@@ -65,9 +65,6 @@
 # ifndef CONF_WITH_IKBD_CLOCK
 #  define CONF_WITH_IKBD_CLOCK 0
 # endif
-# ifndef CONF_WITH_CARTRIDGE
-#  define CONF_WITH_CARTRIDGE 0
-# endif
 # ifndef CONF_WITH_ACSI
 #  define CONF_WITH_ACSI 0
 # endif
@@ -626,9 +623,6 @@
 # ifndef CONF_WITH_IKBD_CLOCK
 #  define CONF_WITH_IKBD_CLOCK 0
 # endif
-# ifndef CONF_WITH_CARTRIDGE
-#  define CONF_WITH_CARTRIDGE 0
-# endif
 # ifndef CONF_WITH_FDC
 #  define CONF_WITH_FDC 0
 # endif
@@ -905,19 +899,6 @@
  */
 #ifndef CONF_WITH_IKBD_CLOCK
 # define CONF_WITH_IKBD_CLOCK 1
-#endif
-
-/*
- * Set CONF_WITH_CARTRIDGE to 1 to enable ROM port cartridge support
- */
-#ifndef CONF_WITH_CARTRIDGE
-# if DIAGNOSTIC_CARTRIDGE
-   /* Diagnostic and Application cartridges have different magic numbers,
-    * so a diagnostic cartridge can't also be an application cartridge. */
-#  define CONF_WITH_CARTRIDGE 0
-# else
-#  define CONF_WITH_CARTRIDGE 1
-# endif
 #endif
 
 /*
