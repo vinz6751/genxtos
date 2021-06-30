@@ -32,7 +32,7 @@
 /dsm.txt
 /tests/*/*.tos
 .vs
-/bios/*.o
-/bdos/*.o
-/util/*.o
-*pp.ld
+*.o
+*.a
+# .ld are build from the .ld_
+*.ld 
