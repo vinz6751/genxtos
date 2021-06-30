@@ -15,7 +15,8 @@ bdos.tos: $(OBJ) bdos.ld Makefile bdosvars.ld ../bios/biosvars.ld
 	$(LD) -o $@ $(LDPATH) -Wl,-T,bdos.ld -Wl,-T,../bios/biosvars.ld $(OBJ)
 
 ../util/libutil.a:
-	$(MAKE) -f ../util/Makefile
+	cd ../util && $(MAKE) 
 	
 bdos.ld: bdos.ld_
 	cd .. && $(MAKE) -f Makefile.ld
+	
