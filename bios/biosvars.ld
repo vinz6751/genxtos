@@ -1,0 +1,8 @@
+
+resvalid = 0x426;
+resvector = 0x42a;
+_phystop = 0x42e;
+_membot = 0x432;
+_memtop = 0x436;
+_themd = 0x48e;
+_pun_ptr = 0x516;

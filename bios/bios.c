@@ -50,6 +50,7 @@
 #include "asm.h"
 #include "chardev.h"
 #include "blkdev.h"
+#include "disk.h"
 #include "parport.h"
 #include "serport.h"
 #include "string.h"
@@ -823,7 +824,7 @@ void biosmain(void)
  */
 
 #if DBGBIOS
-static void bios_0(MPB *mpb)
+static void bios_0(MEMORY_PARTITION_BLOCK *mpb)
 {
     getmpb(mpb);
 }
@@ -1195,6 +1196,10 @@ const PFLONG bios_vecs[] = {
     VEC(bios_9, mediach),
     VEC(bios_a, drvmap),
     VEC(bios_b, kbshift),
+    /* We could also have a variable Bgetvar() which returns a union... */
+    (PFLONG)bmem_gettpa,
+    (PFLONG)balloc_stram,
+    (PFLONG)disk_drvrem
 };
 
 const UWORD bios_ent = ARRAY_SIZE(bios_vecs);

@@ -1,0 +1,1 @@
+_bufl           = 0x4b2;        /* pointers to buffer ctrl blocks for GEMDOS */

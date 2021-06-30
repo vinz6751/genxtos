@@ -30,9 +30,9 @@
 /*
  *  global variables
  */
-MPB pmd;
+MEMORY_PARTITION_BLOCK pmd;
 #if CONF_WITH_ALT_RAM
-MPB pmdalt;
+MEMORY_PARTITION_BLOCK pmdalt;
 int has_alt_ram;
 #endif
 ULONG malloc_align_stram;
@@ -49,9 +49,9 @@ static UBYTE *end_stram;
 #ifdef ENABLE_KDEBUG
 #define MAX_MD_COUNT    1000    /* for loop detection */
 #define MAX_MD_LIST     20      /* for dump */
-static void dump_md_list(char *title,MD *md)
+static void dump_md_list(char *title,MEMORY_DESCRIPTOR *md)
 {
-    MD *m;
+    MEMORY_DESCRIPTOR *m;
     int i, n;
 
     for (n = 0, m = md; m && (n < MAX_MD_COUNT); m = m->m_link)
@@ -94,7 +94,7 @@ static void dump_mem_map(void)
  *
  * returns NULL if not found
  */
-static MPB *find_mpb(void *addr)
+static MEMORY_PARTITION_BLOCK *find_mpb(void *addr)
 {
     if (((UBYTE *)addr >= start_stram) && ((UBYTE *)addr < end_stram))
         return &pmd;
@@ -132,8 +132,8 @@ void *xmalloc(long amount)
  */
 long xmfree(void *addr)
 {
-    MD *p;
-    MPB *mpb;
+    MEMORY_DESCRIPTOR *p;
+    MEMORY_PARTITION_BLOCK *mpb;
 
     KDEBUG(("BDOS: Mfree(%p)\n",addr));
 
@@ -167,8 +167,8 @@ long xmfree(void *addr)
  */
 long xsetblk(int n, void *blk, long len)
 {
-    MD *p;
-    MPB *mpb;
+    MEMORY_DESCRIPTOR *p;
+    MEMORY_PARTITION_BLOCK *mpb;
 
     KDEBUG(("BDOS: Mshrink(%p,%ld)\n",blk,len));
 
@@ -216,7 +216,7 @@ long xsetblk(int n, void *blk, long len)
     }
 
     /*
-     * Shrink the existing MD & create a new one for the freed portion of memory.
+     * Shrink the existing MEMORY_DESCRIPTOR & create a new one for the freed portion of memory.
      */
     if (shrinkit(p,mpb,len) < 0)
         return ERR;
@@ -231,7 +231,7 @@ long xsetblk(int n, void *blk, long len)
  */
 void *xmxalloc(long amount, int mode)
 {
-    MD *m;
+    MEMORY_DESCRIPTOR *m;
     void *ret_value;
 
     KDEBUG(("BDOS: Mxalloc(%ld,0x%04x)\n",amount,mode));
@@ -392,7 +392,7 @@ extern UBYTE _static_altram_end[];
 
 long xmaddalt(UBYTE *start, LONG size)
 {
-    MD *md, *p;
+    MEMORY_DESCRIPTOR *md, *p;
 
     /* shrink size to a multiple of 4 bytes */
     size &= -4L;
@@ -458,7 +458,7 @@ long xmaddalt(UBYTE *start, LONG size)
 long total_alt_ram(void)
 {
     long total = 0;
-    MD* md;
+    MEMORY_DESCRIPTOR* md;
 
 #if CONF_WITH_STATIC_ALT_RAM
     /* Add size of static Alt-RAM area */
@@ -489,10 +489,10 @@ void umem_init(void)
     LONG cookie_mch;
     MAYBE_UNUSED(cookie_mch);
 
-    /* get the MPB */
+    /* get the MEMORY_PARTITION_BLOCK */
     Getmpb((long)&pmd);
 
-    /* derive the addresses, assuming the MPB is in clean state */
+    /* derive the addresses, assuming the MEMORY_PARTITION_BLOCK is in clean state */
     start_stram = pmd.mp_mfl->m_start;
     end_stram = start_stram + pmd.mp_mfl->m_length;
     KDEBUG(("umem_init(): start_stram=%p, end_stram=%p\n",start_stram,end_stram));
@@ -524,8 +524,8 @@ void umem_init(void)
  */
 void set_owner(void *addr, PD *p)
 {
-    MD *m;
-    MPB *mpb;
+    MEMORY_DESCRIPTOR *m;
+    MEMORY_PARTITION_BLOCK *mpb;
 
     mpb = find_mpb(addr);
 

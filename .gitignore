@@ -32,3 +32,7 @@
 /dsm.txt
 /tests/*/*.tos
 .vs
+/bios/*.o
+/bdos/*.o
+/util/*.o
+*pp.ld

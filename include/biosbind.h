@@ -28,6 +28,10 @@
 #define Mediach(a) bios_l_w(0x9,a)
 #define Drvmap() bios_l_v(0xa)
 #define Kbshift(a) bios_l_w(0xb,a)
+/* GenX TOS extensions, to avoid the use of system variables */
+#define Bgettpa() bios_l_w(0xc,a)
+#define Balloc(a,b) bios_l_lw(0xd,a,b)
+#define Bdrvrem() bios_l_v(0xe)
 
 
 
@@ -140,6 +144,24 @@ static __inline__ long bios_l_wl(int op, short a, long b)
         );
     return retval;
 }
+
+static __inline__ long bios_l_lw(int op, long a, short b)
+{
+    register long retval __asm__("d0");
+
+    __asm__ volatile (
+        "move.w  %3,-(sp)\n\t"
+        "move.l  %2,-(sp)\n\t"
+        "move.w  %1,-(sp)\n\t"
+        "trap    #13\n\t"
+        "addq.l  #8,sp"
+         : "=r"(retval)
+         : "nr"(op), "nr"(a), "ir"(b)
+         : "d1", "d2", "a0", "a1", "a2", "memory", "cc"
+        );
+    return retval;
+}
+
 
 static __inline__ long
 bios_l_wlwwwl(int op, short a, long b, short c, short d, short e, long f)

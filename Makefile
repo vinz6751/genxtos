@@ -277,6 +277,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              pmmu030.c 68040_pmmu.S \
              amiga.c amiga2.S spi_vamp.c \
              lisa.c lisa2.S \
+			 c256genx.c c256genx2.S c256genx_kbd.S \
              delay.c delayasm.S sd.c memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S
 
@@ -748,7 +749,7 @@ C256GENX_DEFS =
 NODEP += c256genx
 c256genx: UNIQUE = $(COUNTRY)
 c256genx: OPTFLAGS = $(SMALL_OPTFLAGS)
-c256genx: override DEF += -DTARGET_C256GENX_ROM $(C256GENX_DEFS)
+c256genx: override DEF += -DTARGET_C256GENX_ROM  -DMACHINE_C256FOENIXGENX $(C256GENX_DEFS)
 c256genx:
 	@echo "# Building C256 Foenix GenX EmuTOS into $(ROM_MACHINE_C256GENX)"
 	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_C256GENX=$(ROM_MACHINE_C256GENX) $(ROM_MACHINE_C256GENX)

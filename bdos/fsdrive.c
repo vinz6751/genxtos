@@ -88,7 +88,7 @@ long ckdrv(int d, BOOL checkrem)
         b = (BPB *) Getbpb(d);
 
         if (!b)
-            return (mask&drvrem) ? EPTHNF : EDRIVE;
+            return (mask&Bdrvrem()) ? EPTHNF : EDRIVE;
 
         if ((long)b < 0)
             return (long)b;
@@ -98,7 +98,7 @@ long ckdrv(int d, BOOL checkrem)
 
         drvsel |= mask;
     }
-    else if (checkrem && (mask & drvrem))   /* handle removable media */
+    else if (checkrem && (mask & Bdrvrem()))   /* handle removable media */
     {
         if (Mediach(d))
         {

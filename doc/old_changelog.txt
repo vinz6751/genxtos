@@ -2634,7 +2634,7 @@ Start... early ages
 
 2011-09-12
 - bdos/bios.h bdos/mem.h: Remove unused items from bdos/bios.h, and move
-  definitions of MPB & MD to mem.h. Submitted by Roger Burrows. (VRI)
+  definitions of MEMORY_PARTITION_BLOCK & MEMORY_DESCRIPTOR to mem.h. Submitted by Roger Burrows. (VRI)
 - include/funcdef.h include/gsxdefs.h include/obdefs.h include/taddr.h: Several
   headers are duplicated between the aes & desk directories. This patch moves
   funcdef.h, gsxdefs.h, obdefs.h, and taddr.h from aes/ to include/, and removes
@@ -4245,7 +4245,7 @@ Start... early ages
 
 2013-01-17
 - bdos/mem.h bios/biosmem.h include/memdefs.h: Code cleanup: eliminate
-  duplicate definitions of MD & MPB. (RFB)
+  duplicate definitions of MEMORY_DESCRIPTOR & MEMORY_PARTITION_BLOCK. (RFB)
 
 2013-01-18
 - bios/iorec.h bios/mfp.c tools/bug.c tools/compr.c tools/tounix.c

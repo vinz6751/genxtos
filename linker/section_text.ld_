@@ -1,0 +1,11 @@
+/* The TEXT segment contains EmuTOS executable code and read-only data.
+    * It is always read-only, so it can safely live in ROM.
+    */
+.text : SUBALIGN(2)
+{
+    CREATE_OBJECT_SYMBOLS
+    __text = .;
+    *(.text)
+    *(.rodata .rodata.*) /* Only present in ELF objects */
+    __etext = .;
+} >REGION_READ_ONLY =0x4afc

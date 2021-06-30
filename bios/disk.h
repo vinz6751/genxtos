@@ -121,5 +121,6 @@ LONG DMAwrite(LONG sector, WORD count, const UBYTE *buf, WORD major);
 void disk_init_all(void);
 LONG disk_mediach(UWORD unit);
 void disk_rescan(UWORD unit);
+LONG disk_drvrem(void);
 
 #endif /* DISK_H */
