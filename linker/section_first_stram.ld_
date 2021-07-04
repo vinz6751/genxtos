@@ -2,6 +2,8 @@
 .first_stram :
 {
     /* System variables are located at fixed addresses */
+#include "../tosvars.ld"
+#include "biosvars.ld"
 #include "bdosvars.ld"
     . = 0x800; /* Extend sysvars area upto end of supervisor-only RAM */
     sysvars_end = .;

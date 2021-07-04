@@ -379,6 +379,9 @@
 # ifndef CONF_WITH_FALCON_MMU
 #  define CONF_WITH_FALCON_MMU 0
 # endif
+# ifndef CONF_WITH_68030_PMMU
+#  define CONF_WITH_68030_PMMU 0
+# endif
 # ifndef CONF_WITH_NVRAM
 #  define CONF_WITH_NVRAM 0
 # endif

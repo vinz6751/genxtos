@@ -128,8 +128,7 @@ void timer_init(void)
     tim_addr = (ETV_TIMER_T)just_rts;   /* tick points to rts */
 
     old_sr = set_sr(0x2700);            /* disable interrupts */
-    tim_chain = (ETV_TIMER_T)           /* save old vector */
-        Setexc(0x100, (long)tick_int);  /* set etv_timer to tick_int */
+    tim_chain = (ETV_TIMER_T)Setexc(0x100, (long)tick_int); /* save old vector and set etv_timer to tick_int */
     set_sr(old_sr);                     /* enable interrupts */
 
 }

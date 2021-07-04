@@ -1196,10 +1196,10 @@ const PFLONG bios_vecs[] = {
     VEC(bios_9, mediach),
     VEC(bios_a, drvmap),
     VEC(bios_b, kbshift),
-    /* We could also have a variable Bgetvar() which returns a union... */
-    (PFLONG)bmem_gettpa,
-    (PFLONG)balloc_stram,
-    (PFLONG)disk_drvrem
+    /* We could also have a variable Bgetvar which returns a union... */
+    (PFLONG)bmem_gettpa,  // $c
+    (PFLONG)balloc_stram, // $d Bgetvar(ULONG size, BYTE fromTop): allocates memory, resizing the TPA. Should only be called before user programs are loaded!
+    (PFLONG)disk_drvrem,  // $e LONG Bdrvmem(void): like _drvmem system variable, returns bitfield of drives supporting media change
 };
 
 const UWORD bios_ent = ARRAY_SIZE(bios_vecs);

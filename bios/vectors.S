@@ -103,7 +103,7 @@
 /* basically initialize the 62 exception vectors. */
 _init_exc_vec:
         clr.l   _proc_lives.w
-        lea     deflt_vec_table, a0
+        lea     default_vectors_table, a0
         lea     8, a1
         move.l  #61, d0
 set_vec:
@@ -143,7 +143,7 @@ set_uvec:
  * the former method will allow any_vec to display the correct vector
  * number and report a meaningful panic message.
  */
-deflt_vec_table:
+default_vectors_table:
 buserr_vec:
         bsr.s   any_vec         // vector 2
         bsr.s   any_vec
@@ -212,7 +212,7 @@ unimp_vec:
         bsr.s   any_vec
 
 user_vec:
-        pea     deflt_vec_table(pc)
+        pea     default_vectors_table(pc)
 
 // at this point, stack contains:
 // 0:exception vector address 4:sr 6:pc
@@ -234,7 +234,7 @@ any_vec:
         move.l  (sp)+,d0
         // dump the correct value for sp
         move.l  sp,(_proc_aregs+28).w
-        lea     deflt_vec_table(pc), a0
+        lea     default_vectors_table(pc), a0
         sub.l   a0, d0
         lsr.l   #1, d0
         add.l   #1, d0

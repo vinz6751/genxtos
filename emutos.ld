@@ -42,14 +42,12 @@ SECTIONS
     .low_stram : SUBALIGN(2)
     {
         __low_stram_start = .;
-#if 0
         obj/lowstram.o(.bss COMMON)
         obj/lineavars.o(.bss COMMON)
         __low_stram_end = .;
         ASSERT(ABSOLUTE(_shifty) < 0x8000, "error: bad _shifty address");
         ASSERT((ABSOLUTE(_dskbuf) & 3) == 0, "error: bad _dskbuf alignment");
         ASSERT(ABSOLUTE(__low_stram_end) <= 0x8000, "error: .low_stram section extends beyond 32k");
-#endif
     } >stram
 
     INCLUDE linker/section_text.ld

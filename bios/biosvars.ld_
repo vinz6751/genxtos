@@ -1,4 +1,5 @@
 /* BIOS system variable */
+_etv_timer      = 0x400;    /* 50Hz event timer vector used for updating system time and for GEM */
 resvalid        = 0x426;	/* validates resvector, if 0x31415926 */
 resvector       = 0x42a;	/* reset vector, will be jumped on warm reset if resvalid has the magic number */
 _phystop        = 0x42e;	/* physical top of RAM */
@@ -6,4 +7,5 @@ _membot         = 0x432;	/* start of TPA (user memory) */
 _memtop         = 0x436;	/* end of TPA (user memory) */
 _themd          = 0x48e;	/* first memory descriptor block */
 _pun_ptr        = 0x516;	/* if AHDI, pointer to pun_info */
-
+_longframe      = 0x59e;	/* if not 0, then not 68000 - use long stack frames */
+_p_cookies      = 0x5a0;	/* pointer to cookie jar */

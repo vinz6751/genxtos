@@ -169,7 +169,9 @@ void time_init(void)
 
 
 /*
- *  tikfrk -
+ *  tikfrk update the current system date and time, it is called from the
+ *  Timer C (200Hz) handler, every 4 times, so at 50Hz.
+ *  n is _timer_ms, i.e. normally 200.
  */
 
 static void tikfrk(int n)
