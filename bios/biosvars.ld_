@@ -1,4 +1,4 @@
-/* BIOS system variable */
+/* BIOS system variables */
 _etv_timer      = 0x400;    /* 50Hz event timer vector used for updating system time and for GEM */
 resvalid        = 0x426;	/* validates resvector, if 0x31415926 */
 resvector       = 0x42a;	/* reset vector, will be jumped on warm reset if resvalid has the magic number */

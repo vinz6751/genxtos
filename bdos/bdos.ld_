@@ -4,7 +4,7 @@
  * Copyright (C) 2016-2021 The EmuTOS development team
  *
  * Authors:
- *  VRI   Vincent Rivière
+ *  VRI   Vincent RiviÃ¨re
  *  VB    Vincent Barrilliot
  *
  * This file is distributed under the GPL, version 2 or at your
@@ -22,8 +22,17 @@ OUTPUT_FORMAT(binary)
 
 SECTIONS
 {
+	.first_stram :
+	{
+    	/* System variables are located at fixed addresses */
+
+		#include "bdosvars.ld"
+	    . = 0x800; /* Extend sysvars area upto end of supervisor-only RAM */
+	    sysvars_end = .;
+	} >stram
+
     /* Include pre-processed version of these files */
-    INCLUDE ../linker/section_first_stram.ld
+    /*INCLUDE ../linker/section_first_stram.ld*/
     INCLUDE ../linker/section_text.ld
     INCLUDE ../linker/section_bss.ld
 }

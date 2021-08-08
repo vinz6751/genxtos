@@ -6,6 +6,6 @@ include ../Makefile.inc
 INCDIR  +=-I../include
 SRC := cookie.o doprintf.o memmove.o memset.o setjmp.o string.o stringasm.o
 
-$(TARGET): $(OBJ) ../memorymappp.ld Makefile
+$(TARGET): $(OBJ) ../linker/memorymap.ld Makefile
 	$(AR) rcs -o $@ $(OBJ)
 

@@ -1,6 +1,6 @@
 /* The BSS segment contains uninitialized global variables.
-    * It will be cleared by the startup code.
-    */
+ * It will be cleared by the startup code.
+ */
 .bss : SUBALIGN(2)
 {
     __bss = .;
