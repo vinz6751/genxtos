@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "biosext.h"
@@ -71,7 +71,7 @@
 
 /*==== Defines ============================================================*/
 
-#define DBGBIOS 0               /* If you want to enable debug wrappers */
+#define DBGBIOS 1               /* If you want to enable debug wrappers */
 #define ENABLE_RESET_RESIDENT 0 /* enable to run "reset-resident" code (see below) */
 
 #define ENV_SIZE    12          /* sufficient for standard PATH=^X:\^^ (^=nul byte) */
@@ -1143,6 +1143,7 @@ LONG drvmap(void)
 #if DBGBIOS
 static LONG bios_a(void)
 {
+	KDEBUG(("BIOS 10: Drvmap()\n"));
     return drvmap();
 }
 #endif
@@ -1171,16 +1172,27 @@ static LONG bios_b(WORD flag)
 #endif
 
 
+#if DBGBIOS
+static LONG bios_c(void) { return (LONG)bmem_gettpa(); }
+static LONG bios_d(BOOL fromTop, ULONG size)
+{
+	KDEBUG(("BIOS 13: Balloc(0x%08lx,%s)\n",size,fromTop ? "fromTop" : "fromBottom"));
+	return balloc_stram(size,fromTop);
+}
+static LONG bios_e(void) { return disk_drvrem(); }
+#endif
+
+
+
 /**
  * bios_vecs - the table of bios command vectors.
  */
 
 /* PFLONG defined in bios/vectors.h */
-
 #if DBGBIOS
-#define VEC(wrapper, direct) (PFLONG) wrapper
+  #define VEC(wrapper, direct) (PFLONG) wrapper
 #else
-#define VEC(wrapper, direct) (PFLONG) direct
+  #define VEC(wrapper, direct) (PFLONG) direct
 #endif
 
 const PFLONG bios_vecs[] = {
@@ -1196,10 +1208,10 @@ const PFLONG bios_vecs[] = {
     VEC(bios_9, mediach),
     VEC(bios_a, drvmap),
     VEC(bios_b, kbshift),
-    /* We could also have a variable Bgetvar which returns a union... */
-    (PFLONG)bmem_gettpa,  // $c
-    (PFLONG)balloc_stram, // $d Bgetvar(ULONG size, BYTE fromTop): allocates memory, resizing the TPA. Should only be called before user programs are loaded!
-    (PFLONG)disk_drvrem,  // $e LONG Bdrvmem(void): like _drvmem system variable, returns bitfield of drives supporting media change
+    /* GenX OS extensions */
+    VEC(bios_c, bmem_gettpa),  // We could also have a variable Bgetvar which returns a union... */
+    VEC(bios_d, balloc_stram), // $d balloc_stram(ULONG size, BOOL fromTop): allocates memory, resizing the TPA. Should only be called before running the BDOS.
+    VEC(bios_e, disk_drvrem)   // $e LONG Bdrvmem(void): like _drvmem system variable, returns bitfield of drives supporting media change.
 };
 
 const UWORD bios_ent = ARRAY_SIZE(bios_vecs);
