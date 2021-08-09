@@ -3,7 +3,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2019 The EmuTOS development team
+*                 2002-2021 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -47,6 +47,11 @@
 #define INTER_WSPACE 0
 #define INTER_HSPACE 0
 
+#if CONF_WITH_3D_OBJECTS
+#define BUTTON_FLAGS    (SELECTABLE | EXIT | FL3DACT)
+#else
+#define BUTTON_FLAGS    (SELECTABLE | EXIT)
+#endif
 
 
 /*
@@ -242,6 +247,17 @@ static void fm_build(OBJECT *tree, WORD haveicon, WORD nummsg, WORD mlenmsg,
     bt.g_y = max(ic.g_y+ic.g_h,nummsg+1) + 1 + INTER_HSPACE;
     al.g_h = max(bt.g_y+bt.g_h,ic.g_y+ic.g_h) + 1 + INTER_HSPACE;
 
+    /*
+     * final adjustments(3): button height
+     *  for 3D objects, increase button height by 3 pixels, which adds
+     *  an extra pixel between the top of the text and the button outline.
+     *  this provides slightly better aesthetics and is what TOS4 does.
+     *  this must be done after the calls to max() for obvious reasons.
+     */
+#if CONF_WITH_3D_OBJECTS
+    bt.g_h |= 0x0300;   /* assumes original height is in exact chars */
+#endif
+
     /* init. root object    */
     ob_setxywh(tree, ROOT, &al);
     for (i = 0, obj = tree; i < NUM_ALOBJS; i++, obj++)
@@ -265,7 +281,7 @@ static void fm_build(OBJECT *tree, WORD haveicon, WORD nummsg, WORD mlenmsg,
     /* add button objects with 1 space between them  */
     for (i = 0, obj = tree+BUTOFF; i < numbut; i++, obj++)
     {
-        obj->ob_flags = SELECTABLE | EXIT;
+        obj->ob_flags = BUTTON_FLAGS;
         obj->ob_state = NORMAL;
         ob_setxywh(tree, BUTOFF+i, &bt);
         bt.g_x += mlenbut + 2;
@@ -284,9 +300,17 @@ WORD fm_alert(WORD defbut, char *palstr)
     OBJECT *tree;
     GRECT d, t;
     OBJECT *obj;
+#if CONF_WITH_3D_OBJECTS
+    WORD color;
+#endif
 
     /* init tree pointer    */
     tree = rs_trees[DIALERT];
+
+#if CONF_WITH_3D_OBJECTS
+    color = (backgrcol < gl_ws.ws_ncolors) ? backgrcol : WHITE;
+    tree[ROOT].ob_spec = (tree[ROOT].ob_spec & 0xffffff80L) | 0x70L | (color & 0x000f);
+#endif
 
     set_mouse_to_arrow();
 
