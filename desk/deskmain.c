@@ -3,7 +3,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2020 The EmuTOS development team
+*                 2002-2021 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -67,7 +67,9 @@ typedef struct {
 #define menu_text(tree,inum,ptext) (((tree)+(inum))->ob_spec = (LONG)(ptext))
 
 
+#define CR      0x0d
 #define ESC     0x1b
+
 
 /* architectural */
 #define MIN_DESKMENU_WIDTH  20  /* in characters, compatible with Atari TOS */
@@ -1189,6 +1191,11 @@ static WORD hndl_kbd(WORD thechar)
     WORD title = -1, item;
 
     ascii = LOBYTE(thechar);
+    if (ascii == CR)    /* deselect icons */
+    {
+        desk_clear_all();
+        return FALSE;
+    }
     if (ascii == ESC)   /* refresh window */
     {
         pw = win_ontop();
@@ -1236,7 +1243,7 @@ WORD hndl_msg(void)
 
     done = change = menu = shrunk = FALSE;
 
-    if ( G.g_rmsg[0] == WM_CLOSED && ig_close )
+    if ((G.g_rmsg[0] == WM_CLOSED) && ig_close)
     {
         ig_close = FALSE;
         return done;
@@ -1592,7 +1599,8 @@ static void adjust_menu(OBJECT *obj_array)
             if (m < l)
                 m = l;
         }
-        dropbox->ob_x = mbar->ob_x + title->ob_x;
+        /* force byte alignment for faster display */
+        dropbox->ob_x = (mbar->ob_x + title->ob_x) & 0x00ff;
 
         /* set up separator lines */
         for (k = dropbox->ob_head, item = OBJ(k), m++; k <= dropbox->ob_tail; k++, item++)
@@ -1602,7 +1610,7 @@ static void adjust_menu(OBJECT *obj_array)
         }
 
         /* make sure the menu is not too far on the right of the screen */
-        if ((dropbox->ob_x&0x00ff) + m >= width)
+        if (dropbox->ob_x + m >= width)
         {
             dropbox->ob_x = width - m;
             m = (m-1) | ((CHAR_WIDTH-1)<<8);
@@ -1617,6 +1625,24 @@ static void adjust_menu(OBJECT *obj_array)
     KDEBUG(("desktop menu bar: x=0x%04x, w=0x%04x\n",mbar->ob_x,mbar->ob_width));
 #undef OBJ
 }
+
+#if CONF_WITH_3D_OBJECTS
+/*
+ *  Perform any final position tweaks for 3D objects
+ */
+static void adjust_3d_positions(void)
+{
+    OBJECT *tree = desk_rs_trees[ADDESKCF];
+
+    /*
+     * adjust Desktop configuration dialog
+     */
+    tree[DCFUNPRV].ob_y -= 2 * ADJ3DSTD;    /* avoid button overlap */
+    tree[DCFUNNXT].ob_y += ADJ3DSTD;
+    tree[DCMNUPRV].ob_y -= 2 * ADJ3DSTD;
+    tree[DCMNUNXT].ob_y += ADJ3DSTD;
+}
+#endif
 
 /*
  *  Align text objects according to special values in ob_flags
@@ -1853,6 +1879,10 @@ static WORD desk_xlate_fix(void)
     {
         rsrc_obfix(desk_rs_obj, i);
     }
+
+#if CONF_WITH_3D_OBJECTS
+    adjust_3d_positions();
+#endif
 
     /*
      * perform special object alignment - this must be done after

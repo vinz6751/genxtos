@@ -1,7 +1,7 @@
 /*
  * screen.h - low-level screen routines
  *
- * Copyright (C) 2001-2020 The EmuTOS development team
+ * Copyright (C) 2001-2021 The EmuTOS development team
  *
  * Authors:
  *  LVL   Laurent Vogel
@@ -16,7 +16,7 @@
 
 #define ST_VRAM_SIZE        32000UL
 #define TT_VRAM_SIZE        153600UL
-#define FALCON_VRAM_SIZE    307200UL
+#define FALCON_VRAM_SIZE    368640UL    /* 768x480x256 (including overscan) */
 
 #if CONF_WITH_ATARI_VIDEO
 

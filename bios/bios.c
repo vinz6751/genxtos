@@ -2,7 +2,7 @@
  *  bios.c - C portion of BIOS initialization and front end
  *
  * Copyright (C) 2001 Lineo, Inc.
- * Copyright (C) 2001-2020 The EmuTOS development team
+ * Copyright (C) 2001-2021 The EmuTOS development team
  *
  * Authors:
  *  SCC     Steve C. Cavender
@@ -333,6 +333,7 @@ static void bios_init(void)
     KDEBUG(("screen_init_address()\n"));
     screen_init_address();
 
+    KDEBUG(("vt52_init()\n"));
     vt52_init();        /* initialize the vt52 console */
 
     /* Now kcprintf() will also send debug info to the screen */
@@ -786,7 +787,7 @@ void biosmain(void)
          */
         Pexec(PE_LOADGO, "COMMAND.PRG", "", NULL);
     } else if (exec_os) {
-        /* 
+        /*
          * start the default (ROM) shell
          * like Atari TOS, we pass the default environment
          */
