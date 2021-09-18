@@ -47,11 +47,11 @@ static UBYTE *char_addr(WORD ch)
     UWORD offs;
 
     /* test against limits */
-    if (ch >= v_fnt_st) {
-        if (ch <= v_fnt_nd) {
+    if (ch >= v_fnt_st) {        /* v_fnt_st: ascii code of first cell in font */
+        if (ch <= v_fnt_nd) {    /* v_fnt_nd: ascii code of last cell in font */
             /* getch offset from offset table */
-            offs = v_off_ad[ch];
-            offs >>= 3;                 /* convert from pixels to bytes. */
+            offs = v_off_ad[ch]; /* v_off_ad: pointer to current monospace font */
+            offs >>= 3;          /* convert from pixels to bytes. */
 
             /* return valid address */
             return (UBYTE*)v_fnt_ad + offs;
