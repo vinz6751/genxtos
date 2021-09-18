@@ -19,6 +19,8 @@
  * It is preprocessed, to allow #include, #define, #if, etc.
  */
 
+#include "include/config.h"
+
  /* ==== Start of Exception related variables ================================ */
 _proc_lives     = 0x380;        /* validates system crash page, if 0x12345678 */
 _proc_dregs     = 0x384;        /* saved registers d0-d7 */

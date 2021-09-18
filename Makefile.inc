@@ -11,7 +11,7 @@ INCDIR  =
 ASFLAGS =-mcpu=68000 $(INCDIR)
 CFLAGS  =-fomit-frame-pointer -fno-common -mshort -O3 $(INCDIR)
 
-OBJ = $(SRC:.c=.o) 
+OBJ = $(SRC:.c=.o)
 
 
 #../emutospp.ld: ../emutos.ld ../include/config.h ../tosvars.ld
@@ -23,4 +23,3 @@ OBJ = $(SRC:.c=.o)
 
 clean:
 	rm -rf *.o *.a
-	

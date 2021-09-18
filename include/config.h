@@ -613,7 +613,17 @@
 #  define CONF_ATARI_HARDWARE 0
 # endif
 # ifndef CONF_WITH_IDE
-#  define CONF_WITH_IDE 0 /* Disabled for now */
+#  define CONF_WITH_IDE 0 /* Not supported yet */
+# endif
+# ifndef CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF
+#  define CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF 0
+# endif
+# ifdef WITH_AES
+#  undef WITH_AES
+# endif
+# define WITH_AES 0 /* Not supported yet */
+# ifndef WITH_CLI
+#  define WITH_CLI 1 /* Doesn't work yet but we need to startup something... */
 # endif
 #endif
 

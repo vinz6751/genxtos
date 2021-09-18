@@ -451,7 +451,11 @@ OBJECTS = $(CORE_OBJ) $(OPTIONAL_OBJ) $(END_OBJ)
 
 TOCLEAN += obj/*.ld
 
+
 obj/emutospp.ld: emutos.ld include/config.h tosvars.ld
+	$(CPP) $(CPPFLAGS) -P -x c $< -o $@
+
+%.ld:%.ld_
 	$(CPP) $(CPPFLAGS) -P -x c $< -o $@
 
 #
