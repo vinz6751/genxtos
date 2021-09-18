@@ -131,7 +131,7 @@ UBYTE *balloc_stram(ULONG size, BOOL top)
     return ret;
 }
 
-void getmpb(MPB * mpb)
+void getmpb(MEMORY_PARTITION_BLOCK * mpb)
 {
 #if DBG_BALLOC
     bmem_allowed = FALSE; /* BIOS memory handling not allowed past this point */
@@ -146,6 +146,12 @@ void getmpb(MPB * mpb)
     themd.m_length = memtop - themd.m_start;
     themd.m_own = NULL;         /* no owner's process descriptor */
 
-    mpb->mp_mfl = &themd;       /* free list set to initial MD */
+    mpb->mp_mfl = &themd;       /* free list set to initial MEMORY_DESCRIPTOR */
     mpb->mp_mal = NULL;         /* allocated list empty */
+}
+
+TPA_AREA *bmem_gettpa(void)
+{
+    /* This supposes that memtop follows membot */
+    return (TPA_AREA*)&membot;
 }

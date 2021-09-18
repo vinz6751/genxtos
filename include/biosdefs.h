@@ -84,6 +84,15 @@ typedef struct _bpb BPB;
 #define B_16    1       /* device has 16-bit FATs */
 #define B_1FAT  2       /* device has only a single FAT */
 
+
+/*  low/high addresses were programs will be loaded.
+ *  This matches the TOS's system variables. */
+typedef struct  
+{
+    void *membot;       /* start of TPA (user memory) */
+    void *memtop;       /* end of TPA (user memory) */
+} TPA_AREA;
+
 /*
  * Flags for Kbshift()
  */

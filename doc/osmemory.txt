@@ -33,7 +33,7 @@ TOS 1.04:
 1. TOS 1.04 groups 4 MDs together rather than 3.  In order to do this,
 the size of the memory block is increased to 68 bytes, and this means
 that TOS has to reformat the pool of memory blocks added by FOLDRnnn.PRG.
-With the normal ratio of MD allocations to non-MD allocations, there is
+With the normal ratio of MEMORY_DESCRIPTOR allocations to non-MEMORY_DESCRIPTOR allocations, there is
 almost no benefit in memory usage from doing this, and there is added
 complexity due to the reformatting required.
 

@@ -1,0 +1,26 @@
+BIOS #$c Bgettpa added so the GEMDOS doesn't have to read direct memory addresses (be them documented systmem variables).
+
+
+TPA_AREA *bmem_gettpa(void);
+
+
+
+BIOS $d Balloc to allocate memory before membot, or below memtop. membot/memtop are is bumped/decreased accordingly. This is used by GEMDOS (bufl_init) to reserve space for its buffers, so the TPA is completely unused.
+
+UBYTE *Balloc(ULONG size, BOOL from_top)
+
+(BOOL = int)
+
+
+BIOS $e Bdrvrem returns a LONG where each bit correspond to a drive, if the bit is 1, it means the drive support media change.
+
+TODO: remplacer Bdrvrem Bgettpa etc par une Bgetvar(short) qui retourne un 
+typedef union 
+{
+	TPA_AREA *tpa_area;
+	LONG drvrem;
+	void (*panic)(const char *fmt...);
+	...
+} BIOSVAR;
+
+make bdos et voir les variables TOS encore utilis‚es, remplacer ‡a

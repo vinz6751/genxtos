@@ -1,0 +1,7 @@
+#if CONF_WITH_STATIC_ALT_RAM
+    /* First section in static Alt-RAM */
+    .first_altram :
+    {
+        __static_altram_start = .;
+    } >altram
+#endif

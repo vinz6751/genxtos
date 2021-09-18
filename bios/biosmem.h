@@ -22,8 +22,8 @@ extern UBYTE dskbuf[DSKBUF_SIZE]; /* In ST-RAM */
 /* Prototypes */
 void bmem_init(void);
 
-/* BIOS function */
+/* BIOS functions */
 
-void getmpb(MPB *mpb);
+void getmpb(MEMORY_PARTITION_BLOCK *mpb);
 
 #endif /* BIOSMEM_H */

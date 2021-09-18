@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "biosext.h"
@@ -50,6 +50,7 @@
 #include "asm.h"
 #include "chardev.h"
 #include "blkdev.h"
+#include "disk.h"
 #include "parport.h"
 #include "serport.h"
 #include "string.h"
@@ -70,7 +71,7 @@
 
 /*==== Defines ============================================================*/
 
-#define DBGBIOS 0               /* If you want to enable debug wrappers */
+#define DBGBIOS 1               /* If you want to enable debug wrappers */
 #define ENABLE_RESET_RESIDENT 0 /* enable to run "reset-resident" code (see below) */
 
 #define ENV_SIZE    12          /* sufficient for standard PATH=^X:\^^ (^=nul byte) */
@@ -82,10 +83,6 @@ static char default_env[ENV_SIZE];  /* default environment area */
 
 #if STONX_NATIVE_PRINT
 void stonx_kprintf_init(void);      /* defined in kprintasm.S */
-#endif
-
-#if CONF_WITH_CARTRIDGE
-void run_cartridge_applications(WORD typebit);  /* defined in startup.S */
 #endif
 
 #if CONF_WITH_68040_PMMU
@@ -512,26 +509,6 @@ static void bios_init(void)
     swv_vec = os_header.reseth; /* reset system on monitor change & jump to _main */
     vblsem = 1;
 
-#if CONF_WITH_CARTRIDGE
-    {
-        WORD save_hz = V_REZ_HZ, save_vt = V_REZ_VT, save_pl = v_planes;
-
-        /* Run all boot applications from the application cartridge.
-         * Beware: Hatari features a special cartridge which is used
-         * for GEMDOS drive emulation. It will hack drvbits and hook Pexec().
-         * It will also hack Line A variables to enable extended VDI video modes.
-         */
-        KDEBUG(("run_cartridge_applications(3)\n"));
-        run_cartridge_applications(3); /* Type "Execute prior to bootdisk" */
-        KDEBUG(("after run_cartridge_applications()\n"));
-
-        if ((V_REZ_HZ != save_hz) || (V_REZ_VT != save_vt) || (v_planes != save_pl))
-        {
-            set_rez_hacked();   /* also reinitializes the vt52 console */
-        }
-    }
-#endif
-
     KDEBUG(("bios_init() end\n"));
 }
 
@@ -848,7 +825,7 @@ void biosmain(void)
  */
 
 #if DBGBIOS
-static void bios_0(MPB *mpb)
+static void bios_0(MEMORY_PARTITION_BLOCK *mpb)
 {
     getmpb(mpb);
 }
@@ -1167,6 +1144,7 @@ LONG drvmap(void)
 #if DBGBIOS
 static LONG bios_a(void)
 {
+	KDEBUG(("BIOS 10: Drvmap()\n"));
     return drvmap();
 }
 #endif
@@ -1195,16 +1173,27 @@ static LONG bios_b(WORD flag)
 #endif
 
 
+#if DBGBIOS
+static LONG bios_c(void) { return (LONG)bmem_gettpa(); }
+static LONG bios_d(BOOL fromTop, ULONG size)
+{
+	KDEBUG(("BIOS 13: Balloc(0x%08lx,%s)\n",size,fromTop ? "fromTop" : "fromBottom"));
+	return balloc_stram(size,fromTop);
+}
+static LONG bios_e(void) { return disk_drvrem(); }
+#endif
+
+
+
 /**
  * bios_vecs - the table of bios command vectors.
  */
 
 /* PFLONG defined in bios/vectors.h */
-
 #if DBGBIOS
-#define VEC(wrapper, direct) (PFLONG) wrapper
+  #define VEC(wrapper, direct) (PFLONG) wrapper
 #else
-#define VEC(wrapper, direct) (PFLONG) direct
+  #define VEC(wrapper, direct) (PFLONG) direct
 #endif
 
 const PFLONG bios_vecs[] = {
@@ -1220,6 +1209,10 @@ const PFLONG bios_vecs[] = {
     VEC(bios_9, mediach),
     VEC(bios_a, drvmap),
     VEC(bios_b, kbshift),
+    /* GenX OS extensions */
+    VEC(bios_c, bmem_gettpa),  // We could also have a variable Bgetvar which returns a union... */
+    VEC(bios_d, balloc_stram), // $d balloc_stram(ULONG size, BOOL fromTop): allocates memory, resizing the TPA. Should only be called before running the BDOS.
+    VEC(bios_e, disk_drvrem)   // $e LONG Bdrvmem(void): like _drvmem system variable, returns bitfield of drives supporting media change.
 };
 
 const UWORD bios_ent = ARRAY_SIZE(bios_vecs);

@@ -103,28 +103,29 @@ struct _pd
 #define PF_STANDARD     (PF_FASTLOAD | PF_TTRAMLOAD | PF_TTRAMMEM)
 
 /*
- *  MD - Memory Descriptor
+ *  MEMORY_DESCRIPTOR - Memory Descriptor
  */
-typedef struct _md MD;
+typedef struct _md MEMORY_DESCRIPTOR;
 struct _md
 {
-        MD      *m_link;    /* next MD, or NULL */
+        MEMORY_DESCRIPTOR      *m_link;    /* next MEMORY_DESCRIPTOR, or NULL */
         UBYTE   *m_start;   /* start address of memory block */
         LONG    m_length;   /* number of bytes in memory block*/
         PD      *m_own;     /* owner's process descriptor */
 };
 
 /*
- *  MPB - Memory Partition Block
+ *  MEMORY_PARTITION_BLOCK - Memory Partition Block
  */
-typedef struct _mpb MPB;
+typedef struct _mpb MEMORY_PARTITION_BLOCK;
 struct _mpb
 {
-        MD      *mp_mfl;    /* memory free list */
-        MD      *mp_mal;    /* memory allocated list */
-        MD      *mp_rover;  /* roving pointer - no longer used */
+        MEMORY_DESCRIPTOR      *mp_mfl;    /* memory free list */
+        MEMORY_DESCRIPTOR      *mp_mal;    /* memory allocated list */
+        MEMORY_DESCRIPTOR      *mp_rover;  /* roving pointer - no longer used */
 };
 
 #define PATH_ENV "PATH="    /* PATH environment variable */
+
 
 #endif /* _BDOSDEFS_H */

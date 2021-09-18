@@ -65,9 +65,6 @@
 # ifndef CONF_WITH_IKBD_CLOCK
 #  define CONF_WITH_IKBD_CLOCK 0
 # endif
-# ifndef CONF_WITH_CARTRIDGE
-#  define CONF_WITH_CARTRIDGE 0
-# endif
 # ifndef CONF_WITH_ACSI
 #  define CONF_WITH_ACSI 0
 # endif
@@ -397,6 +394,9 @@
 # ifndef CONF_WITH_FALCON_MMU
 #  define CONF_WITH_FALCON_MMU 0
 # endif
+# ifndef CONF_WITH_68030_PMMU
+#  define CONF_WITH_68030_PMMU 0
+# endif
 # ifndef CONF_WITH_NVRAM
 #  define CONF_WITH_NVRAM 0
 # endif
@@ -606,6 +606,19 @@
 #endif
 
 /*
+ * Defaults for the C256 Foenix GenX machine with 68000 CPU Module
+ */
+#ifdef MACHINE_C256FOENIXGENX
+# ifndef CONF_ATARI_HARDWARE
+#  define CONF_ATARI_HARDWARE 0
+# endif
+# ifndef CONF_WITH_IDE
+#  define CONF_WITH_IDE 0 /* Disabled for now */
+# endif
+#endif
+
+
+/*
  * By default, EmuTOS is built for Atari ST/TT/Falcon compatible hardware
  */
 #ifndef CONF_ATARI_HARDWARE
@@ -661,9 +674,6 @@
 # endif
 # ifndef CONF_WITH_IKBD_CLOCK
 #  define CONF_WITH_IKBD_CLOCK 0
-# endif
-# ifndef CONF_WITH_CARTRIDGE
-#  define CONF_WITH_CARTRIDGE 0
 # endif
 # ifndef CONF_WITH_FDC
 #  define CONF_WITH_FDC 0
@@ -941,19 +951,6 @@
  */
 #ifndef CONF_WITH_IKBD_CLOCK
 # define CONF_WITH_IKBD_CLOCK 1
-#endif
-
-/*
- * Set CONF_WITH_CARTRIDGE to 1 to enable ROM port cartridge support
- */
-#ifndef CONF_WITH_CARTRIDGE
-# if DIAGNOSTIC_CARTRIDGE
-   /* Diagnostic and Application cartridges have different magic numbers,
-    * so a diagnostic cartridge can't also be an application cartridge. */
-#  define CONF_WITH_CARTRIDGE 0
-# else
-#  define CONF_WITH_CARTRIDGE 1
-# endif
 #endif
 
 /*

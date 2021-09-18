@@ -316,7 +316,7 @@
 **
 **      29 Jul 85       SCC     Modified ixcreat() to disallow creation of an
 **                              entry beginning with '.', specifically to fix
-**                              'MD .'.
+**                              'MEMORY_DESCRIPTOR .'.
 **
 **                              Modified xrmdir() to disallow 'RD .' or
 **                              'RD ..'.

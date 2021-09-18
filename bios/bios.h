@@ -26,6 +26,7 @@ LONG getbpb(WORD drive);
 LONG bcostat(WORD handle);
 LONG mediach(WORD drv);
 LONG drvmap(void);
+TPA_AREA *bmem_gettpa(void);
 
 /* utility functions */
 #if CONF_SERIAL_CONSOLE_ANSI

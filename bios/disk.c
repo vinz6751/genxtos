@@ -163,7 +163,11 @@ static void disk_init_one(UWORD unit,LONG *devices_available)
 /*
  **     drvrem - mask of drives with removable media
  */
-LONG    drvrem;
+LONG    drvrem; /* This has a fixed address by the linker script */
+LONG disk_drvrem(void)
+{
+    return drvrem;
+}
 
 /*
  * disk_init_all

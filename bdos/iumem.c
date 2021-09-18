@@ -32,9 +32,9 @@ long ccfreeit;
 /*
  *  ffit - find first fit for requested memory in ospool
  */
-MD *ffit(long amount, MPB *mp)
+MEMORY_DESCRIPTOR *ffit(long amount, MEMORY_PARTITION_BLOCK *mp)
 {
-    MD *p, *q, *p1;     /* free list is composed of MD's */
+    MEMORY_DESCRIPTOR *p, *q, *p1;     /* free list is composed of MEMORY_DESCRIPTOR's */
     LONG maxval;
 
 #ifdef ENABLE_KDEBUG
@@ -53,7 +53,7 @@ MD *ffit(long amount, MPB *mp)
     ++ccffit;
 #endif
 
-    p = (MD *)mp;
+    p = (MEMORY_DESCRIPTOR *)mp;
     if ((q = mp->mp_mfl) == NULL)   /* get free list pointer */
     {
         KDEBUG(("BDOS ffit: null free list ptr\n"));
@@ -70,7 +70,7 @@ MD *ffit(long amount, MPB *mp)
                 maxval = q->m_length;
 
         KDEBUG(("BDOS ffit: maxval=%ld\n",maxval));
-        return (MD *)maxval;
+        return (MEMORY_DESCRIPTOR *)maxval;
     }
 
     if (mp == &pmd)
@@ -104,7 +104,7 @@ MD *ffit(long amount, MPB *mp)
         p->m_link = q->m_link;  /* take the whole thing */
     else
     {
-        /* break it up - 1st allocate a new MD to describe the remainder */
+        /* break it up - 1st allocate a new MEMORY_DESCRIPTOR to describe the remainder */
 
         /*********** TBD **********
          * Nicer Handling of This *
@@ -116,13 +116,13 @@ MD *ffit(long amount, MPB *mp)
             return NULL;
         }
 
-        /* init new MD for remaining memory on free chain */
+        /* init new MEMORY_DESCRIPTOR for remaining memory on free chain */
         p1->m_length = q->m_length - amount;
         p1->m_start = q->m_start + amount;
         p1->m_link = q->m_link;
         p->m_link = p1;
 
-        /* adjust old MD for allocated memory on allocated chain */
+        /* adjust old MEMORY_DESCRIPTOR for allocated memory on allocated chain */
         q->m_length = amount;
     }
 
@@ -141,9 +141,9 @@ MD *ffit(long amount, MPB *mp)
 /*
  *  freeit - Free up a memory descriptor
  */
-void freeit(MD *m, MPB *mp)
+void freeit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp)
 {
-    MD *p, *q, *f;
+    MEMORY_DESCRIPTOR *p, *q, *f;
 
 #ifdef ENABLE_KDEBUG
     if (mp == &pmd)
@@ -170,7 +170,7 @@ void freeit(MD *m, MPB *mp)
 
     if (!p)
     {
-        KDEBUG(("BDOS freeit: invalid MD address %p\n",m));
+        KDEBUG(("BDOS freeit: invalid MEMORY_DESCRIPTOR address %p\n",m));
         return;
     }
 
@@ -186,7 +186,7 @@ void freeit(MD *m, MPB *mp)
      * find where to add it to the free list
      * (the free list is maintained in ascending sequence)
      *
-     * p -> MD to be added
+     * p -> MEMORY_DESCRIPTOR to be added
      */
     for (f = mp->mp_mfl, q = NULL; f; q = f, f = f-> m_link)
         if (p->m_start <= f->m_start)
@@ -225,9 +225,9 @@ void freeit(MD *m, MPB *mp)
 /*
  *  shrinkit - Shrink a memory descriptor
  */
-WORD shrinkit(MD *m, MPB *mp, LONG newlen)
+WORD shrinkit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp, LONG newlen)
 {
-    MD *f, *p, *q;
+    MEMORY_DESCRIPTOR *f, *p, *q;
 
     /*
      * Create a memory descriptor for the freed portion of memory.
@@ -235,7 +235,7 @@ WORD shrinkit(MD *m, MPB *mp, LONG newlen)
     f = xmgetmd();
     if (!f)
     {
-        KDEBUG(("BDOS shrinkit: not enough OS memory for new MD\n"));
+        KDEBUG(("BDOS shrinkit: not enough OS memory for new MEMORY_DESCRIPTOR\n"));
         return -1;
     }
 

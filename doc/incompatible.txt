@@ -267,14 +267,14 @@ by Steffen Engel.
 
 Program: Luftschloss
 --------------------
-Error: Fails to load with an error message about the MPB variable.
+Error: Fails to load with an error message about the MEMORY_PARTITION_BLOCK variable.
 
 Bug analysis:
 Luftschloss is a reset resident RAM disk originally distributed with
 the German book "Scheibenkleister". It does its memory management
 itself, without using GEMDOS functions. For that, it needs to
 determine the location of an undocumented system variable, the memory
-parameter block (MPB). The heuristic it uses to find the memory
+parameter block (MEMORY_PARTITION_BLOCK). The heuristic it uses to find the memory
 address of that variable only works with Atari TOS.
 
 

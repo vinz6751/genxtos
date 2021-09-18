@@ -21,9 +21,9 @@
  *  externals
  */
 
-extern  MPB     pmd;    /* the mem pool for the main user ST ram */
+extern  MEMORY_PARTITION_BLOCK     pmd;    /* the mem pool for the main user ST ram */
 #if CONF_WITH_ALT_RAM
-extern  MPB     pmdalt;  /* the memory pool for the alternative ram (TT-RAM or other) */
+extern  MEMORY_PARTITION_BLOCK     pmdalt;  /* the memory pool for the alternative ram (TT-RAM or other) */
 #endif
 
 /*
@@ -50,8 +50,8 @@ void *xmgetblk(WORD memtype);
 /*  xmfreblk - free up memory allocated through mgetblk */
 void xmfreblk(void *m);
 
-MD *xmgetmd(void);          /* xmgetmd - get an MD */
-void xmfremd(MD *md);       /* xmfremd - free an MD */
+MEMORY_DESCRIPTOR *xmgetmd(void);          /* xmgetmd - get an MEMORY_DESCRIPTOR */
+void xmfremd(MEMORY_DESCRIPTOR *md);       /* xmfremd - free an MEMORY_DESCRIPTOR */
 
 /* init os memory */
 void osmem_init(void);
@@ -86,11 +86,11 @@ void set_owner(void *addr, PD *p);
  */
 
 /* find first fit for requested memory in ospool */
-MD *ffit(long amount, MPB *mp);
+MEMORY_DESCRIPTOR *ffit(long amount, MEMORY_PARTITION_BLOCK *mp);
 /* Free up a memory descriptor */
-void freeit(MD *m, MPB *mp);
+void freeit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp);
 /* shrink a memory descriptor */
-WORD shrinkit(MD *m, MPB *mp, LONG newlen);
+WORD shrinkit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp, LONG newlen);
 
 
 #endif /* MEM_H */

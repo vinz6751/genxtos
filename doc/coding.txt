@@ -89,12 +89,7 @@ Exceptions to the 'leading underscore' rule are:
 
 (2) Processor compatibility
 ---------------------------
-Assembler code must be capable of running on all 680x0 processors as well
-as ColdFire.  This means that you should use 68000-only instructions
-and addressing modes for code that will be executed on 680x0 processors.
-Because ColdFire has restricted address modes for certain instructions
-(move.m is a notable example), this may mean that you will have to use
-conditional compilation in some cases.
+Assembler code must be capable of running on all 680x0 processors.
 
 Certain parts of the code may require 680x0 intructions that are not
 present on the 68000: for example, processor detection needs this.  These

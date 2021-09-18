@@ -64,6 +64,7 @@ help:
 	@echo "m548x-dbug $(SREC_M548X_DBUG), EmuTOS-RAM for dBUG on ColdFire Evaluation Boards"
 	@echo "m548x-bas  $(SREC_M548X_BAS), EmuTOS for BaS_gcc on ColdFire Evaluation Boards"
 	@echo "m548x-prg  emutos.prg, a RAM tos for ColdFire Evaluation Boards with BaS_gcc"
+	@echo "c256genx   $(ROM_C256GENX), EmuTOS flash image for the C256 GenX with 68000 CPU Module"
 	@echo "prg     emutos.prg, a RAM tos"
 	@echo "flop    $(EMUTOS_ST), a bootable floppy with RAM tos"
 	@echo "pak3    $(ROM_PAK3), suitable for PAK/3 systems"
@@ -278,6 +279,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S
+#			 c256genx.c c256genx2.S c256genx_kbd.S \
 
 ifeq (1,$(COLDFIRE))
   bios_src += coldfire.c coldfire2.S spi_cf.c
@@ -759,6 +761,32 @@ m548x-bas:
 	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
 	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS404))) bytes more than TOS 4.04)"
 	@printf "$(LOCALCONFINFO)"
+
+#
+# C256 Foenix GenX with 68000 CPU module image
+#
+
+TOCLEAN += *.rom
+
+ROM_MACHINE_C256GENX = emutos-c256genx.rom
+C256GENX_DEFS =
+
+.PHONY: c256genx
+NODEP += c256genx
+c256genx: UNIQUE = $(COUNTRY)
+c256genx: OPTFLAGS = $(SMALL_OPTFLAGS)
+c256genx: override DEF += -DTARGET_C256GENX_ROM -DMACHINE_C256FOENIXGENX $(C256GENX_DEFS)
+c256genx: WITH_AES = 0
+c256genx:
+	@echo "# Building C256 Foenix GenX EmuTOS into $(ROM_MACHINE_C256GENX)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_C256GENX=$(ROM_MACHINE_C256GENX) $(ROM_MACHINE_C256GENX)
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT))"
+	@printf "$(LOCALCONFINFO)"
+
+$(ROM_MACHINE_C256GENX): emutos.img mkrom
+	./mkrom pad 4M $< $(ROM_MACHINE_C256GENX)
+
 
 #
 # Special variants of EmuTOS running in RAM instead of ROM.

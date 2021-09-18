@@ -31,3 +31,8 @@
 /local.mk
 /dsm.txt
 /tests/*/*.tos
+.vs
+*.o
+*.a
+# .ld are build from the .ld_
+*.ld 

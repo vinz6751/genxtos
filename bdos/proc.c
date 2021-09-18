@@ -66,17 +66,17 @@ static jmp_buf bakbuf;         /* longjmp buffer */
  * These violate the encapsulation of the memory internal structure.
  * Could perhaps better go in the memory part.
  */
-static void free_all_owned(PD *p, MPB *mpb);
-static void reserve_blocks(PD *pd, MPB *mpb);
+static void free_all_owned(PD *p, MEMORY_PARTITION_BLOCK *mpb);
+static void reserve_blocks(PD *pd, MEMORY_PARTITION_BLOCK *mpb);
 
 /* reserve blocks, i.e. remove them from the allocated list
  *
  * the memory associated with these blocks will remain permanently
  * allocated - this is used by Ptermres()
  */
-static void reserve_blocks(PD *p, MPB *mpb)
+static void reserve_blocks(PD *p, MEMORY_PARTITION_BLOCK *mpb)
 {
-    MD *m, **q;
+    MEMORY_DESCRIPTOR *m, **q;
 
     for (m = *(q = &mpb->mp_mal); m; m = *q) {
         if (m->m_own == p) {
@@ -89,9 +89,9 @@ static void reserve_blocks(PD *p, MPB *mpb)
 }
 
 /* free each item in the allocated list, that is owned by 'p' */
-static void free_all_owned(PD *p, MPB *mpb)
+static void free_all_owned(PD *p, MEMORY_PARTITION_BLOCK *mpb)
 {
-    MD *m, *next;
+    MEMORY_DESCRIPTOR *m, *next;
 
     for (m = mpb->mp_mal; m; m = next) {
         next = m->m_link;
@@ -451,7 +451,7 @@ static char *alloc_env(ULONG flags, char *env)
  */
 static UBYTE *alloc_tpa(ULONG flags,LONG needed,LONG *avail)
 {
-    MD *md;
+    MEMORY_DESCRIPTOR *md;
     LONG st_ram_size;
     BOOL st_ram_available = FALSE;
 

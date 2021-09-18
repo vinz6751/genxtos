@@ -45,7 +45,7 @@
 #define MDS_PER_BLOCK   3
 
 typedef struct {
-    MD md;
+    MEMORY_DESCRIPTOR md;
     WORD index;         /* if used, 0-2, else -1 */
 } MDEXT;
 
@@ -151,25 +151,25 @@ static WORD unlink_mdblock(MDBLOCK *mdb)
 
 
 /*
- *  xmgetmd - get an MD
+ *  xmgetmd - get an MEMORY_DESCRIPTOR
  *
  *  To create a single pool for all osmem requests, MDs are grouped in
  *  blocks of 3 called MDBLOCKs which occupy 58 bytes.  MDBLOCKs are
  *  handled as follows:
  *    . they are linked in a chain, initially empty
- *    . when the first MD is required, an MDBLOCK is obtained via
+ *    . when the first MEMORY_DESCRIPTOR is required, an MDBLOCK is obtained via
  *      xmgetblk() and put on the chain, and the first slot is allocated
  *    . MDs are obtained from existing partially-used MDBLOCKS
  *    . when an MDBLOCK is full, it is removed from the chain
- *    . when an MD in a full MDBLOCK is freed, the MDBLOCK is put back
+ *    . when an MEMORY_DESCRIPTOR in a full MDBLOCK is freed, the MDBLOCK is put back
  *      on the chain
  *    . when the MDBLOCK is totally unused, it is put back on the normal
  *      free chain
  */
-MD *xmgetmd(void)
+MEMORY_DESCRIPTOR *xmgetmd(void)
 {
     MDBLOCK *mdb = mdbroot;
-    MD *md;
+    MEMORY_DESCRIPTOR *md;
     WORD i, avail;
 
     if (!mdb)
@@ -187,7 +187,7 @@ MD *xmgetmd(void)
     }
 
     /*
-     * allocate MD from MDBLOCK
+     * allocate MEMORY_DESCRIPTOR from MDBLOCK
      */
     for (i = 0, avail = 0, md = NULL; i < MDS_PER_BLOCK; i++)
     {
@@ -197,7 +197,7 @@ MD *xmgetmd(void)
             {
                 mdb->entry[i].index = i;
                 md = &mdb->entry[i].md;
-                KDEBUG(("xmgetmd(): got MD at %p\n",md));
+                KDEBUG(("xmgetmd(): got MEMORY_DESCRIPTOR at %p\n",md));
             }
             else avail++;
         }
@@ -224,18 +224,18 @@ MD *xmgetmd(void)
 
 
 /*
- *  xmfremd - free an MD
+ *  xmfremd - free an MEMORY_DESCRIPTOR
  */
-void xmfremd(MD *md)
+void xmfremd(MEMORY_DESCRIPTOR *md)
 {
     MDBLOCK *mdb;
     MDEXT *entry;
     WORD i, avail;
 
-    i = *(WORD *)(md+1);            /* word following MD */
+    i = *(WORD *)(md+1);            /* word following MEMORY_DESCRIPTOR */
     if ((i < 0) || (i >= MDS_PER_BLOCK))
     {
-        KDEBUG(("xmfremd(): MD at %p not freed, invalid index %d\n",md,i));
+        KDEBUG(("xmfremd(): MEMORY_DESCRIPTOR at %p not freed, invalid index %d\n",md,i));
         return;
     }
 
@@ -243,7 +243,7 @@ void xmfremd(MD *md)
     mdb = (MDBLOCK *)((char *)entry - sizeof(MDBLOCK *));
 
     mdb->entry[i].index = -1;       /* mark as free */
-    KDEBUG(("xmfremd(): MD at %p freed\n",md));
+    KDEBUG(("xmfremd(): MEMORY_DESCRIPTOR at %p freed\n",md));
 
     for (i = 0, avail = 0; i < MDS_PER_BLOCK; i++)
         if (mdb->entry[i].index < 0)

@@ -295,6 +295,27 @@ release-m548x-bas:
 	cd $(RELEASE_DIR) && zip -9 -r $(RELEASE_M548X_BAS).zip $(RELEASE_M548X_BAS)
 	rm -r $(RELEASE_DIR)/$(RELEASE_M548X_BAS)
 
+.PHONY: release-c256genx
+NODEP += release-c256genx
+RELEASE_C256GENX = emutos-c256genx-$(VERSION)
+release-c256genx:
+	$(MAKE) clean
+	$(MAKE) c256genx
+	mkdir $(RELEASE_DIR)/$(RELEASE_C256GENX)
+	cp etos256*.img $(RELEASE_DIR)/$(RELEASE_C256GENX)
+	cp desk/icon.def $(RELEASE_DIR)/$(RELEASE_C256GENX)/emuicon.def
+	cp desk/icon.rsc $(RELEASE_DIR)/$(RELEASE_C256GENX)/emuicon.rsc
+	cat doc/readme-256k.txt readme.txt >$(RELEASE_DIR)/$(RELEASE_C256GENX)/readme.txt
+	mkdir $(RELEASE_DIR)/$(RELEASE_C256GENX)/doc
+	cp $(DOCFILES) $(RELEASE_DIR)/$(RELEASE_C256GENX)/doc
+	mkdir $(RELEASE_DIR)/$(RELEASE_C256GENX)/extras
+	cp $(EXTRAFILES) $(RELEASE_DIR)/$(RELEASE_C256GENX)/extras
+	cp aes/mform.def $(RELEASE_DIR)/$(RELEASE_C256GENX)/extras/emucurs.def
+	cp aes/mform.rsc $(RELEASE_DIR)/$(RELEASE_C256GENX)/extras/emucurs.rsc
+	find $(RELEASE_DIR)/$(RELEASE_C256GENX) -name '*.txt' -exec unix2dos '{}' ';'
+	cd $(RELEASE_DIR) && zip -9 -r $(RELEASE_C256GENX).zip $(RELEASE_C256GENX)
+	rm -r $(RELEASE_DIR)/$(RELEASE_C256GENX)
+
 .PHONY: release-prg
 NODEP += release-prg
 RELEASE_PRG = emutos-prg-$(VERSION)
@@ -378,7 +399,7 @@ release: clean release-clean release-mkdir \
   release-src release-1024k release-512k release-256k release-192k release-cartridge \
   release-aranym release-firebee release-amiga-rom release-amiga-floppy \
   release-lisa \
-  release-m548x-dbug release-m548x-bas release-prg release-floppy \
+  release-m548x-dbug release-m548x-bas release-c256genx release-prg release-floppy \
   release-pak3 release-emucon
 	$(MAKE) clean
 	@echo '# Packages successfully generated inside $(RELEASE_DIR)'
