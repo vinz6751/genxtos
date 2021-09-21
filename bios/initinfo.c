@@ -258,10 +258,9 @@ static void cprintf_bytesize(ULONG bytes)
 
 /*
  * initinfo - Show initial configuration at startup
- *
- * returns the selected boot device
+ * and allow user to update boot settings
  */
-WORD initinfo(ULONG *pshiftbits)
+void initinfo_show(struct boot_settings *settings)
 {
     int screen_height = v_cel_my + 1;
     int initinfo_height = 19; /* Define ENABLE_KDEBUG to guess correct value */
@@ -270,7 +269,7 @@ WORD initinfo(ULONG *pshiftbits)
     int actual_initinfo_height;
 #endif
     int i;
-    WORD olddev, dev = bootdev;
+    WORD olddev, dev = settings->bootdev;
     long stramsize = (long)phystop;
 #if CONF_WITH_ALT_RAM
     long altramsize = total_alt_ram();
@@ -412,7 +411,7 @@ WORD initinfo(ULONG *pshiftbits)
             c = toupper(c);
 #if WITH_CLI
             if (c == 0x1b) {
-                bootflags |= BOOTFLAG_EARLY_CLI;
+                settings->bootflags |= BOOTFLAG_EARLY_CLI;
             } else
 #endif
             {
@@ -441,27 +440,24 @@ WORD initinfo(ULONG *pshiftbits)
     cprintf("\033k\033E");
 #endif
 
-    *pshiftbits = shiftbits;
-    return dev;
+    settings->shiftbits = shiftbits;
+    settings->bootdev = dev;
 }
 
 
 #else    /* FULL_INITINFO */
 
-
-WORD initinfo(ULONG *pshiftbits)
+void initinfo_show(struct boot_settings *settings)
 {
     /* we already displayed a startup message */
-
-    *pshiftbits = kbshift(-1);
-    return bootdev;
+    *settings->shiftbits = kbshift(-1);
 }
 
 
 #endif   /* FULL_INITINFO */
 
 
-void display_startup_msg(void)
+void  initinfo_show_boot_msg(void)
 {
     cprintf("EmuTOS Version %s\r\n", version);
 }

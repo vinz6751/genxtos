@@ -221,28 +221,9 @@ static void bus_init(void)
 /*
  * blkdev_boot - boot from device in 'bootdev'
  */
-LONG blkdev_boot(void)
+LONG blkdev_boot(WORD bootflags)
 {
     KDEBUG(("drvbits = %08lx\n",drvbits));
-
-    /*
-     * if the user decided to skip hard drive boot, we set the
-     * boot device to floppy A:
-     */
-    if (bootflags & BOOTFLAG_SKIP_HDD_BOOT)
-        bootdev = FLOPPY_BOOTDEV;
-
-    /*
-     * if the user decided to skip AUTO programs, we don't
-     * attempt to execute the bootsector
-     */
-    if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
-        return 0;
-
-#ifdef DISABLE_HD_BOOT
-    if (bootdev >= NUMFLOPPIES) /* don't attempt to boot from hard disk */
-        return 0;
-#endif
 
     /*
      * execute the bootsector code (if present)

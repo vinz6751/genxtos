@@ -17,7 +17,7 @@
 
 /*==== Prototypes =========================================================*/
 
-WORD initinfo(ULONG *pshiftbits);
-void display_startup_msg(void);
+void initinfo_show(struct boot_settings *settings);
+void initinfo_show_boot_msg(void);
 
 #endif /* INITINFO_H */

@@ -25,5 +25,6 @@ void bmem_init(void);
 /* BIOS functions */
 
 void getmpb(MEMORY_PARTITION_BLOCK *mpb);
+UBYTE *balloc_stram(ULONG size, BOOL top);
 
 #endif /* BIOSMEM_H */

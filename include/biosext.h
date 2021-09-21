@@ -35,8 +35,6 @@ struct font_head;
 /* Bitmap of removable logical drives */
 extern LONG drvrem;
 
-/* Boot flags */
-extern UBYTE bootflags;
 #define BOOTFLAG_EARLY_CLI     0x01
 #define BOOTFLAG_SKIP_HDD_BOOT 0x02
 #define BOOTFLAG_SKIP_AUTO_ACC 0x04
@@ -58,8 +56,6 @@ WORD cache_exists(void);
 void set_cache(WORD enable);
 #endif
 
-/* bios allocation of ST-RAM */
-UBYTE *balloc_stram(ULONG size, BOOL top);
 
 /* print a panic message both via kprintf and cprintf, then halt */
 void panic(const char *fmt, ...) PRINTF_STYLE NORETURN;

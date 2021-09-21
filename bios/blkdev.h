@@ -103,7 +103,7 @@ typedef struct _geometry GEOMETRY;
 void blkdev_init(void);
 
 /* general block device functions */
-LONG blkdev_boot(void);
+LONG blkdev_boot(WORD bootflags);
 LONG blkdev_getbpb(WORD dev);
 LONG blkdev_drvmap(void);
 LONG blkdev_avail(WORD dev);

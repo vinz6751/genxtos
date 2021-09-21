@@ -12,6 +12,14 @@
 
 #include "biosdefs.h"
 
+/* BIOS startup settings: information and parameters passed to the welcome screen,
+ * which may be modified by user action. */
+struct boot_settings {
+	WORD  bootdev;   /* number of the boot device. 0='A' etc. */
+	WORD  shiftbits; /* state of the modifier keys, as per Kbshift() */
+	UBYTE bootflags; /* see below */
+};
+
 void biosmain(void) NORETURN;
 LONG bios_do_unimpl(WORD number);
 

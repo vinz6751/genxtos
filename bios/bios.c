@@ -90,22 +90,149 @@ long setup_68040_pmmu(void);        /* defined in 68040_pmmu.S */
 #endif
 
 extern UBYTE osxhbootdelay;         /* defined in OSXH header in startup.S */
+extern PFVOID vbl_list[8];          /* Default array for vblqueue */
 
 /*==== Declarations =======================================================*/
 
 /* used by kprintf() */
 WORD boot_status;               /* see kprint.h for bit flags */
 
-/* Boot flags */
-UBYTE bootflags;
-
 /* Non-Atari hardware vectors */
 #if !CONF_WITH_MFP
 void (*vector_5ms)(void);       /* 200 Hz system timer */
 #endif
 
+/* Initialize the BIOS */
+static void bios_init(void);
+static void figure_out_boot_settings(struct boot_settings *settings);
+static void init_default_environment(WORD bootdev);
+static void run_auto_programs(WORD bootdev);
+static void shutdown(void);
+
 /*==== BOOT ===============================================================*/
 
+/*
+ * biosmain - c part of the bios init code
+ *
+ * Print some status messages
+ * Execute the user interface (shell or AES)
+ */
+
+void biosmain(void)
+{
+    struct boot_settings settings = {0, 0, 0}; /* We use this to pass around boot settings within the BIOS */
+    BOOL failsafe;              /* convenience flag for failsafe mode (no AUTO, no ACC, no auto PRG in AES, no custom mouse etc. */
+
+    bios_init();                /* Initialize the BIOS */
+
+    /* Steem needs this to initialize its GEMDOS hard disk emulation.
+     * This may change drvbits. See Steem sources:
+     * File steem/code/emulator.cpp, function intercept_bios(). */
+    Drvmap();
+
+    figure_out_boot_settings(&settings);
+
+    /* set system variable that is used by the blkdev module */
+    bootdev = settings.bootdev;
+
+    KDEBUG(("bootflags = 0x%02x\n", settings.bootflags));
+    KDEBUG(("bootdev = %d\n", settings.bootdev));
+
+    /* boot eventually from a block device (floppy or harddisk) */
+#ifdef DISABLE_HD_BOOT
+    if (bootdev < NUMFLOPPIES) /* don't attempt to boot from hard disk */
+#endif
+        blkdev_boot(settings.bootflags); /* blkdev relies on the 'bootdev' global var */
+
+    /* Set boot drive */
+    Dsetdrv(bootdev);
+
+    /* Build default environment string */
+    init_default_environment(bootdev); 
+
+#if ENABLE_RESET_RESIDENT
+    run_reset_resident(); /* see comments above */
+#endif
+
+#if WITH_CLI
+    if (settings.bootflags & BOOTFLAG_EARLY_CLI) {
+        /* run an early console, passing the default environment */
+        PD *pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", default_env);
+        pd->p_tbase = (UBYTE *) coma_start;
+        pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
+        Pexec(PE_GOTHENFREE, "", (char *)pd, default_env);
+    }
+#endif
+
+    failsafe = settings.bootflags & BOOTFLAG_SKIP_AUTO_ACC;
+
+    /* execute *.PRG from the <boot_device>:\AUTO folder unless user doesn't want */
+    if (!failsafe)
+        run_auto_programs(settings.bootdev); 
+
+    /* if cmdload system variable is set, run COMMAND.PRG */
+    if (cmdload != 0) {
+        /* Pexec a program called COMMAND.PRG
+         * like Atari TOS, it inherits an empty environment */
+        Pexec(PE_LOADGO, "COMMAND.PRG", "", NULL);
+    } else if (exec_os) {
+        /* start the default (ROM) shell
+         * like Atari TOS, we pass the default environment */
+        PD *pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, failsafe ? "--failsafe" : "", default_env);
+        pd->p_tbase = (UBYTE *) exec_os;
+        pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
+        Pexec(PE_GO, "", (char *)pd, default_env);
+    }
+
+#if CONF_WITH_SHUTDOWN
+    /* try to shutdown the machine / close the emulator */
+    shutdown();
+#endif
+
+    /* hide cursor */
+    cprintf("\033f");
+
+    kcprintf(_("System halted!\n"));
+    halt();
+}
+
+
+static void figure_out_boot_settings(struct boot_settings *settings)
+{
+    BOOL show_initinfo;         /* TRUE if welcome screen must be displayed */
+
+    /*
+     * if it's not the first boot, we use the existing bootdev.
+     * this allows a boot device that was selected via the welcome
+     * screen to persist across warm boots.
+     */
+    settings->bootdev = FIRST_BOOT
+        ? blkdev_avail(DEFAULT_BOOTDEV) ? DEFAULT_BOOTDEV : FLOPPY_BOOTDEV
+        : bootdev;
+
+    /* decide whether to display the welcome screen, and do it if required */
+#if INITINFO_DURATION == 0
+    show_initinfo = FALSE;
+#elif ALWAYS_SHOW_INITINFO
+    show_initinfo = TRUE;
+#else
+    show_initinfo = FIRST_BOOT;
+#endif
+    if (show_initinfo)
+        initinfo_show(settings); /* show the welcome screen */
+    else
+        settings->shiftbits = kbshift(-1);
+
+    /* Check settings and take action accordingly */
+    
+    if (settings->shiftbits & MODE_ALT) {
+        settings->bootflags |= BOOTFLAG_SKIP_HDD_BOOT;
+        settings->bootdev = FLOPPY_BOOTDEV;
+    }
+    
+    if (settings->shiftbits & MODE_CTRL)
+        settings->bootflags |= BOOTFLAG_SKIP_AUTO_ACC;    
+}
 
 /*
  * setup all vectors
@@ -198,8 +325,6 @@ static void vecs_init(void)
     VEC_UNIMPINT = int_unimpint;
 #endif
 }
-
-extern PFVOID vbl_list[8]; /* Default array for vblqueue */
 
 /*
  * Initialize the BIOS
@@ -340,7 +465,7 @@ static void bios_init(void)
     KDEBUG(("after vt52_init()\n"));
 
     /* now we have output, let the user know we're alive */
-    display_startup_msg();
+    initinfo_show_boot_msg();
 
 #if DETECT_NATIVE_FEATURES
     /*
@@ -556,14 +681,14 @@ err:
 /*
  * Build the default environment string: "PATH=^X:\^^" [where ^=nul]
  */
-static void init_default_environment(void)
+static void init_default_environment(WORD bootdev)
 {
     char *p;
 
     strcpy(default_env,PATH_ENV);
     p = default_env + sizeof(PATH_ENV); /* point to first byte of path string */
     strcpy(p,DEF_PATH);
-    *p += bootdev;                      /* fix up drive letter */
+    *p += bootdev;            /* fix up drive letter */
     p += sizeof(DEF_PATH);
     *p = '\0';                          /* terminate with double nul */
 }
@@ -609,8 +734,6 @@ static void run_reset_resident(void)
 /*
  * autoexec - run programs in auto folder
  *
- * Skip this if user holds the Control key down.
- *
  * Note that GEMDOS already created a default basepage so it is safe
  * to use GEMDOS calls here!
  */
@@ -627,14 +750,13 @@ static void run_auto_program(const char* filename)
     KDEBUG(("[OK]\n"));
 }
 
-static void autoexec(void)
+/*
+ * Run PRG programs from the AUTO folder in the order they are found in the FAT
+ */
+static void run_auto_programs(WORD bootdev)
 {
     DTA dta;
     WORD err;
-
-    /* check if the user does not want to run AUTO programs */
-    if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
-        return;
 
 #if DETECT_NATIVE_FEATURES
     bootstrap();                        /* try to boot the new OS kernel directly */
@@ -703,113 +825,6 @@ BOOL can_shutdown(void)
 }
 
 #endif /* CONF_WITH_SHUTDOWN */
-
-/*
- * biosmain - c part of the bios init code
- *
- * Print some status messages
- * exec the user interface (shell or AES)
- */
-
-void biosmain(void)
-{
-    BOOL show_initinfo;         /* TRUE if welcome screen must be displayed */
-    ULONG shiftbits;
-
-    bios_init();                /* Initialize the BIOS */
-
-    /* Steem needs this to initialize its GEMDOS hard disk emulation.
-     * This may change drvbits. See Steem sources:
-     * File steem/code/emulator.cpp, function intercept_bios(). */
-    Drvmap();
-
-    /*
-     * if it's not the first boot, we use the existing bootdev.
-     * this allows a boot device that was selected via the welcome
-     * screen to persist across warm boots.
-     */
-    if (FIRST_BOOT)
-        bootdev = blkdev_avail(DEFAULT_BOOTDEV) ? DEFAULT_BOOTDEV : FLOPPY_BOOTDEV;
-
-#if INITINFO_DURATION == 0
-    show_initinfo = FALSE;
-#elif ALWAYS_SHOW_INITINFO
-    show_initinfo = TRUE;
-#else
-    show_initinfo = FIRST_BOOT;
-#endif
-
-    if (show_initinfo)
-        bootdev = initinfo(&shiftbits); /* show the welcome screen */
-    else
-        shiftbits = kbshift(-1);
-
-    KDEBUG(("bootdev = %d\n", bootdev));
-
-    if (shiftbits & MODE_ALT)
-        bootflags |= BOOTFLAG_SKIP_HDD_BOOT;
-
-    if (shiftbits & MODE_CTRL)
-        bootflags |= BOOTFLAG_SKIP_AUTO_ACC;
-
-    KDEBUG(("bootflags = 0x%02x\n", bootflags));
-
-    /* boot eventually from a block device (floppy or harddisk) */
-    blkdev_boot();
-
-    Dsetdrv(bootdev);           /* Set boot drive */
-    init_default_environment(); /* Build default environment string */
-
-#if ENABLE_RESET_RESIDENT
-    run_reset_resident();       /* see comments above */
-#endif
-
-#if WITH_CLI
-    if (bootflags & BOOTFLAG_EARLY_CLI) {
-        /*
-         * run an early console, passing the default environment
-         */
-        PD *pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", default_env);
-        pd->p_tbase = (UBYTE *) coma_start;
-        pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
-        Pexec(PE_GOTHENFREE, "", (char *)pd, default_env);
-    }
-#endif
-
-    autoexec();                 /* autoexec PRGs from AUTO folder */
-
-    /* clear commandline */
-
-    if(cmdload != 0) {
-        /*
-         * Pexec a program called COMMAND.PRG
-         * like Atari TOS, it inherits an empty environment
-         */
-        Pexec(PE_LOADGO, "COMMAND.PRG", "", NULL);
-    } else if (exec_os) {
-        /*
-         * start the default (ROM) shell
-         * like Atari TOS, we pass the default environment
-         */
-        PD *pd;
-        pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", default_env);
-        pd->p_tbase = (UBYTE *) exec_os;
-        pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
-        Pexec(PE_GO, "", (char *)pd, default_env);
-    }
-
-#if CONF_WITH_SHUTDOWN
-    /* try to shutdown the machine / close the emulator */
-    shutdown();
-#endif
-
-    /* hide cursor */
-    cprintf("\033f");
-
-    kcprintf(_("System halted!\n"));
-    halt();
-}
-
 
 
 /**
@@ -1178,7 +1193,7 @@ static LONG bios_c(void) { return (LONG)bmem_gettpa(); }
 static LONG bios_d(BOOL fromTop, ULONG size)
 {
 	KDEBUG(("BIOS 13: Balloc(0x%08lx,%s)\n",size,fromTop ? "fromTop" : "fromBottom"));
-	return balloc_stram(size,fromTop);
+	return (LONG)balloc_stram(size,fromTop);
 }
 static LONG bios_e(void) { return disk_drvrem(); }
 #endif
