@@ -1934,6 +1934,8 @@ BOOL deskmain(void)
     restart_desktop = FALSE;
 #endif
 
+    G.g_failsafe = strstr(desk_cmdline, "--failsafe") != 0;
+
     /* remember start drive */
     G.g_stdrv = dos_gdrv();
 

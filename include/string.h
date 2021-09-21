@@ -29,6 +29,7 @@ int strcmp(const char *a, const char *b);
 int strncmp(const char *a, const char *b, size_t n);
 int strncasecmp(const char *a, const char *b, size_t n);
 char *strchr(const char *s, int c);
+char *strstr(const char *source, const char *wanted);
 int toupper(int c);
 int sprintf(char *RESTRICT str, const char *RESTRICT fmt, ...) SPRINTF_STYLE;
 

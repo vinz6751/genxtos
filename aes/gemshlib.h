@@ -31,5 +31,5 @@ void sh_wdef(const char *lpcmd, const char *lpdir);
 
 void sh_main(BOOL isauto, BOOL isgem);
 
-LONG aes_run_rom_program(PRG_ENTRY *entry);
+LONG aes_run_rom_program(PRG_ENTRY *entry, const char *cmdline);
 #endif

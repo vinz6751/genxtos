@@ -123,14 +123,13 @@ typedef struct
 #define NUM_ICON_POINTS 9   /* item is an icon (on desktop or in window) */
 #define NUM_TEXT_POINTS 5   /* item is text (in window) */
 
-
 /*
  * The desktop global data area
  */
 typedef struct
 {
 /*GLOBAL*/ WORD         g_stdrv;                /* start drive */
-
+/*GLOBAL*/ BOOL         g_failsafe;		/* run in fail-safe mode */
 /*GLOBAL*/ DTA          g_wdta;                 /* general use DTA */
 
                                             /* desktop window management: */

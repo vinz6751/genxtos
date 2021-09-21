@@ -11,5 +11,6 @@
 #define _DESKGLOB_H
 
 extern GLOBES     G;
+extern const char *desk_cmdline; /* in gemstart.S where the desk app start up code is */
 
 #endif  /* _DESKGLOB_H */

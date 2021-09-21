@@ -104,6 +104,8 @@ typedef struct {                     /* used by count_accs()/ldaccs() */
     char name[LEN_ZFNAME];              /* DA file name */
 } ACC;
 
+static BOOL     failsafe;  /* if --failsafe is on the command line */
+
 static ACC      acc[NUM_ACCS];
 static char     infbuf[INF_SIZE+1];     /* used to read part of EMUDESK.INF */
 
@@ -264,7 +266,7 @@ static WORD count_accs(void)
     WORD i, rc;
 
     /* if the user decided to skip loading accessories, then do so */
-    if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
+    if (failsafe)
         return 0;
 
     strcpy(D.g_work,"\\*.ACC");
@@ -460,7 +462,7 @@ static BOOL process_inf2(BOOL *isauto)
             *(tmpptr2-1) = 0;
             KDEBUG(("Found #Z entry in EMUDESK.INF: path=%s, prg=%s\n",tmpptr1,tmpptr2));
 
-            if (!(bootflags & BOOTFLAG_SKIP_AUTO_ACC))
+            if (!failsafe)
             {
                 /* run autorun program */
                 sh_wdef(tmpptr2, tmpptr1);
@@ -539,7 +541,7 @@ static void setup_mouse_cursors(void)
 
 #if CONF_WITH_LOADABLE_CURSORS
     /* Do not load user cursors if Control was held on startup */
-    if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
+    if (failsafe)
         return;
 
     /*
@@ -769,8 +771,11 @@ static void new_resolution(WORD rez, WORD videlmode)
 
 void gem_main(void)
 {
-    LONG    n;
-    WORD    i;
+    LONG n;
+    WORD i;
+
+    /* Detect fail-safe mode based on commmand line parameter */
+    failsafe = strstr(ad_stail, "--failsafe") != NULL;
 
     /*
      * turn off the text cursor now to prevent an irritating blinking
@@ -902,7 +907,7 @@ void gem_main(void)
      * run the accessories and the desktop until termination
      * (for shutdown or resolution change)
      */
-    aes_run_rom_program(accdesk_start);
+    aes_run_rom_program(accdesk_start, ad_stail);
 
     /* restore previous trap#2 address */
     disable_interrupts();

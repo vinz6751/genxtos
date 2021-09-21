@@ -542,7 +542,7 @@ static WORD load_user_icons(void)
     char icon_rsc_name[sizeof(ICON_RSC_NAME)];
 
     /* Do not load user icons if Control was held on startup */
-    if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
+    if (G.g_failsafe)
         return -1;
 
     /*
@@ -825,8 +825,7 @@ void app_start(void)
 
     shel_get(buf, SIZE_SHELBUF);
     inf_data = buf + CPDATA_LEN;
-    if (!(bootflags & BOOTFLAG_SKIP_AUTO_ACC)
-     && (inf_data[0] != '#'))               /* invalid signature    */
+    if (!G.g_failsafe && (inf_data[0] != '#'))               /* invalid signature    */
         read_inf_file(inf_data);            /*   so read from disk  */
 
     /* If there's still no EMUDESK.INF data, build one now */

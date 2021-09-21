@@ -164,6 +164,30 @@ int strncasecmp(const char *a, const char *b, size_t n)
     return 0;
 }
 
+char *strstr(const char *source, const char *wanted)
+{
+	const char *scan;
+	size_t len;
+	char firstc;
+
+	if (!*source)
+        return *wanted ? NULL : (char*)source;
+	else if (!*wanted)
+		return (char*)source;
+	
+	/*
+	 * The odd placement of the two tests is so "" is findable.
+	 * Also, we inline the first char for speed.
+	 * The ++ on scan has been moved down for optimization.
+	 */
+	firstc = *wanted;
+	len = strlen(wanted);
+	for (scan = source; *scan != firstc || strncmp(scan, wanted, len) != 0; )
+		if (*scan++ == '\0')
+			return NULL;
+	return (char*)scan;
+}
+
 int toupper(int c)
 {
     if(c>='a' && c<='z')

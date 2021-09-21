@@ -21,8 +21,9 @@
         .globl  _ui_start
         .globl  _accdesk_start
         .globl  _dos_exec
-
-        .extern _ad_stail
+        .globl _desk_cmdline
+        
+	.extern _ad_stail
         .extern _ad_envrn
         .extern _size_theglo
         .extern _D
@@ -37,7 +38,7 @@
         .extern _disable_interrupts
         .extern _rlr
         .extern _enable_interrupts
-
+	
         .text
 
 //////////////////////////////////////////////////////////////////////////////
@@ -151,6 +152,11 @@ _accdesk_start:
         trap    #1
         lea     12(sp),sp
 
+        // save the command line
+        move.l  a5,d0
+        add.l   #0x80,d0
+        move.l  d0,_desk_cmdline
+
         // switch to supervisor mode
         clr.l  -(sp)
         move.w  #0x20,-(sp)
@@ -254,3 +260,7 @@ gemusp:
 // pointer to original environment, restored on AES restart
 save_ad_envrn:
         .ds.l   1
+
+// pointer to desktop application command line
+_desk_cmdline:
+        .ds.l	1

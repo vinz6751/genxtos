@@ -563,12 +563,12 @@ static void sh_chdef(SHELL *psh)
 }
 
 
-LONG aes_run_rom_program(PRG_ENTRY *entry)
+LONG aes_run_rom_program(PRG_ENTRY *entry, const char *cmdline)
 {
     PD *pd;     /* this is the BDOS PD structure, not the AESPD */
 
     /* Create a basepage with the standard Pexec() */
-    pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char*)PF_STANDARD, "", NULL);
+    pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char*)PF_STANDARD, cmdline, NULL);
     pd->p_tbase = (UBYTE *) entry;
 
     /* Run the program with dos_exec() for AES reentrancy issues */
@@ -585,7 +585,7 @@ static void set_default_desktop(SHELL *psh)
 }
 
 
-static WORD sh_ldapp(SHELL *psh)
+static WORD sh_ldapp(SHELL *psh, const char *cmdline)
 {
     char *fname = sh_name(D.s_cmd);     /* filename portion of program */
     LONG ret;
@@ -599,7 +599,7 @@ static WORD sh_ldapp(SHELL *psh)
         sh_show("");        /* like TOS, we don't display a name */
         p_nameit(rlr, fname);
         p_setappdir(rlr, D.s_cmd);
-        if (aes_run_rom_program(deskstart))
+        if (aes_run_rom_program(deskstart, cmdline))
         {
             KDEBUG(("sh_ldapp(): ROM desktop terminated abnormally\n"));
             wm_new();           /* run wind_new() to clean up */
@@ -611,7 +611,7 @@ static WORD sh_ldapp(SHELL *psh)
     if (psh->sh_nextapp == CONSOLE_APP)
     {
         /* start the EmuCON shell: */
-        aes_run_rom_program(coma_start);
+        aes_run_rom_program(coma_start, ""); /* We don't pass on the cmdline. */
         set_default_desktop(psh);
         return 0;
     }
@@ -695,8 +695,9 @@ static WORD sh_ldapp(SHELL *psh)
 
 void sh_main(BOOL isauto, BOOL isgem)
 {
-    WORD rc = 0;
+    WORD  rc = 0;
     SHELL *psh = &sh;
+    char  *cmdline;
 
     psh->sh_doexec = SHW_EXEC;
     psh->sh_nextapp = isauto ? AUTORUN_APP : DESKTOP_APP;
@@ -705,8 +706,12 @@ void sh_main(BOOL isauto, BOOL isgem)
     gl_shgem = TRUE;
 
     /* Set default DESKTOP if no autorun app */
-    if (psh->sh_nextapp == DESKTOP_APP)
+    if (psh->sh_nextapp == DESKTOP_APP) {
         set_default_desktop(psh);
+        cmdline = ad_stail; // The AES passes on its command line to the desktop
+    }
+    else
+        cmdline = "";
 
     /*
      * Loop until a resolution change or a shutdown
@@ -726,7 +731,7 @@ void sh_main(BOOL isauto, BOOL isgem)
         if (rc)                         /* display alert for most recent error */
             fm_show(rc, NULL, 1);
 
-        rc = sh_ldapp(psh);             /* run the desktop/console/app */
+        rc = sh_ldapp(psh, cmdline);             /* run the desktop/console/app */
 
     } while((psh->sh_doexec != SHW_SHUTDOWN) && !gl_changerez);
 
