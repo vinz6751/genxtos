@@ -71,10 +71,6 @@
 #define DBGBIOS 1               /* If you want to enable debug wrappers */
 #define ENABLE_RESET_RESIDENT 0 /* enable to run "reset-resident" code (see below) */
 
-#define ENV_SIZE    12          /* sufficient for standard PATH=^X:\^^ (^=nul byte) */
-#define DEF_PATH    "A:\\"      /* default value for path */
-
-static char default_env[ENV_SIZE];  /* default environment area */
 
 /*==== External declarations ==============================================*/
 
