@@ -133,20 +133,18 @@ struct memory_block_t *bget_memory_info(void)
 }
 
 /* Registers detected memory to the BIOS */
-void bmem_register(const char *name, enum ram_type_t type, const void *start, ULONG size)
+void bmem_register(const void *start, ULONG size)
 {
     struct memory_block_t *new;
 
     new = (void*)balloc_stram((ULONG)sizeof(struct memory_block_t), FALSE);
     if (new == NULL)
-        KDEBUG(("Failed to register memory: %s (%d), size:%lu\n", name, type, size));
-    new->name = (char*)name;
-    new->type = type;
+        KDEBUG(("Failed to register memory at %p, size:%lu\n", start, size));
     new->start = (void*)start;
     new->size = size;
     new->next = memory_info;
     memory_info = new;
-    KDEBUG(("Registered memory: %s (%d) at %p, size:%lu\n", name, type, start, size));
+    KDEBUG(("Registered memory: at %p, size:%lu\n", start, size));
 }
 
 #if CONF_WITH_ALT_RAM
@@ -154,13 +152,13 @@ void bmem_register(const char *name, enum ram_type_t type, const void *start, UL
 void altram_init(void)
 {
 #if CONF_WITH_STATIC_ALT_RAM && defined(STATIC_ALT_RAM_SIZE)
-    bmem_register("ALT", ALT, (void*)STATIC_ALT_RAM_ADDRESS, STATIC_ALT_RAM_SIZE);
+    bmem_register((void*)STATIC_ALT_RAM_ADDRESS, STATIC_ALT_RAM_SIZE);
 #endif
 
 #if CONF_WITH_TTRAM
     /* Add eventual TT-RAM to BDOS pool */
     if (ramtop != NULL)
-        bmem_register("TT", ALT, TTRAM_START, ramtop - TTRAM_START);
+        bmem_register(TTRAM_START, ramtop - TTRAM_START);
 #endif
 
 #if CONF_WITH_MONSTER
@@ -180,7 +178,7 @@ void altram_init(void)
         /* Register write sequence: read - write - write */
         *(volatile unsigned short *)MONSTER_REG = monster_reg;
         *(volatile unsigned short *)MONSTER_REG = monster_reg;
-        bmem_register("MONSTER", ALT, (void *)0x400000L, monster_reg*0x100000L);
+        bmem_register((void *)0x400000L, monster_reg*0x100000L);
     }
 #endif
 
@@ -223,7 +221,7 @@ void altram_init(void)
         if (*((volatile short *)0x400000L) != magnum_check1)
             magnum_ram = 0;
 
-        bmem_register("MAGNUM", ALT, (void *)0x400000L, magnum_ram*0x100000L);
+        bmem_register((void *)0x400000L, magnum_ram*0x100000L);
     }
 #endif  /* CONF_WITH_MAGNUM */
 
