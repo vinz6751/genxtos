@@ -23,7 +23,7 @@
  */
 #include "cmd.h"
 #include "version.h"
-#include "string.h"
+#include "shellutl.h"
 
 /*
  *  global variables
@@ -44,6 +44,7 @@ LOCAL char input_line[MAX_LINE_SIZE];
 LOCAL char *arglist[MAX_ARGS];
 LOCAL char redir_name[MAXPATHLEN];
 LOCAL WORD original_res;
+LOCAL WORD original_color0;
 LOCAL WORD original_color3;
 LOCAL LONG vdo_value;
 
@@ -56,9 +57,12 @@ PRIVATE void create_redir(const char *name);
 PRIVATE WORD execute(WORD argc,char **argv,char *redir);
 PRIVATE WORD get_nflops(void);
 PRIVATE void strip_quotes(int argc,char **argv);
-PRIVATE void getenv(char **ppath, const char *psrch);
+PRIVATE void set_colors(WORD res);
+PRIVATE void save_screen(void);
+PRIVATE void restore_screen(void);
 
 int cmdmain(void);      /* called only from cmdasm.S */
+
 
 int cmdmain(void)
 {
@@ -72,13 +76,8 @@ WORD argc, rc;
 
     if (getcookie(_VDO_COOKIE,&vdo_value) == 0)
         vdo_value = _VDO_ST;
-#if CONF_WITH_TT_SHIFTER
-    original_res = (vdo_value < _VDO_VIDEL) ? Getrez() : -1;
-#else
-    original_res = (vdo_value < _VDO_TT) ? Getrez() : -1;
-#endif
-    current_res = original_res;
-    original_color3 = Setcolor(3,-1);
+
+	save_screen();
 
     nflops_copy = Supexec(get_nflops);      /* number of floppy drives */
 
@@ -87,6 +86,10 @@ WORD argc, rc;
      */
     if (current_res == ST_LOW)
         change_res(ST_MEDIUM);
+
+	/* Set colors */
+	Setcolor(0,RGB_BLACK);
+	Setcolor(3,RGB_GREEN);
 
     clear_screen();
     enable_cursor();
@@ -105,12 +108,12 @@ WORD argc, rc;
     {
         /* Setup path from the PATH environment variable */
         char *largv[2];
-        getenv(&largv[1],"PATH=");
+		shellutl_getenv(environment,"PATH=",&largv[1]);
         if (largv[1]) {
-            if (!largv[1][0])   /* skip NUL after PATH= */
+            if (!largv[1][0])   /* skip NULL after PATH= */
                 largv[1]++;
             if (largv[1][0]) {
-                /* path ${PATH$} */
+                /* path ${PATH} */
                 largv[0] = "path";
                 execute(2,largv,redir_name);
             }
@@ -122,15 +125,19 @@ WORD argc, rc;
 
         do {
             rc = read_line(input_line);
+
             save_history(input_line);
-            if (rc < 0)         /* user cancelled line */
+
+			if (rc < 0)         /* user cancelled line */
                 continue;
-            argc = parse_line(input_line,arglist,redir_name);
+
+			argc = parse_line(input_line,arglist,redir_name);
             if (argc < 0)       /* parse error */
                 continue;
-            rc = execute(argc,arglist,redir_name);
+
+			rc = execute(argc,arglist,redir_name);
             if (rc < 0) {       /* exit EmuCON */
-                change_res(original_res);
+				restore_screen();
                 return 0;
             }
         } while (rc <= 0);      /* until resolution change */
@@ -219,59 +226,26 @@ int i;
     }
 }
 
-/*
- *  Find a variable in the process's environment.
- *  psrch: variable name followed by '=', e.g. "PATH="
- *  ppath: returned address of the first character after the found
- *         variable, or NULL if variable was not found.
- *  Note:  the implementation is the same as that of the AES sh_envrn
- *         which we can't use because EmuCON is not a GEM app.
- */
-PRIVATE void getenv(char **ppath, const char *psrch)
+PRIVATE void set_colors(WORD res)
 {
-    /* The implementation is the same as that of the AES sh_envrn */
-    char *p;
-    WORD len;
+	char fgcol, bgcol;
+	char buf[] = "bXcX"; /* VT-52: ESC b = foreground, ESC c = background */
 
-    len = strlen(psrch);
-    *ppath = NULL;
+	Setcolor(0,RGB_BLACK);
 
-    /*
-     * scan environment string until double nul
-     */
-    for (p = environment; *p; ) {
-        if (strncmp(p, psrch, len) == 0) {
-            *ppath = p + len;
-            break;
-        }
-        while(*p++) /* skip to end of current env variable */
-            ;
-    }
-}
-
-/*
- *  change video resolution - assumes new resolution has been validated
- */
-PRIVATE void change_res(WORD res)
-{
-#if CONF_ATARI_HARDWARE
-    WORD fgcol, bgcol;
-
-    if (res == current_res)
-        return;
-
-    Setscreen(-1L,-1L,res,0);
-
-    /*
+	/*
      * set readable text color index for ST medium
-     *
-     *  when switching to ST medium, ensure colour 3 is black
-     *  when switching from ST medium, restore original colour
      */
     if (res == ST_MEDIUM)
-        Setcolor(3,BLACK);
+	{
+		/* In ST Medium, set green on black */
+        Setcolor(3,RGB_GREEN);
+	}
     else if (current_res == ST_MEDIUM)
+	{
+		/* When switching from ST medium, restore original colour */
         Setcolor(3,original_color3);
+	}
     fgcol = 15; /* OS masks color index, so 15 is fine also for mono/medium modes */
     bgcol = 0;
 
@@ -288,10 +262,44 @@ PRIVATE void change_res(WORD res)
         bgcol = 15;
     }
 
-    escape('b');    /* ESC b => set foreground colour */
-    conout(fgcol);
-    escape('c');    /* ESC c => set background colour */
-    conout(bgcol);
+	buf[1] = fgcol; /* ESC b => set foreground colour */
+	buf[3] = bgcol; /* ESC c => set background colour */
+	Cconws(buf);
+}
+
+PRIVATE void save_screen(void)
+{
+#if CONF_WITH_TT_SHIFTER
+    original_res = (vdo_value < _VDO_VIDEL) ? Getrez() : -1;
+#else
+    original_res = (vdo_value < _VDO_TT) ? Getrez() : -1;
+#endif
+
+    current_res = original_res;
+	original_color0 = Setcolor(0,-1);
+    original_color3 = Setcolor(3,-1);
+}
+
+PRIVATE void restore_screen(void)
+{
+	change_res(original_res);
+	Setcolor(0,original_color0);
+	Setcolor(3,original_color3);
+}
+
+/*
+ *  change video resolution - assumes new resolution has been validated
+ */
+PRIVATE void change_res(WORD res)
+{
+#if CONF_ATARI_HARDWARE
+
+    if (res == current_res)
+        return;
+
+    Setscreen(-1L,-1L,res,0);
+
+	set_colors(res);
 
     clear_screen();
     enable_cursor();

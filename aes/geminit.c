@@ -29,6 +29,7 @@
 #include "mforms.h"
 #include "xbiosbind.h"
 #include "has.h"
+#include "../bdos/bdosstub.h"
 #include "biosext.h"
 
 #include "gemgsxif.h"
@@ -56,6 +57,7 @@
 
 #include "string.h"
 #include "tosvars.h"
+#include "shellutl.h"
 
 /* Prototypes: */
 void accdesk_start(void) NORETURN;  /* called only from gemstart.S */
@@ -105,6 +107,7 @@ typedef struct {                     /* used by count_accs()/ldaccs() */
 } ACC;
 
 static ACC      acc[NUM_ACCS];
+static char    *accpath;                /* used to read the ACCPATH env var, empty string if var is not present */
 static char     infbuf[INF_SIZE+1];     /* used to read part of EMUDESK.INF */
 
 #if CONF_WITH_BACKGROUNDS
@@ -137,7 +140,6 @@ GLOBAL SPB      wind_spb;
 GLOBAL WORD     curpid;
 
 GLOBAL THEGLO   D;
-
 
 
 /*
@@ -240,7 +242,7 @@ static void load_one_acc(ACC *acc)
     KDEBUG(("load_one_acc(\"%s\")\n", (const char *)acc->name));
 
     acc->addr = -1L;
-    strcpy(D.s_cmd, acc->name);
+    sprintf(D.s_cmd, "%s\\%s", accpath , acc->name);
 
     ret = dos_open(D.s_cmd, ROPEN);
     if (ret >= 0L)
@@ -261,13 +263,18 @@ static void load_one_acc(ACC *acc)
  */
 static WORD count_accs(void)
 {
+    const char accpathvar[] = "ACCPATH=";
     WORD i, rc;
 
     /* if the user decided to skip loading accessories, then do so */
     if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
         return 0;
 
-    strcpy(D.g_work,"\\*.ACC");
+    shellutl_getenv(ad_envrn, accpathvar, &accpath);
+    if (accpath == NULL)
+	accpath = "";
+    sprintf(D.g_work,"%s\\*.ACC", accpath);
+
     dos_sdta(&D.g_dta);
 
     for (i = 0; i < NUM_ACCS; i++)
@@ -435,10 +442,14 @@ static BOOL process_inf2(BOOL *isauto)
             pcurr = scan_2(pcurr, &env);
             ev_dclick(env & 0x07, TRUE);
             pcurr = scan_2(pcurr, &env);    /* get desired blitter state */
-#if CONF_WITH_BLITTER
+#if MPS_BLITTER_ALWAYS_ON
+	    Blitmode(1);
+#else
+  #if CONF_WITH_BLITTER
             if (has_blitter)
                 Blitmode((env&0x80)?1:0);
-#endif
+  #endif
+#endif // MPS_BLITTER_ALWAYS_ON
 #if CONF_WITH_CACHE_CONTROL
             pcurr = scan_2(pcurr, &env);    /* skip over video bytes if present */
             pcurr = scan_2(pcurr, &env);

@@ -27,7 +27,6 @@
 
 #include "portab.h"
 
-
 /*
  * system calls
  */
@@ -52,6 +51,7 @@ extern LONG jmp_xbios(WORD, ...);
 #define jmp_xbios_llww(a,b,c,d,e)   jmp_xbios((WORD)a,(LONG)b,(LONG)c,(WORD)d,(WORD)e)
 #define jmp_xbios_ww(a,b,c)     jmp_xbios((WORD)(a),(WORD)(b),(WORD)(c))
 
+#define Cconws(a)           jmp_gemdos_p(0x09,a)
 #define Dsetdrv(a)          jmp_gemdos_w(0x0e,a)
 #define Dgetdrv()           jmp_gemdos_v(0x19)
 #define Fgetdta()           jmp_gemdos_v(0x2f)
@@ -131,8 +131,8 @@ extern LONG jmp_xbios(WORD, ...);
 #define TT_MEDIUM       4
 #define TT_HIGH         6
 #define TT_LOW          7
-#define BLACK           0x0000          /* for Setcolor() */
-
+#define RGB_BLACK       0x0000          /* for Setcolor() */
+#define RGB_GREEN       0x00F0
 /*
  *  typedefs
  */
@@ -237,13 +237,11 @@ void errmsg(LONG rc);
 void escape(char c);
 WORD getcookie(LONG cookie,LONG *pvalue);
 WORD getword(char *buf);
-WORD get_path_component(const char **pp,char *dest);
 WORD has_wildcard(const char *name);
 void message(const char *msg);
 void messagenl(const char *msg);
 const char *program_extension(const DTA *dta);
 WORD strequal(const char *s1,const char *s2);
-char *strlower(char *str);
 char *strupper(char *str);
 
 /* cmdasm.S */
