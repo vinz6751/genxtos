@@ -7,6 +7,10 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+ /*
+  * Startup consists into jumping after OS header, then jumping
+  * above EmuTOS extended OS header (specifying machine type, CPU type etc)
+
 #include "asmdefs.h"
 #include "../obj/header.h"
 
@@ -18,7 +22,6 @@
 
         .globl  _os_header
         .globl  _main         // OS entry point
-        .globl  _osxhbootdelay
 
 // ==== References ===========================================================
 
@@ -111,205 +114,7 @@ os_dummy:
 _main:
         bra.w   _realmain   // MUST be 4 bytes long
 
-/*
- * Feature flags in extended OS header (see below)
- *
- *  Bit #       Usage
- *    0         EmuTOS will pass the address of the lineA variables via NatFeats
- *   1-31       (currently reserved)
- */
-#if DETECT_NATIVE_FEATURES
-# define OSXH_LINEA     (1<<0)
-#else
-# define OSXH_LINEA     0
-#endif
-#define OSXH_FEATURES   (OSXH_LINEA)
-
-/*
- *  Machine flags in extended OS header
- *
- *  Bit #       Supported machines
- *    0         ST / MegaST
- *    1         STe / MegaSTe
- *    2         TT
- *    3         Falcon
- *    4         FireBee
- *    5         M548X evaluation boards
- *    6         Amiga
- *    7         (currently reserved)
- *    8         ARAnyM
- *   9-15       (currently reserved)
- */
-#if defined(MACHINE_ARANYM)
-# define OSXH_ST        0
-# define OSXH_STE       0
-# define OSXH_TT        0
-# define OSXH_FALCON    0
-# define OSXH_FIREBEE   0
-# define OSXH_M548X     0
-# define OSXH_AMIGA     0
-# define OSXH_ARANYM    (1<<8)
-#elif defined(MACHINE_AMIGA)
-# define OSXH_ST        0
-# define OSXH_STE       0
-# define OSXH_TT        0
-# define OSXH_FALCON    0
-# define OSXH_FIREBEE   0
-# define OSXH_M548X     0
-# define OSXH_AMIGA     (1<<6)
-# define OSXH_ARANYM    0
-#elif defined(MACHINE_M548X)
-# define OSXH_ST        0
-# define OSXH_STE       0
-# define OSXH_TT        0
-# define OSXH_FALCON    0
-# define OSXH_FIREBEE   0
-# define OSXH_M548X     (1<<5)
-# define OSXH_AMIGA     0
-# define OSXH_ARANYM    0
-#elif defined(MACHINE_FIREBEE)
-# define OSXH_ST        0
-# define OSXH_STE       0
-# define OSXH_TT        0
-# define OSXH_FALCON    0
-# define OSXH_FIREBEE   (1<<4)
-# define OSXH_M548X     0
-# define OSXH_AMIGA     0
-# define OSXH_ARANYM    0
-#else
-# define OSXH_FIREBEE   0
-# define OSXH_M548X     0
-# define OSXH_AMIGA     0
-# ifndef __mcoldfire__
-#  define OSXH_ST       (1<<0)
-# else
-#  define OSXH_ST       0
-# endif
-# if CONF_WITH_STE_SHIFTER
-#  define OSXH_STE      (1<<1)
-# else
-#  define OSXH_STE      0
-# endif
-# if CONF_WITH_TT_SHIFTER
-#  define OSXH_TT       (1<<2)
-# else
-#  define OSXH_TT       0
-# endif
-# if CONF_WITH_VIDEL
-#  define OSXH_FALCON   (1<<3)
-# else
-#  define OSXH_FALCON   0
-# endif
-# if CONF_WITH_ARANYM
-#  define OSXH_ARANYM   (1<<8)
-# else
-#  define OSXH_ARANYM   0
-# endif
-#endif
-#define OSXH_MACHINES   (OSXH_ST+OSXH_STE+OSXH_TT+OSXH_FALCON+OSXH_FIREBEE+OSXH_M548X+OSXH_ARANYM+OSXH_AMIGA)
-
-/*
- *  Processor flags in extended OS header
- *
- *  Bit #       Supported processors
- *    0         68000
- *    1         68010
- *    2         68020
- *    3         68030
- *    4         68040
- *    5         68060
- *    6         68080
- *    7         (currently reserved)
- *    8         ColdFire V4e
- *   9-15       (currently reserved)
- */
-#if defined(MACHINE_ARANYM)
-# define OSXH_68000     0
-# define OSXH_68010     0
-# define OSXH_68020     0
-# define OSXH_68030     0
-# define OSXH_68040     (1<<4)
-# define OSXH_68060     0
-# define OSXH_68080     0
-# define OSXH_COLDFIRE  0
-#elif defined(MACHINE_M548X)
-# define OSXH_68000     0
-# define OSXH_68010     0
-# define OSXH_68020     0
-# define OSXH_68030     0
-# define OSXH_68040     0
-# define OSXH_68060     0
-# define OSXH_68080     0
-# define OSXH_COLDFIRE  (1<<8)
-#elif defined(MACHINE_FIREBEE)
-# define OSXH_68000     0
-# define OSXH_68010     0
-# define OSXH_68020     0
-# define OSXH_68030     0
-# define OSXH_68040     0
-# define OSXH_68060     0
-# define OSXH_68080     0
-# define OSXH_COLDFIRE  (1<<8)
-#else
-# define OSXH_COLDFIRE  0
-# ifndef __mcoldfire__
-#  define OSXH_68000    (1<<0)
-# else
-#  define OSXH_68000    0
-# endif
-# if CONF_WITH_ADVANCED_CPU
-#  define OSXH_68010    (1<<1)
-#  define OSXH_68020    (1<<2)
-#  define OSXH_68030    (1<<3)
-#  define OSXH_68040    (1<<4)
-#  define OSXH_68060    (1<<5)
-# else
-#  define OSXH_68010    0
-#  define OSXH_68020    0
-#  define OSXH_68030    0
-#  define OSXH_68040    0
-#  define OSXH_68060    0
-# endif
-# if CONF_WITH_APOLLO_68080
-#  define OSXH_68080    (1<<6)
-# else
-#  define OSXH_68080    0
-# endif
-#endif
-#define OSXH_PROCESSORS (OSXH_68000+OSXH_68010+OSXH_68020+OSXH_68030+OSXH_68040+OSXH_68060+OSXH_68080+OSXH_COLDFIRE)
-
-/*
- * Default cold-boot delay. Can be modified by users to allow
- * harddisks to become ready. 0 means no delay.
- */
-#define OSXH_BOOTDELAY  (0)
-
-/*
- * Extended OS header
- *
- * This is an EmuTOS extension, present from EmuTOS version 1.0 on.  You
- * may check for its presence by checking the first 4 bytes which contain
- * the magic number 'OSXH'.
- *
- * To avoid problems with programs that branch directly to _main, rather
- * than using the branch instruction at the beginning of the TOS os_header,
- * there is a 4-byte branch instruction at _main which branches past the
- * extended header.  This means, for example, that the extended OS header
- * begins at 0xfc0034 in the 192K ROMS, and at 0xe00034 in the 256K and
- * 512K ROMs.
- */
-osxh:
-    .ascii  "OSXH"                      // magic number
-    .dc.l   osxhend-osxh                // length
-    .dc.b   MAJOR_VERSION,MINOR_VERSION,FIX_VERSION,UNOFFICIAL  // binary version
-    .dc.l   _version-_os_header         // offset to version string
-    .dc.l   OSXH_FEATURES               // feature flags
-    .dc.w   OSXH_MACHINES               // machine flags
-    .dc.w   OSXH_PROCESSORS             // processor flags
-_osxhbootdelay:
-    .dc.b   OSXH_BOOTDELAY              // cold-boot delay
-osxhend:
-    .even                               // for alignment
+#include "os_xheader.S"
 
 /*
  * Get in supervisor mode and reset all Hardware
@@ -369,19 +174,19 @@ amiga_startup_ret:
         // 0x5 is a valid value for the ST and the TT, the correct configuration
         // will be found and applied in memory.S. On the Falcon this is a dummy
         // register, so we can write to it as well without consequences.
-#ifdef __mcoldfire__
+# ifdef __mcoldfire__
         move.b  0xffff8001.w, d0
         cmpi.b  #0xc, d0
-        blt.s   valid_st_mmu_config
+        blt.s   st_mmu_config
         move.b  #0x5, d0
         move.b  d0, 0xffff8001.w
-#else
+# else
         cmpi.b  #0xc, 0xffff8001.w
         blt.s   valid_st_mmu_config
         move.b  #0x5, 0xffff8001.w
-#endif
+# endif
 
-valid_st_mmu_config:
+valid_st_mmu_config: // ST MMU has a valid config
 #endif
 
         // Initialize an early stack to a valid write address.
@@ -419,7 +224,7 @@ vbr_ok:
         // because either this is a cold boot
         // or reset has been called just before amiga_main
 
-#if CONF_ATARI_HARDWARE
+# if CONF_ATARI_HARDWARE
         // on Falcon, we need special care around the reset instruction
         move.l  #not_falcon,8  // can't be Falcon if we get bus error
 
@@ -428,7 +233,7 @@ vbr_ok:
         reset                  // reset all hardware
         tst.w   0xffff8006.w   // remaining magic
         jra     main_after_reset_instruction
-#endif /* CONF_ATARI_HARDWARE */
+# endif /* CONF_ATARI_HARDWARE */
 
 not_falcon:
         // we are not on Falcon, a simple reset is enough
@@ -500,7 +305,7 @@ resetvec:
 noreset:
 
 /*
- * memory configuration
+ * Detect memory configuration memory
  */
 
         .globl  memdone         // return to, if memory config done
