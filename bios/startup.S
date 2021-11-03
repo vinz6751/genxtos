@@ -10,6 +10,7 @@
  /*
   * Startup consists into jumping after OS header, then jumping
   * above EmuTOS extended OS header (specifying machine type, CPU type etc)
+  */
 
 #include "asmdefs.h"
 #include "../obj/header.h"
@@ -157,6 +158,12 @@ _realmain:
         lea     amiga_startup_ret,a6
         jmp     amiga_startup
 amiga_startup_ret:
+#endif
+
+#ifdef MACHINE_C256FOENIXGENX
+        lea     .ret,a6
+        jmp     c256foenixgenx_startup
+.ret:
 #endif
 
 #if (!EMUTOS_LIVES_IN_RAM) && (CONF_WITH_ST_MMU)
