@@ -49,10 +49,4 @@ void sndirq(void);
 /* play key click sound, called by keyboard interrupt */
 void keyclick(UBYTE scancode);
 
-/* play cold boot sound */
-void coldbootsound(void);
-
-/* play warm boot sound */
-void warmbootsound(void);
-
 #endif /* SOUND_H */

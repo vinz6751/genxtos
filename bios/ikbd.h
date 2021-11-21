@@ -23,6 +23,8 @@
  * Private BIOS combinations are defined below.
  */
 
+#define MODE_SHIFT  (MODE_RSHIFT|MODE_LSHIFT)   /* shifted */
+
 #define HOTSWITCH_MODE (MODE_LSHIFT|MODE_ALT)
 
 extern UBYTE shifty;

@@ -16,7 +16,6 @@
 #include "biosdefs.h"
 #include "mfp.h"
 #include "serport.h"
-#include "biosext.h" /* for is_apollo_68080 */
 #include "processor.h"
 #include "delay.h"
 

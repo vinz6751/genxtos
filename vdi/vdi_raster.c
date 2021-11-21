@@ -324,7 +324,7 @@ hwblit_raster(BLITVARS *blt)
 #endif
 
 
-#if !ASM_BLIT_IS_AVAILABLE && !MPS_BLITTER_ALWAYS_ON
+#if !ASM_BLIT_IS_AVAILABLE
 /*
  * the following is a modified version of a blitter emulator, with the HOP
  * processing removed since it is always called with a HOP value of 2 (source)
@@ -660,24 +660,20 @@ static void bit_blt(struct blit_frame *blit_info)
          * (b) we are on 68K (ASM_BLIT_IS_AVAILABLE is 1): the
          *     hardware blitter must be enabled to get here.
          */
-#if MPS_BLITTER_ALWAYS_ON
-	hwblit_raster(blt);
-#else
-  #if !ASM_BLIT_IS_AVAILABLE
-    #if CONF_WITH_BLITTER
+#if !ASM_BLIT_IS_AVAILABLE
+#if CONF_WITH_BLITTER
         if (blitter_is_enabled)
         {
             hwblit_raster(blt);
         }
         else
-    #endif
+#endif
         {
             do_blit(blt);
         }
-    #else
+#else
         hwblit_raster(blt);
-    #endif
-#endif // MPS_BLITTER_ALWAYS_ON
+#endif
 
         s_addr += blit_info->s_nxpl;          /* a0-> start of next src plane   */
         d_addr += blit_info->d_nxpl;          /* a1-> start of next dst plane   */
@@ -974,24 +970,20 @@ cpy_raster(struct raster_t *raster, struct blit_frame *info)
      * (a) the blitter isn't configured, or
      * (b) it's configured but not available.
      */
-#if MPS_BLITTER_ALWAYS_ON
-	bit_blt(info);
-#else
-  #if ASM_BLIT_IS_AVAILABLE
-    #if CONF_WITH_BLITTER
+#if ASM_BLIT_IS_AVAILABLE
+#if CONF_WITH_BLITTER
     if (blitter_is_enabled)
     {
         bit_blt(info);
     }
     else
-    #endif
+#endif
     {
         fast_bit_blt(info);
     }
-  #else
+#else
     bit_blt(info);
-  #endif
-#endif // MPS_BLITTER_ALWAYS_ON
+#endif
 }
 
 /*
@@ -1067,22 +1059,18 @@ void linea_blit(struct blit_frame *info)
      * (a) the blitter isn't configured, or
      * (b) it's configured but not available.
      */
-#if MPS_BLITTER_ALWAYS_ON
-    bit_blt(info);
-#else
-  #if ASM_BLIT_IS_AVAILABLE
-    #if CONF_WITH_BLITTER
+#if ASM_BLIT_IS_AVAILABLE
+#if CONF_WITH_BLITTER
     if (blitter_is_enabled)
     {
         bit_blt(info);
     }
     else
-    #endif
+#endif
     {
         fast_bit_blt(info);
     }
-  #else
+#else
     bit_blt(info);
-  #endif
-#endif // MPS_BLITTER_ALWAYS_ON
+#endif
 }

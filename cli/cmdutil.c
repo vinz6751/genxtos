@@ -112,6 +112,20 @@ const char *p;
 }
 
 /*
+ *  convert a string to lowercase
+ */
+char *strlower(char *str)
+{
+char *p;
+
+    for (p = str; *p; p++)
+        if ((*p >= 'A') && (*p <= 'Z'))
+            *p |= 0x20;
+
+    return str;
+}
+
+/*
  *  convert a string to uppercase
  */
 char *strupper(char *str)
@@ -205,6 +219,41 @@ unsigned char date_sep;
     return p - s;
 }
 
+/*
+ *  copies next path component from buffer &
+ *  updates buffer pointer
+ *
+ *  returns:
+ *      1   arg is normal
+ *      0   no more args
+ */
+WORD get_path_component(const char **pp,char *dest)
+{
+const char *p;
+char *q = dest;
+
+    /*
+     *  look for start of next component
+     */
+    for (p = *pp; *p; p++)
+        if ((*p != ';') && (*p != ','))
+            break;
+    if (!*p) {          /* end of buffer */
+        *pp = p;
+        return 0;
+    }
+
+    while(*p) {
+        if ((*p == ';') || (*p == ','))
+            break;
+        *q++ = *p++;
+    }
+    *q = '\0';
+
+    *pp = p;
+    return 1;
+}
+
 WORD has_wildcard(const char *name)
 {
 const char *p;
@@ -244,8 +293,23 @@ const char *p;
  */
 WORD strequal(const char *s1,const char *s2)
 {
-    return !strncasecmp(s1,s2,-1L);
+const char *p, *q;
+char c1, c2;
 
+    for (p = s1, q = s2; *p; ) {
+        c1 = *p++;
+        if ((c1 >= 'A') && (c1 <= 'Z'))
+            c1 |= 0x20;
+        c2 = *q++;
+        if ((c2 >= 'A') && (c2 <= 'Z'))
+            c2 |= 0x20;
+        if (c1 != c2)
+            return 0;
+    }
+    if (*q)
+        return 0;
+
+    return 1;
 }
 
 PRIVATE LONG getjar(void)

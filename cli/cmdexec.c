@@ -11,7 +11,6 @@
  */
 #include "cmd.h"
 #include "string.h"
-#include "shellutl.h"
 
 static UWORD old_stdout;
 
@@ -116,8 +115,7 @@ char temp[MAXPATHLEN];
 const char *p;
 
     for (p = user_path; *p; ) {
-        p = shellutl_find_next_path_component(p,temp);
-        if (p == NULL)
+        if (get_path_component(&p,temp) == 0)
             return -1;
         add_to_path(temp,name);
         if (find_executable(path,temp) == 0)

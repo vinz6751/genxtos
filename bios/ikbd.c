@@ -1105,8 +1105,3 @@ void kbd_init(void)
 
     bioskeys();
 }
-
-ULONG kbd_default_datetime(void)
-{
-    return DEFAULT_DATETIME;
-}
