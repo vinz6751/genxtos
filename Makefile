@@ -65,6 +65,7 @@ help:
 	@echo "m548x-bas  $(SREC_M548X_BAS), EmuTOS for BaS_gcc on ColdFire Evaluation Boards"
 	@echo "m548x-prg  emutos.prg, a RAM tos for ColdFire Evaluation Boards with BaS_gcc"
 	@echo "c256genx   $(ROM_C256GENX), EmuTOS flash image for the C256 GenX with 68000 CPU Module"
+	@echo "a2560u    $(ROM_A2560U), EmuTOS flash image for the A2560U Foenix"	
 	@echo "prg     emutos.prg, a RAM tos"
 	@echo "flop    $(EMUTOS_ST), a bootable floppy with RAM tos"
 	@echo "pak3    $(ROM_PAK3), suitable for PAK/3 systems"
@@ -791,6 +792,31 @@ c256genx:
 $(ROM_MACHINE_C256GENX): emutos.img mkrom
 	./mkrom pad 4M $< $(ROM_MACHINE_C256GENX)
 
+
+#
+# A2560U Foenix
+#
+
+TOCLEAN += *.rom
+
+ROM_MACHINE_A2560U = emutos-a2560u.rom
+A2560U_DEFS =
+
+.PHONY: a2560u
+NODEP += a2560u
+a2560u: UNIQUE = $(COUNTRY)
+a2560u: OPTFLAGS = $(SMALL_OPTFLAGS)
+a2560u: override DEF += -DTARGET_A2560U_ROM -DMACHINE_A2560U $(A2560U_DEFS)
+a2560u: WITH_AES = 0
+a2560u:
+	@echo "# Building A2560U Foenix EmuTOS into $(ROM_MACHINE_A2560U)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560U=$(ROM_MACHINE_A2560U) $(ROM_MACHINE_A2560U)
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT))"
+	@printf "$(LOCALCONFINFO)"
+
+$(ROM_MACHINE_A2560U): emutos.img mkrom
+	./mkrom pad 2M $< $(ROM_MACHINE_A2560U)
 
 #
 # Special variants of EmuTOS running in RAM instead of ROM.

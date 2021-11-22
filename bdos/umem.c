@@ -359,7 +359,7 @@ ret:
 #define FREESPACE_KLUDGE    256     /* see code below */
 void *srealloc(long amount)
 {
-    MD *md, *last;
+    MEMORY_DESCRIPTOR *md, *last;
     LONG available;
     BOOL realloc;   /* TRUE iff reallocation is possible */
 
