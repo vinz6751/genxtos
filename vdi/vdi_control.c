@@ -196,9 +196,7 @@ void update_rez_dependent(void)
     DEV_TAB[39] = get_palette();    /* some versions of COLOR.CPX care about this */
 
     INQ_TAB[4] = v_planes;
-    if ((v_planes == 16) || (get_monitor_type() == MON_MONO))
-        INQ_TAB[5] = 0;
-    else INQ_TAB[5] = 1;
+    INQ_TAB[5] = ((v_planes == 16) || (get_monitor_type() == MON_MONO)) ? 0 : 1;
 }
 
 
