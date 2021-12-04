@@ -36,3 +36,6 @@
 *.a
 # .ld are build from the .ld_
 *.ld 
+bdos/logo.c
+bdos/logo.h
+logo_compressor
