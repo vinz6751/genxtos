@@ -655,7 +655,7 @@
 #  define CONF_WITH_WM8776 1
 # endif
 # ifndef CONF_VRAM_ADDRESS
-#  define CONF_VRAM_ADDRESS 0x00c0000 /* VRAM is at a special location */
+#  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
