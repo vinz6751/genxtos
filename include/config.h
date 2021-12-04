@@ -648,6 +648,18 @@
 # ifndef WITH_CLI
 #  define WITH_CLI 1 /* Doesn't work yet but we need to startup something... */
 # endif
+# ifndef CONF_WITH_SN76489
+#  define CONF_WITH_SN76489 1
+# endif
+# ifndef CONF_WITH_WM8776
+#  define CONF_WITH_WM8776 1
+# endif
+# ifndef CONF_VRAM_ADDRESS
+#  define CONF_VRAM_ADDRESS 0x00c0000 /* VRAM is at a special location */
+# endif
+# ifndef CONF_WITH_CHUNKY8
+#  define CONF_WITH_CHUNKY8 1
+# endif
 #endif
 
 /*
@@ -778,6 +790,12 @@
 # endif
 # ifndef CONF_WITH_NOVA
 #  define CONF_WITH_NOVA 0
+# endif
+# ifndef CONF_WITH_SN767489
+#  define CONF_WITH_SN767489 0
+# endif
+# ifndef CONF_WITH_CHUNKY8
+#  define CONF_WITH_CHUNKY8 0
 # endif
 #endif
 
@@ -1917,6 +1935,32 @@
  */
 #ifndef CONF_WITH_BUS_ERROR
 # define CONF_WITH_BUS_ERROR 1
+#endif
+
+/*
+ * Set CONF_WITH_SN76489 if the machine has a SN76489 programmable sound generator.
+ * If this is defined, the driver requires SN76489_PORT to be defined as the address
+ * of the chip.
+ */
+#ifndef CONF_WITH_SN76489
+# define CONF_WITH_SN76489 0
+#endif
+
+/*
+ * Set CONF_WITH_WM8776 if the machine has a WM8776 audio codec.
+ * If this is defined, the driver requires WM8776_PORT to be defined as the address
+ * of the chip.
+ */
+#ifndef CONF_WITH_WM8776
+# define CONF_WITH_WM8776 0
+#endif
+
+/*
+ * Set CONF_WITH_CHUNKY8 if the machine uses a chunky frame buffer with 8 bytes
+ * per pixel.
+ */
+#ifndef CONF_WITH_CHUNKY8
+# define CONF_WITH_CHUNKY8 0
 #endif
 
 /*
