@@ -36,10 +36,11 @@
 
 void uart16550_init(UART16550 *uart)
 {
-    uart[MCR] = 8; /* For legacy reasons */
-    uart[FCR] = 1; /* Clear FIFOs, one byte buffer */
     uart16550_set_bps(uart, UART16550_9600BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
+
+    uart[MCR] = 8; /* For legacy reasons */
+    uart[FCR] = 1; /* Clear FIFOs, one byte buffer */
     
     /* Flush reception */
     while (uart16550_can_get(uart))
