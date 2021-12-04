@@ -36,7 +36,7 @@ typedef struct __attribute__((__packed__)) {
     uint8_t blue;
 } COLOR32;
 
-#define VICKY_LUT(n) ((COLOR32*)(VICKY_LUTS+n*0x400))
+#define VICKY_LUT(n) ((COLOR32* volatile)(VICKY_LUTS+n*0x400))
 
 /* Number of colors VICKY can produce */
 #define VICKY_PALETTE   (8*8*8) /* 24 bits palette */
@@ -65,6 +65,7 @@ void vicky2_set_background_color(uint32_t color);
 void vicky2_set_border_color(uint32_t color);
 void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result);
 void vicky2_set_bitmap0_address(const uint8_t *address); /* address is relative to VRAM */
+void vicky2_set_mouse_visible(uint16_t visible);
 
 #endif // MACHINE_A2560U
 
