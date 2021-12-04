@@ -37,7 +37,7 @@
 void uart16550_init(UART16550 *uart)
 {
     uart[MCR] = 8; /* For legacy reasons */
-    uart[FCR] = 1;
+    uart[FCR] = 1; /* Clear FIFOs, one byte buffer */
     uart16550_set_bps(uart, UART16550_9600BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
     
@@ -69,13 +69,13 @@ void uart16550_set_line(UART16550 *uart, uint8_t flags)
 void uart16550_put(UART16550 *uart, const uint8_t *bytes, uint32_t count)
 {
     uint8_t *c = (uint8_t*)bytes;
-    *((unsigned long * volatile)0xB40008) = 0x0000000;
+
     while (count--)
     {        
-        while (!uart16550_can_put(uart)) /* 5: THR is empty */
+        while (!uart16550_can_put(uart))
             ; 
         R8(uart)[THR] = *c++;
-    };    
+    };
 }
 
 
@@ -86,7 +86,7 @@ int uart16550_can_get(const UART16550 *uart)
 
 int uart16550_can_put(const UART16550 *uart)
 {    
-    return R8(uart)[LSR] & 0x20;
+    return R8(uart)[LSR] & 0x20; /* bit 5: THR is empty */
 }
 
 
