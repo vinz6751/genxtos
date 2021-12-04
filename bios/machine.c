@@ -40,6 +40,7 @@
 #include "nova.h"
 #include "biosext.h"
 #include "amiga.h"
+#include "a2560u.h"
 
 #if CONF_WITH_ADVANCED_CPU
 UBYTE is_bus32; /* 1 if address bus is 32-bit, 0 if it is 24-bit */
@@ -601,6 +602,9 @@ void machine_detect(void)
  */
 void machine_init(void)
 {
+#ifdef MACHINE_A2560U
+    a2560u_init();
+#endif
 #if !CONF_WITH_RESET
 /*
  * we must disable interrupts here, because the reset instruction hasn't
@@ -808,6 +812,8 @@ const char * machine_name(void)
     return "Apple Lisa";
 #elif defined(MACHINE_M548X)
     return m548x_machine_name();
+#elif defined(MACHINE_A2560U)
+    return "A2560U";
 #else
     return guess_machine_name();
 #endif

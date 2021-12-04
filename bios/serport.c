@@ -27,6 +27,7 @@
 #include "vectors.h"
 #include "coldfire.h"
 #include "amiga.h"
+#include "a2560u.h"
 #include "ikbd.h"
 
 /*
@@ -278,6 +279,8 @@ LONG bcostat1(void)
 {
 #if CONF_WITH_COLDFIRE_RS232
     return coldfire_rs232_can_write() ? -1 : 0;
+#elif defined (MACHINE_A2560U)
+    return a2560u_bcostat1();
 #elif CONF_WITH_MFP_RS232
 # if RS232_DEBUG_PRINT
     return (MFP_BASE->tsr & 0x80) ? -1 : 0;
@@ -301,6 +304,9 @@ LONG bconout1(WORD dev, WORD b)
 #if CONF_WITH_COLDFIRE_RS232
     coldfire_rs232_write_byte(b);
     return 1;
+#elif defined(MACHINE_A2560U)
+    *((unsigned long * volatile)0xB40008) = 0x0323200;
+    a2560u_bconout1(b);
 #elif CONF_WITH_MFP_RS232
 # if RS232_DEBUG_PRINT
     MFP_BASE->udr = (char)b;

@@ -216,6 +216,10 @@ MULTILIBFLAGS = $(CPUFLAGS) -mshort
 INC = -Iinclude
 OTHERFLAGS = -fomit-frame-pointer -fno-common
 
+# VASM for .asm files
+ASM = vasmm68k_mot
+ASMFLAGS = -quiet -Faout -x $(CPUFLAGS) -spaces -showopt
+
 # Optimization flags (affects ROM size and execution speed)
 STANDARD_OPTFLAGS = -O2
 SMALL_OPTFLAGS = -Os
@@ -258,6 +262,9 @@ OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 # the native C compiler, for tools
 NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -W $(BUILD_TOOLS_OPTFLAGS)
 
+#obj/a2560u_s.o: bios/a2560u_s.asm
+#	$(ASM) $< -o $@ $(ASMFLAGS)
+
 #
 # source code in bios/
 #
@@ -279,7 +286,9 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              amiga.c amiga2.S spi_vamp.c \
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c memory2.c bootparams.c scsi.c nova.c \
-             dsp.c dsp2.S
+             dsp.c dsp2.S \
+			 uart16550.c sn76489.c wm8776.c vicky2.c \
+			 a2560u_s.S a2560u.c
 #			 c256genx.c c256genx2.S c256genx_kbd.S \
 
 ifeq (1,$(COLDFIRE))
@@ -441,6 +450,7 @@ include country.mk
 
 SRC = $(foreach d,$(dirs),$(addprefix $(d)/,$($(d)_src))) $(end_src)
 
+#CORE_OBJ = $(foreach d,$(core_dirs),$(patsubst %.asm,obj/%.o,$(patsubst %.c,obj/%.o,$(patsubst %.S,obj/%.o,$($(d)_src))))) $(FONTOBJ_COMMON) obj/libfont.a obj/version.o
 CORE_OBJ = $(foreach d,$(core_dirs),$(patsubst %.c,obj/%.o,$(patsubst %.S,obj/%.o,$($(d)_src)))) $(FONTOBJ_COMMON) obj/libfont.a obj/version.o
 OPTIONAL_OBJ = $(foreach d,$(optional_dirs),$(patsubst %.c,obj/%.o,$(patsubst %.S,obj/%.o,$($(d)_src))))
 END_OBJ = $(patsubst %,obj/%.o,$(basename $(notdir $(end_src))))
@@ -816,7 +826,7 @@ a2560u:
 	@printf "$(LOCALCONFINFO)"
 
 $(ROM_MACHINE_A2560U): emutos.img mkrom
-	./mkrom pad 2M $< $(ROM_MACHINE_A2560U)
+	./mkrom pad 512k $< $(ROM_MACHINE_A2560U)
 
 #
 # Special variants of EmuTOS running in RAM instead of ROM.

@@ -37,6 +37,7 @@
 #include "amiga.h"
 #include "lisa.h"
 #include "nova.h"
+#include "a2560u.h"
 
 void detect_monitor_change(void);
 static void setphys(const UBYTE *addr);
@@ -627,6 +628,10 @@ void screen_init_mode(void)
     lisa_screen_init();
 #endif
 
+#ifdef MACHINE_A2560U
+    a2560u_screen_init();
+#endif
+
     rez_was_hacked = FALSE; /* initial assumption */
 }
 
@@ -635,9 +640,14 @@ void screen_init_address(void)
 {
     LONG vram_size;
     UBYTE *screen_start;
+    MAYBE_UNUSED(vram_size);
 
 #if CONF_VRAM_ADDRESS
+#ifdef MACHINE_A2560U
+    vram_size = VIDEO_RAM_SIZE;
+#else
     vram_size = 0L;         /* unspecified */
+#endif /* MACHINE_A2560U     */
     screen_start = (UBYTE *)CONF_VRAM_ADDRESS;
 #else
     vram_size = calc_vram_size();
@@ -707,6 +717,8 @@ WORD get_monitor_type(void)
 
 #if CONF_WITH_ATARI_VIDEO
     return shifter_get_monitor_type();
+#elif defined(MACHINE_A2560U)
+    return MON_COLOR;
 #else
     return MON_MONO;    /* fake monochrome monitor */
 #endif
@@ -803,6 +815,8 @@ void screen_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
     *planes = 1;
     *hz_rez = 720;
     *vt_rez = 364;
+#elif defined(MACHINE_A2560U)
+    a2560u_get_current_mode_info(planes, hz_rez, vt_rez);
 #else
     atari_get_current_mode_info(planes, hz_rez, vt_rez);
 #endif
@@ -817,6 +831,12 @@ WORD get_palette(void)
 {
 #ifdef MACHINE_AMIGA
     return 2;               /* we currently only support monochrome */
+#endif
+#ifdef MACHINE_A2560U
+    /* VICKY can do 24bit but this function only returns 16 bits and
+     * the VDI, EmuDesk etc. don't support more than 256 colors.
+     * So we limit ourselves to 256 as it's done in videl.c */  
+    return 256;
 #else
     WORD palette;
 
@@ -830,7 +850,7 @@ WORD get_palette(void)
             return 4096;
         return 0;
     }
-#endif
+#endif /* CONF_WITH_VIDEL */
 
     palette = 4096;         /* for STe/TT colour modes */
 
@@ -879,7 +899,7 @@ static __inline__ void get_std_pixel_size(WORD *width,WORD *height)
  */
 void get_pixel_size(WORD *width,WORD *height)
 {
-#ifdef MACHINE_AMIGA
+#if defined(MACHINE_AMIGA) || defined(MACHINE_A2560U)
     get_std_pixel_size(width,height);
 #else
     if (HAS_VIDEL || HAS_TT_SHIFTER)
@@ -1045,6 +1065,8 @@ static void setphys(const UBYTE *addr)
     amiga_setphys(addr);
 #elif defined(MACHINE_LISA)
     lisa_setphys(addr);
+#elif defined(MACHINE_A2560U)
+    a2560u_setphys(addr);
 #elif CONF_WITH_ATARI_VIDEO
     atari_setphys(addr);
 #endif
