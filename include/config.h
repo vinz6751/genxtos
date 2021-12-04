@@ -660,6 +660,9 @@
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
+# ifndef CONF_STRAM_SIZE
+#  define CONF_STRAM_SIZE 2*1024*1024
+# endif
 #endif
 
 /*
