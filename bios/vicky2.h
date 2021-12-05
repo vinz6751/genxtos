@@ -30,10 +30,10 @@ typedef struct {
 } FOENIX_VIDEO_MODE;
 
 typedef struct __attribute__((__packed__)) {
-    uint8_t alpha;
-    uint8_t red;
-    uint8_t green;
     uint8_t blue;
+    uint8_t green;
+    uint8_t red; 
+    uint8_t alpha;
 } COLOR32;
 
 #define VICKY_LUT(n) ((COLOR32* volatile)(VICKY_LUTS+n*0x400))
@@ -46,8 +46,8 @@ typedef struct __attribute__((__packed__)) {
 #define VICKY_CTRL            VICKY
 
 /* Channel A (first screen), VICKY II has only one anyway */
-#define VICKY_A_BORDER_CTRL_L (VICKY+0x0004) /* Border control */
-#define VICKY_A_BORDER_COLOR  (VICKY+0x0008)
+#define VICKY_A_BORDER_CTRL   (VICKY+0x0004) /* Border control */
+#define VICKY_A_BORDER_COLOR  (VICKY+0x0008) /* Border colour 0x--RRGGBB */
 #define VICKY_A_BG_COLOR      (VICKY+0x000C) /* Background control */
 #define VICKY_A_BMP_FG_CTRL   (VICKY+0x0100) /* Bitmap layer 0 control */
 #define VICKY_A_BMP_FB        (VICKY+0x0104) /* Framebuffer address relative to VRAM */
@@ -66,6 +66,8 @@ void vicky2_set_border_color(uint32_t color);
 void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result);
 void vicky2_set_bitmap0_address(const uint8_t *address); /* address is relative to VRAM */
 void vicky2_set_mouse_visible(uint16_t visible);
+void vicky2_set_lut_color(uint16_t lut, uint16_t number, COLOR32 *color);
+void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result);
 
 #endif // MACHINE_A2560U
 
