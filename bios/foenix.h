@@ -1,5 +1,5 @@
 /*
- * c256genx.h - C256 Foenix GenX specific functions
+ * foenix.h - Foenix Retro System computer specific defines
  *
  * Copyright (C) 2013-2021 The EmuTOS development team
  *
@@ -10,8 +10,68 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#ifndef C256GENX_H
-#define C256GENX_H
+#ifndef FOENIX_H
+#define FOENIX_H
+
+#include <stdint.h>
+
+#ifndef R8
+    #define R8(x) *((int8_t * volatile)(x))
+#endif
+#ifndef R16
+    #define R16(x) *((uint16_t * volatile)(x))
+#endif
+#ifndef R32
+    #define R32(x) *((uint32_t * volatile)(x))
+#endif
+
+
+#ifdef MACHINE_A2560U
+
+#define GAVIN       0x00B00000
+#define BEATRIX     0x00B20000
+#define VICKY       0x00B40000
+#define VRAM_Bank0  0x00C00000 /* 2MB (until 0xDFFFFF) */
+
+/* Serial port speed codes for a2560u_serial_set_bps */
+#define UART0       (UART16550*)(GAVIN+0x28F8)
+#define UART_300    4167 /* Code for 300 bps */
+#define UART_1200   1042 /* Code for 1200 bps */
+#define UART_2400   521  /* Code for 2400 bps */
+#define UART_4800   260  /* Code for 4800 bps */
+#define UART_9600   130  /* Code for 9600 bps */
+#define UART_19200  65   /* Code for 19200 bps */
+#define UART_38400  33   /* Code for 28400 bps */
+#define UART_57600  22   /* Code for 57600 bps */
+#define UART_115200 11   /* Code for 115200 bps */
+
+#define IRQ_GROUPS        3 /* Number of IRQ groups */
+#define IRQ_PENDING_GRP0 (GAVIN+0x100)
+#define IRQ_PENDING_GRP1 (GAVIN+0x102)
+#define IRQ_PENDING_GRP2 (GAVIN+0x104)
+#define IRQ_POL_GRP0     (GAVIN+0x108)
+#define IRQ_POL_GRP1     (GAVIN+0x10A)
+#define IRQ_POL_GRP2     (GAVIN+0x10C)
+#define IRQ_EDGE_GRP0 	 (GAVIN+0x110)
+#define IRQ_EDGE_GRP1 	 (GAVIN+0x112)
+#define IRQ_EDGE_GRP2 	 (GAVIN+0x114)
+#define IRQ_MASK_GRP0 	 (GAVIN+0x118)
+#define IRQ_MASK_GRP1 	 (GAVIN+0x11A)
+#define IRQ_MASK_GRP2 	 (GAVIN+0x11C)
+
+
+/* BEATRIX */
+#define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130))   /* Control register for the SN76489 */
+#define OPL3_PORT     ((volatile uint8_t*)(BEATRIX+0x0200))   /* Access port for the OPL3 */
+#define OPM_INT_BASE  ((volatile uint8_t*)(BEATRIX+0x0C00))   /* Internal OPM base address */
+#define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00))   /* Internal OPN2 base address */
+#define WM8776_PORT   ((uint16_t*)(BEATRIX+0x0E00))         /* Mixer/codec port */
+
+#endif
+
+
+
+
 #ifdef MACHINE_C256FOENIXGENX
 
 
@@ -95,4 +155,4 @@ void PS2_send_controller(const uint8_t b);
 #endif // ASM_ONLY
 
 #endif // MACHINE_C256FOENIXGENX
-#endif // C256GENX_H
+#endif // FOENIX
