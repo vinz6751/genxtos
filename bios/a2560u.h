@@ -21,7 +21,7 @@
 void a2560u_init(void); /* C entry point for initialisation */
 void a2560u_screen_init(void);
 void a2560u_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez);
-void a2560u_setphys(const uint32_t *address);
+void a2560u_setphys(const uint8_t *address);
 void a2560u_set_border_color(uint32_t color);
 
 /* Serial port */
