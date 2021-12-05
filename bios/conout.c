@@ -17,6 +17,8 @@
  * If we ever add a 16x32 font, the code will need changing!
  */
 
+// #define ENABLE_KDEBUG
+
 #include "emutos.h"
 #include "lineavars.h"
 #include "tosvars.h"            /* for v_bas_ad */
@@ -85,14 +87,19 @@ static UBYTE *char_addr(WORD ch)
 
 static UBYTE *cell_addr(UWORD x, UWORD y)
 {
-    ULONG disx, disy;
-
     /* check bounds against screen limits */
     if (x > v_cel_mx)
         x = v_cel_mx;           /* clipped x */
 
     if (y > v_cel_my)
         y = v_cel_my;           /* clipped y */
+
+#ifdef MACHINE_A2560U
+    UBYTE *res = v_bas_ad + (ULONG)v_cel_wr * y + x * 8;
+    KDEBUG(("cell_addr(%i,%i)=%p  v_bas_ad:%p \n",x,y,res,v_bas_ad));
+    return res;
+#else
+    ULONG disx, disy;
 
     /*
      * v_planes cannot be more than 8, so as long as there are no more
@@ -113,6 +120,7 @@ static UBYTE *cell_addr(UWORD x, UWORD y)
      * + X displacement + offset from screen-begin (fix)
      */
     return v_bas_ad + disy + disx + v_cur_of;
+#endif    
 }
 
 
@@ -136,14 +144,8 @@ static UBYTE *cell_addr(UWORD x, UWORD y)
 
 static void cell_xfer(UBYTE *src, UBYTE *dst)
 {
-    UBYTE * src_sav, * dst_sav;
     UWORD fg;
     UWORD bg;
-    int fnt_wr, line_wr;
-    int plane;
-
-    fnt_wr = v_fnt_wr;
-    line_wr = v_lin_wr;
 
     /* check for reversed foreground and background colors */
     if (v_stat_0 & M_REVID) {
@@ -154,6 +156,29 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
         fg = v_col_fg;
         bg = v_col_bg;
     }
+
+#ifdef CONF_WITH_CHUNKY8
+    int i,j; /* Source bitshift */
+    UBYTE bsrc;
+
+    for (j = 0; j < v_cel_ht; j++)
+    {
+        bsrc = *src;
+        for (i = 0; i < 8/*font width*/; i++)
+        {                
+            dst[i] = bsrc & 0x80 ? fg : bg;
+            bsrc <<= 1;
+        }
+        dst += v_lin_wr;
+        src += v_fnt_wr;        
+    }
+#else
+    UBYTE * src_sav, * dst_sav;
+    int fnt_wr, line_wr;
+    int plane;
+
+    fnt_wr = v_fnt_wr;
+    line_wr = v_lin_wr;
 
     src_sav = src;
     dst_sav = dst;
@@ -204,6 +229,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
         fg >>= 1;                       /* next foreground color bit */
         dst_sav += PLANE_OFFSET;        /* top of block in next plane */
     }
+#endif
 }
 
 
@@ -225,11 +251,26 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
 
 static void neg_cell(UBYTE *cell)
 {
-    int plane, len;
-    int cell_len = v_cel_ht;
-    int lin_wr = v_lin_wr;
-
     v_stat_0 |= M_CRIT;                 /* start of critical section. */
+
+#if CONF_WITH_CHUNKY8
+    int i,j; /* Source bitshift */
+    UWORD fg = v_col_fg;
+    UWORD bg = v_col_bg;
+    
+    for (j = 0; j < v_cel_ht; j++)
+    {        
+        for (i = 0; i < 8/*font width*/; i++)
+        {                
+            cell[i] = cell[i] == fg ? bg : fg;            
+        }
+        cell += v_lin_wr;
+    }
+#else
+    int len;
+    int plane;
+    int lin_wr = v_lin_wr;
+    int cell_len = v_cel_ht;
 
     for (plane = v_planes; plane--; ) {
         UBYTE * addr = cell;            /* top of current dest plane */
@@ -240,7 +281,9 @@ static void neg_cell(UBYTE *cell)
             addr += lin_wr;
         }
         cell += PLANE_OFFSET;           /* a1 -> top of block in next plane */
+
     }
+#endif
     v_stat_0 &= ~M_CRIT;                /* end of critical section. */
 }
 
@@ -258,6 +301,7 @@ static void neg_cell(UBYTE *cell)
 
 static BOOL next_cell(void)
 {
+//KDEBUG(("next_cell v_cur_cx:%d  v_cel_mx:%d\n",v_cur_cx,v_cel_mx));
     /* check bounds against screen limits */
     if (v_cur_cx == v_cel_mx) {         /* increment cell ptr */
         if (!(v_stat_0 & M_CEOL)) {
@@ -273,6 +317,11 @@ static BOOL next_cell(void)
 
     v_cur_cx += 1;                      /* next cell to right */
 
+#if CONF_WITH_CHUNKY8
+    /* Would be v_cel_with it it existed, or font->max_cell_width,
+     * but the console stuff only handles 8-pixel-wide fonts */
+    v_cur_ad += 8;
+#else
     /* if X is even, move to next word in the plane */
     if (IS_ODD(v_cur_cx)) {
         /* x is odd */
@@ -282,6 +331,7 @@ static BOOL next_cell(void)
 
     /* new cell (1st plane), added offset to next word in plane */
     v_cur_ad += (v_planes << 1) - 1;
+#endif
 
     return 0;                           /* indicate no wrap needed */
 }
