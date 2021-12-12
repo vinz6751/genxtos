@@ -433,7 +433,7 @@ _int_timerc:
         add.l #0x1,0xb40008     // (debug change border colour)   
         and.w #0xfbff,0xb00102 // Acknowledge timer 3 GAVIN interrupt
 #endif        
-        rte
+//        rte
         rol.w   _timer_c_sieve          // check for 4th call
         jpl     timerc_end
 

@@ -208,7 +208,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* Stop the timer while we configure */    
     a2560u_timer_enable(timer, false);
 
-    /* Stop and reprogram and stop the timer for countdown mode, but don't start. */
+    /* Stop and reprogram and stop the timer, but don't start. */
     /* TODO: In case of control register 0, we write the config of 3 timers at once:
       * can that have nasty effects on any other running timers ? */        
     R32(t->control) &= t->deprog;
@@ -228,14 +228,11 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
         uint32_t value = cpu_freq / frequency;
         uint32_t compare = 0;
         KDEBUG(("cpu_freq=%ld frequency=%ld, cpu/freq=0x%08lx\n", cpu_freq, frequency, value));
-    //    R32(t->value) = value;
-        R32(t->compare) = compare;
-    *((volatile unsigned long * const)0xB00218) = 0x8000;
+        R32(t->value) = value;
+        R32(t->compare) = compare;    
         KDEBUG(("Wrote value 0x%08lx. Now %p=%08lx\n", value, (void*)t->value,R32(t->value)));
-        KDEBUG(("Wrote compare 0x%08lx. Now %p=%08lx\n", compare, (void*)t->compare,R32(t->compare)));
-    //KDEBUG(("Programming val %p=%08lx\n",(void*)t->value,R32(t->value)));
-    }
-    
+        KDEBUG(("Wrote compare 0x%08lx. Now %p=%08lx\n", compare, (void*)t->compare,R32(t->compare)));    
+    }    
 
    /* Set handler */    
     setexc(t->vector, (uint32_t)handler);
@@ -246,13 +243,14 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* Unmask interrupts for that timer */
     R16(IRQ_MASK_GRP1) &= t->irq_mask;
 
-    set_sr(sr);
+    set_sr(0x2000/*sr*/);
     KDEBUG(("AFTER SETTING TIMER\n"));
     KDEBUG(("CPU          sr=%04x\n", get_sr()));
+    KDEBUG(("vector       0x%02x=%p\n",t->vector,(void*)R32(((int32_t)t->vector) << 2)));
     KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
-    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
-    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
-    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
+//    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
+//    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
+//    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
     KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
     KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));    
 }
