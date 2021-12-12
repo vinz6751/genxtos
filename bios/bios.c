@@ -63,6 +63,7 @@
 #include "amiga.h"
 #include "lisa.h"
 #include "coldfire.h"
+#include "a2560u.h"
 #if WITH_CLI
 #include "../cli/clistub.h"
 #endif
@@ -358,6 +359,14 @@ static void bios_init(void)
     etv_term = just_rts;
     swv_vec = just_rts;
 
+    /* Initialize the RS-232 port(s) */
+    KDEBUG(("chardev_init()\n"));
+    chardev_init();     /* Initialize low-memory bios vectors */
+    boot_status |= CHARDEV_AVAILABLE;   /* track progress */
+    KDEBUG(("init_serport()\n"));
+    init_serport();
+    boot_status |= RS232_AVAILABLE;     /* track progress */
+
     /* setup default VBL queue with vbl_list[] */
     nvbls = ARRAY_SIZE(vbl_list);
     vblqueue = vbl_list;
@@ -392,15 +401,12 @@ static void bios_init(void)
     set_sr(0x2300);
 #else
     set_sr(0x2000);
+# ifdef MACHINE_A2560U
+    a2560u_timer_enable(2,true);
+# endif
+
 #endif
 
-    /* Initialize the RS-232 port(s) */
-    KDEBUG(("chardev_init()\n"));
-    chardev_init();     /* Initialize low-memory bios vectors */
-    boot_status |= CHARDEV_AVAILABLE;   /* track progress */
-    KDEBUG(("init_serport()\n"));
-    init_serport();
-    boot_status |= RS232_AVAILABLE;     /* track progress */
 #if CONF_WITH_SCC
     if (has_scc)
         boot_status |= SCC_AVAILABLE;   /* track progress */
@@ -718,10 +724,12 @@ void biosmain(void)
 
     bios_init();                /* Initialize the BIOS */
 
+#if CONF_ATARI_HARDWARE
     /* Steem needs this to initialize its GEMDOS hard disk emulation.
      * This may change drvbits. See Steem sources:
      * File steem/code/emulator.cpp, function intercept_bios(). */
     Drvmap();
+#endif
 
     /*
      * if it's not the first boot, we use the existing bootdev.
@@ -1178,7 +1186,7 @@ static LONG bios_c(void) { return (LONG)bmem_gettpa(); }
 static LONG bios_d(BOOL fromTop, ULONG size)
 {
 	KDEBUG(("BIOS 13: Balloc(0x%08lx,%s)\n",size,fromTop ? "fromTop" : "fromBottom"));
-	return balloc_stram(size,fromTop);
+	return (LONG)balloc_stram(size,fromTop);
 }
 static LONG bios_e(void) { return disk_drvrem(); }
 #endif

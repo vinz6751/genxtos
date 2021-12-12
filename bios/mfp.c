@@ -19,6 +19,7 @@
 #include "vectors.h"
 #include "coldfire.h"
 #include "lisa.h"
+#include "a2560u.h"
 
 #if CONF_WITH_MFP || CONF_WITH_TT_MFP
 
@@ -206,6 +207,8 @@ void init_system_timer(void)
 #elif CONF_WITH_MFP
     /* Timer C: ctrl = divide 64, data = 192 */
     xbtimer(2, 0x50, 192, (LONG)int_timerc);
+#elif MACHINE_A2560U
+    a2560u_set_timer(2, 200, true, int_timerc);
 #endif
 
     /* The timer will really be enabled when sr is set to 0x2500 or lower. */

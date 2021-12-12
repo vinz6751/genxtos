@@ -660,6 +660,13 @@
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
+# ifndef ALWAYS_SHOW_INITINFO
+#  define ALWAYS_SHOW_INITINFO 1 /* So we can get into EmuCON */
+# endif
+# ifdef USE_STOP_INSN_TO_FREE_HOST_CPU /* To confirm: this causes a crash so we don't want it */
+#  undef USE_STOP_INSN_TO_FREE_HOST_CPU
+#  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
+# endif
 #endif
 
 /*

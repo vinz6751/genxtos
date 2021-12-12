@@ -429,7 +429,9 @@ vbl_end:
 
 _int_timerc:
         addq.l  #1, _hz_200.w           // increment 200 Hz counter
-
+        add.l #0x1,0xb40008        
+        and.w #0xf4ff,0xb00102
+        rte
         rol.w   _timer_c_sieve          // check for 4th call
         jpl     timerc_end
 

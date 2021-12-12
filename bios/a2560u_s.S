@@ -49,14 +49,10 @@
 
 | Exports ---------------------------------------------------------------------
     .GLOBAL a2560u_memconf
-
 | Imports ---------------------------------------------------------------------
 
         
 a2560u_memconf: // Called from memory.S to detect memory setup
-        move.l  #0x1fffff,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
-        moveq   #0,d6          // fake memctrl
-        jmp     (a6)           // Return    
-
-
-
+    move.l  #0x1fffff,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
+    moveq   #0,d6          // fake memctrl
+    jmp     (a6)           // Return

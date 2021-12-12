@@ -28,6 +28,8 @@
 
 #ifdef MACHINE_A2560U
 
+#define CPU_FREQ    20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
+
 #define GAVIN       0x00B00000
 #define BEATRIX     0x00B20000
 #define VICKY       0x00B40000
@@ -45,6 +47,7 @@
 #define UART_57600  22   /* Code for 57600 bps */
 #define UART_115200 11   /* Code for 115200 bps */
 
+/* Interrupts */
 #define IRQ_GROUPS        3 /* Number of IRQ groups */
 #define IRQ_PENDING_GRP0 (GAVIN+0x100)
 #define IRQ_PENDING_GRP1 (GAVIN+0x102)
@@ -59,6 +62,89 @@
 #define IRQ_MASK_GRP1 	 (GAVIN+0x11A)
 #define IRQ_MASK_GRP2 	 (GAVIN+0x11C)
 
+/* Interrupt vector numbers (not address!)  */
+#define INT_TIMERS_VECN  0x48
+#define INT_TIMER0_VECN  (INT_TIMERS_VECN+0) /* Timer 0, Clocked with the CPU Clock */
+#define INT_TIMER1_VECN  (INT_TIMERS_VECN+1) /* Timer 1, Clocked with the CPU Clock */
+#define INT_TIMER2_VECN  (INT_TIMERS_VECN+2) /* Timer 2, Clocked with the CPU Clock */
+#define INT_TIMER3_VECN  (INT_TIMERS_VECN+3) /* Timer 3, Clocked with the SOF Channel A */
+#define INT_NIRQ         4
+
+#if 0
+/*
+ * Define standard interrupt numbers to be used for enabling, disabling an interrupt or setting its handler
+ */
+
+#define INT_SOF_A           0x00    /* Vicky Channel A Start of Frame */
+#define INT_SOL_A           0x01    /* Vicky Channel A Start of Line */
+#define INT_VICKY_A_1       0x02
+#define INT_VICKY_A_2       0x03
+#define INT_VICKY_A_3       0x04
+#define INT_VICKY_A_4       0x05
+#define INT_RESERVED_1      0x06
+#define INT_VICKY_A_DAC     0x07
+#define INT_SOF_B           0x08    /* Vicky Channel B Start of Frame */
+#define INT_SOL_B           0x09    /* Vicky Channel B Start of Line */
+#define INT_VICKY_B_1       0x0A
+#define INT_VICKY_B_2       0x0B
+#define INT_VICKY_B_3       0x0C
+#define INT_VICKY_B_4       0x0D
+#define INT_RESERVED_2      0x0E
+#define INT_VICKY_B_DAC     0x0F
+
+#define INT_KBD_PS2         0x10    /* SuperIO - PS/2 Keyboard */
+#define INT_KBD_A2560K      0x11    /* SuperIO - A2560K Built in keyboard (Mo) */
+#define INT_MOUSE           0x12    /* SuperIO - PS/2 Mouse */
+#define INT_COM1            0x13    /* SuperIO - COM1 */
+#define INT_COM2            0x14    /* SuperIO - COM2 */
+#define INT_LPT1            0x15    /* SuperIO - LPT1 */
+#define INT_FDC             0x16    /* SuperIO - Floppy Drive Controller */
+#define INT_MIDI            0x17    /* SuperIO - MIDI */
+#define INT_TIMER0          0x18    /* Timer 0, Clocked with the CPU Clock */
+#define INT_TIMER1          0x19    /* Timer 1, Clocked with the CPU Clock */
+#define INT_TIMER2          0x1A    /* Timer 2, Clocked with the CPU Clock */
+#define INT_TIMER3          0x1B    /* Timer 3, Clocked with the SOF Channel A */
+#define INT_TIMER4          0x1C    /* Timer 4, Clocked with the SOF Channel B */
+#define INT_RESERVED_3      0x1D    /* Reserved */
+#define INT_RESERVED_4      0x1E    /* Reserved */
+#define INT_RTC             0x1F    /* Real Time Clock */
+
+#define INT_PATA            0x20    /* IDE/PATA Hard drive interrupt */
+#define INT_SDC_INS         0x21    /* SD card inserted */
+#define INT_SDC             0x22    /* SD card controller */
+#define INT_OPM_INT         0x23    /* Internal OPM */
+#define INT_OPN2_EXT        0x24    /* External OPN */
+#define INT_OPL3_EXT        0x25    /* External OPL */
+#define INT_RESERVED_5      0x26    /* Reserved */
+#define INT_RESERVED_6      0x27    /* Reserved */
+#define INT_BEATRIX_0       0x28    /* Beatrix 0 */
+#define INT_BEATRIX_1       0x29    /* Beatrix 1 */
+#define INT_BEATRIX_2       0x2A    /* Beatrix 2 */
+#define INT_BEATRIX_3       0x2B    /* Beatrix 3 */
+#define INT_RESERVED_7      0x2C    /* Reserved */
+#define INT_DAC1_PB         0x2D    /* DAC1 Playback Done (48K) */
+#define INT_RESERVED_8      0x2E    /* Reserved */
+#define INT_DAC0_PB         0x2F    /* DAC0 Playback Done (44.1K) */
+#endif
+
+/* Timers */
+#define TIMER_CTRL0    ((uint32_t*)(GAVIN+0x200))
+#define TIMER_CTRL1    ((uint32_t*)(GAVIN+0x204))
+#define TIMER0_VALUE   ((uint32_t*)(GAVIN+0x208))
+#define TIMER0_COMPARE ((uint32_t*)(GAVIN+0x20C))
+#define TIMER1_VALUE   ((uint32_t*)(GAVIN+0x210))
+#define TIMER1_COMPARE ((uint32_t*)(GAVIN+0x214))
+#define TIMER2_VALUE   ((uint32_t*)(GAVIN+0x218))
+#define TIMER2_COMPARE ((uint32_t*)(GAVIN+0x21C))
+#define TIMER3_VALUE   ((uint32_t*)(GAVIN+0x220))
+#define TIMER3_COMPARE ((uint32_t*)(GAVIN+0x224))
+/* Flags for timer control */
+#define TIMER_CTRL_ENABLE   0x01
+#define TIMER_CTRL_CLEAR    0x02
+#define TIMER_CTRL_LOAD     0x04
+#define TIMER_CTRL_UP       0x08
+#define TIMER_CTRL_RECLEAR  0x10
+#define TIMER_CTRL_RELOAD   0x20
 
 /* BEATRIX */
 #define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130))   /* Control register for the SN76489 */
@@ -68,8 +154,6 @@
 #define WM8776_PORT   ((uint16_t*)(BEATRIX+0x0E00))         /* Mixer/codec port */
 
 #endif
-
-
 
 
 #ifdef MACHINE_C256FOENIXGENX

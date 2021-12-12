@@ -11,6 +11,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+#define ENABLE_KDEBUG
 
 #include "vicky2.h"
 
@@ -102,7 +103,11 @@ void vicky2_init(void)
     /* Use instead this to enable border to you can set its color as debugging trace:
      * R32(VICKY_A_BORDER_CTRL) = 0x00030301;
      */
-    R32(VICKY_A_BORDER_CTRL) = 0; 
+#ifdef ENABLE_KDEBUG    
+    R32(VICKY_A_BORDER_CTRL) = 0x00030301;
+#else    
+    R32(VICKY_A_BORDER_CTRL) = 0;
+#endif
 
     /* Setup framebuffer to point to beginning of video RAM */
     R32(VICKY_A_BMP_FG_CTRL) = 1;       /* Enable bitmap layer 0, LUT 0 */
