@@ -161,11 +161,12 @@ void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vecto
  * computation, so to get the best timing possible. */
 const struct a2560u_timer_t a2560u_timers[] = 
 {
-    /* 0x24 is TIMER_CTRL_LOAD|TIMER_CTRL_RELOAD */
-    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, 0x000024, ~0x0100, INT_TIMER0_VECN },
-    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, 0x002400, ~0x0200, INT_TIMER1_VECN },
-    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, 0x240000, ~0x0400, INT_TIMER2_VECN },
-    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, 0x000024, ~0x0800, INT_TIMER3_VECN }
+    /* 0x2C is TIMER_CTRL_LOAD|TIMER_CTRL_UPDOWN|TIMER_CTRL_RELOAD (count down)
+     * 0x1A is TIMER_CTRL_CLEAR|TIMER_CTRL_RECLEAR (count up) */
+    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, 0x0000002C, 0x00000001, ~0x0100, INT_TIMER0_VECN },
+    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, 0x00002C00, 0x00000100, ~0x0200, INT_TIMER1_VECN },
+    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, 0x002C0000, 0x00010000, ~0x0400, INT_TIMER2_VECN },
+    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, 0x0000002C, 0x00000001, ~0x0800, INT_TIMER3_VECN }
 };
 
 
@@ -182,7 +183,7 @@ static void timer_init(void)
 }
 
 /*
- * Start a timer.
+ * Program a timer but don't start it. This causes the timer to stop.
  * timer: timer number
  * frequency: desired frequency
  * repeat: whether the timer should reload after firing interrupt
@@ -196,7 +197,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     if (timer > 3)
         return;
 
-    KDEBUG(("\033ESet timer:%d, %ld, %d, %p\n",timer,frequency,repeat,handler));
+    KDEBUG(("\033ESet timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler));
     
     /* Identify timer control register to use */
     t = (struct a2560u_timer_t *)&a2560u_timers[timer];
@@ -207,12 +208,36 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* Stop the timer while we configure */    
     a2560u_timer_enable(timer, false);
 
-    /* Set timer period */
-    //KDEBUG(("cpu_freq=%ld frequency=%ld, cpu/freq=%p\n", cpu_freq, frequency, (void*)(cpu_freq / frequency)));
-    *(t->value) = (cpu_freq / frequency);
-    *(t->compare) = 0L;
+    /* Stop and reprogram and stop the timer for countdown mode, but don't start. */
+    /* TODO: In case of control register 0, we write the config of 3 timers at once:
+      * can that have nasty effects on any other running timers ? */        
+    R32(t->control) &= t->deprog;
+    R32(t->control) |= t->prog;
 
-    /* Set handler */    
+    KDEBUG(("BEFORE SETTING TIMER\n"));
+    KDEBUG(("CPU          sr=%04x\n", get_sr()));
+    KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
+    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
+    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
+    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
+    KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
+    KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));
+
+    /* Set timer period */
+    {
+        uint32_t value = cpu_freq / frequency;
+        uint32_t compare = 0;
+        KDEBUG(("cpu_freq=%ld frequency=%ld, cpu/freq=0x%08lx\n", cpu_freq, frequency, value));
+    //    R32(t->value) = value;
+        R32(t->compare) = compare;
+    *((volatile unsigned long * const)0xB00218) = 0x8000;
+        KDEBUG(("Wrote value 0x%08lx. Now %p=%08lx\n", value, (void*)t->value,R32(t->value)));
+        KDEBUG(("Wrote compare 0x%08lx. Now %p=%08lx\n", compare, (void*)t->compare,R32(t->compare)));
+    //KDEBUG(("Programming val %p=%08lx\n",(void*)t->value,R32(t->value)));
+    }
+    
+
+   /* Set handler */    
     setexc(t->vector, (uint32_t)handler);
 
     /* Before starting the timer, ignore any previous pending interrupt from it */
@@ -221,35 +246,15 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* Unmask interrupts for that timer */
     R16(IRQ_MASK_GRP1) &= t->irq_mask;
 
-    /* Start the timer.
-     * TODO: In case of control register 0, we write the config of 3 timers at once:
-     * can that have nasty effects on any other running timers ? */    
-    KDEBUG(("CPU sr=%04x (before starting timer)\n",get_sr()));    
-
-    KDEBUG(("BEFORE STARTING TIMER\n"));
-    KDEBUG(("CPU sr=%04x\n",get_sr()));
-    KDEBUG(("value           %p=%p\n", t->value,(void*)*t->value));
-    KDEBUG(("irq_pending(1)  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
-    KDEBUG(("irq_polarity(1) %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
-    KDEBUG(("irq_edge(1)     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
-    KDEBUG(("irq_mask(1)     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
-    KDEBUG(("control         %p=%p\n",t->control,(void*)*t->control));
-
-    *(t->control) |= t->start;
     set_sr(sr);
-    KDEBUG(("AFTER STARTING TIMER\n"));
-    KDEBUG(("CPU sr=%04x (after starting timer)\n",get_sr()));
-    KDEBUG(("value           %p=%p\n", t->value,(void*)*t->value));
-    KDEBUG(("irq_pending(1)  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
-    KDEBUG(("irq_polarity(1) %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
-    KDEBUG(("irq_edge(1)     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
-    KDEBUG(("irq_mask(1)     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
-    KDEBUG(("control         %p=%p\n",t->control,(void*)*t->control));
-
-    KDEBUG(("After start.... charge=%p charge=%p\n",(void*)(*t->value),(void*)(*t->value)));
-
-    //a2560u_debug("TIMER RUNNING\r\n");
-    R32(0xb40008) = 0xffff0000;//for(;;);
+    KDEBUG(("AFTER SETTING TIMER\n"));
+    KDEBUG(("CPU          sr=%04x\n", get_sr()));
+    KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
+    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
+    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
+    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
+    KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
+    KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));    
 }
 
 /*
@@ -260,10 +265,18 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
 void a2560u_timer_enable(uint16_t timer, bool enable)
 {
     struct a2560u_timer_t *t = (struct a2560u_timer_t *)&a2560u_timers[timer];
+//KDEBUG(("Before %s > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control)));
     if (enable)
-        *t->control |= TIMER_CTRL_ENABLE;
+        R32(t->control) |= t->start;
     else
-        *t->control &= ~TIMER_CTRL_ENABLE;
+        R32(t->control) &= ~t->start;
+
+KDEBUG(("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control)));
+    if (R32(t->value) != R32(t->value))
+        KDEBUG(("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value)));
+    else
+        KDEBUG(("Timer is not running\n"));
+    R32(0xb40008) = 0xffff0000;
 }
 
 

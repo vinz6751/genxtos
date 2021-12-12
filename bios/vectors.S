@@ -429,8 +429,10 @@ vbl_end:
 
 _int_timerc:
         addq.l  #1, _hz_200.w           // increment 200 Hz counter
-        add.l #0x1,0xb40008        
-        and.w #0xf4ff,0xb00102
+#ifdef MACHINE_A2560U        
+        add.l #0x1,0xb40008     // (debug change border colour)   
+        and.w #0xfbff,0xb00102 // Acknowledge timer 3 GAVIN interrupt
+#endif        
         rte
         rol.w   _timer_c_sieve          // check for 4th call
         jpl     timerc_end

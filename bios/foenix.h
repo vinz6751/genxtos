@@ -16,13 +16,13 @@
 #include <stdint.h>
 
 #ifndef R8
-    #define R8(x) *((int8_t * volatile)(x))
+    #define R8(x) *((volatile int8_t * const)(x))
 #endif
 #ifndef R16
-    #define R16(x) *((uint16_t * volatile)(x))
+    #define R16(x) *((volatile uint16_t * const)(x))
 #endif
 #ifndef R32
-    #define R32(x) *((uint32_t * volatile)(x))
+    #define R32(x) *((volatile uint32_t * const)(x))
 #endif
 
 
@@ -128,23 +128,23 @@
 #endif
 
 /* Timers */
-#define TIMER_CTRL0    ((uint32_t*)(GAVIN+0x200))
-#define TIMER_CTRL1    ((uint32_t*)(GAVIN+0x204))
-#define TIMER0_VALUE   ((uint32_t*)(GAVIN+0x208))
-#define TIMER0_COMPARE ((uint32_t*)(GAVIN+0x20C))
-#define TIMER1_VALUE   ((uint32_t*)(GAVIN+0x210))
-#define TIMER1_COMPARE ((uint32_t*)(GAVIN+0x214))
-#define TIMER2_VALUE   ((uint32_t*)(GAVIN+0x218))
-#define TIMER2_COMPARE ((uint32_t*)(GAVIN+0x21C))
-#define TIMER3_VALUE   ((uint32_t*)(GAVIN+0x220))
-#define TIMER3_COMPARE ((uint32_t*)(GAVIN+0x224))
+#define TIMER_CTRL0    (GAVIN+0x200)
+#define TIMER_CTRL1    (GAVIN+0x204)
+#define TIMER0_VALUE   (GAVIN+0x208)
+#define TIMER0_COMPARE (GAVIN+0x20C)
+#define TIMER1_VALUE   (GAVIN+0x210)
+#define TIMER1_COMPARE (GAVIN+0x214)
+#define TIMER2_VALUE   (GAVIN+0x218)
+#define TIMER2_COMPARE (GAVIN+0x21C)
+#define TIMER3_VALUE   (GAVIN+0x220)
+#define TIMER3_COMPARE (GAVIN+0x224)
 /* Flags for timer control */
 #define TIMER_CTRL_ENABLE   0x01
-#define TIMER_CTRL_CLEAR    0x02
-#define TIMER_CTRL_LOAD     0x04
-#define TIMER_CTRL_UP       0x08
-#define TIMER_CTRL_RECLEAR  0x10
-#define TIMER_CTRL_RELOAD   0x20
+#define TIMER_CTRL_CLEAR    0x02 /* Set this if counting up */
+#define TIMER_CTRL_LOAD     0x04 /* Set this if counting down */
+#define TIMER_CTRL_UPDOWN   0x08 /* Set this if counting down */
+#define TIMER_CTRL_RECLEAR  0x10 /* Set this to auto recommence counting up */
+#define TIMER_CTRL_RELOAD   0x20 /* Set this if auto recommence counting down */
 
 /* BEATRIX */
 #define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130))   /* Control register for the SN76489 */
