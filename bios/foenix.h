@@ -50,6 +50,14 @@
 /* Interrupts */
 #define IRQ_GROUPS        3 /* Number of IRQ groups */
 #define IRQ_PENDING_GRP0 (GAVIN+0x100)
+    #define INT_SOF_A           0x00    /* Vicky Channel A Start of Frame */
+    #define INT_SOL_A           0x01    /* Vicky Channel A Start of Line */
+    #define INT_VICKY_A_1       0x02
+    #define INT_VICKY_A_2       0x03
+    #define INT_VICKY_A_3       0x04
+    #define INT_VICKY_A_4       0x05
+    #define INT_RESERVED_1      0x06
+    #define INT_VICKY_A_DAC     0x07
 #define IRQ_PENDING_GRP1 (GAVIN+0x102)
 #define IRQ_PENDING_GRP2 (GAVIN+0x104)
 #define IRQ_POL_GRP0     (GAVIN+0x108)
@@ -62,7 +70,8 @@
 #define IRQ_MASK_GRP1 	 (GAVIN+0x11A)
 #define IRQ_MASK_GRP2 	 (GAVIN+0x11C)
 
-/* Interrupt vector numbers (not address!)  */
+/* 68000 Interrupt vector numbers (not address!)  */
+#define INT_VICKYII      0x1E
 #define INT_TIMERS_VECN  0x48
 #define INT_TIMER0_VECN  (INT_TIMERS_VECN+0) /* Timer 0, Clocked with the CPU Clock */
 #define INT_TIMER1_VECN  (INT_TIMERS_VECN+1) /* Timer 1, Clocked with the CPU Clock */
@@ -75,14 +84,7 @@
  * Define standard interrupt numbers to be used for enabling, disabling an interrupt or setting its handler
  */
 
-#define INT_SOF_A           0x00    /* Vicky Channel A Start of Frame */
-#define INT_SOL_A           0x01    /* Vicky Channel A Start of Line */
-#define INT_VICKY_A_1       0x02
-#define INT_VICKY_A_2       0x03
-#define INT_VICKY_A_3       0x04
-#define INT_VICKY_A_4       0x05
-#define INT_RESERVED_1      0x06
-#define INT_VICKY_A_DAC     0x07
+
 #define INT_SOF_B           0x08    /* Vicky Channel B Start of Frame */
 #define INT_SOL_B           0x09    /* Vicky Channel B Start of Line */
 #define INT_VICKY_B_1       0x0A
