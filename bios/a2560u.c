@@ -51,12 +51,13 @@ static uint32_t vbl_freq; /* VBL frequency */
 
 void a2560u_init_lut0(void);
 void a2560u_debug(const char *s);
-void a2560u_serial_put(uint8_t b);
+
 
 /* Interrupt */
 static void irq_init(void);
 static void timer_init(void);
 void irq_add_handler(int id, void *handler);
+void a2560u_irq_vicky(void);
 
 /* Implementation ************************************************************/
 
@@ -73,13 +74,17 @@ void a2560u_init(void)
     sn76489_mute_all();
 
     /* Clear screen and home */
-    KDEBUG(("\033E\r\n"));
+    a2560u_debug(("\033Ea2560u_init()\r\n"));
 }
 
 void a2560u_screen_init(void)
 {
     vicky2_init();
     vbl_freq = 60; /* TODO read that from VICKY's video mode */
+
+    /* Setup VICKY interrupts handler (VBL, HBL etc.) */
+    vblsem = 0;
+    a2560u_irq_set_handler(INT_SOF_A, int_vbl);
 }
 
 void a2560u_setphys(const uint8_t *address)
@@ -112,13 +117,8 @@ uint32_t a2560u_bcostat1(void)
 void a2560u_bconout1(uint8_t byte)
 {
     vicky2_set_border_color(0x000000);
-    uart16550_put(UART0, &byte, 1);
-    vicky2_set_border_color(0x666666);
-}
 
-void a2560u_serial_put(uint8_t b)
-{
-    uart16550_can_get(UART0);
+    vicky2_set_border_color(0x666666);
 }
 
 
@@ -163,10 +163,10 @@ const struct a2560u_timer_t a2560u_timers[] =
 {
     /* 0x2C is TIMER_CTRL_LOAD|TIMER_CTRL_UPDOWN|TIMER_CTRL_RELOAD (count down)
      * 0x1A is TIMER_CTRL_CLEAR|TIMER_CTRL_RECLEAR (count up) */
-    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, 0x0000002C, 0x00000001, ~0x0100, INT_TIMER0_VECN },
-    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, 0x00002C00, 0x00000100, ~0x0200, INT_TIMER1_VECN },
-    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, 0x002C0000, 0x00010000, ~0x0400, INT_TIMER2_VECN },
-    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, 0x0000002C, 0x00000001, ~0x0800, INT_TIMER3_VECN }
+    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, 0x0000002C, 0x00000001, 0x0100, INT_TIMER0_VECN },
+    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, 0x00002C00, 0x00000100, 0x0200, INT_TIMER1_VECN },
+    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, 0x002C0000, 0x00010000, 0x0400, INT_TIMER2_VECN },
+    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, 0x0000002C, 0x00000001, 0x0800, INT_TIMER3_VECN }
 };
 
 
@@ -214,15 +214,16 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     R32(t->control) &= t->deprog;
     R32(t->control) |= t->prog;
 
+#if 0
     KDEBUG(("BEFORE SETTING TIMER\n"));
     KDEBUG(("CPU          sr=%04x\n", get_sr()));
     KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
     KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
-    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
-    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
+//    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
+//    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
     KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
     KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));
-
+#endif
     /* Set timer period */
     {
         uint32_t value = cpu_freq / frequency;
@@ -237,22 +238,25 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
    /* Set handler */    
     setexc(t->vector, (uint32_t)handler);
 
-    /* Before starting the timer, ignore any previous pending interrupt from it */
-    R16(IRQ_PENDING_GRP1) &= t->irq_mask;
+    /* Before starting the timer, ignore any previous pending interrupt from it */    
+    if (R16(IRQ_PENDING_GRP1) & t->irq_mask)
+        R16(IRQ_PENDING_GRP1) |= t->irq_mask;
 
     /* Unmask interrupts for that timer */
-    R16(IRQ_MASK_GRP1) &= t->irq_mask;
+    R16(IRQ_MASK_GRP1) &= ~t->irq_mask;
 
-    set_sr(0x2000/*sr*/);
+    set_sr(sr);
+#if 1
     KDEBUG(("AFTER SETTING TIMER\n"));
     KDEBUG(("CPU          sr=%04x\n", get_sr()));
     KDEBUG(("vector       0x%02x=%p\n",t->vector,(void*)R32(((int32_t)t->vector) << 2)));
     KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
-//    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
+    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
 //    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
 //    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
     KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
     KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));    
+#endif    
 }
 
 /*
@@ -274,7 +278,6 @@ KDEBUG(("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->
         KDEBUG(("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value)));
     else
         KDEBUG(("Timer is not running\n"));
-    R32(0xb40008) = 0xffff0000;
 }
 
 
@@ -284,21 +287,15 @@ KDEBUG(("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->
  */
 void a2560u_debug(const char *s)
 {
-    char *c = (char*)s;
-    long *border = (long*)0xb40008;
-    *border = 0x00ffffff;
-    while (*c)
-    {
-        a2560u_serial_put(*c);
-        *border = 0x000000f0;
-    }
-    *border = 0x0000ff00;
+#ifdef ENABLE_KDEBUG
+    uart16550_put(UART0, (const uint8_t*)s, strlen(s)+1);
+#endif
 }
 
 /* Interrupts management */
 static void irq_init(void)
 {
-    int i;
+    int i, j;
 
     /* This is only during startup, in normal user you would never disable all interrupts. Would you ? */
     volatile uint16_t *pending = (uint16_t*)IRQ_PENDING_GRP0;
@@ -309,11 +306,54 @@ static void irq_init(void)
     // FIXME
     for (i = 0; i < IRQ_GROUPS; i++)
     {
-        pending[i] = polarity[i] = 0;
-        mask[i] = 0xffff;
-        edge[i] = 0xffff;
+        mask[i] = edge[i] = 0xffff;
+        pending[i] = polarity[i] = 0;        
+        
+
+        for (j=0; j<16; j++)
+            a2560_irq_vectors[i][j] = just_rts;
     }
 
     for (i=0x40; i<0x60; i++)
-        setexc(i,(uint32_t)just_rte);    
+        setexc(i,(uint32_t)just_rte);
+
+    setexc(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
+}
+
+/* Interrupt handlers for each of the IRQ groups */
+void *a2560_irq_vectors[IRQ_GROUPS][16];
+/* Utility functions, don't use directly */
+static inline uint16_t irq_group(uint16_t irq_id) { return irq_id >> 4; }
+static inline uint16_t irq_number(uint16_t irq_id) { return irq_id & 0xf; }
+static inline uint16_t irq_mask(uint16_t irq_id) { return 1 << irq_number(irq_id); }
+static inline uint16_t *irq_mask_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_MASK_GRP0)[irq_group(irq_id)]; }
+static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_PENDING_GRP0)[irq_group(irq_id)]; }
+static inline void *irq_handler(uint16_t irq_id) { return a2560_irq_vectors[irq_group(irq_id)][irq_number(irq_id)]; }
+
+
+/* Enable an interruption. First byte is group, second byte is bit */
+void a2560U_irq_enable(uint16_t irq_id)
+{
+    a2560u_irq_acknowledge(irq_id);
+    R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
+    KDEBUG(("a2560U_irq_enable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+}
+
+/* Disable an interruption. First byte is group, second byte is bit */
+void a2560U_irq_disable(uint16_t irq_id)
+{
+    R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
+}
+
+void a2560u_irq_acknowledge(uint16_t irq_id)
+{
+    R16(irq_pending_reg(irq_id)) |= irq_mask(irq_id);
+}
+
+/* Set an interrupt handler for IRQ managed through GAVIN interrupt registers */
+void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
+{    
+    void *old_handler = irq_handler(irq_id);    
+    R32(irq_handler(irq_id)) = (uint32_t)handler;
+    return old_handler;
 }

@@ -38,7 +38,7 @@ struct a2560u_timer_t {
     uint32_t deprog;   /* AND the control register with this to clear timer settings */
     uint32_t prog;     /* OR the control register with this to program the timer in countdown mode */
     uint32_t start;    /* OR the control register with this to start the timer in countdown mode */
-    uint16_t irq_mask; /* AND this to the irq_pending_group to acknowledge the interrupt */
+    uint16_t irq_mask; /* OR this to the irq_pending_group to acknowledge the interrupt */
     uint16_t vector;   /* Exception vector number (not address !) */
     uint32_t dummy;    /* Useless but having the structure 32-byte larges makes it quicker to generate an offset with lsl #5 */
 };
@@ -46,5 +46,11 @@ struct a2560u_timer_t {
 void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector);
 void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
 void a2560u_timer_enable(uint16_t timer, bool enable);
+
+extern void *a2560_irq_vectors[IRQ_GROUPS][16];
+void a2560U_irq_enable(uint16_t irq_id);
+void a2560U_irq_disable(uint16_t irq_id);
+void a2560u_irq_acknowledge(uint16_t irq_id);
+void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);
 
 #endif

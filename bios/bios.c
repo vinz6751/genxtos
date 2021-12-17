@@ -384,7 +384,7 @@ static void bios_init(void)
      * enable interrupts earlier (so that the interrupt-driven serial port
      * routines work), even though we haven't yet initialised the sound &
      * keyboard repeat stuff.
-     */
+     */     
     KDEBUG(("init_system_timer()\n"));
     init_system_timer();
 
@@ -403,6 +403,7 @@ static void bios_init(void)
     set_sr(0x2000);
 # ifdef MACHINE_A2560U
     a2560u_timer_enable(2,true);
+    a2560U_irq_enable(INT_SOF_A);
 # endif
 
 #endif
