@@ -11,6 +11,7 @@
  */
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "uart16550.h"
 
 /* DLAB=0 */
@@ -79,13 +80,13 @@ void uart16550_put(UART16550 *uart, const uint8_t *bytes, uint32_t count)
 }
 
 
-int uart16550_can_get(const UART16550 *uart)
+bool uart16550_can_get(const UART16550 *uart)
 {    
     return R8(uart)[LSR] & 0x01;
 }
 
 
-int uart16550_can_put(const UART16550 *uart)
+bool uart16550_can_put(const UART16550 *uart)
 {    
     return R8(uart)[LSR] & 0x20; /* bit 5: THR is empty */
 }

@@ -14,6 +14,7 @@
 #define UART16550_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifndef UART16550_CLOCK
     #define UART16550_CLOCK 20000000 /* 20Mhz */
@@ -52,8 +53,8 @@ void uart16550_set_bps(UART16550 *uart, uint16_t bps_code);
 void uart16550_set_line(UART16550 *uart, uint8_t flags);
 void uart16550_put(UART16550 *uart, const uint8_t *bytes, uint32_t count);
 uint8_t uart16550_get(const UART16550 *uart);
-int uart16550_can_get(const UART16550 *uart);
-int uart16550_can_put(const UART16550 *uart);
+bool uart16550_can_get(const UART16550 *uart);
+bool uart16550_can_put(const UART16550 *uart);
 
 
 #endif
