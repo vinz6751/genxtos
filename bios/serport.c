@@ -305,7 +305,6 @@ LONG bconout1(WORD dev, WORD b)
     coldfire_rs232_write_byte(b);
     return 1;
 #elif defined(MACHINE_A2560U)
-    *((unsigned long * volatile)0xB40008) = 0x0323200;
     a2560u_bconout1(b);
     return 1;
 #elif CONF_WITH_MFP_RS232
