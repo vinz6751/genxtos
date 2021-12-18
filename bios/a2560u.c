@@ -50,7 +50,6 @@ static uint32_t vbl_freq; /* VBL frequency */
 /* Prototypes ****************************************************************/
 
 void a2560u_init_lut0(void);
-void a2560u_debug(const char *s);
 
 
 /* Interrupt */
@@ -116,9 +115,7 @@ uint32_t a2560u_bcostat1(void)
 
 void a2560u_bconout1(uint8_t byte)
 {
-    vicky2_set_border_color(0x000000);
-
-    vicky2_set_border_color(0x666666);
+    return uart16550_put(UART0,&byte, 1);
 }
 
 
@@ -171,14 +168,14 @@ const struct a2560u_timer_t a2560u_timers[] =
 
 
 /*
- * Initialise the timers, including the 200Hz system timer.
+ * Initialise the timers.
  */
 static void timer_init(void) 
 {
     int i;
 
     /* Disable all timers */
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < sizeof(a2560u_timers)/sizeof(struct a2560u_timer_t); i++)
         a2560u_timer_enable(i, false);
 }
 
@@ -308,7 +305,6 @@ static void irq_init(void)
     {
         mask[i] = edge[i] = 0xffff;
         pending[i] = polarity[i] = 0;        
-        
 
         for (j=0; j<16; j++)
             a2560_irq_vectors[i][j] = just_rts;
@@ -328,7 +324,7 @@ static inline uint16_t irq_number(uint16_t irq_id) { return irq_id & 0xf; }
 static inline uint16_t irq_mask(uint16_t irq_id) { return 1 << irq_number(irq_id); }
 static inline uint16_t *irq_mask_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_MASK_GRP0)[irq_group(irq_id)]; }
 static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_PENDING_GRP0)[irq_group(irq_id)]; }
-static inline void *irq_handler(uint16_t irq_id) { return a2560_irq_vectors[irq_group(irq_id)][irq_number(irq_id)]; }
+#define irq_handler(irqid) (a2560_irq_vectors[irq_group(irqid)][irq_number(irqid)])
 
 
 /* Enable an interruption. First byte is group, second byte is bit */
@@ -353,7 +349,28 @@ void a2560u_irq_acknowledge(uint16_t irq_id)
 /* Set an interrupt handler for IRQ managed through GAVIN interrupt registers */
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
 {    
-    void *old_handler = irq_handler(irq_id);    
-    R32(irq_handler(irq_id)) = (uint32_t)handler;
+//    a2560_irq_vectors[0][0] = handler;
+//    return 0L;
+    void *old_handler = irq_handler(irq_id);
+    irq_handler(irq_id) = (void*)handler;
+
+    // char msg[50];
+    // sprintf(msg, "a2560_irq_vectors=%p\r\n", (void*)a2560_irq_vectors);
+    // a2560u_debug(msg);
+    // sprintf(msg,"handler(%d) irq_handler(irq_id)=%p value=%p\r\n",irq_id, &irq_handler(irq_id), irq_handler(irq_id));
+    // a2560u_debug(msg);
+
+    KDEBUG(("Handler %04ux: %p\n", irq_id, handler));
     return old_handler;
+}
+
+
+void debug1(void* p);
+void debug1(void* p)
+{   
+#if 0
+    char msg[30];
+    sprintf(msg,"handler=%p\r\n",(void*)frclock);
+    a2560u_debug(msg);    
+#endif
 }
