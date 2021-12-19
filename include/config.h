@@ -654,6 +654,9 @@
 # ifndef CONF_WITH_WM8776
 #  define CONF_WITH_WM8776 1
 # endif
+# ifndef CONF_WITH_BQ4802LY
+#  define CONF_WITH_BQ4802LY 1
+# endif
 # ifndef CONF_VRAM_ADDRESS
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
@@ -1960,6 +1963,15 @@
  */
 #ifndef CONF_WITH_WM8776
 # define CONF_WITH_WM8776 0
+#endif
+
+/*
+ * Set CONF_WITH_BQ4802LY if the machine has a bq4802LY real time clock.
+ * If this is defined, the driver requires BQ4802LY_PORT to be defined as the address
+ * of the chip.
+ */
+#ifndef CONF_WITH_BQ4802LY
+# define CONF_WITH_BQ4802LY 0
 #endif
 
 /*

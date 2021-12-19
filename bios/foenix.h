@@ -59,6 +59,15 @@
     #define INT_RESERVED_1      0x06
     #define INT_VICKY_A_DAC     0x07
 #define IRQ_PENDING_GRP1 (GAVIN+0x102)
+    #define INT_KBD_PS2         0x10    /* PS/2 Keyboard */
+    #define INT_MOUSE           0x12    /* PS/2 Mouse */
+    #define INT_COM1            0x13    /* COM1 */
+    #define INT_TIMER0          0x18    /* Timer 0, Clocked with the CPU Clock */
+    #define INT_TIMER1          0x19    /* Timer 1, Clocked with the CPU Clock */
+    #define INT_TIMER2          0x1A    /* Timer 2, Clocked with the CPU Clock */
+    #define INT_TIMER3          0x1B    /* Timer 3, Clocked with the SOF Channel A */
+    #define INT_TIMER4          0x1C    /* Timer 4, Clocked with the SOF Channel B */
+    #define INT_RTC             0x1F    /* Real Time Clock */
 #define IRQ_PENDING_GRP2 (GAVIN+0x104)
 #define IRQ_POL_GRP0     (GAVIN+0x108)
 #define IRQ_POL_GRP1     (GAVIN+0x10A)
@@ -71,13 +80,14 @@
 #define IRQ_MASK_GRP2 	 (GAVIN+0x11C)
 
 /* 68000 Interrupt vector numbers (not address!)  */
-#define INT_VICKYII      0x1E
-#define INT_TIMERS_VECN  0x48
-#define INT_TIMER0_VECN  (INT_TIMERS_VECN+0) /* Timer 0, Clocked with the CPU Clock */
-#define INT_TIMER1_VECN  (INT_TIMERS_VECN+1) /* Timer 1, Clocked with the CPU Clock */
-#define INT_TIMER2_VECN  (INT_TIMERS_VECN+2) /* Timer 2, Clocked with the CPU Clock */
-#define INT_TIMER3_VECN  (INT_TIMERS_VECN+3) /* Timer 3, Clocked with the SOF Channel A */
-#define INT_NIRQ         4
+#define INT_VICKYII       0x1E
+#define INT_TIMERS_VECN   0x48
+#define INT_TIMER0_VECN   (INT_TIMERS_VECN+0) /* Timer 0, Clocked with the CPU Clock */
+#define INT_TIMER1_VECN   (INT_TIMERS_VECN+1) /* Timer 1, Clocked with the CPU Clock */
+#define INT_TIMER2_VECN   (INT_TIMERS_VECN+2) /* Timer 2, Clocked with the CPU Clock */
+#define INT_TIMER3_VECN   (INT_TIMERS_VECN+3) /* Timer 3, Clocked with the SOF Channel A */
+#define INT_BQ4802LY_VECN 0x4F
+#define INT_NIRQ          4
 
 #if 0
 /*

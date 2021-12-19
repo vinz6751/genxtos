@@ -250,16 +250,16 @@ void a2560u_debug(const char*);
 static void neg_cell(UBYTE *cell)
 {
     v_stat_0 |= M_CRIT;                 /* start of critical section. */
-    //KDEBUG(("Negcell %p\n", (void*)cell));
+
 #if CONF_WITH_CHUNKY8
     int i; /* Source bitshift */
     const int inc = v_lin_wr-4;
     for (i = 0; i < v_cel_ht; i++)
     {
         /* TODO it seems that cursor blinking and other things involving reading from video ram don't work (yet).
-            * When we read from video ram, we get 0. So the cursor is always displayed. As I got from the forum,
-            * it's a known problem but I am not sure if it will be resolved. Once VDMA is implemented in the A2560U,
-            * we can use it to transfer video ram to ram and do our thing. */
+         * When we read from video ram, we get 0. So the cursor is always displayed. As I got from the forum,
+         * it's a known problem but I am not sure if it will be resolved. Once VDMA is implemented in the A2560U,
+         * we can use it to transfer video ram to ram and do our thing. */
         /* We process 4 bytes at a time and loop is unrolled for performance */
         *((LONG*)cell) = ~*((LONG*)cell);
         cell += 4;

@@ -23,11 +23,18 @@
 
 | GAVIN -----------------------------------------------------------------------
 .EQU GAVIN,             0xB00000
+    .EQU RTC,               (GAVIN+0x80)
+        .EQU RTC_FLAGS,     (RTC+0x26)
 | Interrupts
 .EQU IRQ_PENDING_GRP0,  GAVIN+0x100
     .EQU VICKY_INT_VBL, 0x1
     .EQU VICKY_INT_HBL, 0x2
 .EQU IRQ_PENDING_GRP1,  GAVIN+0x102
+    .EQU PS2KEYB_INT,   0x0001
+    .EQU PS2MOUSE_INT,  0x0004
+    .EQU PS2MOUSE_INT,  0x0004
+    .EQU COM1_INT,      0x0008
+    .EQU RTC_INT,       0x8000
 .EQU IRQ_PENDING_GRP2,  GAVIN+0x104
 .EQU IRQ_POL_GRP0,      GAVIN+0x108
 .EQU IRQ_POL_GRP1,      GAVIN+0x10A
@@ -54,8 +61,11 @@
 | Exports ---------------------------------------------------------------------
     .GLOBAL a2560u_memconf
     .GLOBAL _a2560u_irq_vicky
+    .GLOBAL _a2560u_irq_bq4802ly
 | Imports ---------------------------------------------------------------------
     .GLOBAL a2560_irq_vectors
+    .GLOBAL _bq4802ly_ticks
+    .GLOBAL _hz_200
         
 a2560u_memconf: // Called from memory.S to detect memory setup
     move.l  #0x200000,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
@@ -90,3 +100,11 @@ vicky_irq_next:
 vicky_irq_done:
     movem.l (sp)+,d3-d4/a3-a4
     rte    
+
+
+_a2560u_irq_bq4802ly: // Real time clock interrupt handler
+    tst.b   RTC_FLAGS  // Acknowledge interrupt on the bq4802LY by reading the flags
+    move.w  #RTC_INT,IRQ_PENDING_GRP1 // Acknowledge GAVIN interrupt
+    addq.l  #1,_bq4802ly_ticks
+    move.l  _bq4802ly_ticks,_hz_200 // We use the RTC timer as 200hz source. Not quite 200Hz since it's 3.90625ms rather than 5ms though.
+    rte
