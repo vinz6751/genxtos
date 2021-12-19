@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-// #define ENABLE_KDEBUG
+//#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "biosext.h"
@@ -359,14 +359,6 @@ static void bios_init(void)
     etv_term = just_rts;
     swv_vec = just_rts;
 
-    /* Initialize the RS-232 port(s) */
-    KDEBUG(("chardev_init()\n"));
-    chardev_init();     /* Initialize low-memory bios vectors */
-    boot_status |= CHARDEV_AVAILABLE;   /* track progress */
-    KDEBUG(("init_serport()\n"));
-    init_serport();
-    boot_status |= RS232_AVAILABLE;     /* track progress */
-
     /* setup default VBL queue with vbl_list[] */
     nvbls = ARRAY_SIZE(vbl_list);
     vblqueue = vbl_list;
@@ -376,6 +368,14 @@ static void bios_init(void)
             vbl_list[i] = NULL;
         }
     }
+
+   /* Initialize the RS-232 port(s) */
+    KDEBUG(("chardev_init()\n"));
+    chardev_init();     /* Initialize low-memory bios vectors */
+    boot_status |= CHARDEV_AVAILABLE;   /* track progress */
+    KDEBUG(("init_serport()\n"));
+    init_serport();
+    boot_status |= RS232_AVAILABLE;     /* track progress */
 
     /*
      * Initialize the system 200 Hz timer (timer C on Atari hardware).
@@ -773,8 +773,8 @@ void biosmain(void)
     run_reset_resident();       /* see comments above */
 #endif
 
-#if WITH_CLI
-    if (bootflags & BOOTFLAG_EARLY_CLI) {
+#if WITH_CLI || defined(MACHINE_A2560U)
+    if (bootflags & BOOTFLAG_EARLY_CLI || 1) {
         /*
          * run an early console, passing the default environment
          */

@@ -172,18 +172,7 @@ void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result)
 
 void vicky2_set_bitmap0_address(const uint8_t *address)
 {
-    R32(VICKY_A_BMP_FB) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */
-#if 0
-    uint8_t *video = (uint8_t*)VRAM_Bank0;//R32(VICKY_A_BMP_FB); //(uint8_t*)(address+VRAM_Bank0);
-    int i,j,b;
-    b = 1;
-    vicky2_set_border_color(b++);
-    for (i=0;i<640;i++)
-        for(j=0;j<480;j++)
-        {
-            video[j*640+i] = b++;
-        }
-#endif    
+    R32(VICKY_A_BMP_FB) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */  
 }
 
 /* For quick 4bit to 8bit scaling */
