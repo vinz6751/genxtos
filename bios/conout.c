@@ -17,7 +17,7 @@
  * If we ever add a 16x32 font, the code will need changing!
  */
 
-// #define ENABLE_KDEBUG
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "lineavars.h"
@@ -94,10 +94,8 @@ static UBYTE *cell_addr(UWORD x, UWORD y)
     if (y > v_cel_my)
         y = v_cel_my;           /* clipped y */
 
-#ifdef MACHINE_A2560U
-    UBYTE *res = v_bas_ad + (ULONG)v_cel_wr * y + x * 8;
-    KDEBUG(("cell_addr(%i,%i)=%p  v_bas_ad:%p \n",x,y,res,v_bas_ad));
-    return res;
+#ifdef MACHINE_A2560U    
+    return v_bas_ad + (ULONG)v_cel_wr * y + x * 8;;
 #else
     ULONG disx, disy;
 
@@ -248,23 +246,25 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
  *
  * out:
  */
-
+void a2560u_debug(const char*);
 static void neg_cell(UBYTE *cell)
 {
     v_stat_0 |= M_CRIT;                 /* start of critical section. */
-
+    //KDEBUG(("Negcell %p\n", (void*)cell));
 #if CONF_WITH_CHUNKY8
-    int i,j; /* Source bitshift */
-    UWORD fg = v_col_fg;
-    UWORD bg = v_col_bg;
-    
-    for (j = 0; j < v_cel_ht; j++)
-    {        
-        for (i = 0; i < 8/*font width*/; i++)
-        {                
-            cell[i] = cell[i] == fg ? bg : fg;            
-        }
-        cell += v_lin_wr;
+    int i; /* Source bitshift */
+    const int inc = v_lin_wr-4;
+    for (i = 0; i < v_cel_ht; i++)
+    {
+        /* TODO it seems that cursor blinking and other things involving reading from video ram don't work (yet).
+            * When we read from video ram, we get 0. So the cursor is always displayed. As I got from the forum,
+            * it's a known problem but I am not sure if it will be resolved. Once VDMA is implemented in the A2560U,
+            * we can use it to transfer video ram to ram and do our thing. */
+        /* We process 4 bytes at a time and loop is unrolled for performance */
+        *((LONG*)cell) = ~*((LONG*)cell);
+        cell += 4;
+        *((LONG*)cell) = ~*((LONG*)cell);
+        cell += inc;
     }
 #else
     int len;
