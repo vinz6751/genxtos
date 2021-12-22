@@ -14,16 +14,18 @@
  #include "ps2.h"
 
  /* Prototypes */
+static const char driver_name[] = "PS/2 Mouse";
 static bool init(struct ps2_driver_api_t *api);
-static bool can_drive(const uint8_t *ps2_device_type);
+static bool can_drive(const uint8_t ps2_device_type[]);
 static void process(const struct ps2_driver_api_t *api, uint8_t byte);
 
 /* Driver itself */
-struct ps2_driver_t ps2_mouse_driver =
+const struct ps2_driver_t ps2_mouse_driver =
 {
-    init,
-    can_drive,
-    process
+    .name = driver_name,
+    .init = init,
+    .can_drive = can_drive,
+    .process = process
 };
 
  /* States the mouse state machine can be in */
@@ -35,7 +37,7 @@ typedef enum sm_state
 } sm_state_t;
 
  /* Internal state of the driver */
-struct ps2_mouse_local_t
+static struct ps2_mouse_local_t
 {
     sm_state_t state;  /* State of the state machine */
     uint16_t x;
@@ -58,7 +60,7 @@ static bool init(struct ps2_driver_api_t *api)
     return SUCCESS;
 }
 
-static bool can_drive(const uint8_t *ps2_device_type)
+static bool can_drive(const uint8_t ps2_device_type[])
 {
 	switch (ps2_device_type[0])
 	{

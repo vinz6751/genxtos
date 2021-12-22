@@ -22,7 +22,7 @@
  * - KEYTBL.TBL config with _AKP cookie (tos 5.00 and later)
  */
 
-/* #define ENABLE_KDEBUG */
+//#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "country.h"
@@ -39,6 +39,7 @@
 #include "coldfire.h"
 #include "amiga.h"
 #include "lisa.h"
+#include "a2560u.h"
 
 
 /* forward declarations */
@@ -1084,8 +1085,14 @@ void kbd_init(void)
     lisa_kbd_init();
 #endif
 
+#ifdef MACHINE_A2560U
+    a2560u_kbd_init();
+#endif
+
+#if CONF_WITH_IKBD_ACIA
     /* initialize the IKBD */
     ikbd_reset();
+#endif
 
     /* initialize the key repeat stuff */
     kb_ticks = 0;

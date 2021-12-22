@@ -19,10 +19,13 @@
 #include "foenix.h"
 
 #define VIDEO_RAM_SIZE VRAM0_SIZE
-#define BQ4802LY_BASE (GAVIN+0x80)
+#define BQ4802LY_BASE  (GAVIN+0x80)
+#define PS2_BASE       (GAVIN+0x2800)
+#define PS2_DATA       PS2_BASE
+#define PS2_CMD        (PS2_BASE+0x04)
 
 void a2560u_init(void); /* C entry point for initialisation */
-void a2560u_debug(const char *);
+void a2560u_debug(const char *, ...);
 void a2560u_screen_init(void);
 void a2560u_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez);
 void a2560u_setphys(const uint8_t *address);
@@ -45,5 +48,7 @@ void a2560U_irq_enable(uint16_t irq_id);
 void a2560U_irq_disable(uint16_t irq_id);
 void a2560u_irq_acknowledge(uint16_t irq_id);
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);
+
+void a2560u_kbd_init(void);
 
 #endif

@@ -287,7 +287,8 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S \
-			 uart16550.c sn76489.c wm8776.c vicky2.c \
+			 uart16550.c sn76489.c wm8776.c bq4802ly.c vicky2.c \
+			 ps2.c ps2_keyboard.c ps2_mouse.c \
 			 a2560u_s.S a2560u.c
 #			 c256genx.c c256genx2.S c256genx_kbd.S \
 

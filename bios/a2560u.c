@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 #include "emutos.h"
 #include "portab.h"
@@ -31,6 +32,7 @@
 #include "disk.h"
 #include "biosmem.h"
 #include "bootparams.h"
+#include "doprintf.h"
 #include "machine.h"
 #include "has.h"
 #include "../bdos/bdosstub.h"
@@ -41,6 +43,8 @@
 #include "sn76489.h"   /* Programmable Sound Generator */
 #include "wm8776.h"    /* Audio codec */
 #include "bq4802ly.h"  /* Real time clock */
+#include "ps2.h"
+#include "ps2_keyboard.h"
 #include "vicky2.h"    /* VICKY II graphics controller */
 #include "a2560u.h"
 
@@ -59,6 +63,8 @@ static void irq_init(void);
 void irq_add_handler(int id, void *handler);
 void a2560u_irq_bq4802ly(void);
 void a2560u_irq_vicky(void);
+void a2560u_irq_ps2kbd(void);
+void a2560u_irq_ps2mouse(void);
 
 /* Implementation ************************************************************/
 
@@ -75,7 +81,7 @@ void a2560u_init(void)
     sn76489_mute_all();
 
     /* Clear screen and home */
-    a2560u_debug(("\033Ea2560u_init()\r\n"));
+    a2560u_debug(("\033Ea2560u_init()"));
 }
 
 void a2560u_screen_init(void)
@@ -295,13 +301,19 @@ KDEBUG(("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->
 
 
 /*
- * Output the string on the serial port
+ * Output the string on the serial port.
  * Use this if the KDEBUG is not available yet.
  */
-void a2560u_debug(const char *s)
+void a2560u_debug(const char* __restrict__ s, ...)
 {
 #ifdef ENABLE_KDEBUG
-    uart16550_put(UART0, (const uint8_t*)s, strlen(s)+1);
+    char msg[80];    
+    va_list ap;
+    va_start(ap, s);
+    sprintf(msg,s,ap);
+    doprintf((void(*)(int))a2560u_bconout1, s, ap);
+    va_end(ap);
+    uart16550_put(UART0, (uint8_t*)"\r\n", 2);
 #endif
 }
 
@@ -413,6 +425,54 @@ void a2560u_setdt(uint32_t datetime)
         (time & 0b0000011111100000) >> 5,  /* minute */
         (time & 0b0000000000011111));      /* second */
 }
+
+
+/* PS/2 setup  ***************************************************************/
+
+static void *balloc_proxy(size_t howmuch)
+{
+    return balloc_stram(howmuch, false);
+}
+
+static const struct ps2_driver_t *drivers[] =
+{
+    &ps2_keyboard_driver  
+};
+
+
+void a2560u_kbd_init(void)
+{
+    /* Disable IEQ while we're configuring */
+    a2560U_irq_disable(INT_KBD_PS2);
+    a2560U_irq_disable(INT_MOUSE);
+
+    /* Explain our setup to the PS/2 subsystem */
+    ps2_config.counter      = (uint32_t*)&frclock; /* FIXME we're using the VBL counter */
+    ps2_config.counter_freq = 60;
+    ps2_config.port_data    = (uint8_t*)PS2_DATA;
+    ps2_config.port_status  = (uint8_t*)PS2_CMD;
+    ps2_config.port_cmd     = (uint8_t*)PS2_CMD;
+    ps2_config.n_drivers    = 1;
+    ps2_config.drivers      = (struct ps2_driver_t **)drivers;
+    ps2_config.malloc       = balloc_proxy;
+    ps2_config.on_key_down  = kbd_int;
+    ps2_config.on_key_up    = kbd_int;
+
+    ps2_init();
+
+    /* Register GAVIN interrupt handlers */
+    setexc(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);
+    setexc(INT_PS2MOUSE_VECN, (uint32_t)a2560u_irq_ps2mouse);
+
+    /* Acknowledge any pending interrupt */
+    a2560u_irq_acknowledge(INT_KBD_PS2);
+    a2560u_irq_acknowledge(INT_MOUSE);
+
+    /* Go ! */
+    a2560U_irq_enable(INT_KBD_PS2);
+    a2560U_irq_enable(INT_MOUSE);        
+}
+
 
 void debug1(void* p);
 void debug1(void* p)

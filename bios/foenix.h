@@ -81,6 +81,8 @@
 
 /* 68000 Interrupt vector numbers (not address!)  */
 #define INT_VICKYII       0x1E
+#define INT_PS2KBD_VECN   0x40
+#define INT_PS2MOUSE_VECN 0x41
 #define INT_TIMERS_VECN   0x48
 #define INT_TIMER0_VECN   (INT_TIMERS_VECN+0) /* Timer 0, Clocked with the CPU Clock */
 #define INT_TIMER1_VECN   (INT_TIMERS_VECN+1) /* Timer 1, Clocked with the CPU Clock */

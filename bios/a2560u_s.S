@@ -62,10 +62,15 @@
     .GLOBAL a2560u_memconf
     .GLOBAL _a2560u_irq_vicky
     .GLOBAL _a2560u_irq_bq4802ly
+    .GLOBAL _a2560u_irq_ps2kbd
+    .GLOBAL _a2560u_irq_ps2mouse
 | Imports ---------------------------------------------------------------------
     .GLOBAL a2560_irq_vectors
     .GLOBAL _bq4802ly_ticks
     .GLOBAL _hz_200
+    .GLOBAL _ps2_config
+    .GLOBAL _ps2_channel1_irq_handler
+    .GLOBAL _ps2_channel2_irq_handler
         
 a2560u_memconf: // Called from memory.S to detect memory setup
     move.l  #0x200000,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
@@ -107,4 +112,20 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
     move.w  #RTC_INT,IRQ_PENDING_GRP1 // Acknowledge GAVIN interrupt
     addq.l  #1,_bq4802ly_ticks
     move.l  _bq4802ly_ticks,_hz_200 // We use the RTC timer as 200hz source. Not quite 200Hz since it's 3.90625ms rather than 5ms though.
+    rte
+
+
+_a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
+    move.w  #PS2KEYB_INT,IRQ_PENDING_GRP1
+    movem.l d0-a6,-(sp) // TODO optimize
+    jsr    _ps2_channel1_irq_handler
+    movem.l (sp)+,d0-a6
+    rte
+
+
+_a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
+    move.w  #PS2MOUSE_INT,IRQ_PENDING_GRP1
+    movem.l d0-a6,-(sp) // TODO optimize
+    jsr    _ps2_channel2_irq_handler
+    movem.l (sp)+,d0-a6
     rte
