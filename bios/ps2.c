@@ -5,7 +5,7 @@
  *	Vincent Barrilliot
  *
  * Limitations:
- * * the driver requires that the 200Hz timer works, because it uses it for timeouts. Any other timer should work too.
+ * * the driver requires a timer works, because it uses it for timeouts.
  * * cannot have multiple instances of this handler as it uses global vars (but which 68k machine has more than one PS/2 port ?)
  * * ancient AT keyboard with translation enabled in the PS/Controller is not supported.
  *
@@ -13,44 +13,54 @@
  * option any later version.  See doc/license.txt for details.
  */
 
- #include "stdint.h"
- #include "ps2.h"
- 
- /* Types */
- #define bool int
- #define SUCCESS -1
- #define ERROR 0;
+#include <stdint.h>
+#include <stdbool.h>
+#include "emutos.h"
+#include "ps2.h"
 
- /* PS/2 Flags */
- #define OUTPUT_FULL 1<<0 /* PS/2 output buffer full (that's where we read from) */
- #define INPUT_FULL  1<<1 /* PS/2 input buffer full (that's where we write to) */
+#define DEBUG 0
+#if DEBUG
+	 void a2560u_debug(const char *s,...);
+#else
+	#define a2560u_debug(a,...)
+#endif
 
- /* PS/2 controller commands */
- #define CMD_GET_CONFIG		0x20
- #define CMD_SET_CONFIG		0x60
- #define CMD_PORT1_DISABLE	0xAD
- #define CMD_PORT2_DISABLE	0xA7
- #define CMD_SELFTEST		0xAA
- #define CMD_DEV1_SELFTEST	0xAB
- #define CMD_DEV2_SELFTEST	0xA9
- #define CMD_DEV1_ENABLE	0xAE
- #define CMD_DEV2_ENABLE	0xA8
- /* PS/2 device commands */
- #define DEVCMD_RESET		0xff
- #define DEVCMD_SCAN_ON		0xf4
- #define DEVCMD_SCAN_OFF	0xf5
- #define DEVCMD_GET_ID		0xf2
- #define ACK				0xfa
+/* Types */
+#define SUCCESS -1
+#define ERROR 0;
+
+/* PS/2 Flags */
+#define OUTPUT_FULL (1<<0) /* PS/2 output buffer full (that's where we read from) */
+#define INPUT_FULL  (1<<1) /* PS/2 input buffer full (that's where we write to) */
+
+/* PS/2 controller commands */
+#define CMD_GET_CONFIG		0x20
+#define CMD_SET_CONFIG		0x60
+#define CMD_PORT1_DISABLE	0xAD
+#define CMD_PORT2_DISABLE	0xA7
+#define CMD_SELFTEST		0xAA
+#define CMD_DEV1_SELFTEST	0xAB
+#define CMD_DEV2_SELFTEST	0xA9
+#define CMD_DEV1_ENABLE		0xAE
+#define CMD_DEV2_ENABLE		0xA8
+/* PS/2 device commands */
+#define DEVCMD_RESET		0xff
+#define DEVCMD_SCAN_ON		0xf4
+#define DEVCMD_SCAN_OFF		0xf5
+#define DEVCMD_GET_ID		0xf2
+#define ACK					0xfa
+#define RESEND				0xfe
 
 /* Device flags */
-#define STAT_EXISTS			 1<<0 // Port exists
-#define STAT_PORTTEST_PASSED 1<<1 // Port self-test passed
-#define STAT_PORT_ENABLED	 1<<2 // Port is enabled successfully
-#define STAT_CONNECTED		 1<<3 // Device is connected
-#define STAT_OK			     1<<4 // Device reset ok
-#define STAT_IDENTIFIED		 1<<5 // Device identification ok
-#define STAT_ATTACHED		 1<<6 // Driver found and attached
-
+#define STAT_EXISTS			 (1<<0) // Port exists
+#define STAT_PORTTEST_PASSED (1<<1) // Port self-test passed
+#define STAT_PORT_ENABLED	 (1<<2) // Port is enabled successfully
+#define STAT_CONNECTED		 (1<<3) // Device is connected
+#define STAT_RESET_OK        (1<<4) // Device reset ok
+#define STAT_IDENTIFIED		 (1<<5) // Device identification ok
+#define STAT_ATTACHED		 (1<<6) // Driver found and attached
+#define STAT_DEV1_ENABLED	 (1<<7) // Device 1 is ready to go
+#define STAT_DEV2_ENABLED	 (1<<8) // Device 1 is ready to go
 
 
 /* Global variables */
@@ -66,11 +76,19 @@ enum ps2_target
  * is processed (emptied) on VBL, ie at least 50 times per second. */
 #define IN_BUFFER_SIZE 128
 
+/* Levels of safety checks */
+#define ENABLE_DEVICES_RESET_CHECKS    1 /* Didn't get the devices to respond to reset to work */
+#define ENABLE_DEVICE_IDENTIFICATION   0 /* Likewise, devices didn't respond to identification requests */
+#define ENABLE_SELF_TEST		   	   1 /* Consider the outcome of self tests */
+#define RESEND_CONFIG_AFTER_SELFTEST   1 /* OS wiki says that on some keyboard, self test can reset config */
+#define FORCE_SELF_TEST_SUCCESS		   1 /* Force the self test results to appear successful */
+
+
 struct ps2_device_t
 {
 	enum ps2_target id; /* 0 for device 1, 1 for device 2 */
 	uint8_t type[2];    /* PS/2 device type (as the device reports itself) */
-	uint8_t status;
+	uint16_t status;
 	struct ps2_driver_t *driver; /* Driver currently attached to the device */
 	struct ps2_driver_api_t api; /* Interface with the driver */
 	/* Reception buffer. Bytes received from the device are stored here */
@@ -81,10 +99,10 @@ struct ps2_device_t
 
 struct ps2_global_t
 {
-	uint8_t status;  /* Status of the PS/2 system */
-	uint8_t dual;    /* Controller is dual channel */
-	uint8_t in_data; /* Last received byte */
-	uint8_t timeout; /* Number of timer ticks to wait before timing out */
+	uint16_t status; /* Status of the PS/2 system */
+	bool     dual;    /* Controller is dual channel */
+	uint8_t  in_data; /* Last received byte */
+	uint8_t  timeout; /* Number of timer ticks to wait before timing out */
 	volatile uint32_t *timer; /* Ever increasing counter (from timer) */
 	struct ps2_device_t dev1; /* Primary channel / device 1 info */
 	struct ps2_device_t dev2; /* Primary channel / device 1 info */
@@ -92,7 +110,10 @@ struct ps2_global_t
 
 /* Local variables */
 static struct ps2_global_t L;
-static struct ps2_api_t P;
+
+/* Global */
+struct ps2_api_t ps2_config;
+#define P ps2_config /* local convenience */
 
 /* Prototypes */
 static bool wait_until_can_write(void);
@@ -104,152 +125,151 @@ static uint8_t get_data_no_wait(void);
 static bool send_data(enum ps2_target dev, uint8_t data);
 static bool send_data1(uint8_t data);
 static bool send_data2(uint8_t data);
+static bool configure_controller(uint8_t *config);
+static bool get_config(uint8_t *config);
+static bool send_config(uint8_t config);
+static bool selftest(void);
+static bool enable_ports(uint8_t *config);
 static bool reset_device(struct ps2_device_t *dev);
-static bool identify_device(struct ps2_device_t *dev);	
+static void reset_devices(void);
+static bool identify_device(struct ps2_device_t *dev);
+static bool enable_scanning(void);
+static void identify_devices(void);
+static void attach_drivers(void);
 static bool attach_driver(struct ps2_device_t *dev);
 static bool setup_driver_api(struct ps2_device_t *dev);
+static bool enable_irqs(uint8_t *config);
+static bool disable_irqs(uint8_t *config);
 static void on_irq(struct ps2_device_t *dev);
-
+static void process(struct ps2_device_t *dev);
 
 
 /* Initialise the PS/2 system */
-uint16_t ps2_init(struct ps2_api_t *p)
+uint16_t ps2_init(void)
 {
-	uint8_t config;
-	bool ok;
+	uint8_t config = 0;
+		
+	P.on_device1_irq = ps2_channel1_irq_handler;
+	P.on_device2_irq = ps2_channel2_irq_handler;	
+	
+	/* We get about 960 bytes/s max as the interface is 9600bps 8/1/1 no parity (10 bits).
+	 * Period for 1 character is 1/960, we convert to mi
+	 * We want to be able to wait 1 character. */
+	L.timeout = P.counter_freq / 960; 
+	if (!L.timeout)
+		L.timeout = 1;
 
-	*(&P) = *p;
-	L.timeout = 960/P.counter_freq + 1; /* we get about 960 bytes/s max as the interface is 9600bps. we want to be able to wait 1 character*/
 	L.status = 0;
 	L.dev1.id = dev1;
 	L.dev2.id = dev2;
+	L.dev1.status = L.dev2.status = 0;
 
-	/* Disable ports, don't care about the result */
-	send_command(CMD_PORT1_DISABLE); 
+	/* Prevent new incoming data. */
+	send_command(CMD_PORT1_DISABLE);
 	send_command(CMD_PORT2_DISABLE);
+	get_config(&config);
+	disable_irqs(&config);
 
 	/* Flush input data */
 	while (get_data())
 		;
 
-	/* Step 1: set controller configuration */
-	ok = ERROR;
-	if (send_command_with_response(CMD_GET_CONFIG))
-	{
-		config = L.in_data;
-		L.dual = config & 1<<5;
-		config &= 3;	/* Disable interrupts */
-		config |= 1<<6; /* Enable translation so we have scancode set 1 */
-		if (send_command(CMD_SET_CONFIG) && send_data(ctrl,config) && get_data()) 
-		{
-			L.dev1.status = STAT_EXISTS;
-			if (L.dual)
-				L.dev2.status = STAT_EXISTS;
-		}
-		ok = SUCCESS; 
-	}
-	if (!ok)
-		return ERR_CTRL_ERROR;
-
-	/* Step 2: controller self-test */
-	if (send_command_with_response(CMD_SELFTEST) && L.in_data == 0x55)
-	{
-		/* Resend config in case it got corrupt by self-test. Is this really common? */
-		send_command(CMD_SET_CONFIG);
-		send_data(ctrl, config);
-		get_data();
-	}
-	else
-		return ERR_CTRL_SELFTEST_FAILED;
-	
-
-	/* Step 3: interface self-tests */
-	if (send_command_with_response(CMD_DEV1_SELFTEST) && L.in_data != 0x00)
-		L.dev1.status = STAT_PORTTEST_PASSED;
-	else
-		L.status |= ERR_CTRL_SELFTEST_FAILED;
-
-	if (send_command_with_response(CMD_DEV2_SELFTEST) && L.in_data != 0x00)
-		L.dev2.status = STAT_PORTTEST_PASSED;
-	else
-		L.status |= ERR_CTRL_SELFTEST_FAILED;
-
-	if (!((L.dev1.status | L.dev1.status) & STAT_PORTTEST_PASSED))
+	/* Update config (but don't send yet): enable IRQ, enable set 1 translation */
+	if (!configure_controller(&config))
 		return L.status;
 
-	/* Step 4: enable ports which have passed self-test, and their IRQ on the PS/2 controller */
-	if (L.dev1.status)
+	/* Test controller and interfaces */
+	if (!selftest())
+		return L.status; 	
+
+	/* Enable successfully tested ports and enable IRQs for them */
+	if (!enable_ports(&config))
 	{
-		if (send_command(CMD_DEV1_ENABLE))
-		{
-			config |= 1<<0; /* Enable IRQ */
-			L.dev1.status &= ~STAT_PORT_ENABLED;
-		}
+		a2560u_debug("Didn't manage to enable ports and IRQs");
+		return L.status;
 	}
-	if (L.dev2.status)
+
+ 	send_config(config);
+
+	/* Reset devices attached to enabled ports. This detects whether a device is present. */
+	reset_devices();
+
+	/* Flush input data */
+	while (get_data())
+		;
+
+	// This doesn't work.
+	identify_devices();
+
+	attach_drivers();
+
+	if (!enable_irqs(&config))
 	{
-		if (send_command(CMD_DEV2_ENABLE))
-		{
-			config |= 1<<1; /* Enable IRQ */
-			L.dev2.status &= ~STAT_PORT_ENABLED;
-		}
+		a2560u_debug("Didn't manage to enable IRQs");
+		return L.status;
 	}
-	/* Send updated config */
-	/* If no port is operational, abort init */
-	if (!(send_command(CMD_SET_CONFIG) && send_data(ctrl, config)))
-		return ERR_CTRL_ERROR;
 
-	/* Step 4: reset devices */
-	if (!reset_device(&L.dev1))
-		L.status |= ERR_DEV1_RESET_FAILED;
-	if (!reset_device(&L.dev2))
-		L.status |= ERR_DEV2_RESET_FAILED;
-
-	/* Step 5: identify connected devices */
-	identify_device(&L.dev1);
-	identify_device(&L.dev2);
-
-	/* Step 6: Attach driver */
-	if (attach_driver(&L.dev1))
-	{
-		if (!setup_driver_api(&L.dev1))
-			L.status |= ERR_DEV1_DRIVER_ERROR;
-	}
-	else
-		L.status |= ERR_DEV1_NO_DRIVER_FOUND;
-
-	if (attach_driver(&L.dev2))
-	{
-		if (!setup_driver_api(&L.dev2))
-			L.status |= ERR_DEV2_DRIVER_ERROR;
-	}
-	else
-		L.status |= ERR_DEV2_NO_DRIVER_FOUND;
-
-	/* We're all set ! */
-	/* Step 7: enable scanning and start processing IRQs */
+	enable_scanning();
 
 	return L.status;
 }
 
+
 static bool identify_device(struct ps2_device_t *dev)
 {
 	/* Disable scanning */
-	if (dev->status & STAT_OK
-		&& send_data(dev->id, DEVCMD_SCAN_OFF) && L.in_data == ACK
-		&& send_command_with_response(DEVCMD_GET_ID) && L.in_data == ACK
-		&& get_data())
+	if ((dev->status & STAT_RESET_OK) == 0)
 	{
-		/* Read & store device ID */
-		dev->type[0] = L.in_data;
-		dev->type[1] = get_data() ? L.in_data : 0;
-		dev->status |= STAT_IDENTIFIED;
-
-		return SUCCESS;
+		a2560u_debug("Device %d was not reset OK", dev->id);
+		return false;
 	}
 
-	return ERROR;	
+	if (!send_data(dev->id, DEVCMD_SCAN_OFF))
+	{
+		a2560u_debug("Timeout when sending DEVCMD_SCAN_OFF to device %d", dev->id);
+		return false;
+	}
+
+	if (!get_data())
+	{
+		a2560u_debug("Timeout when getting response to DEVCMD_SCAN_OFF from  device %d", dev->id);
+		return false;		
+	}
+
+	if (L.in_data != ACK)
+	{
+		a2560u_debug("Device %d didn't acknowledge the DEVCMD_SCAN_OFF command, replied 0x%02x", dev->id, L.in_data);
+		return false;
+	}
+
+	if (!send_data(dev->id, DEVCMD_GET_ID))
+	{
+		a2560u_debug("Timeout when sending DEVCMD_GET_ID to device %d", dev->id);
+		return false;
+	}
+
+	/* Read & store device ID */
+	if (!get_data())
+	{
+		a2560u_debug("Timeout when getting identification byte 1 for device %d", dev->id);
+		return false;
+	}
+	dev->type[0] = L.in_data;
+	if (!get_data())
+	{
+		dev->type[1] = 0;
+		a2560u_debug("Timeout when getting identification byte 2 for device %d", dev->id);
+		return false;
+	}
+	else
+		dev->type[1] = L.in_data;
+
+	a2560u_debug("Device is type 0x%02x %02x", dev->type[0], dev->type[1]);
+
+	dev->status |= STAT_IDENTIFIED;
+	return SUCCESS;
 }	
+
 
 static bool attach_driver(struct ps2_device_t *dev)
 {
@@ -259,95 +279,116 @@ static bool attach_driver(struct ps2_device_t *dev)
 
 		for (i = 0 ; i < P.n_drivers ; i++)
 		{
-			if (P.drivers[i].can_drive(dev->type))
+			struct ps2_driver_t *driver = P.drivers[i];
+			if (driver->can_drive(dev->type))
 			{
-				dev->driver = &P.drivers[i];
+				a2560u_debug("Found driver %s", driver->name);
+				dev->driver = driver;
+				dev->status |= STAT_ATTACHED;
 				return SUCCESS;
 			}
 		}
 	}
 
+	a2560u_debug("Device %d is not identified", dev->id);		
 	dev->driver = NULL;
 	return ERROR;
 }
+
+
+static void on_key_up(uint8_t scancode)
+{
+	P.on_key_up(scancode | 0x80);
+}
+
 
 static bool setup_driver_api(struct ps2_device_t *dev)
 {
 	dev->api.send_data = dev == dev1 ? send_data1 : send_data2;
 	dev->api.get_data = get_data_no_wait;
 	dev->api.malloc = P.malloc;
-	dev->api.free = P.free;
 	dev->api.on_key_down = P.on_key_down;
-	dev->api.on_key_up = P.on_key_up;
+	dev->api.on_key_up = on_key_up;
 	dev->in_read = dev->in_write = 0;
 
 	return dev->driver->init(&dev->api);
 }
 
-static void on_irq1(void)
+
+void ps2_channel1_irq_handler(void)
 {
 	on_irq(&L.dev1);
 }
 
-static void on_irq2(void)
+
+void ps2_channel2_irq_handler(void)
 {
 	on_irq(&L.dev2);
 }
 
+
 static void on_irq(struct ps2_device_t *dev)
 {
-    uint8_t b;
+    uint8_t b = get_data_no_wait();
     int     new_write;
 
-    b = get_data_no_wait();
-
+	a2560u_debug("dev %d received 0x%02x",dev->id, b);
+	
     /* Put the byte into the circular buffer */
     new_write = (dev->in_write + 1) & (IN_BUFFER_SIZE - 1);
     if (new_write == dev->in_read)
-        return; /* buffer full, we loose data */
+        return; /* buffer full, we loose the new data */
 
     dev->in_buffer[new_write] = b;
     dev->in_write = new_write;
+	
+	process(dev);
 }
+
 
 static void process(struct ps2_device_t *dev)
 {
     uint8_t read;
     uint8_t b;
-
-    read = dev->in_read;
+//a2560u_debug("process");
+    read = (dev->in_read + 1) & (IN_BUFFER_SIZE - 1);
     while (read != dev->in_write)
     {
         /* Pull from circular buffer */
-        b = dev->in_buffer[read++];
-        dev->in_read = (read + 1) & (IN_BUFFER_SIZE - 1);
-        read = dev->in_read;
-        
+        b = dev->in_buffer[read];
+        dev->in_read = read;        
+        a2560u_debug("driver-process(%02x)", b);
         dev->driver->process(&dev->api, b);
+		read = (dev->in_read + 1) & (IN_BUFFER_SIZE - 1);
     }
 }
+
 
 static bool wait_until_can_write(void)
 {
 	uint32_t timeout = *P.counter + L.timeout;
 
-    while ((*P.port_status & INPUT_FULL))
-		if (*P.counter >= timeout)
-			return SUCCESS;
+    while ((*P.port_status & INPUT_FULL) == 1)
+		if (*P.counter > timeout)
+			return ERROR;
 
-    return ERROR;
+    return SUCCESS;
 }
+
 
 static bool wait_until_can_read(void)
 {
 	uint32_t timeout = *P.counter + L.timeout;
 
-    while (!(*P.port_status & OUTPUT_FULL))
-		if (*P.counter >= timeout)
-			return SUCCESS;
-
-    return ERROR;
+    while ((*P.port_status & OUTPUT_FULL) == 0)
+	{
+		if (*P.counter > timeout)
+			return ERROR;
+	}
+		
+    return SUCCESS;
 }
+
 
 static bool send_command(uint8_t cmd)
 {
@@ -361,33 +402,43 @@ static bool send_command(uint8_t cmd)
 }
 
 static bool get_data(void)
-{
+{	
 	if (wait_until_can_read())
 	{
-		L.in_data = *P.port_data;
+		L.in_data = get_data_no_wait();
 		return SUCCESS;
 	}
 
 	return ERROR;
 }
 
-/* This one is meant to be called from IRQ. We know something arrived, so need to wait */
+
 static uint8_t get_data_no_wait(void)
 {
-	return  *P.port_data;
+	return *P.port_data;
 }
+
 
 static bool send_command_with_response(uint8_t cmd)
 {
 	return send_command(cmd) && get_data();
 }
 
+
 static bool send_data(enum ps2_target dev, uint8_t data)
 {
-	return dev
-		? send_data1(data)
-		: send_data2(data);
+	switch (dev)
+	{
+		case ctrl:
+		/*case dev1: has same value */
+			return send_data1(data);
+		case dev2:
+			return send_data2(data);
+		default:
+			return false;
+	}	
 }
+
 
 static bool send_data1(uint8_t data)
 {
@@ -400,28 +451,303 @@ static bool send_data1(uint8_t data)
 	return ERROR;
 }
 
+
 /* Send data to the second device */
 static bool send_data2(uint8_t data)
 {
-	return (send_data1(0xd4) && send_data1(data))
-		? SUCCESS
-		: ERROR;
+	return send_data1(0xd4) && send_data1(data);
 }
+
 
 static bool reset_device(struct ps2_device_t *dev)
 {
-	if (dev->status & STAT_PORT_ENABLED)
+	uint32_t timeout;
+
+	dev->status &= ~STAT_RESET_OK;
+
+	if ((dev->status & STAT_PORT_ENABLED) == 0)
+		return ERROR;
+
+	a2560u_debug("RESETing device  %d",dev->id);
+
+	if (!send_data(dev->id, DEVCMD_RESET) && ENABLE_DEVICES_RESET_CHECKS)
+		return ERROR;
+
+	if (!get_data() || L.in_data != ACK)
 	{
-		if (send_data(dev->id, DEVCMD_RESET))
+		a2560u_debug("Reset ACK: got %02x ", L.in_data);
+		return ERROR;
+	}
+	
+	timeout = *P.counter + P.counter_freq * 800 / 1000; /* BAT should last 500-750ms */;
+	while (*P.counter < timeout)
+	{		
+		if (get_data())
 		{
-			dev->status |= STAT_CONNECTED;
-			if (L.in_data == ACK)
+			if (L.in_data == 0xaa)
 			{
-				dev->status |= STAT_OK;
+				dev->status |= STAT_RESET_OK;
 				return SUCCESS;
 			}
-		}	
+			return ERROR;
+		}
 	}
 
+	/* We can get here because we got no response after RESET ACK, or because the
+	 * device reset was not successful */
 	return ERROR;
+}
+
+
+static bool enable_scanning(void)
+{
+	bool res = true;
+
+	if (L.dev1.status & STAT_ATTACHED)
+	{
+		if (!send_data(dev1, DEVCMD_SCAN_ON))
+		{
+			a2560u_debug("Timeout when sending DEVCMD_SCAN_ON to device 0");
+			L.status &= ~STAT_DEV1_ENABLED;
+			res = false;
+		}	
+		else
+		{
+			L.status |= STAT_DEV1_ENABLED;
+			get_data(); /* Flush */
+			a2560u_debug("Device 0 scanning ENABLED %02x", L.in_data);
+		}
+	}
+	else a2560u_debug("Device 0 no driver attached");
+
+	if (L.dev2.status & STAT_ATTACHED)
+	{
+		if (!send_data(dev2, DEVCMD_SCAN_ON))
+		{
+			a2560u_debug("Timeout when sending DEVCMD_SCAN_ON to device 1");
+			L.status &= ~STAT_DEV2_ENABLED;
+			res = false;
+		}	
+		else
+		{
+			get_data(); /* Flush */
+			L.status |= STAT_DEV2_ENABLED;
+			a2560u_debug("Device 1 scanning ENABLED");
+		}
+	}
+
+	return res;
+}
+
+
+static void identify_devices(void)
+{
+#if ENABLE_DEVICE_IDENTIFICATION
+	/* Identify connected devices */
+	identify_device(&L.dev1);
+	identify_device(&L.dev2);
+#else
+	/* Checks are disabled, we could be getting rubbish. Assume keyboard for device 1 */
+	a2560u_debug("Assume device 0 is keyboard with set 1 translation");
+	L.dev1.type[0] = 0xAB;
+	L.dev1.type[1] = 0x41;
+	L.dev1.status |= STAT_IDENTIFIED;
+
+	a2560u_debug("Assume device 1 is mouse");
+	L.dev2.type[0] = 0x00; /* Useless line. 0x00 is mouse */
+	L.dev2.status |= STAT_IDENTIFIED;
+#endif
+}
+
+
+static void attach_drivers(void)
+{
+	if (attach_driver(&L.dev1))
+	{
+		if (!setup_driver_api(&L.dev1))
+		{
+			L.status |= ERR_DEV1_DRIVER_ERROR;
+			a2560u_debug("Error when attaching driver to device 0");
+		}
+		a2560u_debug("Device 0 driver attached: %s", L.dev1.driver->name);
+	}
+	else
+		L.status |= ERR_DEV1_NO_DRIVER_FOUND;
+
+	if (attach_driver(&L.dev2))
+	{
+		if (!setup_driver_api(&L.dev2))
+		{
+			L.status |= ERR_DEV2_DRIVER_ERROR;
+			a2560u_debug("Error when attaching driver to device 1");
+		}
+		a2560u_debug("Device 1 driver attached: %s", L.dev2.driver->name);
+	}
+	else
+		L.status |= ERR_DEV2_NO_DRIVER_FOUND;	
+}
+
+
+static bool configure_controller(uint8_t *config)
+{
+	/* Set controller configuration */
+	L.dual = (*config & (1<<5)) ? true : false;
+	*config |= 3;	 /* Enable interrupts */
+	*config |= 1<<6; /* Enable translation so we have scancode set 1 */
+
+	L.dev1.status = STAT_EXISTS;
+
+	if (L.dual)
+	{
+		a2560u_debug("Dual channel detected");
+		L.dev2.status = STAT_EXISTS;
+	}
+
+	return true;
+}
+
+
+static bool enable_ports(uint8_t *config)
+{
+	bool res = true;
+
+	/* Enable ports which have passed self-test, and enable their IRQ on the controller */
+	if ((L.dev1.status & STAT_PORTTEST_PASSED) && send_command(CMD_DEV1_ENABLE))
+	{
+		L.dev1.status |= STAT_PORT_ENABLED;
+		*config &= ~0x10;
+		a2560u_debug("Interface 1 ENABLED");
+	}
+	else 
+		res = false;
+
+	if ((L.dev2.status & STAT_PORTTEST_PASSED) && send_command(CMD_DEV2_ENABLE))
+	{
+		L.dev2.status |= STAT_PORT_ENABLED;
+		*config &= ~0x20;
+		a2560u_debug("Interface 2 ENABLED");
+	}
+	else
+		res = false;
+
+	if (!res)
+		L.status |= ERR_CTRL_ERROR;
+
+	return res;
+}
+
+
+static bool enable_irqs(uint8_t *config)
+{	
+	if (L.dev1.status & STAT_PORT_ENABLED)
+		*config |= 1;
+	else
+		*config &= ~1;
+
+	if (L.dev2.status & STAT_PORT_ENABLED)
+		*config |= 2;
+	else
+		*config &= ~2;
+
+	/* Send updated config with enabled IRQs */
+	if (!send_config(*config))
+	{
+		L.status = ERR_CTRL_ERROR;
+		return false;
+	}
+
+	return true;
+}
+
+
+static bool disable_irqs(uint8_t *config)
+{
+	*config &= ~(1|2);
+	
+	/* Send updated config with disabled IRQs */
+	if (!send_config(*config))
+	{
+		L.status = ERR_CTRL_ERROR;
+		return false;
+	}
+
+	return true;	
+}
+
+
+static bool selftest(void)
+{
+	bool res = true;
+
+	if (!(send_command_with_response(CMD_SELFTEST) && L.in_data == 0x55) && ENABLE_SELF_TEST)
+	{
+		L.status |= ERR_CTRL_SELFTEST_FAILED;
+		res = false;
+	}
+
+	if (!(send_command_with_response(CMD_DEV1_SELFTEST) || L.in_data == 0x00) && ENABLE_SELF_TEST)
+	{
+		L.status |= ERR_DEV1_SELFTEST_FAILED;
+		res = false;
+	}
+	else
+		L.dev1.status |= STAT_PORTTEST_PASSED;
+
+	if (!(send_command_with_response(CMD_DEV2_SELFTEST) && L.in_data == 0x00) && ENABLE_SELF_TEST)
+	{
+		L.status |= ERR_DEV2_SELFTEST_FAILED;
+		res = false;
+	}
+	else
+		L.dev2.status |= STAT_PORTTEST_PASSED;
+
+	return res;
+}
+
+
+static void reset_devices(void)
+{
+	if (!reset_device(&L.dev1))
+		L.status |= ERR_DEV1_RESET_FAILED;
+
+	if (!reset_device(&L.dev2))
+		L.status |= ERR_DEV2_RESET_FAILED;	
+}
+
+
+static bool get_config(uint8_t *config)
+{
+	if (!send_command_with_response(CMD_GET_CONFIG))
+	{
+		a2560u_debug("Timeout when getting config");
+		return false;
+	}		
+
+	*config = L.in_data;
+	return true;
+}
+
+
+static bool send_config(uint8_t config)
+{
+	a2560u_debug("Setting new config: 0x%02x", config);
+	if (!send_command(CMD_SET_CONFIG))
+	{
+		a2560u_debug("Failed to send CMD_SET_CONFIG to controller");
+		return false;
+	}
+	
+	if (!send_data(ctrl,config))
+	{
+		a2560u_debug("Failed to send config 0x%02x to controller", config);
+		return false;
+	}
+
+	send_command_with_response(CMD_GET_CONFIG);
+	if (L.in_data != config)
+	{
+		a2560u_debug("Unexpected new config 0x%02x", L.in_data);
+	}
+
+	return true;
 }

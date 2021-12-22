@@ -11,10 +11,10 @@
  #define _PS2_H_
 
  #include <stdint.h>
+ #include <stdbool.h>
  #include <stdio.h>
  
- #define bool int
- #define SUCCESS -1
+  #define SUCCESS -1
  #define ERROR 0;
 
  /* ps2_init() return codes */
@@ -35,10 +35,12 @@ struct ps2_driver_api_t;
 struct ps2_driver_t
 {
 	/* Provided by the driver to the PS/2 system */
+	/* Name of the driver */
+	const char *name;
 	/* Initialisation function, must be called before calling anything else */
 	bool	(*init)(struct ps2_driver_api_t *this);
 	/* Whether the driver can manage the given PS/2 device type (2-byte ID). */
-	bool	(*can_drive)(const uint8_t *ps2_device_type);
+	bool	(*can_drive)(const uint8_t ps2_device_type[]);
 	/* Process the data received during interrupts and fire up OS callbacks */
 	void	(*process)(const struct ps2_driver_api_t *this, uint8_t byte);
 };
@@ -50,7 +52,6 @@ struct ps2_driver_api_t
 	bool    (*send_data)(uint8_t b);
 	uint8_t (*get_data)(void);
 	void*   (*malloc)(size_t size);
-	void    (*free)(void *address);
 
 	/* OS callbacks that the driver will call as it does its job */
 	void	(*on_key_down)(uint8_t scancode);
@@ -66,28 +67,30 @@ struct ps2_driver_api_t
 /* This is the interface between the OS and the PS/2 system */
 struct ps2_api_t
 {
-	/* --- INPUT parameters (provided by OS) --- */
-	/* Ever increasing counter and its frequency in Hz */
-	volatile uint32_t	*counter;
-	uint16_t			counter_freq;
-	/* PS/2 port addresses */
-	volatile uint8_t *port_data;
-	volatile uint8_t *port_status;
-	uint8_t			 *port_cmd;
-	/* Available drivers */
-	uint8_t			    n_drivers;
-	struct ps2_driver_t *drivers;
-	/* OS functions that we can use */
-	//void* (*malloc)(size_t size);
-	//void  (*free)(void *address);
-
+	/* DONT CHANGE THE ORDER otherwise the irq handler will break */
+	
 	/* Events OS -> PS/2 */
-	/* These are called by the system interrupt handler when a PS/2 device interrupt
-	 * occurs. The handler gets the data as quickly as possible, stores it then return control. */
+	/* These are called by the system interrupt handler when a PS/2 device interrupt occurs.
+	 * They are placed at the top of the struct so their offset is easier to compute (0 and 4). */
 	void (*on_device1_irq)(void);
 	void (*on_device2_irq)(void);
-	/* The OS instructs the devices to process the data they have received and act 
-	 * accordingly by calling OS events */
+
+	/* --- INPUT parameters (provided by OS) --- */
+	/* Ever increasing counter and its frequency in Hz */
+	volatile uint32_t *counter;
+	uint16_t		   counter_freq;
+	/* PS/2 port addresses */
+	volatile uint8_t  *port_data;
+	volatile uint8_t  *port_status;
+	uint8_t			  *port_cmd;
+	/* Available drivers */
+	uint8_t			   n_drivers;
+	struct ps2_driver_t **drivers;
+	/* OS functions that we can use */
+	void* (*malloc)(size_t size);
+
+	/* Called by the OS to instruct the devices to process the data they have buffered 
+	 * and act accordingly by calling OS events (key up, key down etc.) */
 	void (*on_do_events)(void);
 
 	/* Events PS/2 -> OS. Ultimately, calling these are the purpose in life of drivers */
@@ -95,8 +98,14 @@ struct ps2_api_t
 	void (*on_key_up)(uint8_t scancode);
 };
 
+extern struct ps2_api_t ps2_config;
+
 
 /* Initialises the PS/2 system (to be called by OS) */
-uint16_t ps2_init(struct ps2_api_t *p);
+uint16_t ps2_init(void);
+
+/* To be called by IRQ handlers to handle interrupts */
+void ps2_channel1_irq_handler(void);
+void ps2_channel2_irq_handler(void);
 
 #endif

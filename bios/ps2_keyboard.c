@@ -14,22 +14,25 @@
  * callbacks from the OS.
  */
 
- #include <stdint.h>
- #include <stddef.h>
- #include "ps2.h"
- #include "ps2_scancodes.h"
+#include <stdint.h>
+#include <stddef.h>
+#include "ps2.h"
+#include "ps2_scancodes.h"
+#include "a2560u.h"
 
  /* Prototypes */
+static const char driver_name[] = "PS/2 Keyboard";
 static bool init(struct ps2_driver_api_t *api);
 static void process(const struct ps2_driver_api_t *api, uint8_t scancodestate);
-static bool can_drive(const uint8_t *ps2_device_type);
+static bool can_drive(const uint8_t ps2_device_type[]);
 
 /* Driver */
-struct ps2_driver_t ps2_keyboard_driver =
+const struct ps2_driver_t ps2_keyboard_driver =
 {
-    init,
-    can_drive,
-    process
+    .name = driver_name,
+    .init = init,
+    .can_drive = can_drive,
+    .process = process
 };
 
 /* States the keyboard state machine can be in */
@@ -51,7 +54,7 @@ typedef enum sm_state
 
 /* Translation tables */
 /* Scancodes for E0xx. The index is xx */
-static uint8_t scancodeSet1_E0_to_key[128] = 
+static const uint8_t scancodeSet1_E0_to_key[128] = 
 {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00 - 0x07 */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08 - 0x0F */
@@ -72,7 +75,7 @@ static uint8_t scancodeSet1_E0_to_key[128] =
  };
 
 /* Internal state of the driver */
-struct ps2_keyboard_local_t
+static struct ps2_keyboard_local_t
 {
     sm_state_t state;  /* State of the state machine */   
 };
@@ -84,9 +87,6 @@ struct ps2_keyboard_local_t
 static bool init(struct ps2_driver_api_t *api)
 {
 	/* Shut down leds */
-	api->send_data(0xED);
-	api->send_data(0x0);
-
     api->driver->process = process;
     api->driver_data = (api->malloc)(sizeof(struct ps2_keyboard_local_t));
     if (api->driver_data == NULL)
@@ -99,7 +99,7 @@ static bool init(struct ps2_driver_api_t *api)
 
 /* Given a PS/2 device type (as returned by the device), indicate if the driver
  * supports it. */
-static bool can_drive(const uint8_t *ps2_device_type)
+static bool can_drive(const uint8_t ps2_device_type[])
 {
     if (ps2_device_type[0] == 0xAB)
     {
@@ -160,9 +160,8 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
                     break;
 
                 default:
-                    scancode &= 0x7f;
                     if (IS_BREAK(scancode))
-                        api->on_key_up(scancode);
+                        api->on_key_up(scancode & 0x7f);
                     else
                         api->on_key_down(scancode);
                     break;
@@ -181,7 +180,7 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
 
                 default:
                     {
-                        // Lookup the translation of the E0 prefixed code...
+                        // Lookup the translation of the E0 prefixed code...                        
                         uint8_t translated_code = scancodeSet1_E0_to_key[scancode & 0x7f];
                         if (translated_code != 0) {
                             if (IS_BREAK(scancode))
