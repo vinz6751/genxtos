@@ -329,13 +329,13 @@ static bool setup_driver_api(struct ps2_device_t *dev)
 
 void ps2_channel1_irq_handler(void)
 {
-	on_irq(&L.dev1);
+	L.dev1.driver->process(&L.dev1.api, get_data_no_wait());
 }
 
 
 void ps2_channel2_irq_handler(void)
 {
-	on_irq(&L.dev2);
+	L.dev2.driver->process(&L.dev2.api, get_data_no_wait());
 }
 
 
@@ -362,7 +362,7 @@ static void process(struct ps2_device_t *dev)
 {
     uint8_t read;
     uint8_t b;
-//a2560u_debug("process");
+
     read = (dev->in_read + 1) & (IN_BUFFER_SIZE - 1);
     while (read != dev->in_write)
     {
@@ -370,7 +370,7 @@ static void process(struct ps2_device_t *dev)
         b = dev->in_buffer[read];
         dev->in_read = read;        
         a2560u_debug("driver-process(%02x)", b);
-        dev->driver->process(&dev->api, b);
+        
 		read = (dev->in_read + 1) & (IN_BUFFER_SIZE - 1);
     }
 }
