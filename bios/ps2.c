@@ -77,8 +77,8 @@ enum ps2_target
 #define IN_BUFFER_SIZE 128
 
 /* Levels of safety checks */
-#define ENABLE_DEVICES_RESET_CHECKS    1 /* Didn't get the devices to respond to reset to work */
-#define ENABLE_DEVICE_IDENTIFICATION   0 /* Likewise, devices didn't respond to identification requests */
+#define ENABLE_DEVICES_RESET_CHECKS    1 /* If you have problems with reseting devices, you can ignore it */
+#define ENABLE_DEVICE_IDENTIFICATION   1 /* if you have problems with identifying devices you can make assumptions */
 #define ENABLE_SELF_TEST		   	   1 /* Consider the outcome of self tests */
 #define RESEND_CONFIG_AFTER_SELFTEST   1 /* OS wiki says that on some keyboard, self test can reset config */
 #define FORCE_SELF_TEST_SUCCESS		   1 /* Force the self test results to appear successful */
@@ -155,7 +155,7 @@ uint16_t ps2_init(void)
 	/* We get about 960 bytes/s max as the interface is 9600bps 8/1/1 no parity (10 bits).
 	 * Period for 1 character is 1/960, we convert to mi
 	 * We want to be able to wait 1 character. */
-	L.timeout = P.counter_freq / 960; 
+	L.timeout = P.counter_freq / 30; 
 	if (!L.timeout)
 		L.timeout = 1;
 
@@ -228,7 +228,7 @@ static bool identify_device(struct ps2_device_t *dev)
 	{
 		a2560u_debug("Timeout when sending DEVCMD_SCAN_OFF to device %d", dev->id);
 		return false;
-	}
+	}	
 
 	if (!get_data())
 	{
@@ -248,6 +248,18 @@ static bool identify_device(struct ps2_device_t *dev)
 		return false;
 	}
 
+	if (!get_data())
+	{
+		a2560u_debug("Timeout when getting response to DEVCMD_GET_ID from  device %d", dev->id);
+		return false;		
+	}
+
+	if (L.in_data != ACK)
+	{
+		a2560u_debug("Device %d didn't acknowledge the DEVCMD_GET_ID command, replied 0x%02x", dev->id, L.in_data);
+		return false;
+	}
+
 	/* Read & store device ID */
 	if (!get_data())
 	{
@@ -264,7 +276,7 @@ static bool identify_device(struct ps2_device_t *dev)
 	else
 		dev->type[1] = L.in_data;
 
-	a2560u_debug("Device is type 0x%02x %02x", dev->type[0], dev->type[1]);
+	a2560u_debug("Device %d is type 0x%02x 0x%02x", dev->id, dev->type[0], dev->type[1]);
 
 	dev->status |= STAT_IDENTIFIED;
 	return SUCCESS;
@@ -472,27 +484,31 @@ static bool reset_device(struct ps2_device_t *dev)
 
 	if (!send_data(dev->id, DEVCMD_RESET) && ENABLE_DEVICES_RESET_CHECKS)
 		return ERROR;
-
+	
 	if (!get_data() || L.in_data != ACK)
 	{
-		a2560u_debug("Reset ACK: got %02x ", L.in_data);
+		a2560u_debug("Reset of device %d: ACK: got %02x ", dev->id, L.in_data);
 		return ERROR;
-	}
+	}	
 	
 	timeout = *P.counter + P.counter_freq * 800 / 1000; /* BAT should last 500-750ms */;
 	while (*P.counter < timeout)
 	{		
 		if (get_data())
-		{
+		{			
 			if (L.in_data == 0xaa)
 			{
 				dev->status |= STAT_RESET_OK;
+				a2560u_debug("Device %d reset successfull", dev->id);
 				return SUCCESS;
 			}
-			return ERROR;
+			else
+				break;
 		}
 	}
 
+	a2560u_debug("Reset of device %d failed", dev->id);
+	
 	/* We can get here because we got no response after RESET ACK, or because the
 	 * device reset was not successful */
 	return ERROR;
