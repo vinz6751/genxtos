@@ -156,9 +156,10 @@
 #define TIMER_CTRL_ENABLE   0x01
 #define TIMER_CTRL_CLEAR    0x02 /* Set this if counting up */
 #define TIMER_CTRL_LOAD     0x04 /* Set this if counting down */
-#define TIMER_CTRL_UPDOWN   0x08 /* Set this if counting down */
+#define TIMER_CTRL_DOWN     0x08 /* Count up (0) or down (1) */
 #define TIMER_CTRL_RECLEAR  0x10 /* Set this to auto recommence counting up */
 #define TIMER_CTRL_RELOAD   0x20 /* Set this if auto recommence counting down */
+#define TIMER_CTRL_IRQ      0x80 /* Set this to enable interrupts */
 
 /* BEATRIX */
 #define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130))   /* Control register for the SN76489 */
