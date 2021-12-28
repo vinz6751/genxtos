@@ -10,7 +10,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -179,7 +179,7 @@ const struct a2560u_timer_t {
 {
     #define COUNT_DOWN 0xA4L
     /* 0xA4 is TIMER_CTRL_IRQ|TIMER_CTRL_LOAD||TIMER_CTRL_RELOAD (count down)
-     * 0x9A is TIMER_CTRL_IRQ|TIMER_CTRL_CLEAR|TIMER_CTRL_RECLEAR (count up)
+     * 0x9A is TIMER_CTRL_IRQ|TIMER_CTRL_CLEAR|TIMER_CTRL_RECLEAR (count up) */
     /* TODO 1L as "start" is really TIMER_CTRL_ENABLE but I get a "left shift count >= width of type" warning I can't get rid of */
     { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, COUNT_DOWN << 0,  1L << 0,  0x0100, INT_TIMER0_VECN },
     { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, COUNT_DOWN << 8,  1L << 8,  0x0200, INT_TIMER1_VECN },
@@ -215,7 +215,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     if (timer > 3)
         return;
 
-    KDEBUG(("\033ESet timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler));
+    KDEBUG(("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler));
     
     /* Identify timer control register to use */
     t = (struct a2560u_timer_t *)&a2560u_timers[timer];
@@ -379,6 +379,51 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
     KDEBUG(("Handler %04ux: %p\n", irq_id, handler));
     return old_handler;
 }
+
+/* Calibration ***************************************************************/
+uint32_t calibration_interrupt_count;
+uint32_t calibration_loop_count;
+void a2560_irq_calibration(void);
+void a2560_run_calibration(void);
+
+void a2560u_calibrate_delay(uint32_t calibration_time)
+{
+    int i;
+    uint16_t masks[IRQ_GROUPS];
+    uint32_t old_timer_vector;
+    
+    calibration_interrupt_count = 0;
+    calibration_loop_count = calibration_time;
+
+    KDEBUG(("a2560u_calibrate_delay(0x%ld)\n", calibration_time));
+    /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
+
+    /* Backup all interrupts masks because a2560_run_calibration will mask everything. We'll need to restore */
+    for (i = 0; i < IRQ_GROUPS; i++)
+        masks[i] = ((volatile uint16_t*)IRQ_MASK_GRP0)[i];
+    
+    /* Setup timer for 960Hz, same as what EmuTOS for ST does with using MFP Timer D (UART clock baud rate generator) for 9600 bauds */
+    old_timer_vector = setexc(INT_TIMER0_VECN, -1L);
+    a2560u_set_timer(0, 960, true, a2560_irq_calibration);
+
+    /* This counts the number of wait loops we can do in about 100ms */
+    a2560_run_calibration();
+
+    /* Restore previous timer vector */
+    setexc(INT_TIMER0_VECN, old_timer_vector);
+
+    /* Restore interrupt masks */
+    for (i = 0; i < IRQ_GROUPS; i++)
+        ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = masks[i];
+
+    KDEBUG(("loopcount_1_msec (old)= 0x%08lx, calibration_interrupt_count = %ld\n", loopcount_1_msec, calibration_interrupt_count));
+    /* See delay.c for explaination */
+    if (calibration_interrupt_count)
+        loopcount_1_msec = (calibration_time * 24) / (calibration_interrupt_count * 25);
+
+    KDEBUG(("loopcount_1_msec (new)= 0x%08lx\n", loopcount_1_msec));
+}
+
 
 /* Real Time Clock  **********************************************************/
 

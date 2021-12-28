@@ -63,7 +63,7 @@ void a2560u_set_border_color(uint32_t color);
 uint32_t a2560u_bcostat1(void);
 void a2560u_bconout1(uint8_t byte);
 
-/* Time stuff */
+/* Timing stuff */
 #define HZ200_TIMER_NUMBER 1 /* There is a problem with timer 2 */
 void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector);
 void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
@@ -71,6 +71,8 @@ void a2560u_timer_enable(uint16_t timer, bool enable);
 void a2560u_clock_init(void);
 uint32_t a2560u_getdt(void);
 void a2560u_setdt(uint32_t datetime);
+void a2560u_calibrate_delay(uint32_t calibration_time);
+
 
 extern void *a2560_irq_vectors[IRQ_GROUPS][16];
 void a2560U_irq_enable(uint16_t irq_id);

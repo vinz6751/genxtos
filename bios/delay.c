@@ -18,6 +18,7 @@
 #include "serport.h"
 #include "processor.h"
 #include "delay.h"
+#include "a2560u.h"
 
 /*
  * initial 1 millisecond delay loop values
@@ -52,6 +53,9 @@ void init_delay(void)
 {
 #if defined(MACHINE_FIREBEE) || defined(MACHINE_M548X)
     loopcount_1_msec = SDCLK_FREQUENCY_MHZ * 1000;
+#elif defined(MACHINE_A2560U)
+    /* The A2560U's 68EC000 is running at 20MHz while LOOPS_68000 is for 16MHz*/
+    loopcount_1_msec = LOOPS_68000 * 5 / 4;
 #else
 # if CONF_WITH_APOLLO_68080
     if (is_apollo_68080)
@@ -85,7 +89,9 @@ void init_delay(void)
  */
 void calibrate_delay(void)
 {
-#if CONF_WITH_MFP
+#ifdef MACHINE_A2560U
+    a2560u_calibrate_delay(CALIBRATION_TIME * loopcount_1_msec);
+#elif CONF_WITH_MFP
     ULONG loopcount, intcount;
 
     /*

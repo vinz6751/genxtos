@@ -32,8 +32,9 @@
 .EQU IRQ_PENDING_GRP1,  GAVIN+0x102
     .EQU PS2KEYB_INT,   0x0001
     .EQU PS2MOUSE_INT,  0x0004
-    .EQU PS2MOUSE_INT,  0x0004
+    .EQU PS2MOUSE_INT,  0x0004    
     .EQU COM1_INT,      0x0008
+    .EQU TIMER0_INT,    0x0100
     .EQU RTC_INT,       0x8000
 .EQU IRQ_PENDING_GRP2,  GAVIN+0x104
 .EQU IRQ_POL_GRP0,      GAVIN+0x108
@@ -45,6 +46,7 @@
 .EQU IRQ_MASK_GRP0, 	GAVIN+0x118
 .EQU IRQ_MASK_GRP1, 	GAVIN+0x11A
 .EQU IRQ_MASK_GRP2, 	GAVIN+0x11C
+.EQU TIMER_CTRL0,       GAVIN+0x200
 .EQU UART0,             GAVIN+0x28F8
 
 | BEATRIX ---------------------------------------------------------------------
@@ -64,6 +66,8 @@
     .GLOBAL _a2560u_irq_bq4802ly
     .GLOBAL _a2560u_irq_ps2kbd
     .GLOBAL _a2560u_irq_ps2mouse
+    .GLOBAL _a2560_run_calibration
+    .GLOBAL _a2560_irq_calibration
 | Imports ---------------------------------------------------------------------
     .GLOBAL a2560_irq_vectors
     .GLOBAL _bq4802ly_ticks
@@ -71,6 +75,9 @@
     .GLOBAL _ps2_config
     .GLOBAL _ps2_channel1_irq_handler
     .GLOBAL _ps2_channel2_irq_handler
+    .GLOBAL _calibration_loop_count
+    .GLOBAL _calibration_interrupt_count
+
         
 a2560u_memconf: // Called from memory.S to detect memory setup
     move.l  #0x200000,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
@@ -128,4 +135,32 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     movem.l d0-a6,-(sp) // TODO optimize
     jsr    _ps2_channel2_irq_handler
     movem.l (sp)+,d0-a6
+    rte
+
+
+_a2560_run_calibration: // Calibration loop
+    // We should ideally be using a2560u_timer_enable in this function but we don't because we
+    // don't want any overhead to get the most exact timings.
+    move.l  d2,-(sp) // d2 is not a scratch register
+    move.w  #~TIMER0_INT,IRQ_MASK_GRP1 // Mask everything except Timer 0
+    move.l  _calibration_loop_count,d0
+
+    // Enable timer 0 (cannot use RMW instruction)
+    move.l  TIMER_CTRL0,d1
+    move.l  d1,d2
+    ori.l   #1,d1   // d1: start
+    andi.l  #~1,d2  // d2: stop
+    move.l  d1,TIMER_CTRL0
+cal_loop:                           //just like asm.h inline function
+    subq.l  #1,d0
+    jpl     cal_loop
+
+    // Disable timer 0, quick !
+    move.l  d2,TIMER_CTRL0
+    move.l  (sp)+,d2
+    rts
+
+_a2560_irq_calibration: // Timer 0 handler used for calibration loop, equivalent of handle_timer in delayasm.S
+    move.w #TIMER0_INT,IRQ_PENDING_GRP1
+    addq.l #1,_calibration_interrupt_count
     rte
