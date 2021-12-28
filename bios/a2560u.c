@@ -165,7 +165,7 @@ void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vecto
  * It's done so timers can be reprogrammed quickly without having to do
  * computation, so to get the best timing possible. */
 /* Timers */
-struct a2560u_timer_t {
+const struct a2560u_timer_t {
     uint32_t control;  /* Control register */
     uint32_t value;    /* Value register   */
     uint32_t compare;  /* Compare register */
@@ -175,12 +175,12 @@ struct a2560u_timer_t {
     uint16_t irq_mask; /* OR this to the irq_pending_group to acknowledge the interrupt */
     uint16_t vector;   /* Exception vector number (not address !) */
     uint32_t dummy;    /* Useless but having the structure 32-byte larges makes it quicker to generate an offset with lsl #5 */
-};
-const struct a2560u_timer_t a2560u_timers[] = 
+} a2560u_timers[] = 
 {
-    #define COUNT_DOWN 0x2CL
-    /* 0x24 is TIMER_CTRL_LOAD||TIMER_CTRL_RELOAD (count down)
-     * 0x1A is TIMER_CTRL_CLEAR|TIMER_CTRL_RECLEAR (count up) */
+    #define COUNT_DOWN 0xA4L
+    /* 0xA4 is TIMER_CTRL_IRQ|TIMER_CTRL_LOAD||TIMER_CTRL_RELOAD (count down)
+     * 0x9A is TIMER_CTRL_IRQ|TIMER_CTRL_CLEAR|TIMER_CTRL_RECLEAR (count up)
+    /* TODO 1L as "start" is really TIMER_CTRL_ENABLE but I get a "left shift count >= width of type" warning I can't get rid of */
     { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, COUNT_DOWN << 0,  1L << 0,  0x0100, INT_TIMER0_VECN },
     { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, COUNT_DOWN << 8,  1L << 8,  0x0200, INT_TIMER1_VECN },
     { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, COUNT_DOWN << 16, 1L << 16, 0x0400, INT_TIMER2_VECN },
@@ -226,53 +226,37 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* Stop the timer while we configure */    
     a2560u_timer_enable(timer, false);
 
+    /* Stop and reprogram and the timer, but don't start. */
+    /* TODO: In case of control register 0, we write the config of 3 timers at once because
+     * the timers control register has to be addressed as long word.
+     * Can that have nasty effects on any other running timers ? */
+    R32(t->control) = (R32(t->control) & t->deprog) | t->prog;
+
     /* Set timer period */
     {
         uint32_t value = cpu_freq / frequency;
-        uint32_t compare = 0;
-        KDEBUG(("cpu_freq=%ld frequency=%ld, cpu/freq=0x%08lx\n", cpu_freq, frequency, value));
+        uint32_t compare = 0L;        
         R32(t->value) = value;
-        R32(t->compare) = compare;    
-        KDEBUG(("Wrote value 0x%08lx. Now %p=%08lx\n", value, (void*)t->value,R32(t->value)));
-        KDEBUG(("Wrote compare 0x%08lx. Now %p=%08lx\n", compare, (void*)t->compare,R32(t->compare)));    
-    }  
+        R32(t->compare) = compare;        
+    }
 
-    /* Stop and reprogram and stop the timer, but don't start. */
-    /* TODO: In case of control register 0, we write the config of 3 timers at once:
-      * can that have nasty effects on any other running timers ? */
-    R32(t->control) = (R32(t->control) & t->deprog) | t->prog;
-
-#if 0
-    KDEBUG(("BEFORE SETTING TIMER\n"));
-    KDEBUG(("CPU          sr=%04x\n", get_sr()));
-    KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
-    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
-//    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
-//    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
-    KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
-    KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));
-#endif
-  
-
-   /* Set handler */    
+    /* Set handler */
     setexc(t->vector, (uint32_t)handler);
 
     /* Before starting the timer, ignore any previous pending interrupt from it */    
     if (R16(IRQ_PENDING_GRP1) & t->irq_mask)
-        R16(IRQ_PENDING_GRP1) |= t->irq_mask;
+        R16(IRQ_PENDING_GRP1) = t->irq_mask; /* Yes it's an assignment, no a OR. That's how interrupts are acknowledged */
 
     /* Unmask interrupts for that timer */
     R16(IRQ_MASK_GRP1) &= ~t->irq_mask;
 
     set_sr(sr);
 #if 0
-    KDEBUG(("AFTER SETTING TIMER\n"));
+    KDEBUG(("AFTER SETTING TIMER %d\n", timer));
     KDEBUG(("CPU          sr=%04x\n", get_sr()));
-    KDEBUG(("vector       0x%02x=%p\n",t->vector,(void*)R32(((int32_t)t->vector) << 2)));
+    KDEBUG(("vector       0x%02x=%p\n",t->vector,(void*)setexc(t->vector, -1L)));
     KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
     KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
-//    KDEBUG(("irq_polarity %p=%04x\n", (void*)IRQ_POL_GRP1,R16(IRQ_POL_GRP1)));
-//    KDEBUG(("irq_edge     %p=%04x\n", (void*)IRQ_EDGE_GRP1,R16(IRQ_EDGE_GRP1)));
     KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));    
     KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));    
 #endif    
@@ -286,6 +270,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
 void a2560u_timer_enable(uint16_t timer, bool enable)
 {
     struct a2560u_timer_t *t = (struct a2560u_timer_t *)&a2560u_timers[timer];
+
 KDEBUG(("Before %s > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control)));
     if (enable)
         R32(t->control) |= t->start;
@@ -322,17 +307,16 @@ static void irq_init(void)
 {
     int i, j;
 
-    /* This is only during startup, in normal user you would never disable all interrupts. Would you ? */
     volatile uint16_t *pending = (uint16_t*)IRQ_PENDING_GRP0;
     volatile uint16_t *polarity = (uint16_t*)IRQ_POL_GRP0;
     volatile uint16_t *edge = (uint16_t*)IRQ_EDGE_GRP0;
     volatile uint16_t *mask = (uint16_t*)IRQ_MASK_GRP0;
-    
-    // FIXME
+
     for (i = 0; i < IRQ_GROUPS; i++)
     {
         mask[i] = edge[i] = 0xffff;
-        pending[i] = polarity[i] = 0;        
+        pending[i] = 0xffff; /* Acknowledge any pending interrupt */
+        polarity[i] = 0;        
 
         for (j=0; j<16; j++)
             a2560_irq_vectors[i][j] = just_rts;
@@ -363,6 +347,7 @@ void a2560U_irq_enable(uint16_t irq_id)
     KDEBUG(("a2560U_irq_enable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
 }
 
+
 /* Disable an interruption. First byte is group, second byte is bit */
 void a2560U_irq_disable(uint16_t irq_id)
 {
@@ -370,10 +355,12 @@ void a2560U_irq_disable(uint16_t irq_id)
     KDEBUG(("a2560U_irq_disable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
 }
 
+
 void a2560u_irq_acknowledge(uint16_t irq_id)
 {
     R16(irq_pending_reg(irq_id)) |= irq_mask(irq_id);
 }
+
 
 /* Set an interrupt handler for IRQ managed through GAVIN interrupt registers */
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
@@ -393,6 +380,7 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
     return old_handler;
 }
 
+/* Real Time Clock  **********************************************************/
 
 void a2560u_clock_init(void)
 {

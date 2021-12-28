@@ -402,7 +402,7 @@ static void bios_init(void)
 #else
     set_sr(0x2000);
 # ifdef MACHINE_A2560U
-    a2560u_timer_enable(2,true);
+    a2560u_timer_enable(HZ200_TIMER_NUMBER,true);
     a2560U_irq_enable(INT_SOF_A);
 # endif
 

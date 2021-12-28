@@ -477,6 +477,8 @@ void detect_ide(void)
 
 #ifdef MACHINE_AMIGA
     has_ide = has_gayle ? 0x01 : 0x00;
+#elif defined(MACHINE_A2560U)
+    has_ide = 0x01;
 #elif defined(MACHINE_M548X)
     has_ide = 0x01;
 #elif defined(MACHINE_FIREBEE)

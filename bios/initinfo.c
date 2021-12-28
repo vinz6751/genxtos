@@ -17,7 +17,7 @@
  * Well, this can be made nicer later, if we have much time... :-)
  */
 
-#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "nls.h"
@@ -381,13 +381,8 @@ WORD initinfo(ULONG *pshiftbits)
         long end = hz_200 + INITINFO_DURATION * 200UL;
 
         olddev = dev;
-ULONG oldhz32 = hz_200;
         do
         {
-            if (oldhz32 != hz_200) {
-                KDEBUG(("hz_200 = %08lx\n", hz_200));
-                oldhz32 = hz_200;
-            }
             shiftbits = kbshift(-1);
 
             /* If Shift, Control, Alt or normal key is pressed, stop waiting */

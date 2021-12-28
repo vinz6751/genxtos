@@ -24,6 +24,34 @@
 #define PS2_DATA       PS2_BASE
 #define PS2_CMD        (PS2_BASE+0x04)
 
+/* IDE support */
+struct IDE
+{   
+    uint16_t data;    
+    uint8_t features; /* Read: error */    
+    uint8_t filler03[1];
+    uint8_t sector_count;
+    uint8_t filler05[1];
+    uint8_t sector_number;
+    uint8_t filler07[1];
+    uint8_t cylinder_low;
+    uint8_t filler09[1];
+    uint8_t cylinder_high;
+    uint8_t filler16[1];
+    uint8_t head;
+    uint8_t filler1a[1];
+    uint8_t command; /* Read: status */
+#if 0    
+    UBYTE filler1e[4091];
+    UBYTE control; /* Read: Alternate status */
+    UBYTE filler1019[3];
+    UBYTE address; /* Write: Not used */
+    UBYTE filler02[4067];
+#endif
+};
+#define ide_interface ((volatile struct IDE*)(GAVIN+0x400))
+
+
 void a2560u_init(void); /* C entry point for initialisation */
 void a2560u_debug(const char *, ...);
 void a2560u_screen_init(void);
@@ -36,6 +64,7 @@ uint32_t a2560u_bcostat1(void);
 void a2560u_bconout1(uint8_t byte);
 
 /* Time stuff */
+#define HZ200_TIMER_NUMBER 1 /* There is a problem with timer 2 */
 void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector);
 void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
 void a2560u_timer_enable(uint16_t timer, bool enable);

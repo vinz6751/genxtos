@@ -11,7 +11,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include "vicky2.h"
 
@@ -22,8 +22,6 @@
 #include "string.h"
 
 #include "foenix.h"
-
-#define ENABLE_KDEBUG
 
 #define TTRGB_BLACK     0x0000          /* TT palette */
 #define TTRGB_BLUE      0x000f
