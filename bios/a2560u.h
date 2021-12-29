@@ -27,7 +27,7 @@
 /* IDE support */
 struct IDE
 {   
-    uint16_t data;    
+    uint16_t data;
     uint8_t features; /* Read: error */    
     uint8_t filler03[1];
     uint8_t sector_count;
@@ -37,10 +37,13 @@ struct IDE
     uint8_t cylinder_low;
     uint8_t filler09[1];
     uint8_t cylinder_high;
-    uint8_t filler16[1];
+    uint8_t filler0b[1];
     uint8_t head;
-    uint8_t filler1a[1];
+    uint8_t filler0d[1];
     uint8_t command; /* Read: status */
+    uint8_t filler0f[1];
+    uint8_t control;  /* Read: Alternate status */
+
 #if 0    
     UBYTE filler1e[4091];
     UBYTE control; /* Read: Alternate status */
@@ -75,8 +78,12 @@ void a2560u_calibrate_delay(uint32_t calibration_time);
 
 
 extern void *a2560_irq_vectors[IRQ_GROUPS][16];
-void a2560U_irq_enable(uint16_t irq_id);
-void a2560U_irq_disable(uint16_t irq_id);
+/* Backup all IRQ mask registers and mask all interrupts */
+void a2560u_irq_mask_all(uint16_t *save);
+/* Restore interrupts backed up with a2560u_irq_mask_all */
+void a2560u_irq_restore(const uint16_t *save);
+void a2560u_irq_enable(uint16_t irq_id);
+void a2560u_irq_disable(uint16_t irq_id);
 void a2560u_irq_acknowledge(uint16_t irq_id);
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);
 

@@ -50,7 +50,7 @@ extern UBYTE *phystop;
 
 extern WORD timer_ms;
 
-extern volatile LONG hz_200;
+extern volatile ULONG hz_200;
 extern UBYTE *dskbufp;
 extern volatile WORD flock;
 extern WORD nflops;

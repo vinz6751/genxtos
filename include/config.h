@@ -636,7 +636,7 @@
 #  define CONF_ATARI_HARDWARE 0
 # endif
 # ifndef CONF_WITH_IDE
-#  define CONF_WITH_IDE 0 /* Not supported yet */
+#  define CONF_WITH_IDE 1
 # endif
 # ifndef CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF
 #  define CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF 0

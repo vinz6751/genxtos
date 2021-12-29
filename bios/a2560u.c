@@ -60,6 +60,7 @@ static void timer_init(void);
 
 /* Interrupt */
 static void irq_init(void);
+void irq_mask_all(uint16_t *save);
 void irq_add_handler(int id, void *handler);
 void a2560u_irq_bq4802ly(void);
 void a2560u_irq_vicky(void);
@@ -271,7 +272,6 @@ void a2560u_timer_enable(uint16_t timer, bool enable)
 {
     struct a2560u_timer_t *t = (struct a2560u_timer_t *)&a2560u_timers[timer];
 
-KDEBUG(("Before %s > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control)));
     if (enable)
         R32(t->control) |= t->start;
     else
@@ -328,6 +328,30 @@ static void irq_init(void)
     setexc(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
 }
 
+
+void a2560u_irq_mask_all(uint16_t *save)
+{
+    int i;
+    uint16_t sr = set_sr(0x2700);
+
+    for (i = 0; i < IRQ_GROUPS; i++)
+    {
+        save[i] = ((volatile uint16_t*)IRQ_MASK_GRP0)[i];
+        ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = 0xffff;
+    }
+    
+    set_sr(sr);
+}
+
+
+void a2560u_irq_restore(const uint16_t *save)
+{
+    int i;
+
+    for (i = 0; i < IRQ_GROUPS; i++)
+        ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = save[i];
+}
+
 /* Interrupt handlers for each of the IRQ groups */
 void *a2560_irq_vectors[IRQ_GROUPS][16];
 /* Utility functions, don't use directly */
@@ -340,19 +364,19 @@ static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)I
 
 
 /* Enable an interruption. First byte is group, second byte is bit */
-void a2560U_irq_enable(uint16_t irq_id)
+void a2560u_irq_enable(uint16_t irq_id)
 {
     a2560u_irq_acknowledge(irq_id);
     R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
-    KDEBUG(("a2560U_irq_enable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+    KDEBUG(("a2560u_irq_enable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
 }
 
 
 /* Disable an interruption. First byte is group, second byte is bit */
-void a2560U_irq_disable(uint16_t irq_id)
+void a2560u_irq_disable(uint16_t irq_id)
 {
     R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
-    KDEBUG(("a2560U_irq_disable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+    KDEBUG(("a2560u_irq_disable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
 }
 
 
@@ -387,8 +411,7 @@ void a2560_irq_calibration(void);
 void a2560_run_calibration(void);
 
 void a2560u_calibrate_delay(uint32_t calibration_time)
-{
-    int i;
+{    
     uint16_t masks[IRQ_GROUPS];
     uint32_t old_timer_vector;
     
@@ -399,8 +422,7 @@ void a2560u_calibrate_delay(uint32_t calibration_time)
     /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
 
     /* Backup all interrupts masks because a2560_run_calibration will mask everything. We'll need to restore */
-    for (i = 0; i < IRQ_GROUPS; i++)
-        masks[i] = ((volatile uint16_t*)IRQ_MASK_GRP0)[i];
+    a2560u_irq_mask_all(masks);
     
     /* Setup timer for 960Hz, same as what EmuTOS for ST does with using MFP Timer D (UART clock baud rate generator) for 9600 bauds */
     old_timer_vector = setexc(INT_TIMER0_VECN, -1L);
@@ -413,8 +435,7 @@ void a2560u_calibrate_delay(uint32_t calibration_time)
     setexc(INT_TIMER0_VECN, old_timer_vector);
 
     /* Restore interrupt masks */
-    for (i = 0; i < IRQ_GROUPS; i++)
-        ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = masks[i];
+    a2560u_irq_restore(masks);
 
     KDEBUG(("loopcount_1_msec (old)= 0x%08lx, calibration_interrupt_count = %ld\n", loopcount_1_msec, calibration_interrupt_count));
     /* See delay.c for explaination */
@@ -476,8 +497,8 @@ static const struct ps2_driver_t *drivers[] =
 void a2560u_kbd_init(void)
 {
     /* Disable IEQ while we're configuring */
-    a2560U_irq_disable(INT_KBD_PS2);
-    a2560U_irq_disable(INT_MOUSE);
+    a2560u_irq_disable(INT_KBD_PS2);
+    a2560u_irq_disable(INT_MOUSE);
 
     /* Explain our setup to the PS/2 subsystem */
     ps2_config.counter      = (uint32_t*)&frclock; /* FIXME we're using the VBL counter */
@@ -502,8 +523,8 @@ void a2560u_kbd_init(void)
     a2560u_irq_acknowledge(INT_MOUSE);
 
     /* Go ! */
-    a2560U_irq_enable(INT_KBD_PS2);
-    a2560U_irq_enable(INT_MOUSE);        
+    a2560u_irq_enable(INT_KBD_PS2);
+    a2560u_irq_enable(INT_MOUSE);        
 }
 
 

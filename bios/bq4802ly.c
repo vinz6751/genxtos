@@ -35,14 +35,14 @@ uint16_t bcd_to_i(uint8_t bcd);
 
 void bq4802ly_init(void)
 {
-    a2560U_irq_disable(INT_RTC);
+    a2560u_irq_disable(INT_RTC);
 
     /* Make sure the RTC is on */
     bq4802ly->control = BQ4802LY_STOP;
 
     bq4802ly_enable_ticks(true);
 
-    a2560U_irq_enable(INT_RTC);
+    a2560u_irq_enable(INT_RTC);
 }
 
 
