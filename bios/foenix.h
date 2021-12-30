@@ -35,6 +35,9 @@
 #define VICKY       0x00B40000
 #define VRAM_Bank0  0x00C00000 /* 2MB (until 0xDFFFFF) */
 
+#define GAVIN_CTRL  (GAVIN)
+  #define GAVIN_CTRL_BEEPER 0x0010
+
 /* Serial port speed codes for a2560u_serial_set_bps */
 #define UART0       (UART16550*)(GAVIN+0x28F8)
 #define UART_300    4167 /* Code for 300 bps */

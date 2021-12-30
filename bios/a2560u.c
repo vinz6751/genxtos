@@ -71,6 +71,7 @@ void a2560u_irq_ps2mouse(void);
 
 void a2560u_init(void)
 {
+    a2560u_beeper(true);
     *((unsigned long * volatile)0xB40008) = 0x0000000; /* Black border */
 
     cpu_freq = CPU_FREQ; /* TODO read that from GAVIN's Machine ID */
@@ -83,6 +84,7 @@ void a2560u_init(void)
 
     /* Clear screen and home */
     a2560u_debug(("\033Ea2560u_init()"));
+    a2560u_beeper(false);
 }
 
 void a2560u_screen_init(void)
@@ -525,6 +527,94 @@ void a2560u_kbd_init(void)
     /* Go ! */
     a2560u_irq_enable(INT_KBD_PS2);
     a2560u_irq_enable(INT_MOUSE);        
+}
+
+
+/* System information ********************************************************/
+
+static const uint32_t foenix_cpu_speed_hz[] =
+{
+    14318000,
+    20000000,
+    25000000,
+    33000000,
+    40000000,
+    50000000,
+    66000000,
+    80000000
+};
+
+static const char* foenix_model_name[] =
+{
+    "C256 FMX",
+    "C256 U",
+    NULL,
+    "A2560 dev",
+    "Gen X",
+    "C256 U+",
+    NULL,
+    NULL,
+    "A2560X",
+    "A2560U",
+    NULL,
+    "A2560K"
+};
+
+static const char * foenix_cpu_name[] =
+{
+    "MC68SEC000",
+    "MC68020"
+    "MC68EC020",
+    "MC68030",
+    "MC68EC30",
+    "MC68040",
+    "MC68040V",
+};
+
+
+void a2560u_system_info(struct foenix_system_info_t *result)
+{
+    result->fpga_date = MAKE_ULONG(R16(VICKY+0x30),R16(VICKY+0x32));
+    result->fpga_major = R16(VICKY+0x3A);
+    result->fpga_minor = R16(VICKY+0x38);
+    result->fpga_partnumber = MAKE_ULONG(R16(VICKY+0x3E), R16(VICKY+0x3C));
+    
+    uint16_t revision = R16(VICKY+0x34);
+    result->pcb_revision_name[0] = HIBYTE(revision);
+    result->pcb_revision_name[1] = LOBYTE(revision);    
+    revision = R16(VICKY+0x36);
+    result->pcb_revision_name[2] = HIBYTE(revision);
+    result->pcb_revision_name[3] = '\0';
+
+    result->cpu_name = (char*)foenix_cpu_name[R16(GAVIN+0x0C) >> 12];
+    //result->model_name = foenix_model_name[poke]
+
+    uint16_t machine_id = R16(GAVIN+0x0C);
+    result->cpu_id = (machine_id & 0xf000) >> 12;
+    result->cpu_name = foenix_cpu_name[result->cpu_id];
+    result->cpu_speed_hz = foenix_cpu_speed_hz[(machine_id & 0xf00) >> 8];
+    int model_id = machine_id & 0x0f;
+    result->model_name = foenix_model_name[model_id];
+
+    if (model_id == 9) /* A2560U */
+    {
+        if (((machine_id & 0xc0) >> 6) == 0x10)
+            result->vram_size = (1L << 21); /* 2Mo */
+        else
+            result->vram_size = (1L << 22); /* 4Mo */
+
+        // CPU speed not correctly reported ?
+        result->cpu_speed_hz = foenix_cpu_speed_hz[1];
+    }
+}
+
+
+void a2560u_beeper(bool on)
+{
+    if (on)
+        R16(GAVIN_CTRL) |= GAVIN_CTRL_BEEPER;
+    else
+        R16(GAVIN_CTRL) &= ~GAVIN_CTRL_BEEPER;
 }
 
 

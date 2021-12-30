@@ -10,7 +10,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "cookie.h"
@@ -813,8 +813,13 @@ const char * machine_name(void)
 #elif defined(MACHINE_M548X)
     return m548x_machine_name();
 #elif defined(MACHINE_A2560U)
-    return "A2560U";
+    struct foenix_system_info_t info;
+
+    a2560u_system_info(&info);
+ 
+    return info.model_name;
 #else
+
     return guess_machine_name();
 #endif
 }

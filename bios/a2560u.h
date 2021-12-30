@@ -54,8 +54,25 @@ struct IDE
 };
 #define ide_interface ((volatile struct IDE*)(GAVIN+0x400))
 
+/* System info from GAVIN and VICKY */
+struct foenix_system_info_t
+{
+    char *model_name;
+    uint8_t cpu_id;
+    uint32_t cpu_speed_hz;
+    uint32_t vram_size;
+    char *cpu_name;
+    char pcb_revision_name[4];
+    uint32_t fpga_date; /* ddddmmyy, BCD */
+    uint16_t fpga_major;
+    uint16_t fpga_minor;
+    uint32_t fpga_partnumber;
+};
+
 
 void a2560u_init(void); /* C entry point for initialisation */
+void a2560u_beeper(bool on);
+void a2560u_system_info(struct foenix_system_info_t *result);
 void a2560u_debug(const char *, ...);
 void a2560u_screen_init(void);
 void a2560u_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez);
