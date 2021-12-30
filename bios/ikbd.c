@@ -22,7 +22,7 @@
  * - KEYTBL.TBL config with _AKP cookie (tos 5.00 and later)
  */
 
-//#define ENABLE_KDEBUG
+/*#define ENABLE_KDEBUG*/
 
 #include "emutos.h"
 #include "country.h"
@@ -34,6 +34,7 @@
 #include "asm.h"
 #include "ikbd.h"
 #include "sound.h"              /* for keyclick */
+#include "scancode.h"
 #include "delay.h"
 #include "bios.h"
 #include "coldfire.h"
@@ -45,25 +46,7 @@
 /* forward declarations */
 static WORD convert_scancode(UBYTE *scancodeptr);
 
-/* scancode definitions */
-#define KEY_RELEASED 0x80       /* This bit set, when key-release scancode */
 
-#define KEY_LSHIFT  0x2a        /* modifiers */
-#define KEY_RSHIFT  0x36
-#define KEY_CTRL    0x1d
-#define KEY_ALT     0x38
-#define KEY_CAPS    0x3a
-
-#define KEY_ESCAPE  0x01        /* invariant keys, unaffected by modifiers */
-#define KEY_BACKSPACE 0x0e
-#define KEY_TAB     0x0f
-#define KEY_UNDO    0x61
-
-#define KEY_RETURN  0x1c        /* semi-invariant, ctrl changes ascii to newline */
-#define KEY_ENTER   0x72
-
-#define KEY_F1      0x3b        /* function keys F1 - F10 */
-#define KEY_F10     0x44
 
 #define KEY_CTRL_HOME 0x77      /* scancode values set when ctrl modifies scancode */
 #define KEY_CTRL_LTARROW 0x73
@@ -83,17 +66,13 @@ static WORD convert_scancode(UBYTE *scancodeptr);
  *  alt-insert, alt-home => mouse buttons (standard, but Amiga differs, see below)
  *  alt-arrowkeys: mouse movement
  */
-#define KEY_HELP    0x62
-#define KEY_DELETE  0x53
-#define KEY_INSERT  0X52
-#define KEY_HOME    0X47
-#define KEY_UPARROW 0x48
-#define KEY_LTARROW 0x4b
-#define KEY_RTARROW 0x4d
-#define KEY_DNARROW 0x50
+
 #ifdef MACHINE_AMIGA
 #define KEY_EMULATE_LEFT_BUTTON     KEY_DELETE
 #define KEY_EMULATE_RIGHT_BUTTON    KEY_HELP
+#elif defined(MACHINE_A2560U)
+#define KEY_EMULATE_LEFT_BUTTON     KEY_INSERT
+#define KEY_EMULATE_RIGHT_BUTTON    KEY_PAGEUP
 #else
 #define KEY_EMULATE_LEFT_BUTTON     KEY_INSERT
 #define KEY_EMULATE_RIGHT_BUTTON    KEY_HOME
@@ -577,7 +556,10 @@ static WORD convert_scancode(UBYTE *scancodeptr)
     case KEY_ESCAPE:
     case KEY_BACKSPACE:
     case KEY_TAB:
+#ifdef MACHINE_A2560U
+#else    
     case KEY_UNDO:
+#endif    
         return current_keytbl.norm[scancode];
     }
 
@@ -593,10 +575,12 @@ static WORD convert_scancode(UBYTE *scancodeptr)
         if (handle_mouse_mode(scancode))    /* we sent a packet, */
             return 0;                       /* so we're done     */
 
+#if 0 // TODO support printscreen key
         if (scancode == KEY_HELP) {
             dumpflg++;      /* tell VBL to call scrdmp() function */
             return 0;
         }
+#endif
 
         /* ALT-keypad means that char number */
         if ((scancode >= KEYPAD_START) && (scancode <= KEYPAD_END)) {
@@ -636,7 +620,7 @@ static WORD convert_scancode(UBYTE *scancodeptr)
      * the main keyboard tables are used (these are all 128-byte direct
      * scancode lookup tables).
      */
-    if (shifty & MODE_ALT) {
+    if (shifty & MODE_ALTGR) {
         if (shifty & MODE_SHIFT) {
             a = current_keytbl.shft;
         } else if (shifty & MODE_CAPS) {
@@ -785,7 +769,7 @@ void kbd_int(UBYTE scancode)
             break;
         case KEY_CTRL:
             shifty &= ~MODE_CTRL;       /* clear bit */
-            break;
+            break;          
         case KEY_ALT:
             shifty &= ~MODE_ALT;        /* clear bit */
             if (mouse_packet[0])
@@ -804,13 +788,20 @@ void kbd_int(UBYTE scancode)
             }
             shifty &= ~MODE_CAPS;       /* clear bit */
             break;
-#endif
-        case KEY_HOME:
-            shifty &= ~MODE_HOME;       /* clear bit */
+#elif defined(MACHINE_A2560U)
+        case KEY_RCTRL:
+            shifty &= ~MODE_CTRL;       /* clear bit */
+            break;
+        case KEY_ALTGR:
+            shifty &= ~MODE_ALTGR;       /* clear bit */
+            break;
+#endif  
+        case KEY_EMULATE_LEFT_BUTTON:
+            shifty &= ~MODE_MOUSEL;       /* clear bit */
             kb_ticks = 0;               /* stop key repeat */
             break;
-        case KEY_INSERT:
-            shifty &= ~MODE_INSERT;     /* clear bit */
+        case KEY_EMULATE_RIGHT_BUTTON:
+            shifty &= ~MODE_MOUSER;     /* clear bit */
             kb_ticks = 0;               /* stop key repeat */
             break;
         default:                    /* non-modifier keys: */
@@ -852,6 +843,14 @@ void kbd_int(UBYTE scancode)
         shifty ^= MODE_CAPS;    /* toggle bit */
 #endif
         break;
+#ifdef MACHINE_A2560U
+        case KEY_RCTRL:
+            shifty |= MODE_CTRL;  /* set bit */
+            break;
+        case KEY_ALTGR:
+            shifty |= MODE_ALTGR; /* set bit */
+            break;
+#endif        
     default:
         modifier = FALSE;
         break;
@@ -877,10 +876,10 @@ void kbd_int(UBYTE scancode)
     if (shifty & MODE_ALT) {    /* only if the Alt key is down ... */
         switch(scancode) {
         case KEY_HOME:
-            shifty |= MODE_HOME;    /* set bit */
+            shifty |= MODE_MOUSEL;    /* set bit */
             break;
         case KEY_INSERT:
-            shifty |= MODE_INSERT;  /* set bit */
+            shifty |= MODE_MOUSER;  /* set bit */
             break;
         }
     }

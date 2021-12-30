@@ -522,7 +522,12 @@ static WORD user_input(WORD c, BOOL flow_control)
     if (c < 0)
         c = get_key();
 
-    if ((c == CTL_C) || (c == 'Q') || (c == 'q') || (c == UNDO))    /* wants to quit */
+    /* wants to quit */
+    if ((c == CTL_C) || (c == 'Q') || (c == 'q')
+#ifdef UNDO    
+     || (c == UNDO)
+#endif
+     )
         return -1;
 
     if (!flow_control)
