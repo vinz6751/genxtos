@@ -22,10 +22,13 @@ Puis l'uploader à cette adresse à l'aide de [C256Mgr](https://github.com/pwein
 
 Voilà grossièrement l'état du projet:
 L'OS démarre vers EmuCON (petit shell) et des utilitaires en mode texte peuvent être exécutés.
-* Le curseur et la console ne fonctionnent pas parfaitement.
-* Le clavier n'est pas correctement mappé.
+* Le curseur et l'affichae en mode texte ne fonctionent pas parfaitement (problème de scrolling et de curseur)
+* Le clavier français est correctement mappé.
+* L'IDE fonctionne (avec un seul périphérique)
+* Le lecteur de carte SD fonctionne.
+* Le timer système 200Hz fonctionne (il utilise le timer 1)
 * RTC presque fonctionnelle
-* Souris, son, GEM non géré.
+* Souris, son, GEM etc sont à faire.
 
 
 *English*
