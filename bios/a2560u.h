@@ -72,6 +72,7 @@ struct foenix_system_info_t
 
 void a2560u_init(void); /* C entry point for initialisation */
 void a2560u_beeper(bool on);
+void a2560u_disk_led(bool on);
 void a2560u_system_info(struct foenix_system_info_t *result);
 void a2560u_debug(const char *, ...);
 void a2560u_screen_init(void);

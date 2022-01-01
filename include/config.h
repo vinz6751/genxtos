@@ -638,6 +638,9 @@
 # ifndef CONF_WITH_IDE
 #  define CONF_WITH_IDE 1
 # endif
+# ifndef CONF_WITH_SDMMC
+#  define CONF_WITH_SDMMC 1
+# endif
 # ifndef CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF
 #  define CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF 0
 # endif

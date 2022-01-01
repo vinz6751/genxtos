@@ -36,7 +36,9 @@
 #define VRAM_Bank0  0x00C00000 /* 2MB (until 0xDFFFFF) */
 
 #define GAVIN_CTRL  (GAVIN)
-  #define GAVIN_CTRL_BEEPER 0x0010
+  #define GAVIN_CTRL_BEEPER  0x0010
+  #define GAVIN_CTRL_PWRLED  0x0001
+  #define GAVIN_CTRL_DISKLED 0x0002
 
 /* Serial port speed codes for a2560u_serial_set_bps */
 #define UART0       (UART16550*)(GAVIN+0x28F8)
@@ -93,6 +95,18 @@
 #define INT_TIMER3_VECN   (INT_TIMERS_VECN+3) /* Timer 3, Clocked with the SOF Channel A */
 #define INT_BQ4802LY_VECN 0x4F
 #define INT_NIRQ          4
+
+/* SPI/SD interface controller */
+/* Transaction types for the "transfer type" register (GAVIN+0x302) */
+#define SDC_TRANS_DIRECT   0
+#define SDC_TRANS_SD_INIT  1
+#define SDC_TRANS_SD_READ  2
+#define SDC_TRANS_SD_WRITE 3
+/* Set this to the transfer control (GAVIN+0x303) to start the operation set in "transfer type" */
+#define SDC_TRANS_START  1
+/* Bit mask to get the status of the operation (GAVIN+0x304) */
+#define SDC_TRANS_BUSY   1
+
 
 #if 0
 /*
