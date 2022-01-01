@@ -631,37 +631,17 @@ void a2560u_disk_led(bool on)
 #include "spi.h"
 
 
+/* Nothing needed there, it's all handled by GAVIN */
+void spi_clock_sd(void) { }
+void spi_clock_mmc(void) { }
+void spi_clock_ident(void) { }
+void spi_cs_assert(void) { }
+void spi_cs_unassert(void) { }
+
 void spi_initialise(void)
 {
+    /* We use plain SPI and EmuTOS's SD layer on top of it */
     sdc_controller->transfer_type = SDC_TRANS_DIRECT;
-}
-
-
-void spi_clock_sd(void)
-{
-}
-
-
-void spi_clock_mmc(void)
-{
-}
-
-
-void spi_clock_ident(void)
-{
-}
-
-
-/* when we assert or unassert, we send a dummy byte to
- * force a write to the register
- */
-void spi_cs_assert(void)
-{
-}
-
-
-void spi_cs_unassert(void)
-{
 }
 
 
@@ -684,15 +664,4 @@ void spi_send_byte(uint8_t c)
 uint8_t spi_recv_byte(void)
 {
     return clock_byte(0xff);
-}
-
-
-void debug1(void* p);
-void debug1(void* p)
-{   
-#if 0
-    char msg[30];
-    sprintf(msg,"handler=%p\r\n",(void*)frclock);
-    a2560u_debug(msg);    
-#endif
 }

@@ -96,13 +96,6 @@ vicky_irq_loop:
     and.b   d4,d3           // the .b is deliberate, VICKY uses only the LSB the PENDING register
     beq.s   vicky_irq_next
     movea.l (a3)+,a4    // TODO on 68020+ use double indirection
-#if 0 // See address of called handler
-    movem.l d0-a6,-(sp)
-    move.l  a4,-(sp)
-    jsr     _debug1
-    addq.l  #4,sp    
-    movem.l (sp)+,d0-a6
-#endif
     jsr     (a4)            // call handler
     move.w  d4,IRQ_PENDING_GRP0 // acknowledge
 vicky_irq_next:    
