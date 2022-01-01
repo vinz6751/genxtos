@@ -23,6 +23,9 @@
 #define PS2_BASE       (GAVIN+0x2800)
 #define PS2_DATA       PS2_BASE
 #define PS2_CMD        (PS2_BASE+0x04)
+#define SDC_BASE       (GAVIN+0x300)
+#define IDE_BASE       (GAVIN+0x400)
+
 
 /* IDE support */
 struct IDE
@@ -52,7 +55,37 @@ struct IDE
     UBYTE filler02[4067];
 #endif
 };
-#define ide_interface ((volatile struct IDE*)(GAVIN+0x400))
+#define ide_interface ((volatile struct IDE*)IDE_BASE)
+
+
+/* SD card support */
+struct sdc_controller_t 
+{
+    uint8_t version;
+    uint8_t control;
+    uint8_t transfer_type;
+    uint8_t transfer_control;
+    uint8_t transfer_status;
+    uint8_t transfer_error;
+    uint8_t data;
+    uint8_t sd_xxxa;
+    uint8_t sd_xxax;
+    uint8_t sd_xaxx;
+    uint8_t sd_axxx;
+    uint8_t spi_clock;
+    uint8_t dummy0c[4];
+    uint8_t rx_fifo_data;
+    uint8_t dummy11[1];
+    uint8_t rx_fifo_h;
+    uint8_t rx_fifo_l;
+    uint8_t rx_fifo_control;
+    uint8_t dummy15[11];
+    uint8_t tx_fifo;
+    uint8_t dummy21[3];
+    uint8_t tx_fifo_control;
+};
+#define sdc_controller ((volatile struct sdc_controller_t*)SDC_BASE)
+
 
 /* System info from GAVIN and VICKY */
 struct foenix_system_info_t

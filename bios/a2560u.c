@@ -630,38 +630,10 @@ void a2560u_disk_led(bool on)
 
 #include "spi.h"
 
-struct /*__attribute__((__packed__))*/ sd_controller_t 
-{
-    uint8_t version;
-    uint8_t control;
-    uint8_t transfer_type;
-    uint8_t transfer_control;
-    uint8_t transfer_status;
-    uint8_t transfer_error;
-    uint8_t data;
-    uint8_t sd_xxxa;
-    uint8_t sd_xxax;
-    uint8_t sd_xaxx;
-    uint8_t sd_axxx;
-    uint8_t spi_clock;
-    uint8_t dummy0c[4];
-    uint8_t rx_fifo_data;
-    uint8_t dummy11[1];
-    uint8_t rx_fifo_h;
-    uint8_t rx_fifo_l;
-    uint8_t rx_fifo_control;
-    uint8_t dummy15[11];
-    uint8_t tx_fifo;
-    uint8_t dummy21[3];
-    uint8_t tx_fifo_control;
-};
-
-static volatile struct sd_controller_t* const sd;
-
 
 void spi_initialise(void)
 {
-    sd->transfer_type = SDC_TRANS_DIRECT;
+    sdc_controller->transfer_type = SDC_TRANS_DIRECT;
 }
 
 
@@ -685,27 +657,21 @@ void spi_clock_ident(void)
  */
 void spi_cs_assert(void)
 {
-    // SAGA_SDCARD_CTL = 0;
-    //spi_send_byte(0xff);
 }
 
 
 void spi_cs_unassert(void)
 {
-    // SAGA_SDCARD_CTL = 1;
-    //spi_send_byte(0xff);
 }
 
 
 static uint8_t clock_byte(uint8_t value)
 {
-    a2560u_disk_led(true);
-    sd->data = value;
-    sd->control = SDC_TRANS_START;
-    while (sd->transfer_status & SDC_TRANS_BUSY)
+    sdc_controller->data = value;
+    sdc_controller->transfer_control = SDC_TRANS_START;
+    while (sdc_controller->transfer_status & SDC_TRANS_BUSY)
         ;
-    a2560u_disk_led(false);
-    return sd->data;
+    return sdc_controller->data;
 }
 
 

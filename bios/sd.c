@@ -22,6 +22,7 @@
 #include "spi.h"
 #include "string.h"
 #include "tosvars.h"
+#include "a2560u.h"
 
 #if CONF_WITH_SDMMC
 
@@ -144,7 +145,16 @@ static LONG sd_write(UWORD drv,ULONG sector,UWORD count,UBYTE *buf);
  */
 void sd_init(void)
 {
+#ifdef MACHINE_A2560U
+    a2560u_disk_led(true);
+#endif
+
     sd_check(0);    /* just drive 0 to check */
+
+#ifdef MACHINE_A2560U
+    a2560u_disk_led(false);
+#endif
+
 }
 
 /*
@@ -161,6 +171,10 @@ int i;
 
     if (count == 0)
         return 0;
+
+#ifdef MACHINE_A2560U
+    a2560u_disk_led(true);
+#endif
 
     /*
      * retry at most once (to handle reinitialisation)
@@ -203,6 +217,10 @@ int i;
     if (ret < 0)
         KDEBUG(("sd_rw(%d,%ld,%d,%p,%d) rc=%ld\n",rw,sector,count,p,dev,ret));
 
+#ifdef MACHINE_A2560U
+    a2560u_disk_led(false);
+#endif    
+
     return ret;
 }
 
@@ -217,6 +235,10 @@ UBYTE cardreg[16];
 
     if (drv)
         return EUNDEV;
+
+#ifdef MACHINE_A2560U
+    a2560u_disk_led(true);
+#endif
 
     switch(ctrl) {
     case GET_DISKINFO:
@@ -260,6 +282,10 @@ UBYTE cardreg[16];
     default:
         rc = ERR;
     }
+
+#ifdef MACHINE_A2560U
+    a2560u_disk_led(true);
+#endif
 
     return rc;
 }
