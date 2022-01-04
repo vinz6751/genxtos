@@ -40,11 +40,13 @@
 #define TTRGB_LTYELLOW  0x0ff9
 #define TTRGB_WHITE     0x0fff
 
+#define A2560_BLUE 0x55b
+
 static const uint16_t tt_dflt_palette[] = {
     TTRGB_WHITE, TTRGB_RED, TTRGB_GREEN, TTRGB_YELLOW,
     TTRGB_BLUE, TTRGB_MAGENTA, TTRGB_CYAN, TTRGB_LTGRAY,
     TTRGB_GRAY, TTRGB_LTRED, TTRGB_LTGREEN, TTRGB_LTYELLOW,
-    TTRGB_LTBLUE, TTRGB_LTMAGENTA, TTRGB_LTCYAN, TTRGB_BLACK,
+    TTRGB_LTBLUE, TTRGB_LTMAGENTA, TTRGB_LTCYAN, /*TTRGB_BLACK*/ A2560_BLUE,
     0x0fff, 0x0eee, 0x0ddd, 0x0ccc, 0x0bbb, 0x0aaa, 0x0999, 0x0888,
     0x0777, 0x0666, 0x0555, 0x0444, 0x0333, 0x0222, 0x0111, 0x0000,
     0x0f00, 0x0f01, 0x0f02, 0x0f03, 0x0f04, 0x0f05, 0x0f06, 0x0f07,
@@ -74,7 +76,7 @@ static const uint16_t tt_dflt_palette[] = {
     0x0760, 0x0750, 0x0740, 0x0730, 0x0720, 0x0710, 0x0400, 0x0401,
     0x0402, 0x0403, 0x0404, 0x0304, 0x0204, 0x0104, 0x0004, 0x0014,
     0x0024, 0x0034, 0x0044, 0x0043, 0x0042, 0x0041, 0x0040, 0x0140,
-    0x0240, 0x0340, 0x0440, 0x0430, 0x0420, 0x0410, TTRGB_WHITE, TTRGB_BLACK
+    0x0240, 0x0340, 0x0440, 0x0430, 0x0420, 0x0410, TTRGB_WHITE, A2560_BLUE
 };
 
 const FOENIX_VIDEO_MODE foenix_video_modes[] = {
@@ -110,7 +112,8 @@ void vicky2_init(void)
     /* Setup framebuffer to point to beginning of video RAM */
     R32(VICKY_A_BMP_FG_CTRL) = 1;       /* Enable bitmap layer 0, LUT 0 */
     R32(VICKY_A_BMP_FB) = 0L;           /* Set framebuffer address (relative to VRAM) */
-    R32(VICKY_A_BG_COLOR) = 0xffffffff; /* White background */
+    //R32(VICKY_A_BG_COLOR) = 0xffffffff; /* White background */
+    R32(VICKY_A_BG_COLOR) = 0xff0e2b4f; /* Blue-ish background */
 
     /* Initialise the LUT0 which we use for the screen */    
     for (i = 0; i < 256; i++)
