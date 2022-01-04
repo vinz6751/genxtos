@@ -25,6 +25,7 @@
 #include "sound.h"              /* for bell() */
 #include "string.h"
 #include "conout.h"
+#include "a2560u.h"
 
 
 
@@ -95,7 +96,7 @@ static UBYTE *cell_addr(UWORD x, UWORD y)
         y = v_cel_my;           /* clipped y */
 
 #ifdef MACHINE_A2560U    
-    return v_bas_ad + (ULONG)v_cel_wr * y + x * 8;;
+    return v_bas_ad + (ULONG)v_cel_wr * y + x * 8 + v_cur_of;
 #else
     ULONG disx, disy;
 
@@ -158,6 +159,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
 #ifdef CONF_WITH_CHUNKY8
     int i,j; /* Source bitshift */
     UBYTE bsrc;
+    UBYTE *c = dst;
 
     for (j = 0; j < v_cel_ht; j++)
     {
@@ -170,6 +172,8 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
         dst += v_lin_wr;
         src += v_fnt_wr;        
     }
+
+    a2560u_mark_cell_dirty(c);  
 #else
     UBYTE * src_sav, * dst_sav;
     int fnt_wr, line_wr;
@@ -246,7 +250,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
  *
  * out:
  */
-void a2560u_debug(const char*);
+
 static void neg_cell(UBYTE *cell)
 {
     v_stat_0 |= M_CRIT;                 /* start of critical section. */
@@ -254,6 +258,7 @@ static void neg_cell(UBYTE *cell)
 #if CONF_WITH_CHUNKY8
     int i; /* Source bitshift */
     const int inc = v_lin_wr-4;
+    UBYTE *c = cell;
     for (i = 0; i < v_cel_ht; i++)
     {
         /* TODO it seems that cursor blinking and other things involving reading from video ram don't work (yet).
@@ -261,11 +266,19 @@ static void neg_cell(UBYTE *cell)
          * it's a known problem but I am not sure if it will be resolved. Once VDMA is implemented in the A2560U,
          * we can use it to transfer video ram to ram and do our thing. */
         /* We process 4 bytes at a time and loop is unrolled for performance */
+#if 0
         *((LONG*)cell) = ~*((LONG*)cell);
         cell += 4;
         *((LONG*)cell) = ~*((LONG*)cell);
         cell += inc;
+#else
+        int j;
+        for(j=7; j--;)
+            cell[j] = ~cell[j];
+        cell += v_lin_wr;
+#endif        
     }
+    a2560u_mark_cell_dirty(c);
 #else
     int len;
     int plane;
@@ -583,6 +596,10 @@ void blank_out(int topx, int topy, int botx, int boty)
             addr += offs;       /* skip non-region area with stride advance */
         }
     }
+
+#ifdef MACHINE_A2560U
+    a2560u_mark_screen_dirty();
+#endif    
 }
 
 
@@ -624,6 +641,11 @@ void scroll_up(UWORD top_line)
 
     /* exit thru blank out, bottom line cell address y to top/left cell */
     blank_out(0, v_cel_my , v_cel_mx, v_cel_my);
+
+#ifdef MACHINE_A2560U
+    // already called by blank_out
+    //a2560u_mark_screen_dirty();
+#endif    
 }
 
 
@@ -651,4 +673,9 @@ void scroll_down(UWORD start_line)
 
     /* exit thru blank out */
     blank_out(0, start_line , v_cel_mx, start_line);
+
+#ifdef MACHINE_A2560U
+    // already called by blank_out
+    //a2560u_mark_screen_dirty();
+#endif   
 }

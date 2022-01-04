@@ -311,7 +311,11 @@ _int_vbl:
         subq.w  #1, _vblsem.w           // check VBL semaphore
         jmi     vbl_end                 // if VBL routine disabled -> end
 
+#ifdef MACHINE_A2560U
+        movem.l d1-d7/a1-a6, -(sp)      // save registers (d0/a0 already saved by VICKY interrupt handler)
+#else
         movem.l d0-d7/a0-a6, -(sp)      // save registers
+#endif        
         addq.l  #1, _vbclock.w          // count number of VBL interrupts
 
 #if CONF_WITH_ATARI_VIDEO
@@ -320,6 +324,11 @@ _int_vbl:
 #endif
 
         jsr     _blink                  // blink cursor
+
+#ifdef MACHINE_A2560U
+        .GLOBAL a2560u_copy_fb_to_vram
+        jbsr    a2560u_copy_fb_to_vram
+#endif
 
 #if CONF_WITH_ATARI_VIDEO
 // the contents of colorptr indicate the palette processing required; since
@@ -413,7 +422,11 @@ vbl_no_queue:
         move.w  d0,_dumpflg.w
 vbl_no_dump:
 
+#ifdef MACHINE_A2560U
+        movem.l (sp)+, d1-d7/a1-a6      // restore registers
+#else
         movem.l (sp)+, d0-d7/a0-a6      // restore registers
+#endif        
 vbl_end:
         addq.w  #1,_vblsem.w
 

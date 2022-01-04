@@ -28,6 +28,7 @@
 #include "screen.h"
 #include "delay.h"
 #include "asm.h"
+#include "lineavars.h"
 #include "string.h"
 #include "disk.h"
 #include "biosmem.h"
@@ -68,6 +69,7 @@ void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
 
 /* Implementation ************************************************************/
+/* To speed up the copy from RAM to VRAM we manage a list of dirty cells */
 
 void a2560u_init(void)
 {
@@ -87,28 +89,56 @@ void a2560u_init(void)
     a2560u_beeper(false);
 }
 
+
+/* Video  ********************************************************************/
+
+uint32_t a2560u_fb_size;
+uint8_t *a2560u_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
+volatile struct a2560u_dirty_cells_t a2560u_dirty_cells;
+
 void a2560u_screen_init(void)
-{
+{    
     vicky2_init();
     vbl_freq = 60; /* TODO read that from VICKY's video mode */
 
     /* Setup VICKY interrupts handler (VBL, HBL etc.) */
     vblsem = 0;
+    a2560u_dirty_cells.writer = a2560u_dirty_cells.reader = a2560u_dirty_cells.full_copy = 0;
     a2560u_irq_set_handler(INT_SOF_A, int_vbl);
 }
 
-void a2560u_setphys(const uint8_t *address)
+
+uint32_t a2560u_calc_vram_size(void)
 {
-    vicky2_set_bitmap0_address(address-VRAM_Bank0);
+    /* Get video mode */
+    a2560u_fb_size = (uint32_t)BYTES_LIN * V_REZ_VT;
+    //a2560u_debug("a2560u_calc_vram_size returns %d*%d=%ld", BYTES_LIN, V_REZ_VT, a2560u_fb_size);
+    return a2560u_fb_size;
 }
+
+
+void a2560u_mark_screen_dirty(void)
+{
+    a2560u_dirty_cells.full_copy = -1;
+}
+
+
+void a2560u_setphys(const uint8_t *address)
+{    
+    a2560u_vram_fb = (uint8_t*)address;
+    vicky2_set_bitmap0_address((uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
+}
+
 
 void a2560u_set_border_color(uint32_t color)
 {
     vicky2_set_border_color(color);
 }
 
+
 void a2560u_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
 {
+    //a2560u_debug("a2560u_get_current_mode_info\n");
     FOENIX_VIDEO_MODE mode;
     vicky2_get_video_mode(&mode);
     *planes = 8;
@@ -218,7 +248,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     if (timer > 3)
         return;
 
-    KDEBUG(("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler));
+    //KDEBUG(("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler));
     
     /* Identify timer control register to use */
     t = (struct a2560u_timer_t *)&a2560u_timers[timer];
@@ -279,11 +309,11 @@ void a2560u_timer_enable(uint16_t timer, bool enable)
     else
         R32(t->control) &= ~t->start;
 
-KDEBUG(("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control)));
-    if (R32(t->value) != R32(t->value))
-        KDEBUG(("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value)));
-    else
-        KDEBUG(("Timer is not running\n"));
+// KDEBUG(("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control)));
+//     if (R32(t->value) != R32(t->value))
+//         KDEBUG(("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value)));
+//     else
+//         KDEBUG(("Timer is not running\n"));
 }
 
 
@@ -378,7 +408,7 @@ void a2560u_irq_enable(uint16_t irq_id)
 void a2560u_irq_disable(uint16_t irq_id)
 {
     R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
-    KDEBUG(("a2560u_irq_disable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+    //KDEBUG(("a2560u_irq_disable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
 }
 
 
@@ -409,8 +439,8 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
 /* Calibration ***************************************************************/
 uint32_t calibration_interrupt_count;
 uint32_t calibration_loop_count;
-void a2560_irq_calibration(void);
-void a2560_run_calibration(void);
+void a2560u_irq_calibration(void);
+void a2560u_run_calibration(void);
 
 void a2560u_calibrate_delay(uint32_t calibration_time)
 {    
@@ -423,15 +453,15 @@ void a2560u_calibrate_delay(uint32_t calibration_time)
     KDEBUG(("a2560u_calibrate_delay(0x%ld)\n", calibration_time));
     /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
 
-    /* Backup all interrupts masks because a2560_run_calibration will mask everything. We'll need to restore */
+    /* Backup all interrupts masks because a2560u_run_calibration will mask everything. We'll need to restore */
     a2560u_irq_mask_all(masks);
     
     /* Setup timer for 960Hz, same as what EmuTOS for ST does with using MFP Timer D (UART clock baud rate generator) for 9600 bauds */
     old_timer_vector = setexc(INT_TIMER0_VECN, -1L);
-    a2560u_set_timer(0, 960, true, a2560_irq_calibration);
+    a2560u_set_timer(0, 960, true, a2560u_irq_calibration);
 
     /* This counts the number of wait loops we can do in about 100ms */
-    a2560_run_calibration();
+    a2560u_run_calibration();
 
     /* Restore previous timer vector */
     setexc(INT_TIMER0_VECN, old_timer_vector);

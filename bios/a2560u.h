@@ -108,10 +108,25 @@ void a2560u_beeper(bool on);
 void a2560u_disk_led(bool on);
 void a2560u_system_info(struct foenix_system_info_t *result);
 void a2560u_debug(const char *, ...);
+
+/* Video */
 void a2560u_screen_init(void);
+uint32_t a2560u_calc_vram_size(void);
+void a2560u_mark_cell_dirty(const uint8_t *cell);
+void a2560u_mark_screen_dirty(void);
 void a2560u_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez);
 void a2560u_setphys(const uint8_t *address);
 void a2560u_set_border_color(uint32_t color);
+
+#define A2560U_DIRTY_CELLS_SIZE 1024
+struct a2560u_dirty_cells_t
+{
+    uint16_t writer;
+    uint16_t reader;
+    uint16_t full_copy; /* Set this to non-zero to copy the whole frame buffer and flush the ring buffer */
+    uint8_t *cells[A2560U_DIRTY_CELLS_SIZE];
+};
+extern volatile struct a2560u_dirty_cells_t a2560u_dirty_cells;
 
 /* Serial port */
 uint32_t a2560u_bcostat1(void);

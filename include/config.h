@@ -629,7 +629,7 @@
 
 
 /*
- * Defaults for the A2560U from Foenox Retro Systems
+ * Defaults for the A2560U from Foenix Retro Systems
  */
 #ifdef MACHINE_A2560U
 # ifndef CONF_ATARI_HARDWARE
@@ -660,9 +660,11 @@
 # ifndef CONF_WITH_BQ4802LY
 #  define CONF_WITH_BQ4802LY 1
 # endif
+#if 0
 # ifndef CONF_VRAM_ADDRESS
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
+#endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif

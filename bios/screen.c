@@ -643,11 +643,7 @@ void screen_init_address(void)
     MAYBE_UNUSED(vram_size);
 
 #if CONF_VRAM_ADDRESS
-#ifdef MACHINE_A2560U
-    vram_size = VIDEO_RAM_SIZE;
-#else
     vram_size = 0L;         /* unspecified */
-#endif /* MACHINE_A2560U     */
     screen_start = (UBYTE *)CONF_VRAM_ADDRESS;
 #else
     vram_size = calc_vram_size();
@@ -663,8 +659,14 @@ void screen_init_address(void)
     /* set new v_bas_ad */
     v_bas_ad = screen_start;
     KDEBUG(("v_bas_ad = %p, vram_size = %lu\n", v_bas_ad, vram_size));
+
+#ifdef MACHINE_A2560U
+    /* We use a fake framebuffer, and have code in place to copy it to the VRAM */
+    setphys(VRAM_Bank0);
+#else
     /* correct physical address */
     setphys(screen_start);
+#endif
 }
 
 /*
@@ -757,6 +759,8 @@ ULONG calc_vram_size(void)
     return amiga_initial_vram_size();
 #elif defined(MACHINE_LISA)
     return 32*1024UL;
+#elif MACHINE_A2560U
+    return a2560u_calc_vram_size();
 #else
     ULONG vram_size;
 

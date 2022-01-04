@@ -324,7 +324,7 @@ WORD initinfo(ULONG *pshiftbits)
 #elif defined(MACHINE_A2560U)
     struct foenix_system_info_t info;
     a2560u_system_info(&info);
-    cprintf("%s @ %ldHz", info.cpu_name, info.cpu_speed_hz / 1000000);
+    cprintf("%s @ %ldMHz", info.cpu_name, info.cpu_speed_hz / 1000000);
 #else
 # if CONF_WITH_APOLLO_68080
     if (is_apollo_68080)
@@ -451,7 +451,7 @@ WORD initinfo(ULONG *pshiftbits)
 #else
     cprintf("\033k\033E");
 #endif
-
+ 
     *pshiftbits = shiftbits;
     return dev;
 }
