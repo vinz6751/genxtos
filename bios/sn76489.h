@@ -16,8 +16,30 @@
 
 #include <stdint.h>
 
-void sn76489_mute_all(void);
-void sn76489_tone(uint8_t voice, int frequency);
-void sn76489_attenuation(uint8_t voice, uint8_t attenuation);
+
+/* Attenuation levels a.k.a A0-A3 (you can ADD/OR them) */
+#define SN76489_ATT_2dB  1
+#define SN76489_ATT_4dB  2
+#define SN76489_ATT_8dB  4
+#define SN76489_ATT_16dB 8
+#define SN76489_ATT_OFF  0xf
+
+/* Noise feedback */
+#define SN76489_NSE_WHITE    4    /* Use OR */
+#define SN76489_NSE_PERIODIC (~4) /* Use AND */
+
+/* Noise rate */
+#define SN76489_NSE_RATE_512  0
+#define SN76489_NSE_RATE_1024 1 /* Doc is wrong ? */
+#define SN76489_NSE_RATE_2048 2
+#define SN76489_NSE_TONE3     3
+
+
+void sn76489_select(uint8_t *psg);
+void sn76489_mute(void);
+void sn76489_tone(uint8_t channel, uint16_t frequency);
+void sn76489_noise(uint8_t type, uint16_t rate);
+void sn76489_attenuation(uint8_t channel, uint8_t attenuation);
+uint16_t sn76489_compute_frequency(uint16_t frequency);
 
 #endif // SN76489_H

@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 #ifndef R8
-    #define R8(x) *((volatile int8_t * const)(x))
+    #define R8(x) *((volatile uint8_t * const)(x))
 #endif
 #ifndef R16
     #define R16(x) *((volatile uint16_t * const)(x))
@@ -179,7 +179,11 @@
 #define TIMER_CTRL_IRQ      0x80 /* Set this to enable interrupts */
 
 /* BEATRIX */
-#define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130))   /* Control register for the SN76489 */
+#define SN76489_PORT_L  (BEATRIX+0x0110)   /* Control register for the left SN76489 */
+#define SN76489_PORT_R  (BEATRIX+0x0120)   /* Control register for the right SN76489 */
+#define SN76489_PORT_M  (BEATRIX+0x0130)   /* Control register for both left and right SN76489s (convenience) */
+#define SN76489_CLOCK   357954500L         /* Clock speed */
+
 #define OPL3_PORT     ((volatile uint8_t*)(BEATRIX+0x0200))   /* Access port for the OPL3 */
 #define OPM_INT_BASE  ((volatile uint8_t*)(BEATRIX+0x0C00))   /* Internal OPM base address */
 #define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00))   /* Internal OPN2 base address */

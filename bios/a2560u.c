@@ -74,7 +74,6 @@ void a2560u_irq_ps2mouse(void);
 void a2560u_init(void)
 {
     a2560u_beeper(true);
-    *((unsigned long * volatile)0xB40008) = 0x0000000; /* Black border */
 
     cpu_freq = CPU_FREQ; /* TODO read that from GAVIN's Machine ID */
 
@@ -82,7 +81,8 @@ void a2560u_init(void)
     uart16550_init(UART0); /* So we can debug to serial port early */
     timer_init();    
     wm8776_init();
-    sn76489_mute_all();
+    sn76489_select((uint8_t*)SN76489_PORT_M); /* Mute both SN76489s */
+    sn76489_mute(); 
 
     /* Clear screen and home */
     a2560u_debug(("\033Ea2560u_init()"));
