@@ -1,4 +1,7 @@
-.EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560h
+// Assembler routines for the Foenix Retro Systems A2560U
+
+.EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560u.h.
+                                   // The smaller this is, the higher MAX_CELLS_RENDERED_PER_FRAME needs to be.
 .EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
 
 | 
@@ -174,15 +177,11 @@ a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     .GLOBAL _v_lin_wr
     .GLOBAL _v_cel_ht
 
-// Performance options:
-// Disable the rendering during VBL so VICKY can concentrate on pumping bytes from the FIFO.
-// Actually this has little or no effect since VICKY doesn't do much doing the VBL.
-#define DISABLE_RENDERING_DURING_VBL 0
 // Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
 // If it's not enough the dirty cells array may be too small and we loose data. If it's too high, we may spend
 // too much time copying data and miss lower-priority interrupts (e.g. keyboard/mouse).
 // Note: this doesn't apply to full screen refresh
-#define MAX_CELLS_RENDERED_PER_FRAME 80
+#define MAX_CELLS_RENDERED_PER_FRAME 20
 
 #if MAX_CELLS_RENDERED_PER_FRAME != -1
     move.l  #MAX_CELLS_RENDERED_PER_FRAME-1,d6 // max number of characters we render per frame
@@ -204,11 +203,6 @@ copy_cell_to_vram:
     clr.l   d5
     move.w  _v_lin_wr,d5    // Cache for moving to next line of the frame buffer
     subq.w  #6,d5           // We use post incrementation 6 times
-#if DISABLE_RENDERING_DURING_VBL
-    move.l  0xb40000,d7 // Disable graphics rendering    
-    ori.l   #VICKY_CTRL_DISABLE_RENDER,d7
-    move.l  d7,0xb40000    
-#endif    
 cell_copy:
     addq.w  #4,d0           // Advance reader and wrap at 256 (offset 1024)
     andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0
@@ -226,7 +220,7 @@ copy_cell_to_fb:
     adda.l  d5,a1   // Next line    
     adda.l  d5,a2
     dbra    d3,copy_cell_to_fb
-#if MAX_CELLS_RENDERED_PER_FRAME > 1    
+#if MAX_CELLS_RENDERED_PER_FRAME != 1
     dbra    d6,cell_copy_more
     bra.s   cell_copy_done
 #endif
@@ -235,11 +229,6 @@ cell_copy_more:
     bne.s   cell_copy  // If so, nothing more to read
 cell_copy_done:
     move.w  d0,2(a0)    // Update reader    
-#if DISABLE_RENDERING_DURING_VBL    
-    move.l  0xb40000,d6 // Re-enable graphics rendering
-    andi.l  #~VICKY_CTRL_DISABLE_RENDER,d6
-    move.l  d6,0xb40000
-#endif    
     rts    
 
 copy_whole_screen:
@@ -269,12 +258,6 @@ fbcpy:
     lea     12*2(a3),a3             // That ensures we won't copy beyond the end of the FB in VRAM.
     cmpa.l  #0xc4b000,a3            // FIXME don't hardcode end of FB
     bmi.s   fbcpy
-
-#if DISABLE_RENDERING_DURING_VBL    
-    move.l  0xb40000,d6 // Disable graphics rendering
-    andi.l  #~0x80,d6
-    move.l  d6,0xb40000
-#endif
     rts
 
 
@@ -283,7 +266,7 @@ _a2560u_mark_cell_dirty:
     lea     _a2560u_dirty_cells,a0
     move.w  (a0),d0     // Writer
     addq.w  #4,d0       // Next position
-    andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap at position 256 (offset 1024)
+    andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap if needed
     move.l  4(sp),6(a0,d0)     
     move.w  d0,(a0)     // write writer
     rts
