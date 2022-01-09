@@ -177,7 +177,7 @@ a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
 // Performance options:
 // Disable the rendering during VBL so VICKY can concentrate on pumping bytes from the FIFO.
 // Actually this has little or no effect since VICKY doesn't do much doing the VBL.
-#define DISABLE_RENDERING_DURING_VBL 1
+#define DISABLE_RENDERING_DURING_VBL 0
 // Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
 // If it's not enough the dirty cells array may be too small and we loose data. If it's too high, we may spend
 // too much time copying data and miss lower-priority interrupts (e.g. keyboard/mouse).
@@ -188,7 +188,6 @@ a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     move.l  #MAX_CELLS_RENDERED_PER_FRAME-1,d6 // max number of characters we render per frame
 #endif
 
-    //move.w  #16,0xb00000 // Bip ON
     lea     _a2560u_dirty_cells,a0
     tst.w   4(a0)           // Copy whole frame buffer to VRAM ?
     jne     copy_whole_screen  // Yes -> go there
@@ -204,7 +203,7 @@ copy_cell_to_vram:
     subq.w  #1,d4           // For the dbra of cell height
     clr.l   d5
     move.w  _v_lin_wr,d5    // Cache for moving to next line of the frame buffer
-    subq.w  #7,d5           // We use post incrementation 7 times
+    subq.w  #6,d5           // We use post incrementation 6 times
 #if DISABLE_RENDERING_DURING_VBL
     move.l  0xb40000,d7 // Disable graphics rendering    
     ori.l   #VICKY_CTRL_DISABLE_RENDER,d7
@@ -219,19 +218,13 @@ cell_copy:
     adda.l  a3,a2
     move.w  d4,d3           // Prepare line decounter
 copy_cell_to_fb:
-    // Copy one row
-#if 1
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1),(a2)
+    // Copy one row (8 bytes)
+    move.w  (a1)+,(a2)+
+    move.w  (a1)+,(a2)+
+    move.w  (a1)+,(a2)+
+    move.w  (a1),(a2)
     adda.l  d5,a1   // Next line    
     adda.l  d5,a2
-#endif    
     dbra    d3,copy_cell_to_fb
 #if MAX_CELLS_RENDERED_PER_FRAME > 1    
     dbra    d6,cell_copy_more
@@ -255,63 +248,27 @@ copy_whole_screen:
     move.w  #0,4(a0)            // Put down the flag to force full copy, as we're doing it now
     move.l  _a2560u_fb_size,d0
     movea.l  _v_bas_ad,a1       // Source
-    movea.l _a2560u_vram_fb,a3  // Destination
-
-#if 1
-    // For now with the 11-Nov-2021 FPGA load we can only copy byte per byte because there's a mixup in LOW/HI when copying
-    // to VRAM. That will be fixed in the next version so we can use words (but not long words)
-    lsr.l   #4,d0               // We unroll the loop to copy 16 bytes at a time
+    movea.l _a2560u_vram_fb,a3  // Destination  
+    lsr.l   #5,d0               // We unroll the loop to copy 32 bytes at a time
 fbcpy:
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    dbra    d0,fbcpy    // CAVEAT: by using dbra we assume that d0 < 65536, ie frame bufer size is 1048KB max.
-                        // That works even for 1024*768 so we're good. 
-#else // Not tested (needs FPGA fix, see above)    
-fbcpy: // ACHTUNG WE'RE WRITTING BEYOND THE ALLOCATED FB IN THE VRAM
-    // This is 40+% faster than the above but is not working.
-    lsr.l   #5,d0               // We unroll the loop to copy 16 bytes at a time
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    dbra    d0,fbcpy
-
-    // Yet another method but which doesn't work
-    # movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    # movem.w d0-d7/a0/a2/a4-a6,(a3)
-    # lea     13*2(a3),a3
-    # movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    # movem.w d0-d7/a0/a2/a4-a6,(a3)
-    # lea     13*2(a3),a3        
-    # cmpa.l  #0xc4b000,a3 // FIXME don't hardcode end of FB
-    # bmi.s   fbcpy
-#endif /* Full screen transfer */    
+    // Another method, faster but which can but which doesn't work
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a5 // We do one less register here so an iteration is 128 bytes.
+    movem.w d0-d7/a0/a2/a4-a5,(a3)  // As all resolutions have a screensize multiple of 128,
+    lea     12*2(a3),a3             // That ensures we won't copy beyond the end of the FB in VRAM.
+    cmpa.l  #0xc4b000,a3            // FIXME don't hardcode end of FB
+    bmi.s   fbcpy
 
 #if DISABLE_RENDERING_DURING_VBL    
     move.l  0xb40000,d6 // Disable graphics rendering
