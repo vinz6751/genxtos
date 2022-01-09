@@ -170,19 +170,19 @@
 #define TIMER3_VALUE   (GAVIN+0x220)
 #define TIMER3_COMPARE (GAVIN+0x224)
 /* Flags for timer control */
-#define TIMER_CTRL_ENABLE   0x01
-#define TIMER_CTRL_CLEAR    0x02 /* Set this if counting up */
-#define TIMER_CTRL_LOAD     0x04 /* Set this if counting down */
-#define TIMER_CTRL_DOWN     0x08 /* Count up (0) or down (1) */
-#define TIMER_CTRL_RECLEAR  0x10 /* Set this to auto recommence counting up */
-#define TIMER_CTRL_RELOAD   0x20 /* Set this if auto recommence counting down */
-#define TIMER_CTRL_IRQ      0x80 /* Set this to enable interrupts */
+#define TIMER_CTRL_ENABLE   0x01L
+#define TIMER_CTRL_CLEAR    0x02L /* Set this if counting up */
+#define TIMER_CTRL_LOAD     0x04L /* Set this if counting down */
+#define TIMER_CTRL_UPDOWN   0x08L /* Count up (1) or down (0) */
+#define TIMER_CTRL_RECLEAR  0x10L /* Set this to auto recommence counting up */
+#define TIMER_CTRL_RELOAD   0x20L /* Set this if auto recommence counting down */
+#define TIMER_CTRL_IRQ      0x80L /* Set this to enable interrupts */
 
 /* BEATRIX */
-#define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130))   /* Control register for the SN76489 */
-#define OPL3_PORT     ((volatile uint8_t*)(BEATRIX+0x0200))   /* Access port for the OPL3 */
-#define OPM_INT_BASE  ((volatile uint8_t*)(BEATRIX+0x0C00))   /* Internal OPM base address */
-#define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00))   /* Internal OPN2 base address */
+#define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130)) /* Control register for the SN76489 */
+#define OPL3_PORT     ((volatile uint8_t*)(BEATRIX+0x0200)) /* Access port for the OPL3 */
+#define OPM_INT_BASE  ((volatile uint8_t*)(BEATRIX+0x0C00)) /* Internal OPM base address */
+#define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00)) /* Internal OPN2 base address */
 #define WM8776_PORT   ((uint16_t*)(BEATRIX+0x0E00))         /* Mixer/codec port */
 
 #endif
