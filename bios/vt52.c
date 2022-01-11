@@ -21,6 +21,7 @@
 #include "conout.h"
 #include "vt52.h"
 #include "bios.h"
+#include "a2560u.h"
 
 #if CONF_SERIAL_CONSOLE_ANSI
 /* We disable cursor home commands because it is more convenient */
@@ -611,16 +612,12 @@ static void erase_from_home(void)
  */
 static void do_cnt_esce(void)
 {
-    invert_cell(v_cur_cx, v_cur_cy);        /* complement cursor */
+#if CONF_WITH_A2560U_TEXT_MODE
+    vicky2_show_cursor();
+#else
+    con_paint_cursor();
+#endif    
     v_stat_0 |= M_CVIS;                     /* set visibility bit */
-
-    /* see if flashing is enabled */
-    if ( v_stat_0 & M_CFLASH ) {
-        v_stat_0 |= M_CSTATE;                   /* set cursor on */
-
-        /* do not flash the cursor when it moves */
-        v_cur_tim = v_period;                   /* reset the timer */
-    }
 }
 
 
@@ -670,20 +667,12 @@ static void cursor_off(void)
 
     disab_cnt++;                        /* increment the disable counter */
 
-    /* test and clear the visible state bit */
-    if (!(v_stat_0 & M_CVIS) )
-        return;                         /* if already invisible, just return */
+    if (v_stat_0 & M_CVIS) {
+        v_stat_0 &= ~M_CVIS;                /* make invisible! */
 
-    v_stat_0 &= ~M_CVIS;                /* make invisible! */
-
-    /* see, if flashing is disabled */
-    if ( ! (v_stat_0 & M_CFLASH) ) {
-        invert_cell(v_cur_cx, v_cur_cy);
-    }
-    /* see, if cursor is on or off */
-    else if ( v_stat_0 & M_CSTATE ) {
-        v_stat_0 &= ~M_CSTATE;    /* cursor off? */
-        invert_cell(v_cur_cx, v_cur_cy);
+        if (!(v_stat_0 & M_CFLASH) || (v_stat_0 & M_CSTATE)) {
+            con_unpaint_cursor();
+        }
     }
 }
 
@@ -848,6 +837,9 @@ static void ascii_lf(void)
  */
 void blink(void)
 {
+#if CONF_WITH_A2560U_TEXT_MODE
+    /* VICKY is in charge of blinking the cursor */
+#else
     /* test visibility/semaphore bit */
     if (!(v_stat_0 & M_CVIS) )
         return;    /* if invisible or blocked, return */
@@ -863,13 +855,13 @@ void blink(void)
     v_cur_tim = v_period;       /* else reset timer */
 
     /* toggle cursor state */
-    if ( v_stat_0 & M_CSTATE )
-        v_stat_0 &= ~M_CSTATE;    /* clear bit (overwrite) */
-    else
-        v_stat_0 |= M_CSTATE;    /* set bit (overwrite) */
-
-    /* fetch x and y coords and complement cursor */
-    invert_cell(v_cur_cx, v_cur_cy);
+    if ( v_stat_0 & M_CSTATE ) {
+        con_unpaint_cursor();
+    }
+    else {
+        con_paint_cursor();        
+    }
+#endif    
 }
 
 
@@ -899,7 +891,7 @@ WORD cursconf(WORD function, WORD operand)
     case 1:
         cursor_on();                    /* set cursor visible */
         break;
-    case 2:
+    case 2:    
         v_stat_0 &= ~M_CFLASH;          /* unset cursor flash bit */
         break;
     case 3:
@@ -926,8 +918,16 @@ void vt52_init(void)
     /* Initial cursor settings */
     v_cur_cx = 0;                       /* cursor to column 0, row 0 */
     v_cur_cy = 0;
+#ifdef MACHINE_A2560U
+    a2560u_update_cursor();
+#endif     
     v_cur_of = 0;                       /* line offset is 0 */
+#if CONF_WITH_A2560U_TEXT_MODE
+    v_cur_ad = cell_addr(0,0);
+    vicky2_text_init();
+#else
     v_cur_ad = v_bas_ad;                /* set cursor to start of screen */
+#endif
 
     v_stat_0 = M_CFLASH;                /* cursor invisible, flash, nowrap, normal video */
     cursconf(4, 30);                    /* 0.5 second blink rate (@ 60Hz vblank) */

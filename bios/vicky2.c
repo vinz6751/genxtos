@@ -11,9 +11,10 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "vicky2.h"
+#include "a2560u.h"
 
 #ifdef MACHINE_A2560U
 
@@ -80,31 +81,39 @@ static const uint16_t tt_dflt_palette[] = {
 };
 
 const FOENIX_VIDEO_MODE foenix_video_modes[] = {
-    { 0, 640, 480, 256, 60 },
-    { 1, 800, 600, 256, 60 },
-    { 2, 0,   0,   0,   0 }, /* Reserved */
-    { 3, 640, 400, 256, 70 }
+    { VICKY_MODE_640x480_60, 640, 480, 256, 60 },
+    { VICKY_MODE_800x600_60, 800, 600, 256, 60 },
+    { VICKY_MODE_RESERVED2, 0,   0,   0,   0 }, /* Reserved */
+    { VICKY_MODE_640x400_70, 640, 400, 256, 70 }
 };
 
 static void convert_color(uint16_t orgb, COLOR32 *dst);
+
+uint32_t vicky_vbl_freq; /* VBL frequency */
 
 
 void vicky2_init(void)
 {    
     int i;
     COLOR32 color;
+    FOENIX_VIDEO_MODE mode;
 
     /* Enable video and bitmap, 640x480 */
-    R32(VICKY_CTRL) = 0x4L + 0x8L; /* Enable graphics engine and bitmap */
-    
+#if CONF_WITH_A2560U_TEXT_MODE
+    R32(VICKY_CTRL) = 0;
+#else    
+    R32(VICKY_CTRL) = VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP;
+#endif    
+    vicky2_set_video_mode(VICKY_MODE_640x480_60);
+    vicky2_get_video_mode(&mode);
     vicky2_set_mouse_visible(0);
     
     /* No border. If we used borders we would have to offset/resize all our graphics stuff */
     /* Use instead this to enable border to you can set its color as debugging trace:
      * R32(VICKY_A_BORDER_CTRL) = 0x00030301;
      */
-#ifdef ENABLE_KDEBUG    
-    R32(VICKY_A_BORDER_CTRL) = 0x00030301;
+#if defined(ENABLE_KDEBUG)
+    R32(VICKY_A_BORDER_CTRL) = 0x030301;
 #else    
     R32(VICKY_A_BORDER_CTRL) = 0;
 #endif
@@ -123,7 +132,7 @@ void vicky2_init(void)
     }
 
     /* Clear screen */    
-    memset((void*)VRAM_Bank0,0,640*480L);
+    memset((void*)VRAM_Bank0,0,mode.w * mode.h);
 }
 
 void vicky2_set_background_color(uint32_t color)
@@ -159,10 +168,20 @@ void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result)
 
 void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result)
 {
-    uint32_t video = R32(VICKY_CTRL);
-    
+    uint32_t video;
+    uint32_t border;
+
+    video = R32(VICKY_CTRL);
     *result = foenix_video_modes[(video & 0x300) >> 8];
-    
+
+    /* Take into account the size of the border */
+    border = R32(VICKY_A_BORDER_CTRL) ;
+    if (border & VICKY_A_BORDER_ENABLE)
+    {
+        result->w -= (border & VICKY_A_BORDER_WIDTH) >> 7;
+        result->h -= (border & VICKY_A_BORDER_HEIGHT) >> 15;
+    }    
+
     /* If pixel doubling, divide resolution by 2 */
     if (video & 0x400)
     {
@@ -170,6 +189,17 @@ void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result)
         result->h /= 2;
     }
 }
+
+void vicky2_set_video_mode(uint16_t mode)
+{
+    /* In theory we should disable interrupts so nobody changes the
+     * VICKY control register while we're messing with it... */
+    R32(VICKY_CTRL) = (R32(VICKY_CTRL) & ~VICKY_MODE_MASK) | ((mode & 0x07) << 8);
+    vicky_vbl_freq = foenix_video_modes[mode & 0x03].fps;
+
+    a2560u_debug("Video mode %d set, new VICKY ctrl: %p", mode, (void*)R32(VICKY_CTRL));
+}
+
 
 void vicky2_set_bitmap0_address(const uint8_t *address)
 {
@@ -197,4 +227,128 @@ void vicky2_set_mouse_visible(uint16_t visible)
     else
         R16(MOUSE_POINTER_CTRL) &= ~1;    
 }
-#endif // MACHINE_A2560U
+
+
+
+/* Text mode support *********************************************************/
+#include "font.h"
+#include "lineavars.h"
+#include "biosext.h"
+
+/* Line-A variables */
+extern uint16_t v_col_fg; /* Font background */
+extern uint16_t v_col_bg; /* Font foreground */
+extern uint16_t v_cur_ad; /* Current cursor address */
+
+static const uint16_t text_palette[32] =
+{
+/*  0xHHLL, 0xHHLL
+ *  0xGGBB, 0xAARR */
+#define BLUE_THEME 1
+#if BLUE_THEME
+    0x2b4f, 0xff0e, /* A2560 background */
+#else    
+	0x0000, 0xFF00,	/* Black (transparent) */
+#endif
+	0x0000, 0xFF80, /* Mid-Tone Red */
+	0x8000, 0xFF00, /* Mid-Tone Green */
+	0x8000, 0xFF80, /* Mid-Tone Yellow */
+	0x0080, 0xFF00, /* Mid-Tone Blue */
+	0x5500, 0xFFAA, /* Mid-Tone Orange */
+	0x8080, 0xFF00, /* Mid-Tone Cian */
+	0x8080, 0xFF80, /* 50% Grey */
+	0x5555, 0xFF55, /* Dark Grey */
+    0x5555, 0xFFFF, /* Bright Red */
+	0xFF55, 0xFF55, /* Bright Green */
+	0xFF55, 0xFFFF, /* Bright Yellow */
+	0x55FF, 0xFF55, /* Bright Blue */
+	0x7FFF, 0xFFFF, /* Bright Orange */
+	0xFFFF, 0xFF55, /* Bright Cyan */
+#if BLUE_THEME
+	0x55BB, 0xFF55, /* A2560 light blue */
+#else    
+    0xFFFF, 0xFFFF 	/* White */
+#endif
+};
+
+static void vicky2_load_font(void)
+{
+    int ascii;
+    int i;
+
+    uint8_t *dst = (uint8_t*)VICKY_FONT;
+
+    for (ascii = 0; ascii < 256; ascii++)
+    {
+        uint8_t *src = char_addr(ascii);        
+        
+        /* Character 0 is the cursor (filled block) */ 
+        if (ascii && src != 0L)
+        {
+            for (i = 0; i < v_cel_ht; i++)
+            {        
+                *dst++ = *src;
+                src += v_fnt_wr;
+            }            
+        }
+        else
+        {            
+            for (i = 0; i < v_cel_ht ; i++)
+                *dst++ = 0xff;
+        }
+    }
+}
+
+
+void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg)
+{
+    int i;
+    volatile uint16_t * const fglut = (uint16_t*)VICKY_TEXT_COLOR_FG;
+    volatile uint16_t * const bglut = (uint16_t*)VICKY_TEXT_COLOR_BG;
+
+    for (i = 0; i < VICKY_TEXT_COLOR_SIZE; i++)
+    {
+		fglut[i] = fg[i];
+		bglut[i] = bg[i];
+	}
+}
+
+
+void vicky2_text_init(void)
+{
+    vicky2_load_font();
+    vicky2_set_text_lut(text_palette, text_palette);
+
+    int i;
+    volatile uint8_t *c = (volatile uint8_t*)VICKY_TEXT_COLOR;
+    volatile uint8_t *t = (uint8_t*)VICKY_TEXT;
+    uint8_t color = (uint8_t)(v_col_fg << 4 | v_col_fg);
+
+    for (i = 0 ; i < VICKY_TEXT_SIZE ; i++)
+    {
+         *c++ = color;
+         *t++ = ' ';
+    }
+
+    /* Set cursor */
+    R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_CHAR;
+    R32(VICKY_A_CURSOR_CTRL) |= (((uint32_t)0x00L) << 16);
+
+    /* Enable text mode (without overlay) */
+    R32(VICKY_CTRL) |= VICKY_A_CTRL_TEXT;
+    vicky2_show_cursor();    
+}
+
+
+void vicky2_show_cursor(void)
+{
+    R32(VICKY_A_CURSOR_CTRL) |= VICKY_CURSOR_ENABLE;
+}
+
+
+void vicky2_hide_cursor(void)
+{
+    R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_ENABLE;
+}
+
+#endif /* MACHINE_A2560U */

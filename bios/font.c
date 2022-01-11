@@ -73,11 +73,19 @@ void font_set_default(void)
 {
     Fonthead *font;
 
+#if CONF_WITH_FORCE_8x8_FONT
+    font = &fon8x8;
+#else
     font = (V_REZ_VT < 400) ? &fon8x8 : &fon8x16;
+#endif    
 
     v_cel_ht = font->form_height;
     v_cel_wr = v_lin_wr * font->form_height;
+#if CONF_WITH_FORCE_8x8_FONT
+    v_cel_mx = (V_REZ_HZ / font->max_cell_width);// + 5; this offset depends on the border but I haven't figured how
+#else
     v_cel_mx = (V_REZ_HZ / font->max_cell_width) - 1;
+#endif
     v_cel_my = (V_REZ_VT / font->form_height) - 1;
 
     v_fnt_wr = font->form_width;
@@ -85,4 +93,38 @@ void font_set_default(void)
     v_fnt_nd = font->last_ade;
     v_fnt_ad = font->dat_table;
     v_off_ad = font->off_table;
+}
+
+
+/*
+ * char_addr - retrieve the address of the source cell in the font
+ *
+ *
+ * Given an offset value.
+ *
+ * in:
+ *   ch - source cell code
+ *
+ * out:
+ *   pointer to first byte of source cell if code was valid
+ */
+
+UBYTE *char_addr(WORD ch)
+{
+    UWORD offs;
+
+    /* test against limits */
+    if (ch >= v_fnt_st) {        /* v_fnt_st: ascii code of first cell in font */
+        if (ch <= v_fnt_nd) {    /* v_fnt_nd: ascii code of last cell in font */
+            /* getch offset from offset table */
+            offs = v_off_ad[ch]; /* v_off_ad: pointer to current monospace font */
+            offs >>= 3;          /* convert from pixels to bytes. */
+
+            /* return valid address */
+            return (UBYTE*)v_fnt_ad + offs;
+        }
+    }
+
+    /* invalid code. no address returned */
+    return NULL;
 }

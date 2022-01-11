@@ -7,6 +7,7 @@
  *
  * Authors:
  *  MAD     Martin Doering
+ *  VB      Vincent Barrilliot
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -20,11 +21,13 @@
 #define ENABLE_KDEBUG
 
 #include "emutos.h"
+#include "asm.h"
 #include "lineavars.h"
 #include "tosvars.h"            /* for v_bas_ad */
 #include "sound.h"              /* for bell() */
 #include "string.h"
 #include "conout.h"
+#include "font.h"
 #include "a2560u.h"
 
 
@@ -33,60 +36,14 @@
 
 
 /*
- * char_addr - retrieve the address of the source cell
- *
- *
- * Given an offset value.
- *
- * in:
- *   ch - source cell code
- *
- * out:
- *   pointer to first byte of source cell if code was valid
- */
-
-static UBYTE *char_addr(WORD ch)
-{
-    UWORD offs;
-
-    /* test against limits */
-    if (ch >= v_fnt_st) {        /* v_fnt_st: ascii code of first cell in font */
-        if (ch <= v_fnt_nd) {    /* v_fnt_nd: ascii code of last cell in font */
-            /* getch offset from offset table */
-            offs = v_off_ad[ch]; /* v_off_ad: pointer to current monospace font */
-            offs >>= 3;          /* convert from pixels to bytes. */
-
-            /* return valid address */
-            return (UBYTE*)v_fnt_ad + offs;
-        }
-    }
-
-    /* invalid code. no address returned */
-    return NULL;
-}
-
-
-
-/*
  * cell_addr - convert cell X,Y to a screen address.
  *
  *
  * convert cell X,Y to a screen address. also clip cartesian coordinates
  * to the limits of the current screen.
- *
- * latest update:
- *
- * 18-sep-84
- * in:
- *
- * d0.w      cell X
- * d1.w      cell Y
- *
- * out:
- * a1      points to first byte of cell
  */
 
-static UBYTE *cell_addr(UWORD x, UWORD y)
+CHAR_ADDR cell_addr(UWORD x, UWORD y)
 {
     /* check bounds against screen limits */
     if (x > v_cel_mx)
@@ -95,8 +52,12 @@ static UBYTE *cell_addr(UWORD x, UWORD y)
     if (y > v_cel_my)
         y = v_cel_my;           /* clipped y */
 
-#ifdef MACHINE_A2560U    
+#ifdef MACHINE_A2560U
+# if CONF_WITH_A2560U_TEXT_MODE
+    return v_cel_mx * y + x + v_cur_of;
+# else
     return v_bas_ad + (ULONG)v_cel_wr * y + x * 8 + v_cur_of;
+# endif
 #else
     ULONG disx, disy;
 
@@ -141,8 +102,16 @@ static UBYTE *cell_addr(UWORD x, UWORD y)
  * a4      points to byte below this cell's bottom
  */
 
-static void cell_xfer(UBYTE *src, UBYTE *dst)
+static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
 {
+#if CONF_WITH_A2560U_TEXT_MODE
+    R8(VICKY_TEXT+dst) = src;
+    
+    if (v_stat_0 & M_REVID)  
+        R8(VICKY_TEXT_COLOR + dst) = v_col_bg << 4 | v_col_fg;
+    else
+        R8(VICKY_TEXT_COLOR + dst) = v_col_fg << 4 | v_col_bg;
+#else
     UWORD fg;
     UWORD bg;
 
@@ -156,7 +125,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
         bg = v_col_bg;
     }
 
-#ifdef CONF_WITH_CHUNKY8
+# ifdef CONF_WITH_CHUNKY8
     int i,j; /* Source bitshift */
     UBYTE bsrc;
     UBYTE *c = dst;
@@ -174,7 +143,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
     }
 
     a2560u_mark_cell_dirty(c);  
-#else
+# else
     UBYTE * src_sav, * dst_sav;
     int fnt_wr, line_wr;
     int plane;
@@ -231,6 +200,7 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
         fg >>= 1;                       /* next foreground color bit */
         dst_sav += PLANE_OFFSET;        /* top of block in next plane */
     }
+# endif
 #endif
 }
 
@@ -251,11 +221,14 @@ static void cell_xfer(UBYTE *src, UBYTE *dst)
  * out:
  */
 
-static void neg_cell(UBYTE *cell)
+static void neg_cell(CHAR_ADDR cell)
 {
     v_stat_0 |= M_CRIT;                 /* start of critical section. */
 
-#if CONF_WITH_CHUNKY8
+#if CONF_WITH_A2560U_TEXT_MODE
+    rolb(R8(VICKY_TEXT_COLOR+cell),4);
+#else
+# if CONF_WITH_CHUNKY8
     int i; /* Source bitshift */
     const int inc = v_lin_wr-4;
     UBYTE *c = cell;
@@ -266,20 +239,20 @@ static void neg_cell(UBYTE *cell)
          * it's a known problem but I am not sure if it will be resolved. Once VDMA is implemented in the A2560U,
          * we can use it to transfer video ram to ram and do our thing. */
         /* We process 4 bytes at a time and loop is unrolled for performance */
-#if 0
+#  if 0
         *((LONG*)cell) = ~*((LONG*)cell);
         cell += 4;
         *((LONG*)cell) = ~*((LONG*)cell);
         cell += inc;
-#else
+#  else
         int j;
         for(j=7; j--;)
             cell[j] = ~cell[j];
         cell += v_lin_wr;
-#endif        
+#  endif
     }
     a2560u_mark_cell_dirty(c);
-#else
+# else
     int len;
     int plane;
     int lin_wr = v_lin_wr;
@@ -296,6 +269,7 @@ static void neg_cell(UBYTE *cell)
         cell += PLANE_OFFSET;           /* a1 -> top of block in next plane */
 
     }
+# endif
 #endif
     v_stat_0 &= ~M_CRIT;                /* end of critical section. */
 }
@@ -314,7 +288,6 @@ static void neg_cell(UBYTE *cell)
 
 static BOOL next_cell(void)
 {
-//KDEBUG(("next_cell v_cur_cx:%d  v_cel_mx:%d\n",v_cur_cx,v_cel_mx));
     /* check bounds against screen limits */
     if (v_cur_cx == v_cel_mx) {         /* increment cell ptr */
         if (!(v_stat_0 & M_CEOL)) {
@@ -330,7 +303,9 @@ static BOOL next_cell(void)
 
     v_cur_cx += 1;                      /* next cell to right */
 
-#if CONF_WITH_CHUNKY8
+#if CONF_WITH_A2560U_TEXT_MODE
+    v_cur_ad += 1;
+#elif CONF_WITH_CHUNKY8
     /* Would be v_cel_with it it existed, or font->max_cell_width,
      * but the console stuff only handles 8-pixel-wide fonts */
     v_cur_ad += 8;
@@ -400,43 +375,30 @@ void move_cursor(int x, int y)
 
     v_cur_cx = x;
     v_cur_cy = y;
+#ifdef MACHINE_A2560U
+    a2560u_update_cursor();
+#endif
 
-    /* is cursor visible? */
-    if (!(v_stat_0 & M_CVIS)) {
-        /* not visible */
-        v_cur_ad = cell_addr(x, y);             /* just set new coordinates */
-        return;                                 /* and quit */
-    }
+    if (v_stat_0 & M_CVIS) {
+        /* is cursor flashing? */
+        if (v_stat_0 & M_CFLASH) {
+            v_stat_0 &= ~M_CVIS;  /* yes, make invisible...semaphore. */
 
-    /* is cursor flashing? */
-    if (v_stat_0 & M_CFLASH) {
-        v_stat_0 &= ~M_CVIS;                    /* yes, make invisible...semaphore. */
+            /* if cursor flashing enabled and cursor is presently painted, unpaint */
+            if (v_stat_0 & M_CSTATE)
+                con_unpaint_cursor();
 
-        /* is cursor presently displayed ? */
-        if (!(v_stat_0 & M_CSTATE)) {
-            /* not displayed */
-            v_cur_ad = cell_addr(x, y);         /* just set new coordinates */
-
-            /* show the cursor when it moves */
-            neg_cell(v_cur_ad);                 /* complement cursor. */
-            v_stat_0 |= M_CSTATE;
-            v_cur_tim = v_period;               /* reset the timer. */
+            /* set new coordinates and paint there */
+            v_cur_ad = cell_addr(x, y);
+            con_paint_cursor();
 
             v_stat_0 |= M_CVIS;                 /* end of critical section. */
-            return;
         }
     }
-
-    /* move the cursor after all special checks failed */
-    neg_cell(v_cur_ad);                         /* erase present cursor */
-
-    v_cur_ad = cell_addr(x, y);                 /* fetch x and y coords. */
-    neg_cell(v_cur_ad);                         /* complement cursor. */
-
-    /* do not flash the cursor when it moves */
-    v_cur_tim = v_period;                       /* reset the timer. */
-
-    v_stat_0 |= M_CVIS;                         /* end of critical section. */
+    else {
+        /* not visible */
+        v_cur_ad = cell_addr(x, y);             /* just set new coordinates */
+    }  
 }
 
 
@@ -451,18 +413,23 @@ void move_cursor(int x, int y)
 
 void ascii_out(int ch)
 {
-    UBYTE * src, * dst;
+    CHAR_ADDR src;
+    CHAR_ADDR dst;
     BOOL visible;                       /* was the cursor visible? */
 
+#if CONF_WITH_A2560U_TEXT_MODE
+    src = ch;
+#else
     src = char_addr(ch);                /* a0 -> get character source */
     if (src == NULL)
         return;                         /* no valid character */
+#endif
 
     dst = v_cur_ad;                     /* a1 -> get destination */
 
     visible = v_stat_0 & M_CVIS;        /* test visibility bit */
     if (visible) {
-        v_stat_0 &= ~M_CVIS;                    /* start of critical section */
+        v_stat_0 &= ~M_CVIS;            /* start of critical section */
     }
 
     /* put the cell out (this covers the cursor) */
@@ -470,11 +437,16 @@ void ascii_out(int ch)
 
     /* advance the cursor and update cursor address and coordinates */
     if (next_cell()) {
-        UBYTE * cell;
+        /* CRLF */
+        CHAR_ADDR cell;
         UWORD y = v_cur_cy;
 
         /* perform cell carriage return. */
+#if CONF_WITH_A2560U_TEXT_MODE
+        cell = VICKY_TEXT + v_cel_mx * y;
+#else       
         cell = v_bas_ad + (ULONG)v_cel_wr * y;
+#endif        
         v_cur_cx = 0;                   /* set X to first cell in line */
 
         /* perform cell line feed. */
@@ -485,19 +457,17 @@ void ascii_out(int ch)
         else {
             scroll_up(0);               /* scroll from top of screen */
         }
-        v_cur_ad = cell;                /* update cursor address */
+        v_cur_ad = cell;                /* update cursor address */   
     }
+
+#ifdef MACHINE_A2560U
+    a2560u_update_cursor();
+#endif
 
     /* if visible */
     if (visible) {
-        neg_cell(v_cur_ad);             /* display cursor. */
-        v_stat_0 |= M_CSTATE;           /* set state flag (cursor on). */
+        con_paint_cursor();             /* display cursor. */
         v_stat_0 |= M_CVIS;             /* end of critical section. */
-
-        /* do not flash the cursor when it moves */
-        if (v_stat_0 & M_CFLASH) {
-            v_cur_tim = v_period;       /* reset the timer. */
-        }
     }
 }
 
@@ -523,6 +493,35 @@ void ascii_out(int ch)
 
 void blank_out(int topx, int topy, int botx, int boty)
 {
+#if CONF_WITH_A2560U_TEXT_MODE
+    UWORD next_line;    
+    int nrows,ncolumns;
+    int row,column;
+    uint8_t *line;
+    uint8_t *colour;
+    uint16_t cell;
+    uint8_t cell_colour;
+    
+    next_line = v_cel_mx;
+    nrows = boty - topy + 1;
+    ncolumns = botx - topx + 1;
+    cell = (uint16_t)cell_addr(topx, topy);
+    cell_colour = v_col_fg << 4 | v_col_bg;
+    line = (uint8_t*)(VICKY_TEXT + cell);
+    colour = (uint8_t*)(VICKY_TEXT_COLOR + cell);
+
+    /* TODO: could do with optimisation */
+    for (row = 0; row < nrows; row++)    
+    {
+        for (column = 0; column < ncolumns; column++)
+        {
+            line[column] = ' ';
+            colour[column] = cell_colour;
+        }
+        line += next_line;
+        colour += next_line;
+    }
+#else
     UWORD color = v_col_bg;             /* bg color value */
     int pair, pairs, row, rows, offs;
     UBYTE * addr = cell_addr(topx, topy);   /* running pointer to screen */
@@ -597,9 +596,10 @@ void blank_out(int topx, int topy, int botx, int boty)
         }
     }
 
-#ifdef MACHINE_A2560U
+# ifdef MACHINE_A2560U
     a2560u_mark_screen_dirty();
-#endif    
+# endif
+#endif
 }
 
 
@@ -625,8 +625,14 @@ void blank_out(int topx, int topy, int botx, int boty)
 void scroll_up(UWORD top_line)
 {
     ULONG count;
-    UBYTE * src, * dst;
+    CHAR_ADDR src;
+    CHAR_ADDR dst;
 
+#if CONF_WITH_A2560U_TEXT_MODE
+    dst = cell_addr(0, top_line);
+    src = cell_addr(0, top_line + 1);
+    count = (ULONG)v_cel_mx * (v_cel_my - top_line);
+#else
     /* screen base addr + cell y nbr * cell wrap */
     dst = v_bas_ad + (ULONG)top_line * v_cel_wr;
 
@@ -635,14 +641,20 @@ void scroll_up(UWORD top_line)
 
     /* form # of bytes to move */
     count = (ULONG)v_cel_wr * (v_cel_my - top_line);
+#endif
 
     /* move BYTEs of memory*/
+#if CONF_WITH_A2560U_TEXT_MODE    
+    memmove((void*)(dst + VICKY_TEXT), (void*)(src + VICKY_TEXT), count);
+    memmove((void*)(dst + VICKY_TEXT_COLOR), (void*)(src + VICKY_TEXT_COLOR), count);
+#else
     memmove(dst, src, count);
+#endif
 
     /* exit thru blank out, bottom line cell address y to top/left cell */
     blank_out(0, v_cel_my , v_cel_mx, v_cel_my);
 
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) && !CONF_WITH_A2560U_TEXT_MODE
     // already called by blank_out
     //a2560u_mark_screen_dirty();
 #endif    
@@ -657,8 +669,14 @@ void scroll_up(UWORD top_line)
 void scroll_down(UWORD start_line)
 {
     ULONG count;
-    UBYTE * src, * dst;
+    CHAR_ADDR src;
+    CHAR_ADDR dst;
 
+#if CONF_WITH_A2560U_TEXT_MODE
+    src = cell_addr(0, start_line);
+    dst = cell_addr(0, start_line + 1);
+    count = (ULONG)v_cel_mx * (v_cel_my - start_line);
+#else
     /* screen base addr + offset of start line */
     src = v_bas_ad + (ULONG)start_line * v_cel_wr;
 
@@ -667,15 +685,48 @@ void scroll_down(UWORD start_line)
 
     /* form # of bytes to move */
     count = (ULONG)v_cel_wr * (v_cel_my - start_line);
+#endif
 
     /* move BYTEs of memory*/
+#if CONF_WITH_A2560U_TEXT_MODE
+    memmove((void*)(dst + VICKY_TEXT), (void*)(src + VICKY_TEXT), count);
+    memmove((void*)(dst + VICKY_TEXT_COLOR), (void*)(src + VICKY_TEXT_COLOR), count);
+#else    
     memmove(dst, src, count);
+#endif
 
     /* exit thru blank out */
     blank_out(0, start_line , v_cel_mx, start_line);
 
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) && !CONF_WITH_A2560U_TEXT_MODE
     // already called by blank_out
     //a2560u_mark_screen_dirty();
 #endif   
+}
+
+
+void con_paint_cursor(void)
+{
+    v_stat_0 |= M_CSTATE;
+    
+#if CONF_WITH_A2560U_TEXT_MODE
+    /* VICKY is in charge */
+    vicky2_show_cursor();
+#else
+    neg_cell(v_cur_ad);
+#endif
+    v_cur_tim = v_period; /* reset the timer for blinking */
+}
+
+
+void con_unpaint_cursor(void)
+{
+    v_stat_0 &= ~M_CSTATE;
+
+#if CONF_WITH_A2560U_TEXT_MODE
+    /* VICKY is in charge */
+    vicky2_hide_cursor();
+#else
+    neg_cell(v_cur_ad);
+#endif    
 }

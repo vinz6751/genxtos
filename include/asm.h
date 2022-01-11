@@ -227,6 +227,18 @@ static __inline__ void swpcopyw(const UWORD* src, UWORD* dest)
 
 
 /*
+ * Pseudo-prototype for macro: void rolb(byref UBYTE x, WORD count);
+ *  rotates x leftwards by count bits
+ */
+#define rolb(x,n)                   \
+    __asm__ volatile                \
+    ("rol.b %2,%1"                  \
+    : "=d"(x)       /* outputs */   \
+    : "0"(x),"I"(n) /* inputs */    \
+    : "cc"          /* clobbered */ \
+    )
+
+/*
  * Pseudo-prototype for macro: void roll(byref ULONG x, WORD count);
  *  rotates x leftwards by count bits
  */

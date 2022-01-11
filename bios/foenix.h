@@ -1,10 +1,10 @@
 /*
  * foenix.h - Foenix Retro System computer specific defines
  *
- * Copyright (C) 2013-2021 The EmuTOS development team
+ * Copyright (C) 2022 The EmuTOS development team
  *
  * Authors:
- *  VRI   Vincent Barrilliot
+ *  VB   Vincent Barrilliot
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -30,10 +30,24 @@
 
 #define CPU_FREQ    20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
 
-#define GAVIN       0x00B00000
-#define BEATRIX     0x00B20000
-#define VICKY       0x00B40000
-#define VRAM_Bank0  0x00C00000 /* 2MB (until 0xDFFFFF) */
+/* General memory map */
+#define GAVIN           0x00B00000
+#define BEATRIX         0x00B20000
+#define VICKY           0x00B40000
+#define VICKY_TEXT      0x00B60000
+#define VICKY_TEXT_SIZE 0x4000
+#define VRAM_Bank0      0x00C00000
+#define VRAM0_SIZE      0x00200000 /* 2MB */
+
+/* Chipset addresses */
+#define BQ4802LY_BASE  (GAVIN+0x80)
+#define PS2_BASE       (GAVIN+0x2800)
+#define PS2_DATA       PS2_BASE
+#define PS2_CMD        (PS2_BASE+0x04)
+#define SDC_BASE       (GAVIN+0x300)
+#define IDE_BASE       (GAVIN+0x400)
+#define VICKY_TEXT_MEM 0xB60000
+
 
 #define GAVIN_CTRL  (GAVIN)
   #define GAVIN_CTRL_BEEPER  0x0010
@@ -258,17 +272,6 @@
 #define INT_MASK_REG1 		(INT_BASE+13)	// Enable Interrupt #1
 #define INT_MASK_REG2 		(INT_BASE+14)	// Enable Interrupt #2
 #define INT_MASK_REG3		(INT_BASE+15)	// Enable Interrupt #3
-
-
-#ifndef ASM_ONLY
-// Only for C
-
-#include <stdint.h>
-
-// Send a byte to the PS/2 controller
-void PS2_send_controller(const uint8_t b);
-
-#endif // ASM_ONLY
 
 #endif // MACHINE_C256FOENIXGENX
 #endif // FOENIX

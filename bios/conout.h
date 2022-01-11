@@ -34,9 +34,16 @@
 extern WORD v_col_bg;           /* current background color */
 extern WORD v_col_fg;           /* current foreground color */
 
+/* Represents the type used to address a character in the console's screen */
+#ifdef CONF_WITH_A2560U_TEXT_MODE
+typedef UWORD CHAR_ADDR;
+#else
+typedef UBYTE* CHAR_ADDR;
+#endif
+
 /* Cursor related linea variables */
 
-extern UBYTE *v_cur_ad;         /* current cursor address */
+extern CHAR_ADDR v_cur_ad;         /* current cursor address */
 extern WORD v_cur_of;           /* cursor offset */
 extern UBYTE v_cur_tim;         /* cursor blink timer */
 
@@ -54,3 +61,6 @@ void blank_out (int, int, int, int);
 void invert_cell(int, int);
 void scroll_up(UWORD top_line);
 void scroll_down(UWORD start_line);
+CHAR_ADDR cell_addr(UWORD x, UWORD y);
+void con_paint_cursor(void);
+void con_unpaint_cursor(void);

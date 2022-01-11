@@ -51,7 +51,6 @@
 
 /* Local variables ***********************************************************/
 static uint32_t cpu_freq; /* CPU frequency */
-static uint32_t vbl_freq; /* VBL frequency */
 
 
 /* Prototypes ****************************************************************/
@@ -99,7 +98,6 @@ volatile struct a2560u_dirty_cells_t a2560u_dirty_cells;
 void a2560u_screen_init(void)
 {    
     vicky2_init();
-    vbl_freq = 60; /* TODO read that from VICKY's video mode */
 
     /* Setup VICKY interrupts handler (VBL, HBL etc.) */
     vblsem = 0;
@@ -138,10 +136,10 @@ void a2560u_set_border_color(uint32_t color)
 
 void a2560u_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
 {
-    //a2560u_debug("a2560u_get_current_mode_info\n");
     FOENIX_VIDEO_MODE mode;
+
     vicky2_get_video_mode(&mode);
-    *planes = 8;
+    *planes = 8; /* We have 8bits per pixel */
     *hz_rez = mode.w;
     *vt_rez = mode.h;
 }
@@ -187,7 +185,7 @@ void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vecto
         frequency *= data;
     
     /* Convert that according to our timer's clock */
-    timer_clock = timer == 3 ? vbl_freq : cpu_freq;
+    timer_clock = timer == 3 ? vicky_vbl_freq : cpu_freq;
     frequency = (frequency * timer_clock) / MFP68901_FREQ;
 
     a2560u_set_timer(timer, frequency, false, vector);
@@ -694,4 +692,12 @@ void spi_send_byte(uint8_t c)
 uint8_t spi_recv_byte(void)
 {
     return clock_byte(0xff);
+}
+
+
+/* Console support ***********************************************************/
+
+void a2560u_update_cursor(void)
+{
+    R32(VICKY_A_CURSOR_POS) = MAKE_ULONG(v_cur_cy,v_cur_cx);
 }

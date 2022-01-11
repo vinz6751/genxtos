@@ -668,6 +668,9 @@
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
+# ifndef CONF_WITH_FORCE_8x8_FONT
+#  define CONF_WITH_FORCE_8x8_FONT 1
+# endif
 # ifndef ALWAYS_SHOW_INITINFO
 #  define ALWAYS_SHOW_INITINFO 1 /* So we can get into EmuCON */
 # endif
@@ -675,6 +678,7 @@
 #  undef USE_STOP_INSN_TO_FREE_HOST_CPU
 #  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
 # endif
+#define CONF_WITH_A2560U_TEXT_MODE 1 /* Use VICKY's text mode rather than a bitmap screen buffer */
 #endif
 
 /*
@@ -811,6 +815,9 @@
 # endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 0
+# endif
+# ifndef CONF_WITH_FORCE_8x8_FONT
+#  define CONF_WITH_FORCE_8x8_FONT 0
 # endif
 #endif
 
@@ -1986,6 +1993,14 @@
 #ifndef CONF_WITH_CHUNKY8
 # define CONF_WITH_CHUNKY8 0
 #endif
+
+/*
+ * Set CONF_WITH_FORCE_8x8_FONT to force the use of the 8x8 font.
+ */
+#ifndef CONF_WITH_FORCE_8x8_FONT
+# define CONF_WITH_FORCE_8x8_FONT 0
+#endif
+
 
 /*
  * Useful macros for both assembler and C
