@@ -89,7 +89,7 @@ struct ps2_device_t
 	enum ps2_target id; /* 0 for device 1, 1 for device 2 */
 	uint8_t type[2];    /* PS/2 device type (as the device reports itself) */
 	uint16_t status;
-	struct ps2_driver_t *driver; /* Driver currently attached to the device */
+	const struct ps2_driver_t *driver; /* Driver currently attached to the device */
 	struct ps2_driver_api_t api; /* Interface with the driver */
 	/* Reception buffer. Bytes received from the device are stored here */
 	uint16_t in_read;
@@ -291,7 +291,7 @@ static bool attach_driver(struct ps2_device_t *dev)
 
 		for (i = 0 ; i < P.n_drivers ; i++)
 		{
-			struct ps2_driver_t *driver = P.drivers[i];
+			const struct ps2_driver_t *driver = P.drivers[i];
 			if (driver->can_drive(dev->type))
 			{
 				a2560u_debug("Found driver %s", driver->name);
@@ -338,7 +338,11 @@ void ps2_channel2_irq_handler(void)
 	L.dev2.driver->process(&L.dev2.api, get_data_no_wait());
 }
 
-
+/* This isn't used. It thought we would try to handle the IRQ as quickly as possible
+ * so to avoid missing bytes (especially for the mouse), and let the OS tell us when we want to process.
+ * I have not played with the mouse yet so i don't know if that's required. For the time
+ * being, the keyboard IRQ handlers call driver->process directly and it "seems" ok.
+ * So that function is not used but we shall see if should be used for the mouse at least, later. */
 static void on_irq(struct ps2_device_t *dev)
 {
     uint8_t b = get_data_no_wait();

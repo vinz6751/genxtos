@@ -196,7 +196,7 @@ void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vecto
  * It's done so timers can be reprogrammed quickly without having to do
  * computation, so to get the best timing possible. */
 /* Timers */
-const struct a2560u_timer_t {
+static const struct a2560u_timer_t {
     uint32_t control;  /* Control register */
     uint32_t value;    /* Value register   */
     uint32_t compare;  /* Compare register */
@@ -518,9 +518,8 @@ static void *balloc_proxy(size_t howmuch)
     return balloc_stram(howmuch, false);
 }
 
-static const struct ps2_driver_t *drivers[] =
-{
-    &ps2_keyboard_driver  
+static const struct ps2_driver_t * const drivers[] = {
+    &ps2_keyboard_driver
 };
 
 
@@ -536,8 +535,8 @@ void a2560u_kbd_init(void)
     ps2_config.port_data    = (uint8_t*)PS2_DATA;
     ps2_config.port_status  = (uint8_t*)PS2_CMD;
     ps2_config.port_cmd     = (uint8_t*)PS2_CMD;
-    ps2_config.n_drivers    = 1;
-    ps2_config.drivers      = (struct ps2_driver_t **)drivers;
+    ps2_config.n_drivers    = sizeof(drivers)/sizeof(struct ps2_driver_t*);
+    ps2_config.drivers      = drivers;
     ps2_config.malloc       = balloc_proxy;
     ps2_config.on_key_down  = kbd_int;
     ps2_config.on_key_up    = kbd_int;
@@ -554,7 +553,7 @@ void a2560u_kbd_init(void)
 
     /* Go ! */
     a2560u_irq_enable(INT_KBD_PS2);
-    a2560u_irq_enable(INT_MOUSE);        
+    a2560u_irq_enable(INT_MOUSE);
 }
 
 

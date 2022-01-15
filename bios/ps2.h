@@ -85,7 +85,7 @@ struct ps2_api_t
 	uint8_t			  *port_cmd;
 	/* Available drivers */
 	uint8_t			   n_drivers;
-	struct ps2_driver_t **drivers;
+	const struct ps2_driver_t * const *drivers;
 	/* OS functions that we can use */
 	void* (*malloc)(size_t size);
 
