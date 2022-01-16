@@ -23,7 +23,7 @@ all: $(LINKERFILES)
 
 linker/section_first_stram.ld: bios/biosvars.ld bdos/bdosvars.ld
 
-.PHONY:clean_ld
+.PHONY:clean
 
-clean_ld:
+clean:
 	rm -rf $(LINKERFILES)
