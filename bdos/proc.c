@@ -529,14 +529,18 @@ static void proc_go(PD *p)
 
     /* create a stack at the end of the TPA */
     sp = (struct gouser_stack *) (p->p_hitpa - sizeof(struct gouser_stack));
+    KDEBUG(("sp: %p p->p_hitpa=%p\n", (void*)sp, (void*)p->p_hitpa));
 
     sp->basepage = p;      /* the stack contains the basepage */
+    KDEBUG(("basepage: %p\n", (void*)sp->basepage));
 
     sp->retaddr = (long)p->p_tbase; /* return address a3 is text start */
-    sp->sr = get_sr() & 0x0700;  /* the process will start in user mode, same IPL */
+    sp->sr = get_sr() & 0x0700;  /* the process will start in user mode, same IPL */    
+    KDEBUG(("retaddr: %p, sr=%04x\n", (void*)sp->retaddr, sp->sr));
 
     /* the other stack is the supervisor stack */
     sp->other_sp = (long) &supstk[SUPSIZ];
+    KDEBUG(("other_sp: %p\n", (void*)sp->other_sp));
 
     /* store this new stack in the saved a7 field of the PD */
     p->p_areg[7-3] = (long) sp;
