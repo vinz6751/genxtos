@@ -161,7 +161,7 @@ static void vecs_init(void)
      * an endless loop.
      * New ColdFire programs are supposed to be clean and avoid zero
      * divides. So we keep the default panic() behaviour in such case. */
-#else
+#elif !defined(MACHINE_A2560U)
     /* Original TOS cowardly ignores integer divide by zero. */
     VEC_DIVNULL = just_rte;
 #endif
