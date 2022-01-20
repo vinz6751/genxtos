@@ -125,7 +125,7 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
         bg = v_col_bg;
     }
 
-# ifdef CONF_WITH_CHUNKY8
+# if CONF_WITH_CHUNKY8
     int i,j; /* Source bitshift */
     UBYTE bsrc;
     UBYTE *c = dst;
@@ -141,8 +141,9 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
         dst += v_lin_wr;
         src += v_fnt_wr;        
     }
-
-    a2560u_mark_cell_dirty(c);  
+#  ifdef MACHINE_A2560U
+    a2560u_mark_cell_dirty(c);
+#  endif
 # else
     UBYTE * src_sav, * dst_sav;
     int fnt_wr, line_wr;

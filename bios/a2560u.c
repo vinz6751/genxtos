@@ -17,6 +17,9 @@
 #include <stdarg.h>
 
 #include "emutos.h"
+
+#ifdef MACHINE_A2560U
+
 #include "portab.h"
 #include "vectors.h"
 #include "tosvars.h"
@@ -701,3 +704,5 @@ void a2560u_update_cursor(void)
 {
     R32(VICKY_A_CURSOR_POS) = MAKE_ULONG(v_cur_cy,v_cur_cx);
 }
+
+#endif /* MACHINE_A2560U */

@@ -1,3 +1,6 @@
+#include "config.h"
+#ifdef MACHINE_A2560U
+
 .EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560h
 .EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
 
@@ -330,3 +333,5 @@ _a2560u_mark_cell_dirty:
     move.l  4(sp),6(a0,d0)     
     move.w  d0,(a0)     // write writer
     rts
+
+#endif // MACHINE_A2560U

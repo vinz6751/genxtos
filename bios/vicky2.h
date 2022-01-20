@@ -15,7 +15,7 @@
 
 #include "config.h"
 
-#if MACHINE_A2560U
+#ifdef MACHINE_A2560U
 
 #include <stdint.h>
 #include "foenix.h"

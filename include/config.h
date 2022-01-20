@@ -819,6 +819,9 @@
 # ifndef CONF_WITH_FORCE_8x8_FONT
 #  define CONF_WITH_FORCE_8x8_FONT 0
 # endif
+# ifndef CONF_WITH_A2560U_TEXT_MODE
+#  define CONF_WITH_A2560U_TEXT_MODE 0
+# endif
 #endif
 
 /*
@@ -2017,6 +2020,12 @@
 # define CONF_WITH_FORCE_8x8_FONT 0
 #endif
 
+/*
+ * Set CONF_WITH_A2560U_TEXT_MODE to support the 8x8 text mode supported by VICKY.
+ */
+#ifndef CONF_WITH_A2560U_TEXT_MODE
+# define CONF_WITH_A2560U_TEXT_MODE 0
+#endif
 
 /*
  * Useful macros for both assembler and C

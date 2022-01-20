@@ -759,7 +759,7 @@ ULONG calc_vram_size(void)
     return amiga_initial_vram_size();
 #elif defined(MACHINE_LISA)
     return 32*1024UL;
-#elif MACHINE_A2560U
+#elif defined(MACHINE_A2560U)
     return a2560u_calc_vram_size();
 #else
     ULONG vram_size;

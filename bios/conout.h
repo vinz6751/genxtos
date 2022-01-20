@@ -35,7 +35,7 @@ extern WORD v_col_bg;           /* current background color */
 extern WORD v_col_fg;           /* current foreground color */
 
 /* Represents the type used to address a character in the console's screen */
-#ifdef CONF_WITH_A2560U_TEXT_MODE
+#if CONF_WITH_A2560U_TEXT_MODE
 typedef UWORD CHAR_ADDR;
 #else
 typedef UBYTE* CHAR_ADDR;
