@@ -13,6 +13,8 @@
 #ifndef A2560U_H
 #define A2560U_H
 
+#ifdef MACHINE_A2560U
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "vicky2.h"
@@ -149,5 +151,7 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);
 
 void a2560u_kbd_init(void);
 void a2560u_update_cursor(void);
+
+#endif /* MACHINE_A2560U */
 
 #endif

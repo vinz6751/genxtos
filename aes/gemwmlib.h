@@ -12,10 +12,14 @@
 
 #define DESKWH  0       /* window handle for desktop */
 
+/* gadgets classified by type (location) */
+#define TGADGETS    (NAME | CLOSER | FULLER | MOVER)    /* for 'top' window gadgets */
+#define VGADGETS    (UPARROW | DNARROW | VSLIDE)        /* for vertical scroll bar */
+#define HGADGETS    (LFARROW | RTARROW | HSLIDE)        /* for horizontal scroll bar */
+
 extern WORD     gl_wtop;
 extern OBJECT   *gl_awind;
 
-void w_nilit(WORD num, OBJECT olist[]);
 void w_getsize(WORD which, WORD w_handle, GRECT *pt);
 void w_drawdesk(GRECT *pc);
 void w_setactive(void);

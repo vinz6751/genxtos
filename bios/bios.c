@@ -161,7 +161,7 @@ static void vecs_init(void)
      * an endless loop.
      * New ColdFire programs are supposed to be clean and avoid zero
      * divides. So we keep the default panic() behaviour in such case. */
-#else
+#elif !defined(MACHINE_A2560U)
     /* Original TOS cowardly ignores integer divide by zero. */
     VEC_DIVNULL = just_rte;
 #endif
@@ -452,10 +452,23 @@ static void bios_init(void)
     dsp_init();
 #endif
 
+#if CONF_WITH_MEMORY_TEST
+    /*
+     * we only do this on cold boot
+     */
+    if (FIRST_BOOT)
+    {
+        BOOL ok;
+        cprintf("\n%s:\n",_("Memory test"));
+        ok = memory_test();         /* simple memory test, like Atari TOS */
+        cprintf("%s %s\n",_("Memory test"),ok?_("complete"):_("aborted"));
+    }
+#endif
+
     /* User configurable boot delay to allow harddisks etc. to get ready */
     if (FIRST_BOOT && osxhbootdelay)
     {
-        long end = hz_200 + (long)osxhbootdelay * 200UL;
+        long end = hz_200 + (long)osxhbootdelay * CLOCKS_PER_SEC;
         while (hz_200 < end)
         {
 #if USE_STOP_INSN_TO_FREE_HOST_CPU

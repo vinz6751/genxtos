@@ -30,6 +30,7 @@
 #include "gemaplib.h"
 #include "geminit.h"
 #include "gemevlib.h"
+#include "gemmnext.h"
 #include "gemmnlib.h"
 #include "gemoblib.h"
 #include "gemobed.h"
@@ -43,13 +44,12 @@
 #include "gemshlib.h"
 #include "gemfmalt.h"
 #include "gemasm.h"
+#include "gemctrl.h"
 
 #include "string.h"
 
 
 LONG super(WORD cx, AESPB *pcrys_blk);  /* called only from gemdosif.S */
-
-GLOBAL WORD     gl_mnclick;
 
 static void     *ad_rso;
 
@@ -177,26 +177,20 @@ static UWORD crysbind(WORD opcode, AESGLOBAL *pglobal, WORD control[], WORD int_
     case MENU_REGISTER:
         ret = mn_register(MM_PID, (char *)MM_PSTR);
         break;
-    case MENU_UNREGISTER:
-#if CONF_WITH_PCGEM
-        /* distinguish between menu_unregister() and menu_popup() */
-        if (IN_LEN == 1)
-            mn_unregister( MM_MID );
-        else
-#endif
-            unsupported = TRUE;
+#if CONF_WITH_MENU_EXTENSION
+    case MENU_POPUP:
+        ret = mn_popup((MENU *)MPOP_IN, MPOP_XPOS, MPOP_YPOS, (MENU *)MPOP_OUT);
         break;
-    case MENU_CLICK:
-        /* distinguish between menu_click() and menu_attach() */
-#if CONF_WITH_PCGEM
-        if (IN_LEN == 2) {
-            if (MN_SETIT)
-                gl_mnclick = MN_CLICK;
-            ret = gl_mnclick;
-        } else
-#endif
-            unsupported = TRUE;
+    case MENU_ATTACH:
+        ret = mn_attach(MPOP_FLAG, (OBJECT *)MPOP_IN, MPOP_ITEM, (MENU *)MPOP_OUT);
         break;
+    case MENU_ISTART:
+        ret = mn_istart(MPOP_FLAG, (OBJECT *)MPOP_IN, MPOP_ITEM, MPOP_ITEM2);
+        break;
+    case MENU_SETTINGS:
+        mn_settings(MPOP_FLAG, (MN_SET *)MPOP_SET);
+        break;
+#endif
 
     /* Object Manager */
     case OBJC_ADD:
@@ -290,7 +284,14 @@ static UWORD crysbind(WORD opcode, AESGLOBAL *pglobal, WORD control[], WORD int_
         ret = gl_handle;
         break;
     case GRAF_MOUSE:
-        gr_mouse(GR_MNUMBER, (MFORM *)GR_MADDR);
+        if (gl_ctmown)          /* if the ctlmgr owns the mouse, */
+        {                       /* give up control (temporarily) */
+            ct_mouse(FALSE);    /* sets gl_ctmown = FALSE as byproduct */
+            gr_mouse(GR_MNUMBER, (MFORM *)GR_MADDR);
+            ct_mouse(TRUE);     /* restores gl_ctmown = TRUE as byproduct */
+        }
+        else
+            gr_mouse(GR_MNUMBER, (MFORM *)GR_MADDR);
         break;
     case GRAF_MKSTATE:
         gr_mkstate(&GR_MX, &GR_MY, &GR_MSTATE, &GR_KSTATE);

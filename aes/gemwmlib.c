@@ -53,12 +53,6 @@
 
 #define DROP_SHADOW_SIZE    2   /* size of drop shadow on windows */
 
-#if CONF_WITH_3D_OBJECTS
-#define TGADGETS    (NAME | CLOSER | FULLER | MOVER)
-#define VGADGETS    (UPARROW | DNARROW | VSLIDE)
-#define HGADGETS    (LFARROW | RTARROW | HSLIDE)
-#endif
-
 GLOBAL WORD     gl_wtop;
 GLOBAL OBJECT   *gl_awind;
 
@@ -180,7 +174,7 @@ static WORD adj_hbox;
 #endif
 
 
-void w_nilit(WORD num, OBJECT olist[])
+static void w_nilit(WORD num, OBJECT olist[])
 {
     while(num--)
     {
@@ -1233,8 +1227,7 @@ static void w_owns(WINDOW *pwin, ORECT *po, GRECT *pt, GRECT *poutwds)
     {
         rc_copy(&po->o_gr, poutwds);
         pwin->w_rnext = po = po->o_link;
-        if ((rc_intersect(pt, poutwds)) &&
-            (rc_intersect(&gl_rfull, poutwds)))
+        if (rc_intersect(pt, poutwds))
             return;
     }
 
