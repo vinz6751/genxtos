@@ -277,7 +277,9 @@ bios_src += lowstram.c
 
 # Other BIOS sources can be put in any order
 bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
-             biosmem.c blkdev.c chardev.c clock.c conout.c country.c \
+             biosmem.c blkdev.c chardev.c clock.c \
+			 conout.c conout_atarifb.c \
+			 country.c \
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
              kprint.c kprintasm.S linea.S lineainit.c lineavars.S machine.c \
              mfp.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
@@ -289,7 +291,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              dsp.c dsp2.S \
 			 uart16550.c sn76489.c wm8776.c bq4802ly.c vicky2.c \
 			 ps2.c ps2_keyboard.c ps2_mouse.c \
-			 a2560u_s.S a2560u.c
+			 a2560u_s.S a2560u.c a2560u_conout_text.c a2560u_conout_bmp.c
 #			 c256genx.c c256genx2.S c256genx_kbd.S \
 
 ifeq (1,$(COLDFIRE))
@@ -358,7 +360,7 @@ desk_src = deskstart.S deskmain.c gembind.c deskact.c deskapp.c deskdir.c \
 # source code in cli/ for EmuTOS console EmuCON
 #
 
-cli_src = cmdasm.S cmdmain.c cmdedit.c cmdexec.c cmdint.c cmdparse.c cmdutil.c
+cli_src = cmdasm.S cmdmain.c cmdedit.c cmdexec.c cmdint.c cmdparse.c cmdutil.c cmdtest.S
 
 #
 # source code to put at the end of the ROM

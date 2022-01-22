@@ -175,7 +175,7 @@ _a2560u_irq_calibration: // Timer 0 handler used for calibration loop, equivalen
 a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     .GLOBAL _a2560u_dirty_cells
     .GLOBAL _v_lin_wr
-    .GLOBAL _v_cel_ht
+    .GLOBAL _v_cel_ht    
 
 // Performance options:
 // Disable the rendering during VBL so VICKY can concentrate on pumping bytes from the FIFO.
@@ -191,7 +191,8 @@ a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     move.l  #MAX_CELLS_RENDERED_PER_FRAME-1,d6 // max number of characters we render per frame
 #endif
 
-    //move.w  #16,0xb00000 // Bip ON
+    // move.w  #16,0xb00000 // Bip ON
+    
     lea     _a2560u_dirty_cells,a0
     tst.w   4(a0)           // Copy whole frame buffer to VRAM ?
     jne     copy_whole_screen  // Yes -> go there
@@ -249,7 +250,8 @@ cell_copy_done:
     move.l  0xb40000,d6 // Re-enable graphics rendering
     andi.l  #~VICKY_CTRL_DISABLE_RENDER,d6
     move.l  d6,0xb40000
-#endif    
+#endif
+    // move.w  #0,0xb00000 // Bip OFF
     rts    
 
 copy_whole_screen:
@@ -321,6 +323,7 @@ fbcpy: // ACHTUNG WE'RE WRITTING BEYOND THE ALLOCATED FB IN THE VRAM
     andi.l  #~0x80,d6
     move.l  d6,0xb40000
 #endif
+    // move.w  #0,0xb00000 // Bip OFF
     rts
 
 

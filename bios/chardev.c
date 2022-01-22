@@ -101,7 +101,7 @@ LONG bconout5(WORD dev, WORD ch)
     /* The terminal will interpret the control characters, anyway */
     bconout(1, ch);
 #endif
-    ascii_out(LOBYTE(ch));
+    conout_ascii_out(LOBYTE(ch));
     return 1L;
 }
 

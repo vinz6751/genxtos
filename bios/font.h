@@ -20,8 +20,8 @@
 
 /* prototypes */
 
-void font_init(void);           /* initialize BIOS font ring */
-void font_set_default(void);    /* choose the default font */
-UBYTE *char_addr(WORD ch);      /* get address of a character number in font file */
+void font_init(void);               /* initialize BIOS font ring */
+Fonthead *font_set_default(void);   /* choose the default font */
+UBYTE *char_addr(UWORD ch);         /* get address of a character number in font file */
 
 #endif /* FONT_H */

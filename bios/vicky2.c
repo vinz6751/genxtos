@@ -99,15 +99,12 @@ void vicky2_init(void)
     FOENIX_VIDEO_MODE mode;
 
     /* Enable video and bitmap, 640x480 */
-#if CONF_WITH_A2560U_TEXT_MODE
     R32(VICKY_CTRL) = 0;
-#else    
-    R32(VICKY_CTRL) = VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP;
-#endif    
+
     vicky2_set_video_mode(VICKY_MODE_640x480_60);
     vicky2_get_video_mode(&mode);
     vicky2_set_mouse_visible(0);
-    
+
     /* No border. If we used borders we would have to offset/resize all our graphics stuff */
     /* Use instead this to enable border to you can set its color as debugging trace:
      * R32(VICKY_A_BORDER_CTRL) = 0x00030301;
@@ -131,8 +128,7 @@ void vicky2_init(void)
         vicky2_set_lut_color(0, i, &color);         
     }
 
-    /* Clear screen */    
-    memset((void*)VRAM_Bank0,0,mode.w * mode.h);
+    memset((void*)VRAM_Bank0,0,(uint32_t)mode.w * mode.h);
 }
 
 void vicky2_set_background_color(uint32_t color)
@@ -332,11 +328,13 @@ void vicky2_text_init(void)
 
     /* Set cursor */
     R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_CHAR;
-    R32(VICKY_A_CURSOR_CTRL) |= (((uint32_t)0x00L) << 16);
+    R32(VICKY_A_CURSOR_CTRL) |= (((uint32_t)0x00L) << 16); /* 0 is a filled cell */
 
-    /* Enable text mode (without overlay) */
+    /* Enable text mode. Cant have text mode and gfx without overlay otherwise it crashes.
+     * If we have overlay, then the inverse video doesn't work as the background is transparent. */
+    R32(VICKY_CTRL) &= ~(VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP);
     R32(VICKY_CTRL) |= VICKY_A_CTRL_TEXT;
-    vicky2_show_cursor();    
+    vicky2_hide_cursor();
 }
 
 

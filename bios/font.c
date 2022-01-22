@@ -69,30 +69,24 @@ void font_init(void)
  * linea variables according to chosen font configuration
  */
 
-void font_set_default(void)
+Fonthead* font_set_default(void)
 {
     Fonthead *font;
 
-#if CONF_WITH_FORCE_8x8_FONT
+#if CONF_WITH_FORCE_8x8_FONT/* Some problems with 8x16 because of cursor so use 8x8 for now */
     font = &fon8x8;
 #else
     font = (V_REZ_VT < 400) ? &fon8x8 : &fon8x16;
-#endif    
+#endif
 
     v_cel_ht = font->form_height;
-    v_cel_wr = v_lin_wr * font->form_height;
-#if CONF_WITH_FORCE_8x8_FONT
-    v_cel_mx = (V_REZ_HZ / font->max_cell_width);// + 5; this offset depends on the border but I haven't figured how
-#else
-    v_cel_mx = (V_REZ_HZ / font->max_cell_width) - 1;
-#endif
-    v_cel_my = (V_REZ_VT / font->form_height) - 1;
-
     v_fnt_wr = font->form_width;
     v_fnt_st = font->first_ade;
     v_fnt_nd = font->last_ade;
     v_fnt_ad = font->dat_table;
     v_off_ad = font->off_table;
+
+    return font;
 }
 
 
@@ -109,7 +103,7 @@ void font_set_default(void)
  *   pointer to first byte of source cell if code was valid
  */
 
-UBYTE *char_addr(WORD ch)
+UBYTE *char_addr(UWORD ch)
 {
     UWORD offs;
 

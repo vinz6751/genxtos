@@ -678,7 +678,8 @@
 #  undef USE_STOP_INSN_TO_FREE_HOST_CPU
 #  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
 # endif
-#define CONF_WITH_A2560U_TEXT_MODE 1 /* Use VICKY's text mode rather than a bitmap screen buffer */
+#define CONF_WITH_A2560U_TEXT_MODE 1          /* Use VICKY's text mode if possible rather than a bitmap screen buffer */
+#define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 1 /* Use shadow framebuffer for rendering 8x16 */
 #endif
 
 /*
@@ -821,6 +822,9 @@
 # endif
 # ifndef CONF_WITH_A2560U_TEXT_MODE
 #  define CONF_WITH_A2560U_TEXT_MODE 0
+# endif
+# ifndef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+#  define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
 # endif
 #endif
 
@@ -2026,6 +2030,17 @@
 #ifndef CONF_WITH_A2560U_TEXT_MODE
 # define CONF_WITH_A2560U_TEXT_MODE 0
 #endif
+
+/*
+ * Set CONF_WITH_A2560U_SHADOW_FRAMEBUFFER to add support for a shadow framebuffer that
+ * is in RAM but copied to VRAM during VBL.
+ */
+#ifndef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+# define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
+#endif
+
+
+
 
 /*
  * Useful macros for both assembler and C

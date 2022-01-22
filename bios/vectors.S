@@ -325,7 +325,7 @@ _int_vbl:
 
         jsr     _blink                  // blink cursor
 
-#if defined(MACHINE_A2560U) && !CONF_WITH_A2560U_TEXT_MODE
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
         .GLOBAL a2560u_copy_fb_to_vram
         jbsr    a2560u_copy_fb_to_vram
 #endif

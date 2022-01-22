@@ -2365,7 +2365,7 @@ Start... early ages
 - bios/clock.c: Fixed wrong seconds in Gettime() on machines having NVRAM. (VRI)
 
 2011-04-15
-- bios/conout.c: invert_cell(): use the x and y parameters. (VRI)
+- bios/conout.c: conout_invert_cell(): use the x and y parameters. (VRI)
 - bios/conout.c: Fixed cursor blink when moving backwards. (VRI)
 
 2011-04-18

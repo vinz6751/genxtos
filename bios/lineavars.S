@@ -179,7 +179,7 @@ _v_cel_my:      .ds.w   1       // -42  rows on the screen minus 1
 _v_cel_wr:      .ds.w   1       // -40  length (in bytes) of a line of characters
 _v_col_bg:      .ds.w   1       // -38  current background color
 _v_col_fg:      .ds.w   1       // -36  current foreground color
-_v_cur_ad:      .ds.l   1       // -34  current cursor address
+_v_cur_ad:      .ds.l   1       // -34  current cursor address (type is CHAR_ADDR, obscure type which depends on console driver)
 _v_cur_of:      .ds.w   1       // -30  offset from begin of screen
 _v_cur_cx:      .ds.w   1       // -28  current cursor column
 _v_cur_cy:      .ds.w   1       // -26  current cursor row
