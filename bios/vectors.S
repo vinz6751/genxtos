@@ -1013,11 +1013,12 @@ biosxbios:
         move.w  d0,-(a1)        // and save in save_area
         move.l  (sp)+,-(a1)     // save return address
 
+#if CONF_WITH_ADVANCED_CPU
         tst.w   _longframe.w    // Check processor type
         jeq     bx_nolongframe  // ...when we support CPU >=68000
         move.w  (sp)+,-(a1)
-
 bx_nolongframe:
+#endif
         movem.l d3-d7/a3-a7, -(a1)      // regs, including stack pointer
         move.l  a1, _savptr.w
 
@@ -1040,13 +1041,15 @@ bx_ret_exc:
         move.l  _savptr.w, a1
         movem.l (a1)+, d3-d7/a3-a7      // Get regs back, including sp
 
+#if CONF_WITH_ADVANCED_CPU
         tst.w   _longframe.w    // Check longframe again: Is CPU >= 68000?
         jeq     bx_nolong2
         move.w  (a1)+,-(sp)
-
 bx_nolong2:
-        move.l  (a1)+,-(sp)
-        move.w  (a1)+,-(sp)
+#endif
+
+        move.l  (a1)+,-(sp)     // unstack return address 
+        move.w  (a1)+,-(sp)     // unstack status register
 
         move.l  a1, _savptr.w
 // The RTE below is shared for other purposes.
