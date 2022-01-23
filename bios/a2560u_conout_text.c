@@ -19,6 +19,9 @@
 #define ENABLE_KDEBUG
 
 #include "emutos.h"
+
+#ifdef MACHINE_A2560U
+
 #include "asm.h"
 #include "lineavars.h"
 #include "tosvars.h"            /* for v_bas_ad */
@@ -164,3 +167,5 @@ const CONOUT_DRIVER a2560u_conout_text =
     paint_cursor,
     unpaint_cursor
 };
+
+#endif /* MACHINE_A2560U */ 
