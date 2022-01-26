@@ -27,11 +27,6 @@
 #include "asm.h"
 
 
-
-struct param rel_pblock;        /* mouse parameter block */
-
-
-
 /*
  * mouse initialization
  *
@@ -39,6 +34,9 @@ struct param rel_pblock;        /* mouse parameter block */
 
 void Initmous(WORD type, struct param *param, PFVOID newvec)
 {
+#ifdef MACHINE_A2560U
+    kbdvecs.mousevec = (newvec != NULL) ? newvec : just_rts;    
+#else    
     long retval = -1;           /* ok, if it stays so... */
     struct param *p = param;   /* pointer to parameter block */
 
@@ -102,7 +100,7 @@ void Initmous(WORD type, struct param *param, PFVOID newvec)
         retval = 0;             /* means error */
     }
 
-    if (retval!=0 && type!=0) {         /* if no error */
+    if (retval != 0 && type != 0) {         /* if no error */
 
         if (param != NULL) {
             if (p->topmode == IN_YBOT)
@@ -119,4 +117,5 @@ void Initmous(WORD type, struct param *param, PFVOID newvec)
     } else {                    /* if error */
         kbdvecs.mousevec = just_rts;    /* set dummy vector */
     }
+#endif    
 }

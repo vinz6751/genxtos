@@ -12,7 +12,7 @@
 
 #include "asmdefs.h"
 
-#define EXTENDED_PALETTE (CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER)
+#define EXTENDED_PALETTE (CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER || defined(MACHINE_A2560U))
 
                 .bss
 
@@ -24,7 +24,7 @@
                 .globl  _CUR_FONT
                 .globl  _cur_ms_stat
                 .globl  _disab_cnt
-                .globl  _draw_flag
+                .globl  _vbl_must_draw_mouse
 
                 .globl  _mouse_cdb
                 .globl  _m_pos_hx
@@ -150,7 +150,7 @@ _cur_ms_stat:   .ds.b   1       // -348 current mouse status
 _disab_cnt:     .ds.w   1       // -346 disable depth count. (>0 => disabled)
 _newx:          .ds.w   1       // -344 new mouse x&y position
 _newy:          .ds.w   1
-_draw_flag:     .ds.b   1       // -340 non-zero means draw mouse form on vblank
+_vbl_must_draw_mouse: .ds.b 1   // -340 (_draw_flag) non-zero means draw mouse form on vblank
 _mouse_flag:    .ds.b   1       // -339 non-zero while mouse cursor is being modified
 
 _sav_cur_x:     .ds.w   1       // -338 save area for cursor cell coords.

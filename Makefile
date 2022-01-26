@@ -281,7 +281,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
 			 conout.c conout_atarifb.c \
 			 country.c \
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
-             kprint.c kprintasm.S linea.S lineainit.c lineavars.S machine.c \
+             kprint.c kprintasm.S machine.c \
              mfp.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c serport.c sound.c videl.c vt52.c xhdi.c \
              pmmu030.c 68040_pmmu.S \
@@ -325,7 +325,11 @@ endif
 vdi_src = vdi_asm.S vdi_bezier.c vdi_col.c vdi_control.c vdi_esc.c \
           vdi_fill.c vdi_gdp.c vdi_input.c vdi_line.c vdi_main.c \
           vdi_marker.c vdi_misc.c vdi_mouse.c vdi_raster.c vdi_text.c \
-          vdi_textblit.c
+          vdi_textblit.c vdi_locator.c \
+		  linea_.S linea.c lineavars.S \
+		  linea_mouse.c linea_mouse_.S \
+		  linea_mouse_atari.c linea_mouse_atari_.S \
+		  linea_mouse_a2560u.c
 
 ifeq (1,$(COLDFIRE))
 vdi_src += vdi_tblit_cf.S

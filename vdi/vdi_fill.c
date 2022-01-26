@@ -637,6 +637,9 @@ void vdi_v_fillarea(Vwk * vwk)
 static UWORD
 get_color (UWORD mask, UWORD * addr)
 {
+#if CONF_WITH_CHUNKY8
+    return ((UBYTE*)addr)[mask]; /* mask is really x */
+#else
     UWORD color = 0;                    /* clear the pixel value accumulator. */
     WORD plane = v_planes;
 
@@ -652,6 +655,7 @@ get_color (UWORD mask, UWORD * addr)
     }
 
     return color;       /* this is the color we are searching for */
+#endif    
 }
 
 
@@ -673,8 +677,13 @@ pixelread(const WORD x, const WORD y)
 
     /* convert x,y to start address and bit mask */
     addr = get_start_addr(x, y);
+
+#if CONF_WITH_CHUNKY8
+    mask = x;
+#else
     addr += v_planes;                   /* start at highest-order bit_plane */
     mask = 0x8000 >> (x&0xf);           /* initial bit position in WORD */
+#endif
 
     return get_color(mask, addr);       /* return the composed color value */
 }
@@ -688,11 +697,13 @@ search_to_right (const VwkClip * clip, WORD x, UWORD mask, const UWORD search_co
     while( x++ < clip->xmx_clip ) {
         UWORD color;
 
+#if CONF_WITH_CHUNKY8
+#else
         /* need to jump over interleaved bit_plane? */
         rorw1(mask);    /* rotate right */
         if ( mask & 0x8000 )
             addr += v_planes;
-
+#endif
         /* search, while pixel color != search color */
         color = get_color(mask, addr);
         if ( search_col != color ) {
@@ -713,10 +724,13 @@ search_to_left (const VwkClip * clip, WORD x, UWORD mask, const UWORD search_col
     while (x-- > clip->xmn_clip) {
         UWORD color;
 
+#if CONF_WITH_CHUNKY8
+#else
         /* need to jump over interleaved bit_plane? */
         rolw1(mask);    /* rotate left */
         if ( mask & 0x0001 )
             addr -= v_planes;
+#endif
 
         /* search, while pixel color != search color */
         color = get_color(mask, addr);
@@ -757,8 +771,11 @@ static WORD end_pts(const VwkClip *clip, WORD x, WORD y, WORD *xleftout, WORD *x
 
     /* convert x,y to start address and bit mask */
     addr = get_start_addr(x, y);
+#if CONF_WITH_CHUNKY8    
+#else    
     addr += v_planes;                   /* start at highest-order bit_plane */
     mask = 0x8000 >> (x & 0x000f);   /* fetch the pixel mask. */
+#endif
 
     /* get search color and the left and right end */
     color = get_color (mask, addr);
@@ -1043,9 +1060,6 @@ void
 put_pix(void)
 {
     UWORD *addr;
-    UWORD color;
-    UWORD mask;
-    int plane;
 
     const WORD x = PTSIN[0];
     const WORD y = PTSIN[1];
@@ -1058,8 +1072,16 @@ put_pix(void)
     if (addr < (UWORD*)v_bas_ad || addr >= get_start_addr(V_REZ_HZ, V_REZ_VT)) {
         return;
     }
-    color = INTIN[0];           /* device dependent encoded color bits */
+
+#if CONF_WITH_CHUNKY8
+    *((UBYTE*)addr) = (UBYTE)(INTIN[0]);
+#else
+    UWORD color;
+    UWORD mask;
+    int plane;
+
     mask = 0x8000 >> (x&0xf);   /* initial bit position in WORD */
+    color = INTIN[0];           /* device dependent encoded color bits */
 
     for (plane = v_planes; plane; plane--) {
         if (color&0x0001)
@@ -1068,4 +1090,5 @@ put_pix(void)
             *addr++ &= ~mask;
         color >>= 1;
     }
+#endif    
 }

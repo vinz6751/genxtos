@@ -10,9 +10,9 @@
 #ifndef _VDISTUB_H
 #define _VDISTUB_H
 
+#include "linea.h"
+
 /* Forward declarations */
-struct Mcdb_;
-struct _mcs;
 struct blit_frame;
 
 /* The VDI is just a library. It has no initialization routine.
@@ -21,14 +21,9 @@ struct blit_frame;
 void vditrap(void);
 
 /* shared VDI functions & VDI line-A wrapper functions */
-void cur_display (struct Mcdb_ *sprite, struct _mcs *mcs, WORD x, WORD y);
-void cur_replace (struct _mcs *mcs);
 WORD get_pix(void);
 void put_pix(void);
 void text_blt(void);
-void linea_show_mouse(void);
-void linea_hide_mouse(void);
-void linea_transform_mouse(void);
 void linea_rect(void);
 void linea_hline(void);
 void linea_polygon(void);

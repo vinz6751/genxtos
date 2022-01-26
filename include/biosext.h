@@ -29,7 +29,6 @@
 #define DSKBUF_SIZE     (DSKBUF_SECS * SECTOR_SIZE)
 
 /* Forward declarations */
-struct _mcs;
 struct font_head;
 
 /* Bitmap of removable logical drives */
@@ -74,9 +73,6 @@ BOOL can_shutdown(void);
 #if CONF_WITH_EXTENDED_MOUSE
 extern void (*mousexvec)(WORD scancode);    /* Additional mouse buttons */
 #endif
-
-/* Line A extensions */
-extern UBYTE v_planes_shift; /* pixel to address helper */
 
 /* determine monitor type, ... */
 WORD get_monitor_type(void);

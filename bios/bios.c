@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-//#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "biosext.h"
@@ -494,7 +494,7 @@ static void bios_init(void)
     if (HAS_NOVA && !(kbshift(-1) & MODE_CTRL)) {
         KDEBUG(("init_nova()\n"));
         if (init_nova()) {
-            set_rez_hacked();   /* also reinitializes the vt52 console */
+            screen_set_rez_hacked();   /* also reinitializes the vt52 console */
         }
     }
 #endif

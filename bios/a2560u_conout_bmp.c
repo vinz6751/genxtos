@@ -32,6 +32,8 @@ static void init(const Fonthead *font)
 {
     v_cel_wr = v_lin_wr * v_cel_ht;
     v_cur_ad.pxaddr = v_bas_ad;
+
+    /* Stop text mode and start bitmap */
     R32(VICKY_CTRL) &= ~VICKY_A_CTRL_TEXT; 
     R32(VICKY_CTRL) = VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP;
 }

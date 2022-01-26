@@ -30,7 +30,7 @@ const struct keytbl *get_keytbl(void);
 /* used by nls.c */
 const char *get_lang_name(void);
 
-/* used by initlinea.c */
+/* used by font_init */
 void get_fonts(const Fonthead **f6x6,
                const Fonthead **f8x8,
                const Fonthead **f8x16);

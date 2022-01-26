@@ -219,9 +219,9 @@ static void convert_color(uint16_t orgb, COLOR32 *dst)
 void vicky2_set_mouse_visible(uint16_t visible)
 {
     if (visible)
-        R16(MOUSE_POINTER_CTRL) |= 1;
+        R16(VICKY_MOUSE_CTRL) |= 1;
     else
-        R16(MOUSE_POINTER_CTRL) &= ~1;    
+        R16(VICKY_MOUSE_CTRL) &= ~1;    
 }
 
 
@@ -347,6 +347,16 @@ void vicky2_show_cursor(void)
 void vicky2_hide_cursor(void)
 {
     R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_ENABLE;
+}
+
+void vicky2_show_mouse(void)
+{
+    R16(VICKY_MOUSE_CTRL) |= VICKY_MOUSE_ENABLE;
+}
+
+void vicky2_hide_mouse(void)
+{
+    R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;
 }
 
 #endif /* MACHINE_A2560U */

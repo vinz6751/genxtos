@@ -14,22 +14,13 @@
 #include "has.h"
 #include "xbiosbind.h"
 #include "lineavars.h"
+#include "linea.h" /* EXTENDED_PALETTE */
 
 #if EXTENDED_PALETTE
 #define MAXCOLOURS  256
 #else
 #define MAXCOLOURS  16
 #endif
-
-/*
- * the following line-A variables contain the VDI color palette entries.
- * REQ_COL contains the first 16 entries; req_col2 contains entries
- * 16-255 (only applicable for 8-plane resolutions).  Note that the
- * location of req_col2 is not documented by Atari, but is derived from
- * disassembly of TOS ROMs, and source code for MagiC's VDI.
- */
-extern WORD REQ_COL[16][3];     /* defined in lineavars.S */
-extern WORD req_col2[240][3];   /* defined in lineavars.S */
 
 /* Some color mapping tables */
 WORD MAP_COL[MAXCOLOURS];       /* maps vdi pen -> hardware register */

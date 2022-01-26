@@ -17,8 +17,8 @@
 
 /* Defines for mouse configuration in IKBD */
                     /* the following values apply to 'topmode' in 'struct param' */
-#define IN_YTOP 0       /* Y=0 means top of screen */
-#define IN_YBOT 1       /* Y=0 means bottom of screen */
+#define IN_YTOP 0   /* Y=0 means top of screen */
+#define IN_YBOT 1   /* Y=0 means bottom of screen */
                     /* the following values apply to 'buttons' in 'struct param'; */
                     /* they are for documentation only, and are not used in EmuTOS */
 #define IN_PACKETS 3    /* absolute mouse position reported on button press */
@@ -64,8 +64,5 @@ struct mouse_data {
 
 /* External declarations */
 void Initmous(WORD , struct param *, PFVOID);
-
-void mouse_int(void);           /* mouse interrupt vector */
-
 
 #endif /* MOUSE_H */

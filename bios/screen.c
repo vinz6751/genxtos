@@ -13,7 +13,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/*#define ENABLE_KDEBUG*/
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "machine.h"
@@ -22,6 +22,7 @@
 #include "videl.h"
 #include "asm.h"
 #include "tosvars.h"
+#include "linea.h" // linea_set_screen_shift
 #include "lineavars.h"
 #include "nvram.h"
 #include "font.h"
@@ -196,9 +197,9 @@ WORD esetshift(WORD mode)
 
     /*
      * because the resolution may have changed, we must reinitialise
-     * the VT52 emulator
+     * the screen services (Line-A, VT52 emulator)
      */
-    vt52_init();
+    screen_init_services();
 
     return oldmode;
 }
@@ -662,7 +663,7 @@ void screen_init_address(void)
 
 #ifdef MACHINE_A2560U
     /* We use a fake framebuffer, and have code in place to copy it to the VRAM */
-    setphys(VRAM_Bank0);
+    setphys((const UBYTE *)VRAM_Bank0);
 #else
     /* correct physical address */
     setphys(screen_start);
@@ -675,12 +676,11 @@ void screen_init_address(void)
  * called by bios_init() if a special video mode (Nova support, Hatari
  * cartridge extended VDI) has altered key lineA variables
  */
-void set_rez_hacked(void)
+void screen_set_rez_hacked(void)
 {
     rez_was_hacked = TRUE;
 
-    set_screen_shift();     /* set shift amount for screen address calc */
-    vt52_init();            /* initialize the vt52 console */
+    screen_init_services();
 }
 
 /*
@@ -733,7 +733,7 @@ struct video_mode {
     UWORD       vt_rez;         /* screen vertical resolution (v_vt_rez) */
 };
 
-static const struct video_mode vmode_table[] = {
+static const struct video_mode const vmode_table[] = {
     { 4,  320, 200},            /* rez=0: ST low */
     { 2,  640, 200},            /* rez=1: ST medium */
     { 1,  640, 400},            /* rez=2: ST high */
@@ -1165,11 +1165,17 @@ WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
     atari_setrez(rez, videlmode);
 #endif
 
+    screen_init_services();
+
+    return oldmode;
+}
+
+void screen_init_services(void)
+{
+    KDEBUG(("screen_init_services"));
     /* Re-initialize line-a, VT52 etc: */
     linea_init();
     vt52_init();
-
-    return oldmode;
 }
 
 void setpalette(const UWORD *palettePtr)

@@ -21,8 +21,6 @@
 #include "foenix.h"
 
 
-
-
 /* IDE support */
 struct IDE
 {   
