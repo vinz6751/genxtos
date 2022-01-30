@@ -328,8 +328,7 @@ vdi_src = vdi_asm.S vdi_bezier.c vdi_col.c vdi_control.c vdi_esc.c \
           vdi_textblit.c vdi_locator.c \
 		  linea_.S linea.c lineavars.S \
 		  linea_mouse.c linea_mouse_.S \
-		  linea_mouse_atari.c linea_mouse_atari_.S \
-		  linea_mouse_a2560u.c
+		  linea_mouse_atari.c linea_mouse_a2560u.c
 
 ifeq (1,$(COLDFIRE))
 vdi_src += vdi_tblit_cf.S

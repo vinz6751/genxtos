@@ -22,8 +22,8 @@
 typedef struct {
     void (*init)(void);
     void (*deinit)(void);
-    void (*draw)(void);
-    void (*paint_mouse)(MCDB *sprite, WORD x, WORD y);
+    void (*vbl_draw)(WORD x, WORD y);
+    void (*paint_mouse)(WORD x, WORD y);
     void (*unpaint_mouse)(void);
     void (*set_mouse_cursor)(const MFORM *src);
     void (*resolution_changed)(void);
@@ -35,6 +35,7 @@ extern void (*linea_on_resolution_changed)(void);
 void linea_init(void); /* Initialize the Line-A layer */
 void linea_resolution_changed(void);
 void linea_mouse_init(void);
+void linea_mouse_deinit(void);
 void linea_mouse_force_show(void);
 void linea_mouse_show(void);
 void linea_mouse_hide(void);

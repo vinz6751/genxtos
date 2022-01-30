@@ -360,6 +360,7 @@ static void bios_init(void)
     swv_vec = just_rts;
 
     /* setup default VBL queue with vbl_list[] */
+    KDEBUG(("VBL queue\n"));
     nvbls = ARRAY_SIZE(vbl_list);
     vblqueue = vbl_list;
     {
@@ -435,6 +436,9 @@ static void bios_init(void)
     init_acia_vecs();   /* Init the ACIA interrupt vector and related stuff */
     KDEBUG(("after init_acia_vecs()\n"));
     boot_status |= MIDI_AVAILABLE;  /* track progress */
+
+    KDEBUG(("linea_mouse_init()\n")); /* we have to do that after keyboard vectors are setup */
+    linea_mouse_init();
 
     /* Enable 50 Hz processing */
     timer_c_sieve = 0x1111;

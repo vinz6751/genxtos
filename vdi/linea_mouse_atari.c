@@ -21,52 +21,16 @@
 
 
 static MCS  *mcs_ptr;  /* ptr to Mouse Cursor Save area in use */
-
+ 
 static void paint_clipped_mouse(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_start, UWORD shft);
 static void paint_mouse_atari(MCDB *sprite, WORD x, WORD y);
 static void unpaint_mouse_atari(void);
-void mov_cur(void);             /* code to call when mouse has moved (in .S file) */
 
-/*
- * vbl_draw - moves mouse cursor, GEM VBL routine
- *
- * It removes the mouse cursor from its current location, if necessary,
- * and redraws it at a new location.
- *
- *      Inputs:
- *         vbl_must_draw_mouse - signals need to redraw cursor
- *         newx - new cursor x-coordinate
- *         newy - new cursor y-coordinate
- *         mouse_flag - mouse cursor is being modified
- *         HIDE_CNT - mouse cursor hide/show indicator
- *
- *      Outputs:
- *         vbl_must_draw_mouse is cleared
- *
- *      Registers Modified:     d0, d1
- *
- */
 
-/* If we do not need to draw the cursor now then just exit. */
-
-static void vbl_draw(void)
+static void vbl_draw(WORD x, WORD y)
 {
-    WORD old_sr, x, y;
-
-    /* if the cursor is being modified, or is hidden, just exit */
-    if (mouse_flag || HIDE_CNT)
-        return;
-
-    old_sr = set_sr(0x2700);        /* disable interrupts */
-    if (vbl_must_draw_mouse) {
-        vbl_must_draw_mouse = FALSE;
-        x = newx;                   /* get x/y for paint_mouse() atomically */
-        y = newy;
-        set_sr(old_sr);
-        unpaint_mouse_atari();       /* remove the old cursor from the screen */
-        paint_mouse_atari(&mouse_cdb, x, y); /* display the cursor */
-    } else
-        set_sr(old_sr);
+    unpaint_mouse_atari();               /* remove the old cursor from the screen */
+    paint_mouse_atari(&mouse_cdb, x, y); /* display the cursor */
 }
 
 
@@ -86,13 +50,14 @@ static void vbl_draw(void)
  * is subject to left or right clipping, however, then it must lie
  * within one screen word (per plane), so we only save 32 bytes/plane.
  */
-void paint_mouse_atari(MCDB *sprite, WORD x, WORD y)
+void paint_mouse_atari(WORD x, WORD y)
 {
     int row_count, plane, inc, op, dst_inc;
     UWORD * addr, * mask_start;
     UWORD shft, cdb_fg, cdb_bg;
     UWORD cdb_mask;             /* for checking cdb_bg/cdb_fg */
     ULONG *save;
+    MCDB sprite = &mouse_cdb;
 
     x -= sprite->xhot;          /* x = left side of destination block */
     y -= sprite->yhot;          /* y = top of destination block */
@@ -409,25 +374,9 @@ static void resolution_changed(void)
 }
 
 
-static void init(void)
-{
-    vblqueue[0] = vbl_draw;      /* set GEM VBL-routine to the first VBL slot */
-    user_cur = mov_cur;         /* initialize user_cur vector */    
-}
-
-
-static void deinit(void)
-{
-    vblqueue[0] = vbl_draw;      /* set GEM VBL-routine to the first VBL slot */
-
-    /* disable mouse via XBIOS */
-    Initmous(0, 0, 0);
-}
-
-
 const LINEA_MOUSE_RENDERER mouse_display_driver = {
-    init,
-    deinit,
+    .init = just_rts,
+    .deinit = just_rts,
     vbl_draw,
     paint_mouse_atari,
     unpaint_mouse_atari,

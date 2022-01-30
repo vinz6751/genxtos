@@ -18,7 +18,7 @@
 #include "emutos.h"
 #include "ps2.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 	 void a2560u_debug(const char *s,...);
 #else
@@ -194,7 +194,6 @@ uint16_t ps2_init(void)
 	/* Flush input data */
 	while (get_data())
 		;
-	
 	
 	identify_devices();
 

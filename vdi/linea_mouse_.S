@@ -36,8 +36,8 @@
 
 
 /*
- * _mousevec_handler - Mouse interrupt routine
- * entry:       a0 = address of packet
+ * _mousevec_handler - Interrupt routine called when a mouse packet has been received
+ * entry:       a0 = address of IKBD mouse packet
  * exit:        none
  * destroys:    nothing
  */
@@ -81,38 +81,38 @@ no_left:
 
         // Handle mouse mouvement
 xy_update:
-        move.b  1(a0), d0       // get new relative x pos
-        or.b    2(a0), d0       // get new relative y pos
-        jne     new_coord       // just check for movement
+        move.b  1(a0), d0        // get new relative x pos
+        or.b    2(a0), d0        // get new relative y pos
+        jne     new_coord        // just check for movement
         bclr.b  #5, _cur_ms_stat // no motion: clear motion status
-        jra     mousevec_done         // no change done, bye-bye
+        jra     mousevec_done    // no change done, bye-bye
 new_coord:
         bset.b  #5, _cur_ms_stat // motion set motion status
         // Calculate new GCURX
-        move.w  _GCURX, d0      // set d0 to _GCURX
+        move.w  _GCURX, d0       // set d0 to _GCURX
         move.b  1(a0), d1
-        ext.w   d1              // sign extend to word
-        add.w   d1, d0          // d0 contains new x coordinate
+        ext.w   d1               // sign extend to word
+        add.w   d1, d0           // d0 contains new x coordinate
         // Calculate new GCURY
-        move.w  _GCURY,d1       // init d1 to _GCURY
+        move.w  _GCURY,d1        // init d1 to _GCURY
         move.b  2(a0), d3
-        ext.w   d3              // sign extend to word
-        add.w   d3, d1          // d1 contains new x coordinate
+        ext.w   d3               // sign extend to word
+        add.w   d3, d1           // d1 contains new x coordinate
         jbsr    scrn_clip
         // Call user routine upon motion (d0:x, d1:y)
-        move.l  _user_mot,a1    // get user routine address
-        jsr     (a1)            // call user to modify x,y
+        move.l  _user_mot,a1     // get user routine address
+        jsr     (a1)             // call user to modify x,y
         // Update GCURX/GCURY
         jbsr    scrn_clip
-        move.w  d0,_GCURX       // save new X location
-        move.w  d1,_GCURY       // save new y location
+        move.w  d0,_GCURX        // save new X location
+        move.w  d1,_GCURY        // save new y location
 
-        // Call user routine with final coordinates (d0:x, d1:y)
-        move.l  _user_cur,a1    // get user routine address
-        jsr     (a1)            // call user to draw cursor
+        // Call user routine with final coordinates on where to paint (d0:x, d1:y)
+        move.l  _user_cur,a1     // get user routine address (normally linea_mouse_moved)
+        jsr     (a1)             // call user to draw cursor
 
-                                // d0 contains new x position
-                                // d1 contains new y position
+                                 // d0 contains new x position
+                                 // d1 contains new y position
 mousevec_done:
         movem.l (sp)+,d0-d7/a0-a6  // restore registers
 ms_exit:
@@ -133,6 +133,7 @@ cl_xmax:
         cmp.w   (a0),d0     // is new x-coordinate > maximum value?
         jle     cl_y        // nope - go clip the y-coordinate
         move.w  (a0),d0     // yes - set it to the maximum value
+        subq.w  #1,d0
 cl_y:
         tst.w   d1          // is new y-coordinate < 0?
         jge     cl_ymax     // nope - check if greater than maximum value
@@ -142,7 +143,36 @@ cl_ymax:
         cmp.w   8(a0),d1    // is new y-coordinate > maximum value ? (8 is _V_REZ_VT-_V_REZ_HZ)
         jle     cl_done     // nope - done
         move.w  8(a0),d1    // yes - set it to the maximum value
+        subq.w  #1,d1
 cl_done:
+        rts
+
+
+/* We are notified that the mouse moved and needs redrawing during the next VBL.
+ * Inputs: d0.w: new X, d1.w: new Y
+ * Outputs: None
+ * Clobbered: None */
+         .globl  _linea_mouse_moved
+        .extern _newx           // new mouse x position for the VBL handler
+        .extern _newy           // new mouse y position for the VBL handler
+_linea_mouse_moved:
+        tst.w   _HIDE_CNT       // is the mouse cursor hidden?
+        //bra.s    done           // yes - don't draw it now
+
+        /* The cursor is not currently hidden.  Save the new coordinates for the
+        * cursor and set a flag to signal the need to redraw it.  The cursor will
+        * actually be drawn by a drawing routine added to the VBL queue.
+        * This is a critical region so all interrupts must be turned off. */
+
+        move.w  sr,-(sp)        // save current value of status register
+        ori.w   #0x0700,sr      // mask off all interrupts
+
+        move.w  d0,_newx        // save new cursor x-coordinate
+        move.w  d1,_newy        // save new cursor y-coordinate
+
+        move.b  #-1,_vbl_must_draw_mouse   // set the 'draw cursor' flag to signal to the VBL handler to redraw
+        move.w  (sp)+,sr        // restore the value of the status register
+done:
         rts
 
 

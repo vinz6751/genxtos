@@ -219,9 +219,9 @@ static void convert_color(uint16_t orgb, COLOR32 *dst)
 void vicky2_set_mouse_visible(uint16_t visible)
 {
     if (visible)
-        R16(VICKY_MOUSE_CTRL) |= 1;
+        R16(VICKY_MOUSE_CTRL) |= VICKY_MOUSE_ENABLE;
     else
-        R16(VICKY_MOUSE_CTRL) &= ~1;    
+        R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;    
 }
 
 
@@ -330,7 +330,7 @@ void vicky2_text_init(void)
     R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_CHAR;
     R32(VICKY_A_CURSOR_CTRL) |= (((uint32_t)0x00L) << 16); /* 0 is a filled cell */
 
-    /* Enable text mode. Cant have text mode and gfx without overlay otherwise it crashes.
+    /* Enable text mode. Can't have text mode and gfx without overlay otherwise it crashes.
      * If we have overlay, then the inverse video doesn't work as the background is transparent. */
     R32(VICKY_CTRL) &= ~(VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP);
     R32(VICKY_CTRL) |= VICKY_A_CTRL_TEXT;
