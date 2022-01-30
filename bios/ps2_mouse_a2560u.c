@@ -94,20 +94,6 @@ static bool can_drive(const uint8_t ps2_device_type[])
 	}
 }
 
-void vbdg(uint16_t x, uint16_t y);
-void vbdg(uint16_t x, uint16_t y)
-{
-    a2560u_debug("X: %d   Y: %d", x,y);
-}
-
-void bidon(const int8_t *p);
-void bidon(const int8_t *p)
-{
-    a2560u_debug("M:%p %02x %02x %02x", (void*)p, p[0], p[1], p[2]);
-    //a2560u_debug("M:%p", (void*)p);
-    //a2560u_debug("M:%02x %02x %02x", p[0], p[1], p[2]);
-}
-
 
 /* WARNING there are some direct access stuff here because we want this to perform.
  * Remember we can have 9600 interrupts per second... */
