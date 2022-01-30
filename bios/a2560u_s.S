@@ -39,7 +39,6 @@
 .EQU IRQ_PENDING_GRP1,  GAVIN+0x102
     .EQU PS2KEYB_INT,   0x0001
     .EQU PS2MOUSE_INT,  0x0004
-    .EQU PS2MOUSE_INT,  0x0004    
     .EQU COM1_INT,      0x0008
     .EQU TIMER0_INT,    0x0100
     .EQU RTC_INT,       0x8000
@@ -131,7 +130,7 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
 _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
     move.w  #PS2KEYB_INT,IRQ_PENDING_GRP1
     movem.l d0-a6,-(sp) // TODO optimize
-    jsr    _ps2_channel1_irq_handler
+    jbsr    _ps2_channel1_irq_handler
     movem.l (sp)+,d0-a6
     rte
 
@@ -139,7 +138,7 @@ _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
 _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     move.w  #PS2MOUSE_INT,IRQ_PENDING_GRP1
     movem.l d0-a6,-(sp) // TODO optimize
-    jsr    _ps2_channel2_irq_handler
+    jbsr    _ps2_channel2_irq_handler
     movem.l (sp)+,d0-a6
     rte
 

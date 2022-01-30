@@ -18,7 +18,7 @@
 #include "emutos.h"
 #include "ps2.h"
 
-#define DEBUG 0
+#define DEBUG 1
 #if DEBUG
 	 void a2560u_debug(const char *s,...);
 #else
@@ -148,9 +148,6 @@ static void process(struct ps2_device_t *dev);
 uint16_t ps2_init(void)
 {
 	uint8_t config = 0;
-		
-	P.on_device1_irq = ps2_channel1_irq_handler;
-	P.on_device2_irq = ps2_channel2_irq_handler;	
 	
 	/* We get about 960 bytes/s max as the interface is 9600bps 8/1/1 no parity (10 bits).
 	 * Period for 1 character is 1/960, we convert to mi
@@ -197,8 +194,8 @@ uint16_t ps2_init(void)
 	/* Flush input data */
 	while (get_data())
 		;
-
-	// This doesn't work.
+	
+	
 	identify_devices();
 
 	attach_drivers();
@@ -271,7 +268,6 @@ static bool identify_device(struct ps2_device_t *dev)
 	{
 		dev->type[1] = 0;
 		a2560u_debug("Timeout when getting identification byte 2 for device %d", dev->id);
-		return false;
 	}
 	else
 		dev->type[1] = L.in_data;
@@ -310,7 +306,7 @@ static bool attach_driver(struct ps2_device_t *dev)
 
 static void on_key_up(uint8_t scancode)
 {
-	P.on_key_up(scancode | 0x80);
+	P.os_callbacks.on_key_up(scancode | 0x80);
 }
 
 
@@ -319,8 +315,9 @@ static bool setup_driver_api(struct ps2_device_t *dev)
 	dev->api.send_data = dev == dev1 ? send_data1 : send_data2;
 	dev->api.get_data = get_data_no_wait;
 	dev->api.malloc = P.malloc;
-	dev->api.on_key_down = P.on_key_down;
-	dev->api.on_key_up = on_key_up;
+	dev->api.os_callbacks.on_key_down = P.os_callbacks.on_key_down;
+	dev->api.os_callbacks.on_key_up = on_key_up;
+	dev->api.os_callbacks.on_mouse = P.os_callbacks.on_mouse;
 	dev->in_read = dev->in_write = 0;
 
 	return dev->driver->init(&dev->api);
@@ -417,6 +414,7 @@ static bool send_command(uint8_t cmd)
 	return ERROR;
 }
 
+
 static bool get_data(void)
 {	
 	if (wait_until_can_read())
@@ -471,31 +469,59 @@ static bool send_data1(uint8_t data)
 /* Send data to the second device */
 static bool send_data2(uint8_t data)
 {
-	return send_data1(0xd4) && send_data1(data);
+	return send_command(0xd4) && send_data1(data);
 }
 
 
 static bool reset_device(struct ps2_device_t *dev)
 {
 	uint32_t timeout;
+	int tries = 5;
 
 	dev->status &= ~STAT_RESET_OK;
 
 	if ((dev->status & STAT_PORT_ENABLED) == 0)
 		return ERROR;
 
-	a2560u_debug("RESETing device  %d",dev->id);
-
-	if (!send_data(dev->id, DEVCMD_RESET) && ENABLE_DEVICES_RESET_CHECKS)
-		return ERROR;
-	
-	if (!get_data() || L.in_data != ACK)
+	while (tries--)
 	{
-		a2560u_debug("Reset of device %d: ACK: got %02x ", dev->id, L.in_data);
+		// if (!send_data(dev->id, DEVCMD_SCAN_OFF))
+		// {
+		// 	a2560u_debug("Timeout when sending DEVCMD_SCAN_OFF to device %d", dev->id);
+		// 	continue;	
+		// }
+		
+		// if (!get_data() || L.in_data != ACK)
+		// {
+		// 	a2560u_debug("Device %d didn't acknowledge DEVCMD_SCAN_OFF", dev->id);
+		// 	continue;	
+		// }
+
+		a2560u_debug("Sending RESET to device %d",dev->id);
+
+		if (!send_data(dev->id, DEVCMD_RESET) && ENABLE_DEVICES_RESET_CHECKS)
+			continue;
+
+		if (!get_data())
+		{
+			a2560u_debug("No response");
+			continue;
+		}
+
+		a2560u_debug("Device %d responded to reset with %02x ", dev->id, L.in_data);
+
+		if (L.in_data == RESEND)
+			continue;
+		
+		if (L.in_data == ACK)
+			break;
+		else
+			a2560u_debug("Unexpected response %02x", L.in_data);
+	}
+	if (tries < 0)
 		return ERROR;
-	}	
-	
-	timeout = *P.counter + P.counter_freq * 800 / 1000; /* BAT should last 500-750ms */;
+
+	timeout = *P.counter + P.counter_freq * 4 / 5; /* BAT should last 500-750ms  (4/5 = 800ms/1000)*/;
 	while (*P.counter < timeout)
 	{		
 		if (get_data())
@@ -512,7 +538,7 @@ static bool reset_device(struct ps2_device_t *dev)
 	}
 
 	a2560u_debug("Reset of device %d failed", dev->id);
-	
+
 	/* We can get here because we got no response after RESET ACK, or because the
 	 * device reset was not successful */
 	return ERROR;

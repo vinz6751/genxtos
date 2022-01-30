@@ -35,7 +35,7 @@ static void mform_color_validator(const MFORM *src, MCDB *dst);
 
 /* prototypes for functions in vdi_asm.S */
 
-void mov_cur(void);             /* user button vector */
+
 
 #if CONF_WITH_EXTENDED_MOUSE
 void wheel_int(void);           /* wheel interrupt routine */
@@ -48,48 +48,12 @@ PFVOID old_statvec; /* original IKBD status packet routine */
 #endif
 
 #if !WITH_AES
-/* Default Mouse Cursor Definition */
-static const MFORM arrow_mform = {
-    1, 0, 1, 0, 1,
-    /* background definition */
-    {
-        0xE000, /* %1110000000000000 */
-        0xF000, /* %1111000000000000 */
-        0xF800, /* %1111100000000000 */
-        0xFC00, /* %1111110000000000 */
-        0xFE00, /* %1111111000000000 */
-        0xFF00, /* %1111111100000000 */
-        0xFF80, /* %1111111110000000 */
-        0xFFC0, /* %1111111111000000 */
-        0xFE00, /* %1111111000000000 */
-        0xFE00, /* %1111111000000000 */
-        0xEF00, /* %1110111100000000 */
-        0x0F00, /* %0000111100000000 */
-        0x0780, /* %0000011110000000 */
-        0x0780, /* %0000011110000000 */
-        0x03C0, /* %0000001111000000 */
-        0x0000  /* %0000000000000000 */
-    },
-    /* foreground definition */
-    {
-        0x4000, /* %0100000000000000 */
-        0x6000, /* %0110000000000000 */
-        0x7000, /* %0111000000000000 */
-        0x7800, /* %0111100000000000 */
-        0x7C00, /* %0111110000000000 */
-        0x7E00, /* %0111111000000000 */
-        0x7F00, /* %0111111100000000 */
-        0x7F80, /* %0111111110000000 */
-        0x7C00, /* %0111110000000000 */
-        0x6C00, /* %0110110000000000 */
-        0x4600, /* %0100011000000000 */
-        0x0600, /* %0000011000000000 */
-        0x0300, /* %0000001100000000 */
-        0x0300, /* %0000001100000000 */
-        0x0180, /* %0000000110000000 */
-        0x0000  /* %0000000000000000 */
-    }
-};
+/* The AES has all the mouse forms, which may even be customized.
+ * If it's there we use it otherwise we fallback on the default arrow cursor
+ * provided by the Line-A */
+
+#include "mform.h"
+
 #define default_mform() &arrow_mform
 #endif
 
@@ -167,13 +131,6 @@ void vdimouse_init(void)
     val_mode = 0;               /* default is request mode  */
     chc_mode = 0;               /* default is request mode  */
     str_mode = 0;               /* default is request mode  */
-
-    user_but = just_rts;
-    user_mot = just_rts;
-    user_cur = mov_cur;         /* initialize user_cur vector */
-#if CONF_WITH_EXTENDED_MOUSE
-    user_wheel = just_rts;
-#endif
 
     /* Move in the default mouse form (presently the arrow) */    
     mform_color_validator((const MFORM*)default_mform(), &mouse_cdb); /* FIXME CHEAT, not sure how to inject an implementation-specific validator... */

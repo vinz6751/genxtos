@@ -34,4 +34,7 @@ typedef struct mform
     UWORD   mf_data[16];
 } MFORM;
 
+
+static const MFORM arrow_mform;
+
 #endif

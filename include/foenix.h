@@ -101,7 +101,8 @@
 /* 68000 Interrupt vector numbers (not address!)  */
 #define INT_VICKYII       0x1E
 #define INT_PS2KBD_VECN   0x40
-#define INT_PS2MOUSE_VECN 0x41
+#define INT_PS2MOUSE_VECN 0x42
+#define INT_COM1_VECN     0x43
 #define INT_TIMERS_VECN   0x48
 #define INT_TIMER0_VECN   (INT_TIMERS_VECN+0) /* Timer 0, Clocked with the CPU Clock */
 #define INT_TIMER1_VECN   (INT_TIMERS_VECN+1) /* Timer 1, Clocked with the CPU Clock */
@@ -138,7 +139,7 @@
 #define INT_VICKY_B_DAC     0x0F
 
 #define INT_KBD_PS2         0x10    /* SuperIO - PS/2 Keyboard */
-#define INT_KBD_A2560K      0x11    /* SuperIO - A2560K Built in keyboard (Mo) */
+#define INT_KBD_A2560K      0x11    /* SuperIO - A2560K Built in keyboard (Maurice) */
 #define INT_MOUSE           0x12    /* SuperIO - PS/2 Mouse */
 #define INT_COM1            0x13    /* SuperIO - COM1 */
 #define INT_COM2            0x14    /* SuperIO - COM2 */

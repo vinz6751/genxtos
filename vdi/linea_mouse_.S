@@ -20,13 +20,14 @@
         .extern _user_but       // user button vector
         .extern _user_mot       // user motion vector
         .extern _user_cur       // user cursor vector
-        .extern _DEV_TAB        // address of device table
+        .extern _V_REZ_HZ
+        .extern _V_REZ_VT
 #if CONF_WITH_EXTENDED_MOUSE
         .extern _user_wheel     // user wheel vector
         .extern _old_statvec    // previous IKBD status packet vector
 #endif
         /* Exports */
-        .globl  _mousevec_handler      // mouse interrupt routine
+        .globl  _mousevec_handler      // mouse interrupt routine, has IKBD mouse packet in a0
 #if CONF_WITH_EXTENDED_MOUSE
         .globl  _wheel_int      // wheel interrupt routine
         .globl  _call_user_but  // call the _user_but vector from C
@@ -36,7 +37,7 @@
 
 /*
  * _mousevec_handler - Mouse interrupt routine
- * entry:       a0 = address of mouse buffer from aciavecs.S
+ * entry:       a0 = address of packet
  * exit:        none
  * destroys:    nothing
  */
@@ -44,11 +45,11 @@ _mousevec_handler:
         movem.l d0-d7/a0-a6, -(sp)      // save registers used
 
         move.b  (a0), d0        // see if we have a mouse packet
-        move.b  d0, d1          // save packet
+        move.b  d0, d1          // duplicate packet header
         and.b   #0xf8, d1       // mask out for ...
         cmp.b   #0xf8, d1       // relative mouse packet header?
-        jne     ms_done
-
+        jne     mousevec_done
+  
         // Handle buttons
         and.w   #3, d0          // isolate mouse buttons
 
@@ -84,7 +85,7 @@ xy_update:
         or.b    2(a0), d0       // get new relative y pos
         jne     new_coord       // just check for movement
         bclr.b  #5, _cur_ms_stat // no motion: clear motion status
-        jra     ms_done         // no change done, bye-bye
+        jra     mousevec_done         // no change done, bye-bye
 new_coord:
         bset.b  #5, _cur_ms_stat // motion set motion status
         // Calculate new GCURX
@@ -105,13 +106,14 @@ new_coord:
         jbsr    scrn_clip
         move.w  d0,_GCURX       // save new X location
         move.w  d1,_GCURY       // save new y location
+
         // Call user routine with final coordinates (d0:x, d1:y)
         move.l  _user_cur,a1    // get user routine address
         jsr     (a1)            // call user to draw cursor
 
                                 // d0 contains new x position
                                 // d1 contains new y position
-ms_done:
+mousevec_done:
         movem.l (sp)+,d0-d7/a0-a6  // restore registers
 ms_exit:
         rts        
@@ -122,24 +124,24 @@ ms_exit:
  * Outputs: d0 and d1 clipped to screen size
  * Clobbered: a0 */
 scrn_clip:
-        lea.l   _DEV_TAB,a0     // get address of device table [0] is max_x, [1] is max_y
-        tst.w   d0              // is new x-coordinate < 0?
-        jge     cl_xmax         // nope - check if greater than maximum value
-        clr.w   d0              // yes - set it to 0
-        jra     cl_y            // now clip the y-coordinate
+        lea.l   _V_REZ_HZ,a0
+        tst.w   d0          // is new x-coordinate < 0?
+        jge     cl_xmax     // nope - check if greater than maximum value
+        clr.w   d0          // yes - set it to 0
+        jra     cl_y        // now clip the y-coordinate
 cl_xmax:
-        cmp.w   (a0),d0         // is new x-coordinate > maximum value?
-        jle     cl_y            // nope - go clip the y-coordinate
-        move.w  (a0),d0         // yes - set it to the maximum value
+        cmp.w   (a0),d0     // is new x-coordinate > maximum value?
+        jle     cl_y        // nope - go clip the y-coordinate
+        move.w  (a0),d0     // yes - set it to the maximum value
 cl_y:
-        tst.w   d1              // is new y-coordinate < 0?
-        jge     cl_ymax         // nope - check if greater than maximum value
-        clr.w   d1              // yes - set it to 0
+        tst.w   d1          // is new y-coordinate < 0?
+        jge     cl_ymax     // nope - check if greater than maximum value
+        clr.w   d1          // yes - set it to 0
         rts
 cl_ymax:
-        cmp.w   2(a0),d1        // is new y-coordinate > maximum value?
-        jle     cl_done         // nope - done
-        move.w  2(a0),d1        // yes - set it to the maximum value
+        cmp.w   8(a0),d1    // is new y-coordinate > maximum value ? (8 is _V_REZ_VT-_V_REZ_HZ)
+        jle     cl_done     // nope - done
+        move.w  8(a0),d1    // yes - set it to the maximum value
 cl_done:
         rts
 

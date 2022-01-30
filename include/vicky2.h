@@ -80,6 +80,8 @@ typedef struct __attribute__((__packed__)) {
     #define VICKY_MOUSE_CHOICE  2
 #define VICKY_MOUSE_X         (VICKY+0x0C02)
 #define VICKY_MOUSE_Y         (VICKY+0x0C04)
+#define VICKY_MOUSE_PACKET    (VICKY+0x0C0A)    /* 3 words (16bits)/ PS/2 mouse packet that VICKY knows how to interpret */
+
 
 /* Text mode */
 #define VICKY_FONT            (VICKY+0x8000)      /* Font memory (-> 0xbff) */

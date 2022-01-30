@@ -25,7 +25,7 @@ static MCS  *mcs_ptr;  /* ptr to Mouse Cursor Save area in use */
 static void paint_clipped_mouse(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_start, UWORD shft);
 static void paint_mouse_atari(MCDB *sprite, WORD x, WORD y);
 static void unpaint_mouse_atari(void);
-
+void mov_cur(void);             /* code to call when mouse has moved (in .S file) */
 
 /*
  * vbl_draw - moves mouse cursor, GEM VBL routine
@@ -412,6 +412,7 @@ static void resolution_changed(void)
 static void init(void)
 {
     vblqueue[0] = vbl_draw;      /* set GEM VBL-routine to the first VBL slot */
+    user_cur = mov_cur;         /* initialize user_cur vector */    
 }
 
 

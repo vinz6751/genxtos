@@ -32,14 +32,14 @@ typedef struct {
 extern const LINEA_MOUSE_RENDERER mouse_display_driver;
 extern void (*linea_on_resolution_changed)(void);
 
-void linea_init(void); /* initialize variables */
+void linea_init(void); /* Initialize the Line-A layer */
 void linea_resolution_changed(void);
 void linea_mouse_init(void);
 void linea_mouse_force_show(void);
 void linea_mouse_show(void);
 void linea_mouse_hide(void);
 void linea_mouse_transform(void);
-void linea_set_screen_shift(void);    /* set shift amount for screen address calcs */
+void linea_set_screen_shift(void);    /* Set shift amount for screen address calcs */
 void linea_mouse_set_form(const MFORM *src);
 UWORD *get_start_addr(const WORD x, const WORD y);
 

@@ -54,7 +54,8 @@ void linea_init(void)
 {
     screen_get_current_mode_info(&v_planes, &V_REZ_HZ, &V_REZ_VT);
     linea_resolution_changed();
-
+    linea_mouse_init();
+    
     KDEBUG(("linea_init(): %dx%d %d-plane (v_lin_wr=%d)\n",
         V_REZ_HZ, V_REZ_VT, v_planes, v_lin_wr));
 }

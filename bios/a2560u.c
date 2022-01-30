@@ -49,6 +49,7 @@
 #include "bq4802ly.h"  /* Real time clock */
 #include "ps2.h"
 #include "ps2_keyboard.h"
+#include "ps2_mouse_a2560u.h"
 #include "vicky2.h"    /* VICKY II graphics controller */
 #include "a2560u.h"
 
@@ -356,7 +357,7 @@ static void irq_init(void)
     }
 
     for (i=0x40; i<0x60; i++)
-        setexc(i,(uint32_t)just_rte);
+        setexc(i,(uint32_t)just_rte); /* That's not even correct because it doesn't acknowledge interrupts */
 
     setexc(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
 }
@@ -401,7 +402,7 @@ void a2560u_irq_enable(uint16_t irq_id)
 {
     a2560u_irq_acknowledge(irq_id);
     R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
-    KDEBUG(("a2560u_irq_enable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+    // KDEBUG(("a2560u_irq_enable(%02x) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
 }
 
 
@@ -409,13 +410,13 @@ void a2560u_irq_enable(uint16_t irq_id)
 void a2560u_irq_disable(uint16_t irq_id)
 {
     R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
-    //KDEBUG(("a2560u_irq_disable(%u) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+    // KDEBUG(("a2560u_irq_disable(%02x) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
 }
 
 
-void a2560u_irq_acknowledge(uint16_t irq_id)
+void a2560u_irq_acknowledge(uint8_t irq_id)
 {
-    R16(irq_pending_reg(irq_id)) |= irq_mask(irq_id);
+    R16(irq_pending_reg(irq_id)) = irq_mask(irq_id);
 }
 
 
@@ -521,8 +522,10 @@ static void *balloc_proxy(size_t howmuch)
     return balloc_stram(howmuch, false);
 }
 
+
 static const struct ps2_driver_t * const drivers[] = {
-    &ps2_keyboard_driver
+    &ps2_keyboard_driver,
+    &ps2_mouse_driver_a2560u
 };
 
 
@@ -541,13 +544,14 @@ void a2560u_kbd_init(void)
     ps2_config.n_drivers    = sizeof(drivers)/sizeof(struct ps2_driver_t*);
     ps2_config.drivers      = drivers;
     ps2_config.malloc       = balloc_proxy;
-    ps2_config.on_key_down  = kbd_int;
-    ps2_config.on_key_up    = kbd_int;
+    ps2_config.os_callbacks.on_key_down = kbd_int;
+    ps2_config.os_callbacks.on_key_up   = kbd_int;
+    ps2_config.os_callbacks.on_mouse    = call_mousevec;
 
     ps2_init();
 
     /* Register GAVIN interrupt handlers */
-    setexc(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);
+    setexc(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);    
     setexc(INT_PS2MOUSE_VECN, (uint32_t)a2560u_irq_ps2mouse);
 
     /* Acknowledge any pending interrupt */

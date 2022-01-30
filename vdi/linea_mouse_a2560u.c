@@ -20,6 +20,8 @@
 
 static void paint_mouse(MCDB *sprite, WORD x, WORD y)
 {
+    R16(VICKY_MOUSE_X) = x;
+    R16(VICKY_MOUSE_Y) = y;
     vicky2_show_mouse();
 }
 
@@ -36,11 +38,12 @@ static void set_mouse_cursor(const MFORM *src)
 {
     /* No hot-spot support in the Foenix :( */
 
-    int r,c;
+    int r,c; /* row, column */
     UWORD mask;
     UWORD data;
     UWORD *v = (UWORD*)VICKY_MOUSE_MEM;
 
+    a2560u_debug("set_mouse_cursor");
     for (r = 0; r < 16; r++)
     {
         mask = src->mf_mask[r];
@@ -50,14 +53,17 @@ static void set_mouse_cursor(const MFORM *src)
         {
             if (mask & 0x8000)
                 v[c] = (data & 0x8000) 
-                    ? src->mf_fg
-                    : src->mf_bg;
+                    ? 2//src->mf_fg
+                    : 3;//src->mf_bg;
             else
-                v[c] = 0;
+                v[c] = 4;
             mask <<= 1;
             data <<= 1;
         }
     }
+
+    /* TODO: Set mouse palette ? */
+
 }
 
 

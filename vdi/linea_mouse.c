@@ -14,17 +14,27 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
+#include "asm.h"
 #include "aesdefs.h"
 #include "linea.h"
 #include "xbiosbind.h" /* Initmous */
 #include "vdiext.h"
 #include "a2560u.h"
 
+
 void mousevec_handler(void); /* in .S file */
 
+/* Initialize mouse via XBIOS in relative mode */
+static const struct {
+    UBYTE topmode;
+    UBYTE buttons;
+    UBYTE xparam;
+    UBYTE yparam;
+} mouse_params = {0, 0, 1, 1};
 
 void linea_mouse_init(void)
 {
+    a2560u_debug("linea_mouse_init");
     /* mouse settings */
     HIDE_CNT = 1;               /* mouse is initially hidden */
     GCURX = V_REZ_HZ / 2;       /* initialize the mouse to center */
@@ -36,14 +46,15 @@ void linea_mouse_init(void)
     newx = 0;                   /* set cursor x-coordinate to 0 */
     newy = 0;                   /* set cursor y-coordinate to 0 */
 
-    /* Initialize mouse via XBIOS in relative mode */
-    static const struct {
-        UBYTE topmode;
-        UBYTE buttons;
-        UBYTE xparam;
-        UBYTE yparam;
-    } mouse_params = {0, 0, 1, 1};
-    Initmous(1, (LONG)&mouse_params, (LONG)mousevec_handler);    
+    user_but = just_rts;
+    user_mot = just_rts;
+    user_cur = just_rts;
+#if CONF_WITH_EXTENDED_MOUSE
+    user_wheel = just_rts;
+#endif
+
+    linea_mouse_set_form(&arrow_mform);
+    Initmous(1, (LONG)&mouse_params, (LONG)mousevec_handler);
 }
 
 /*
@@ -51,7 +62,7 @@ void linea_mouse_init(void)
  */
 void linea_mouse_force_show(void)
 {
-    if (!INTIN[0] && HIDE_CNT)
+    if (!INTIN[0])
         HIDE_CNT = 1;           /* reset cursor to on */
 
     linea_mouse_show();
@@ -71,6 +82,8 @@ void linea_mouse_force_show(void)
  */
 void linea_mouse_show(void)
 {
+    a2560u_debug("linea_mouse_show HIDE_CNT=%d",HIDE_CNT);
+
     if (HIDE_CNT != 1)      /* if not about to be shown: */
     {
         HIDE_CNT--;             /* just decrement hide count */

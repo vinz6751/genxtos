@@ -140,7 +140,7 @@ midivec:        .ds.l   1       // MIDI input
 vkbderr:        .ds.l   1       // keyboard error
 vmiderr:        .ds.l   1       // MIDI-Error
 statvec:        .ds.l   1       // IKBD-Status
-mousevec:       .ds.l   1       // mouse-routine
+mousevec:       .ds.l   1       // mouse-routine, receives pointer to mouse packet in a0
 clockvec:       .ds.l   1       // time-routine
 joyvec:         .ds.l   1       // joystick-routinee
 midisys:        .ds.l   1       // MIDI-systemvector
@@ -173,7 +173,11 @@ _init_acia_vecs:
         move.l  a0,vkbderr-_kbdvecs(a1)
         move.l  a0,vmiderr-_kbdvecs(a1)
         move.l  a0,statvec-_kbdvecs(a1)
+#ifdef MACHINE_A2560U
+        // The mousevec vector is already installed when initializing the screen/line-A
+#else
         move.l  a0,mousevec-_kbdvecs(a1)
+#endif        
 #if CONF_WITH_IKBD_CLOCK
 #ifdef __mcoldfire__
         move.l  #_clockvec,d0                        // in bios/clock.c
