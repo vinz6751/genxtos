@@ -311,12 +311,14 @@ _int_vbl:
         subq.w  #1, _vblsem.w           // check VBL semaphore
         jmi     vbl_end                 // if VBL routine disabled -> end
 
+        addq.l  #1, _vbclock.w          // count number of processed VBL interrupts
+
 #ifdef MACHINE_A2560U
         movem.l d1-d7/a1-a6, -(sp)      // save registers (d0/a0 already saved by VICKY interrupt handler)
 #else
         movem.l d0-d7/a0-a6, -(sp)      // save registers
 #endif        
-        addq.l  #1, _vbclock.w          // count number of VBL interrupts
+
 
 #if CONF_WITH_ATARI_VIDEO
 // check for monitor switching and jump to _swv_vec if necessary...
