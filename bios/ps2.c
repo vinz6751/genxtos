@@ -311,7 +311,7 @@ static void on_key_up(uint8_t scancode)
 
 static bool setup_driver_api(struct ps2_device_t *dev)
 {
-	dev->api.send_data = dev == dev1 ? send_data1 : send_data2;
+	dev->api.send_data = dev->id == dev1 ? send_data1 : send_data2;
 	dev->api.get_data = get_data_no_wait;
 	dev->api.malloc = P.malloc;
 	dev->api.os_callbacks.on_key_down = P.os_callbacks.on_key_down;
