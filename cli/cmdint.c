@@ -134,6 +134,29 @@ LOCAL const char * const help_edit[] = {
  N_("control-left/right arrow = previous/next word"), NULL };
 
 
+LONG run_test(WORD argc, char **argv); // in cmdtest.S
+#include "lineavars.h"
+#include <stdio.h>
+
+static LONG run_testc(WORD argc, char **argv) 
+{
+    WORD oldx = GCURX;
+    WORD oldy = GCURY;
+    WORD oldbuts = MOUSE_BT;
+    for (;;)
+    {
+        if (oldx != GCURX || oldy != GCURY || oldbuts != MOUSE_BT)
+        {
+            char buf[40];
+            sprintf(buf, "X:%04d Y:%04d B:%02x\r\n", GCURX, GCURY, MOUSE_BT);
+            outputnl(buf);
+            oldx = GCURX;
+            oldy = GCURY;
+            oldbuts = MOUSE_BT;            
+        }
+    }
+}
+
 /*
  *  command table
  */
@@ -159,8 +182,11 @@ LOCAL const COMMAND cmdtable[] = {
     { "show", NULL, 0, 1, run_show, help_show },
     { "version", NULL, 0, 0, run_version, help_version },
     { "wrap", NULL, 0, 1, run_wrap, help_wrap },
+    { "test", NULL, 0, 0, run_test, NULL},
+    { "testc", NULL, 0, 0, run_testc, NULL},    
     { "", NULL, 0, 255, NULL, NULL }                    /* end marker */
 };
+
 
 static LONG linecount;  /* used by 'more' command */
 

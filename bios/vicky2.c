@@ -101,7 +101,7 @@ void vicky2_init(void)
     /* Enable video and bitmap, 640x480 */
     R32(VICKY_CTRL) = 0;
 
-    vicky2_set_video_mode(VICKY_MODE_640x480_60);
+    vicky2_set_video_mode(VICKY_MODE_320x240_60);
     vicky2_get_video_mode(&mode);
     vicky2_set_mouse_visible(0);
 
@@ -351,11 +351,13 @@ void vicky2_hide_cursor(void)
 
 void vicky2_show_mouse(void)
 {
+        a2560u_debug("SHOWM");
     R16(VICKY_MOUSE_CTRL) |= VICKY_MOUSE_ENABLE;
 }
 
 void vicky2_hide_mouse(void)
 {
+    a2560u_debug("HIDEM");
     R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;
 }
 

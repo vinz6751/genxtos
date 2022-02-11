@@ -30,32 +30,22 @@ const struct ps2_driver_t ps2_mouse_driver_a2560u =
     .process = process
 };
 
- /* States the mouse state machine can be in */
-typedef enum sm_state
-{
-    SM_IDLE = 0,
-    SM_WAITING_BYTE1,
-    SM_WAITING_BYTE2,
-    SM_RECEIVED
-} sm_state_t;
-
-
-/* Models the VICKY mouse-related registers */
-struct vicky_mouse_t {
-    uint16_t x;
-    uint16_t y;    
-    uint16_t packet[3];
-};
+ /* Important states the mouse state machine can be in */
+#define SM_IDLE 0
+#define SM_BYTE0_RECEIVED 1
+#define SM_BYTE1_RECEIVED 2
+#define SM_BYTE2_RECEIVED 3
+#define SM_RECEIVED 3
 
 
  /* Internal state of the driver */
 struct ps2_mouse_local_t
 {
-    sm_state_t state;  /* State of the state machine (really counts bytes in the packet) */
-    uint16_t   prev_x;
-    uint16_t   prev_y;
-    uint16_t   buttons;
-    int8_t    ps2packet[3];
+    uint16_t state;  /* State of the state machine (really counts bytes in the packet) */
+    uint16_t prev_x;
+    uint16_t prev_y;
+    uint16_t buttons;
+    int8_t   ps2packet[3];
 };
 
 
@@ -74,8 +64,10 @@ static bool init(struct ps2_driver_api_t *api)
         return ERROR;
 
     DRIVER_DATA->state = SM_IDLE;
+#if 0    
     DRIVER_DATA->prev_x = VICKY_MOUSE->x = GCURX;
     DRIVER_DATA->prev_y = VICKY_MOUSE->y = GCURY;
+#endif    
     DRIVER_DATA->buttons = 0;
 
     return SUCCESS;
@@ -99,13 +91,14 @@ static bool can_drive(const uint8_t ps2_device_type[])
  * Remember we can have 9600 interrupts per second... */
 void process(const struct ps2_driver_api_t *api, uint8_t byte)
 {
+    a2560u_debug("%02x", byte);
     if (DRIVER_DATA->state == SM_IDLE && (byte & 0x08) != 0x08)
         return; /* We're lost. Ignore the packet. This is not even safe because if the packet contains a 08 we're fooled. */
 
-#if 1
+#if 0
     DRIVER_DATA->ps2packet[DRIVER_DATA->state++] = (int8_t)byte;
     if (DRIVER_DATA->state == SM_RECEIVED)
-    {
+    {        
         /* Emulate an IKBD mouse packet. */
         int8_t *packet = (int8_t*)(DRIVER_DATA->ps2packet); /* Tweaking the PS/2 packet into a IKBD one saves us from copying... */
         packet[0] = 0xf8 | (DRIVER_DATA->ps2packet[0] & 3); /* Relative mouse report + buttons */
@@ -115,11 +108,15 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         DRIVER_DATA->state = SM_IDLE;
     } 
 #else
-    // TODO: Make VICKY mouse packet analyzer work
-    VICKY_MOUSE->packet[DRIVER_DATA->state++] = byte;
-
-    if (DRIVER_DATA->state == SM_RECEIVED)
+    volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
+    packet[DRIVER_DATA->state] = (uint16_t)byte;
+    DRIVER_DATA->state++;
+    if (DRIVER_DATA->state >= SM_RECEIVED)
     {
+        a2560u_debug(".", byte);
+        GCURX = R16(VICKY_MOUSE_X);
+        GCURY = R16(VICKY_MOUSE_Y);
+#if 0        
         /* Emulate an IKBD mouse packet. */
         uint8_t packet[3];
 
@@ -134,6 +131,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         DRIVER_DATA->prev_x = VICKY_MOUSE->x;
         DRIVER_DATA->prev_y = VICKY_MOUSE->y;
         /* This is deliberately done last so that in case of overruns we ignore the incoming packet */
+#endif
         DRIVER_DATA->state = SM_IDLE;
     }
 #endif

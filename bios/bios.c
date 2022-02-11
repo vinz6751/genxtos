@@ -790,7 +790,7 @@ void biosmain(void)
     run_reset_resident();       /* see comments above */
 #endif
 
-#if WITH_CLI || defined(MACHINE_A2560U)
+#if WITH_CLI && defined(MACHINE_A2560U) /* Can't run user programs from flash */
     if (bootflags & BOOTFLAG_EARLY_CLI || 1) {
         /*
          * run an early console, passing the default environment

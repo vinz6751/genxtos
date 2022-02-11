@@ -318,7 +318,8 @@ static bool setup_driver_api(struct ps2_device_t *dev)
 	dev->api.os_callbacks.on_key_up = on_key_up;
 	dev->api.os_callbacks.on_mouse = P.os_callbacks.on_mouse;
 	dev->in_read = dev->in_write = 0;
-
+	while (get_data());
+	
 	return dev->driver->init(&dev->api);
 }
 

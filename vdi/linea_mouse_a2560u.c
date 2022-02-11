@@ -29,7 +29,7 @@ static void paint_mouse(WORD x, WORD y)
 
 static void unpaint_mouse(void)
 {
-    vicky2_hide_mouse();
+    //vicky2_hide_mouse();
 }
 
 

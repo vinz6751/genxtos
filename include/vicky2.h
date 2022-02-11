@@ -78,9 +78,10 @@ typedef struct __attribute__((__packed__)) {
 #define VICKY_MOUSE_CTRL        (VICKY+0x0C00)
     #define VICKY_MOUSE_ENABLE  1
     #define VICKY_MOUSE_CHOICE  2
-#define VICKY_MOUSE_X         (VICKY+0x0C02)
-#define VICKY_MOUSE_Y         (VICKY+0x0C04)
-#define VICKY_MOUSE_PACKET    (VICKY+0x0C0A)    /* 3 words (16bits)/ PS/2 mouse packet that VICKY knows how to interpret */
+#define VICKY_MOUSE_SUPPORT   (VICKY+0x0C02)
+#define VICKY_MOUSE_X         (VICKY_MOUSE_SUPPORT)
+#define VICKY_MOUSE_Y         (VICKY_MOUSE_SUPPORT+2)
+#define VICKY_MOUSE_PACKET    (VICKY_MOUSE_SUPPORT+8) /* 3 words (16bits)/ PS/2 mouse packet that VICKY knows how to interpret */
 
 
 /* Text mode */
