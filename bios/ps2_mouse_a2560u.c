@@ -111,7 +111,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         packet[0] = 0xf8 | (packet[0] & 3);
         api->os_callbacks.on_mouse(packet);
 
-        a2560u_debug("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
+        //a2560u_debug("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
     }
 #else
     // This is maximum speed setup. No TOS vectors are called, only variables are updated.
