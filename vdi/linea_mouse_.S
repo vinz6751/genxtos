@@ -35,9 +35,6 @@
 #endif
 
 
-debug:
-        move.b #'a',0xb60000
-
 /*
  * _linea_mouse_packet_received_handler - Interrupt routine called when a mouse packet has been received
  * Formerly known as "mousevec" handler
@@ -47,13 +44,13 @@ debug:
  */
 _linea_mouse_packet_received_handler:
         movem.l d0-d7/a0-a6, -(sp)      // save registers used
- move.b #'a',0xb60000
+
         move.b  (a0), d0        // see if we have a mouse packet
         move.b  d0, d1          // duplicate packet header
         and.b   #0xf8, d1       // mask out for ...
         cmp.b   #0xf8, d1       // relative mouse packet header?
         jne     mousevec_done
-  move.b #'b',0xb60001
+
         // Handle buttons
         and.w   #3, d0          // isolate mouse buttons
 
@@ -93,7 +90,6 @@ xy_update:
         bclr.b  #5, _cur_ms_stat // no motion: clear motion status
         jra     mousevec_done    // no change done, bye-bye
 new_coord:
- move.b #'c',0xb60002
         bset.b  #5, _cur_ms_stat // motion set motion status
         // Calculate new GCURX
         move.w  _GCURX, d0       // set d0 to _GCURX
