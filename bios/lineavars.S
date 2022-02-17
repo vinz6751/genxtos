@@ -263,6 +263,9 @@ _BYTES_LIN:     .ds.w   1       // -2   byte per screen line
                 .globl  _COPYTRAN
                 .globl  _SEEDABORT
 
+                .globl _linea_max_x
+                .globl _linea_max_y
+                
 // ==== Global GSX Variables =================================================
 
 line_a_vars:                            // This is the base line-a pointer
@@ -357,3 +360,7 @@ _ext_save_stat: .ds.b   1           // 1636 save status
                 .ds.b   1
 _ext_save_area: .ds.l   128         // 1638 form save area
 #endif
+
+// The following are extensions
+_linea_max_x:   .ds.w   1       // Max screen X coordinate, ie _V_REZ_HZ - 1
+_linea_max_y:   .ds.w   1       // Max screen Y coordinate, ie _V_REZ_VT - 1

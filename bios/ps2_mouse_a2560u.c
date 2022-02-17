@@ -1,6 +1,6 @@
 /* ps2_mouse_a2560u - PS/2 mouse driver for A2560U Foenix
  * 
- * Authors:
+ * Author:
  *	Vincent Barrilliot
  *
  * This file is distributed under the GPL, version 2 or at your
@@ -14,6 +14,8 @@
  #include "lineavars.h"
  #include "a2560u.h"
 
+/* Settings */
+#define MAXIMUM_TOS_COMPATIBILITY 1
 
  /* Prototypes */
 static const char driver_name[] = "PS/2 Mouse";
@@ -42,9 +44,6 @@ const struct ps2_driver_t ps2_mouse_driver_a2560u =
 struct ps2_mouse_local_t
 {
     uint16_t state;  /* State of the state machine (really counts bytes in the packet) */
-    uint16_t prev_x;
-    uint16_t prev_y;
-    uint16_t buttons;
     int8_t   ps2packet[3];
 };
 
@@ -67,8 +66,7 @@ static bool init(struct ps2_driver_api_t *api)
 #if 0   
     DRIVER_DATA->prev_x = VICKY_MOUSE->x = GCURX;
     DRIVER_DATA->prev_y = VICKY_MOUSE->y = GCURY;
-#endif    
-    DRIVER_DATA->buttons = 0;
+#endif
 
     // DEBUG
     R16(VICKY_MOUSE_CTRL) = VICKY_MOUSE_ENABLE;
@@ -90,26 +88,17 @@ static bool can_drive(const uint8_t ps2_device_type[])
 }
 
 
-/* WARNING there are some direct access stuff here because we want this to perform.
- * Remember we can have 9600 interrupts per second... */
 void process(const struct ps2_driver_api_t *api, uint8_t byte)
 {
     if (DRIVER_DATA->state == SM_IDLE && (byte & 0x08) != 0x08)
         return; /* We're lost. Ignore the packet. This is not even safe because if the packet contains a 08 we're fooled. */
 
-#if 0
-    volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
-    packet[DRIVER_DATA->state++] = (uint16_t)byte;
-    if (DRIVER_DATA->state >= SM_RECEIVED)
-    {
-        DRIVER_DATA->state = SM_IDLE;
-        GCURX = *((uint16_t*)VICKY_MOUSE_X);
-        GCURY = *((uint16_t*)VICKY_MOUSE_Y);
-        a2560u_debug("%d,%d", GCURX, GCURY);
-    }
-#else 
-    uint8_t *packet = DRIVER_DATA->ps2packet;
-    packet[DRIVER_DATA->state++] = byte;
+#if MAXIMUM_TOS_COMPATIBILITY
+    // This is the slower but more compatible option. We write VICKY PS/2 registers as it's the 
+    // only way (currently?) to get the mouse cursor to move. But we simulate an IKBD relative mouse
+    // packet and pass it to the "mousevec" vector of the TOS so all TOS hooks etc. can work.
+    int8_t *packet = DRIVER_DATA->ps2packet;
+    packet[DRIVER_DATA->state++] = (int8_t)byte;
     if (DRIVER_DATA->state >= SM_RECEIVED)    
     {
         DRIVER_DATA->state = SM_IDLE;
@@ -117,32 +106,28 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         vicky_ps2[0] = (uint16_t)packet[0];
         vicky_ps2[1] = (uint16_t)packet[1];
         vicky_ps2[2] = (uint16_t)packet[2];
-
+        
         // Emulate a IKBD mouse packet
-        packet[0] = 0xf8 | DRIVER_DATA->buttons;
+        packet[0] = 0xf8 | (packet[0] & 3);
         api->os_callbacks.on_mouse(packet);
+
+        a2560u_debug("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
+    }
+#else
+    // This is maximum speed setup. No TOS vectors are called, only variables are updated.
+    // This is probably not something you want to use unless in a game/demo as the VDI/AES stuff will not work.
+    volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
+    packet[DRIVER_DATA->state++] = (uint16_t)byte;
+    if (DRIVER_DATA->state >= SM_RECEIVED)
+    {
+        DRIVER_DATA->state = SM_IDLE;
+
+        // This is not currently working (06 Jan 2022), VICKY calculates the new coords
+        // but the values are not copied into the VICKY_MOUSE registers so they always
+        // return the same value.
+        GCURX = *((uint16_t*)VICKY_MOUSE_X);
+        GCURY = *((uint16_t*)VICKY_MOUSE_Y);
         //a2560u_debug("%d,%d", GCURX, GCURY);
-        // GCURX = R16(VICKY_MOUSE_X);
-        // GCURY = R16(VICKY_MOUSE_Y);
-        //a2560u_debug("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
-
-#if 0        
-        /* Emulate an IKBD mouse packet. */
-        uint8_t packet[3];
-
-        packet[0] = 0x08 | DRIVER_DATA->buttons;
-        /* VICKY has done the magic, only need to send the info to the OS */        
-        packet[1] = VICKY_MOUSE->x - DRIVER_DATA->prev_x;
-        packet[2] = VICKY_MOUSE->y - DRIVER_DATA->prev_y;
-
-        a2560u_debug("%02x %02x %02x", packet[0], packet[1], packet[2]);
-        //api->os_callbacks.on_mouse(packet);
-
-        DRIVER_DATA->prev_x = VICKY_MOUSE->x;
-        DRIVER_DATA->prev_y = VICKY_MOUSE->y;
-        /* This is deliberately done last so that in case of overruns we ignore the incoming packet */
-#endif
-
     }
 #endif
 }

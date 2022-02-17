@@ -131,7 +131,7 @@ ms_exit:
  * Outputs: d0 and d1 clipped to screen size
  * Clobbered: a0 */
 scrn_clip:
-        lea.l   _V_REZ_HZ,a0
+        lea.l   _linea_max_x,a0
         tst.w   d0          // is new x-coordinate < 0?
         jge     cl_xmax     // nope - check if greater than maximum value
         clr.w   d0          // yes - set it to 0
@@ -140,17 +140,15 @@ cl_xmax:
         cmp.w   (a0),d0     // is new x-coordinate > maximum value?
         jle     cl_y        // nope - go clip the y-coordinate
         move.w  (a0),d0     // yes - set it to the maximum value
-        subq.w  #1,d0
 cl_y:
         tst.w   d1          // is new y-coordinate < 0?
         jge     cl_ymax     // nope - check if greater than maximum value
         clr.w   d1          // yes - set it to 0
         rts
 cl_ymax:
-        cmp.w   8(a0),d1    // is new y-coordinate > maximum value ? (8 is _V_REZ_VT-_V_REZ_HZ)
+        cmp.w   2(a0),d1    // is new y-coordinate > maximum value ? (2 is address of linea_max_y relative to linea_max_x)
         jle     cl_done     // nope - done
-        move.w  8(a0),d1    // yes - set it to the maximum value
-        subq.w  #1,d1
+        move.w  2(a0),d1    // yes - set it to the maximum value
 cl_done:
         rts
 

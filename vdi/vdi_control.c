@@ -172,12 +172,12 @@ Vwk * get_vwk_by_handle(WORD handle)
 /*
  * update resolution-dependent VDI/lineA variables
  *
- * this function assumes that v_planes, V_REZ_HZ, V_REZ_VT are already set
+ * this function assumes that v_planes, linea_max_x, linea_max_y are already set
  */
 void vdi_resolution_changed(void)
 {
-    DEV_TAB[0] = V_REZ_HZ - 1;
-    DEV_TAB[1] = V_REZ_VT - 1;
+    DEV_TAB[0] = linea_max_x;
+    DEV_TAB[1] = linea_max_y;
     get_pixel_size(&DEV_TAB[3],&DEV_TAB[4]);
     DEV_TAB[13] = (v_planes<8) ? (1 << v_planes) : 256;
     DEV_TAB[35] = (v_planes==1) ? 0 : 1;

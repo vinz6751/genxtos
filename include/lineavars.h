@@ -99,8 +99,10 @@ extern UWORD v_cur_cy;          /* current cursor row */
 extern UWORD V_REZ_HZ;          /* screen horizontal resolution */
 extern UWORD V_REZ_VT;          /* screen vertical resolution */
 extern UWORD BYTES_LIN;         /* width of line in bytes */
+extern WORD  DEV_TAB[];         /* intout array for open workstation */
 
-extern WORD DEV_TAB[];          /* intout array for open workstation */
+extern UWORD linea_max_x;       /* max X coordinate (= V_REZ_HZ - 1) */
+extern UWORD linea_max_y;       /* max Y coordinate (= V_REZ_VT -1) */
 
 extern UBYTE v_planes_shift;   /* pixel to address helper */
 

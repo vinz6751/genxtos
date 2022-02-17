@@ -35,6 +35,10 @@ static const UBYTE shift_offset[9] = {0, 3, 2, 0, 1, 0, 0, 0, 0};
  */
 UBYTE v_planes_shift;
 
+/* Use to clip mouse coordinates */
+UWORD screen_max_x;
+UWORD screen_max_y;
+
 /* Code to call when the Line A is notified of resolution change. */
 void (*linea_on_resolution_changed)(void);
 
@@ -68,6 +72,9 @@ void linea_resolution_changed(void)
     BYTES_LIN = v_lin_wr = V_REZ_HZ / 8 * v_planes;
 #endif
     
+    linea_max_x = V_REZ_HZ - 1;
+    linea_max_y = V_REZ_VT - 1;
+
     /* precalculate shift value to optimize pixel address calculations */
     linea_set_screen_shift();
 
