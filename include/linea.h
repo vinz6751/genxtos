@@ -20,11 +20,9 @@
 
 /* Kind of driver definition for managing mouse display */
 typedef struct {
-    void (*init)(void);
-    void (*deinit)(void);
-    void (*vbl_draw)(WORD x, WORD y);
-    void (*paint_mouse)(WORD x, WORD y);
-    void (*unpaint_mouse)(void);
+    void (*mouse_set_visible)(WORD x, WORD y);
+    void (*mouse_set_invisible)(void);
+    void (*mouse_move_to)(WORD x, WORD y);
     void (*set_mouse_cursor)(const MFORM *src);
     void (*resolution_changed)(void);
 } LINEA_MOUSE_RENDERER;
@@ -43,6 +41,10 @@ void linea_mouse_transform(void);
 void linea_set_screen_shift(void);    /* Set shift amount for screen address calcs */
 void linea_mouse_set_form(const MFORM *src);
 UWORD *get_start_addr(const WORD x, const WORD y);
+
+/* Sprite support */
+void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y);
+void linea_sprite_hide_atari(MCS *mcs);
 
 #endif
 

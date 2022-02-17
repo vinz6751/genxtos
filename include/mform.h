@@ -35,6 +35,6 @@ typedef struct mform
 } MFORM;
 
 
-static const MFORM arrow_mform;
+extern const MFORM arrow_mform;
 
 #endif

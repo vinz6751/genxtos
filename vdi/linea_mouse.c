@@ -23,11 +23,12 @@
 #include "a2560u.h"
 
 /* In .S file */
-void mousevec_handler(void);  /* Responds to incoming mouse packet */
-void linea_mouse_moved(void); /* Code to call when mouse has moved to raise a flag
-                               * (vbl_must_draw_mouse) that will tell the VBL handler 
-                               * to update the mouse on the screen to the new location */
-static void vbl_draw(void);   /* VBL queue item that update mouse location on the screen */
+void linea_mouse_packet_received_handler(void);  /* Responds to incoming mouse packet */
+void linea_mouse_moved_handler(void); /* Code to call by the mouse packet reception interrupt 
+    * when mouse has moved. Redraw should not be done from there because it's could be too slow.
+    * The Atari only raises a flag "vbl_must_draw_mouse" that signals to a routine in the VBL
+    * queue that the mouse needs to be moved to new coordinates. The mouse paintaing is actually
+    * done from the the VBL handler. */
 
 /* Initialize mouse via XBIOS in relative mode */
 static const struct {
@@ -38,59 +39,9 @@ static const struct {
 } mouse_params = {0, 0, 1, 1};
 
 
-static BOOL linea_mouse_inited;
-
-void linea_mouse_init(void)
-{    
-    a2560u_debug("linea_mouse_init");
-    /* mouse settings */
-    HIDE_CNT = 1;               /* mouse is initially hidden */
-    GCURX = V_REZ_HZ / 2;       /* initialize the mouse to center */
-    GCURY = V_REZ_VT / 2;
-    MOUSE_BT = 0;               /* clear the mouse button state */
-    cur_ms_stat = 0;            /* clear the mouse status */
-    mouse_flag = 0;             /* clear the mouse flag */
-    
-    /* VBL mouse redraw setup */
-    vbl_must_draw_mouse = 0;    /* VBL handler doesn't need to draw mouse */
-#if false    /* That's not needed. They'll be set when we need them */
-    newx = 0;                   /* set cursor x-coordinate to 0 */
-    newy = 0;                   /* set cursor y-coordinate to 0 */   
-#endif
-
-    user_cur = linea_mouse_moved;
-    user_but = just_rts;
-    user_mot = just_rts;
-
-#if CONF_WITH_EXTENDED_MOUSE
-    user_wheel = just_rts;
-#endif
-
-    if (mouse_display_driver.init)
-        mouse_display_driver.init();
-
-    vblqueue[0] = vbl_draw;
-
-    linea_mouse_set_form(&arrow_mform);
-
-    Initmous(1, (LONG)&mouse_params, (LONG)mousevec_handler);
-
-    linea_mouse_inited = TRUE;
-    a2560u_debug("linea_mouse_init done");    
-}
-
-
-void linea_mouse_deinit(void)
-{
-    if (!linea_mouse_inited)
-        return;
-
-    vblqueue[0] = 0L;
-    Initmous(0, 0, 0);
-    linea_mouse_inited = FALSE;
-}
-
-
+#ifndef MACHINE_A2560U
+/* VBL queue item, called upon each VBL to move the mouse cursor 
+ * to newx/newy (Line A variables) if necessary. */
 static void vbl_draw(void)
 {
     WORD old_sr, x, y;
@@ -105,12 +56,63 @@ static void vbl_draw(void)
         vbl_must_draw_mouse = FALSE;
         x = newx;                   /* Get x/y atomically for vbl_draw() */
         y = newy;
-        set_sr(old_sr);
-        mouse_display_driver.vbl_draw(x, y);
+        set_sr(old_sr);        
+        mouse_display_driver.mouse_move_to(x,y);
     }
     else
         set_sr(old_sr);
 }
+#endif
+
+static BOOL linea_mouse_inited;
+
+void linea_mouse_init(void)
+{    
+    a2560u_debug("linea_mouse_init");
+    
+    /* Mouse settings */
+    HIDE_CNT = 1;               /* mouse is initially hidden */
+    GCURX = V_REZ_HZ / 2;       /* initialize the mouse to center */
+    GCURY = V_REZ_VT / 2;
+    MOUSE_BT = 0;               /* clear the mouse button state */
+    cur_ms_stat = 0;            /* clear the mouse status */
+    mouse_flag = 0;             /* clear the mouse flag */    
+    linea_mouse_set_form(&arrow_mform);
+
+    /* Mouse event handlers */
+    user_cur = linea_mouse_moved_handler;    
+    user_but = just_rts;
+    user_mot = just_rts;
+#if CONF_WITH_EXTENDED_MOUSE
+    user_wheel = just_rts;
+#endif
+
+    /* VBL mouse redraw setup */
+    vbl_must_draw_mouse = 0;    /* VBL handler doesn't need to draw mouse */
+#ifdef MACHINE_A2560U
+    // On the Foenix, VICKY moves the mouse automatically as part of processing PS/2 packets.
+#else
+    vblqueue[0] = vbl_draw;
+#endif
+
+    /* Program the IKBD so it starts sending mouse packets */
+    Initmous(1, (LONG)&mouse_params, (LONG)linea_mouse_packet_received_handler);
+
+    linea_mouse_inited = TRUE;
+    a2560u_debug("linea_mouse_init done");    
+}
+
+
+void linea_mouse_deinit(void)
+{
+    if (!linea_mouse_inited)
+        return;
+    
+    vblqueue[0] = 0L;
+    Initmous(0, 0, 0);
+    linea_mouse_inited = FALSE;
+}
+
 
 /*
  * This forces the mouse to be displayed
@@ -133,7 +135,6 @@ void linea_mouse_force_show(void)
  *
  *   Outputs:
  *      hide_cnt = hide_cnt - 1
- *      vbl_must_draw_mouse = 0
  */
 void linea_mouse_show(void)
 {
@@ -148,9 +149,8 @@ void linea_mouse_show(void)
     }
 
     /* HIDE_CNT is precisely 1 at this point */
-    mouse_display_driver.paint_mouse(GCURX, GCURY);  /* display the cursor */
-
-    vbl_must_draw_mouse = 0;              /* disable VBL drawing routine */
+    vbl_must_draw_mouse = 0;
+    mouse_display_driver.mouse_set_visible(GCURX, GCURY);  /* display the cursor */
     HIDE_CNT--;
 }
 
@@ -164,7 +164,6 @@ void linea_mouse_show(void)
  *
  * Outputs:
  *    hide_cnt = hide_cnt + 1
- *    vbl_must_draw_mouse = 0
  */
 void linea_mouse_hide(void)
 {
@@ -175,9 +174,8 @@ void linea_mouse_hide(void)
      */
     HIDE_CNT += 1;              /* increment it */
     if (HIDE_CNT == 1) {        /* if cursor was not hidden... */
-    
-        vbl_must_draw_mouse = 0;               /* disable VBL drawing routine */
-        mouse_display_driver.unpaint_mouse();  /* remove the cursor from screen */
+        vbl_must_draw_mouse = 0;
+        mouse_display_driver.mouse_set_invisible();  /* remove the cursor from screen */
     }
 }
 

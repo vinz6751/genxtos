@@ -71,6 +71,7 @@ void a2560u_irq_vicky(void);
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
 
+
 /* Implementation ************************************************************/
 /* To speed up the copy from RAM to VRAM we manage a list of dirty cells */
 
@@ -333,6 +334,18 @@ void a2560u_debug(const char* __restrict__ s, ...)
     doprintf((void(*)(int))a2560u_bconout1, s, ap);
     va_end(ap);
     uart16550_put(UART0, (uint8_t*)"\r\n", 2);
+#endif
+}
+
+void a2560u_debugnl(const char* __restrict__ s, ...)
+{
+#ifdef ENABLE_KDEBUG
+    char msg[80];    
+    va_list ap;
+    va_start(ap, s);
+    sprintf(msg,s,ap);
+    doprintf((void(*)(int))a2560u_bconout1, s, ap);
+    va_end(ap);
 #endif
 }
 

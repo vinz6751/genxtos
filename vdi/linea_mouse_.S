@@ -27,7 +27,7 @@
         .extern _old_statvec    // previous IKBD status packet vector
 #endif
         /* Exports */
-        .globl  _mousevec_handler      // mouse interrupt routine, has IKBD mouse packet in a0
+        .globl  _linea_mouse_packet_received_handler      // mouse interrupt routine, has IKBD mouse packet in a0
 #if CONF_WITH_EXTENDED_MOUSE
         .globl  _wheel_int      // wheel interrupt routine
         .globl  _call_user_but  // call the _user_but vector from C
@@ -35,21 +35,25 @@
 #endif
 
 
+debug:
+        move.b #'a',0xb60000
+
 /*
- * _mousevec_handler - Interrupt routine called when a mouse packet has been received
+ * _linea_mouse_packet_received_handler - Interrupt routine called when a mouse packet has been received
+ * Formerly known as "mousevec" handler
  * entry:       a0 = address of IKBD mouse packet
  * exit:        none
  * destroys:    nothing
  */
-_mousevec_handler:
+_linea_mouse_packet_received_handler:
         movem.l d0-d7/a0-a6, -(sp)      // save registers used
-
+ move.b #'a',0xb60000
         move.b  (a0), d0        // see if we have a mouse packet
         move.b  d0, d1          // duplicate packet header
         and.b   #0xf8, d1       // mask out for ...
         cmp.b   #0xf8, d1       // relative mouse packet header?
         jne     mousevec_done
-  
+  move.b #'b',0xb60001
         // Handle buttons
         and.w   #3, d0          // isolate mouse buttons
 
@@ -62,12 +66,14 @@ no_left:
         cmp.b   d1,d0           // has button state changed ?
         jeq     xy_update       // no: go test x,y change
 
+        // Update mouse buttons variable
         lea     _MOUSE_BT,a1
         move.w  (a1),d2
         andi.w  #0xfffc,d2
         or.w    d2,d0           // keep additional mouse button states
         move.w  d0,(a1)
 
+        // Call user button handling routine
         move.w  d1,-(sp)        // save previous mouse state
         move.l  _user_but,a1    // get user routine address
         jsr     (a1)
@@ -87,6 +93,7 @@ xy_update:
         bclr.b  #5, _cur_ms_stat // no motion: clear motion status
         jra     mousevec_done    // no change done, bye-bye
 new_coord:
+ move.b #'c',0xb60002
         bset.b  #5, _cur_ms_stat // motion set motion status
         // Calculate new GCURX
         move.w  _GCURX, d0       // set d0 to _GCURX
@@ -107,8 +114,8 @@ new_coord:
         move.w  d0,_GCURX        // save new X location
         move.w  d1,_GCURY        // save new y location
 
-        // Call user routine with final coordinates on where to paint (d0:x, d1:y)
-        move.l  _user_cur,a1     // get user routine address (normally linea_mouse_moved)
+        // Call user routine in charge of updating the display (d0:x, d1:y)
+        move.l  _user_cur,a1     // get user routine address (normally linea_mouse_moved_handler)
         jsr     (a1)             // call user to draw cursor
 
                                  // d0 contains new x position
@@ -148,16 +155,18 @@ cl_done:
         rts
 
 
-/* We are notified that the mouse moved and needs redrawing during the next VBL.
+/* We are notified that the mouse moved and need to request redrawing.
+ * We signal this using vbl_must_draw_mouse and new coordinates are newx, newy.
+ * The VBL handler can pick this up.
  * Inputs: d0.w: new X, d1.w: new Y
  * Outputs: None
  * Clobbered: None */
-         .globl  _linea_mouse_moved
+         .globl  _linea_mouse_moved_handler
         .extern _newx           // new mouse x position for the VBL handler
         .extern _newy           // new mouse y position for the VBL handler
-_linea_mouse_moved:
+_linea_mouse_moved_handler:
         tst.w   _HIDE_CNT       // is the mouse cursor hidden?
-        //bra.s    done           // yes - don't draw it now
+        bne.s    done           // yes - don't draw it now
 
         /* The cursor is not currently hidden.  Save the new coordinates for the
         * cursor and set a flag to signal the need to redraw it.  The cursor will

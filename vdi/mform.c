@@ -10,7 +10,7 @@
 #include "mform.h"
 
 /* Default Mouse Cursor Definition */
-static const MFORM arrow_mform = {
+const MFORM arrow_mform = {
     1, 0, 1, 0, 1,
     /* background definition */
     {

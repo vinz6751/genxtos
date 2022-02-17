@@ -38,8 +38,8 @@
         .extern _linea_blit
         .extern _text_blt
 
-        .extern _unpaint_mouse_atari
-        .extern _paint_mouse_atari
+        .extern _linea_sprite_hide_atari
+        .extern _linea_sprite_show_atari
         .extern _linea_raster
         .extern _linea_fill
 
@@ -172,7 +172,7 @@ undraw_sprite:
         move.l  a2,-(sp)        /* save area ptr */
 #ifdef MACHINE_A2560U
 #else        
-        jsr     _unpaint_mouse_atari
+        jsr     _linea_sprite_hide_atari
 #endif
         addq.l  #4,sp
         rts
@@ -184,7 +184,7 @@ draw_sprite:
         move.l  a0,-(sp)        /* new sprite */
 #ifdef MACHINE_A2560U
 #else
-        jsr     _paint_mouse_atari
+        jsr     _linea_sprite_show_atari
 #endif        
         lea     12(sp),sp
         rts

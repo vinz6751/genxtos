@@ -168,6 +168,8 @@ _save_area:     .ds.l   64      // -322 form save area
 /* Timer vectors */
 _tim_addr:      .ds.l   1       // -66  timer interrupt vector
 _tim_chain:     .ds.l   1       // -62  timer interrupt vector save
+
+/* Mouse vectors */
 _user_but:      .ds.l   1       // -58  user button vector
 _user_cur:      .ds.l   1       // -54  user cursor vector
 _user_mot:      .ds.l   1       // -50  user motion vector

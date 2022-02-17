@@ -143,6 +143,7 @@ static LONG run_testc(WORD argc, char **argv)
     WORD oldx = GCURX;
     WORD oldy = GCURY;
     WORD oldbuts = MOUSE_BT;
+    outputnl("Testing the mouse...");
     for (;;)
     {
         if (oldx != GCURX || oldy != GCURY || oldbuts != MOUSE_BT)

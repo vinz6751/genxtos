@@ -13,322 +13,29 @@
 
 #ifndef MACHINE_A2560U
 
-#include "asm.h"
 #include "linea.h"
 #include "lineavars.h"
-#include "tosvars.h" /* vblqueue */
-#include "xbiosbind.h" /* Initmous */
 
 
 static MCS  *mcs_ptr;  /* ptr to Mouse Cursor Save area in use */
  
-static void paint_clipped_mouse(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_start, UWORD shft);
-static void paint_mouse_atari(MCDB *sprite, WORD x, WORD y);
-static void unpaint_mouse_atari(void);
 
-
-static void vbl_draw(WORD x, WORD y)
+static void mouse_set_visible(WORD x, WORD y)
 {
-    unpaint_mouse_atari();               /* remove the old cursor from the screen */
-    paint_mouse_atari(&mouse_cdb, x, y); /* display the cursor */
+    linea_sprite_show_atari(&mouse_cdb, mcs_ptr, x, y);
 }
 
 
-/*
- * paint_mouse() - blits a "cursor" to the destination
- *
- * before the destination is overwritten, the current contents are
- * saved to the user-provided save area (MCS).  then the cursor is
- * written, combining a background colour form, a foreground colour
- * form, and the current contents of the destination.
- *
- * some points to note:
- * the cursor is always 16x16 pixels.  in the general case, it will
- * overlap two adjacent screen words in each plane; thus the save area
- * requires 4 bytes per plane for each row of the cursor, or 64 bytes
- * in total per plane (plus some bookkeeping overhead).  if the cursor
- * is subject to left or right clipping, however, then it must lie
- * within one screen word (per plane), so we only save 32 bytes/plane.
- */
-void paint_mouse_atari(WORD x, WORD y)
+static void mouse_set_invisible(void)
 {
-    int row_count, plane, inc, op, dst_inc;
-    UWORD * addr, * mask_start;
-    UWORD shft, cdb_fg, cdb_bg;
-    UWORD cdb_mask;             /* for checking cdb_bg/cdb_fg */
-    ULONG *save;
-    MCDB sprite = &mouse_cdb;
-
-    x -= sprite->xhot;          /* x = left side of destination block */
-    y -= sprite->yhot;          /* y = top of destination block */
-
-    mcs_ptr->stat = 0x00;           /* reset status of save buffer */
-
-    /*
-     * clip x axis
-     */
-    if (x < 0) {            /* clip left */
-        x += 16;                /* get address of right word */
-        op = 1;                 /* remember we're clipping left */
-    }
-    else if (x >= (V_REZ_HZ-15)) {  /* clip right */
-        op = 2;                 /* remember we're clipping right */
-    }
-    else {                  /* no clipping */
-        op = 0;                 /* longword save */
-        mcs_ptr->stat |= MCS_LONGS; /* mark savearea as longword save */
-    }
-
-    /*
-     * clip y axis
-     */
-    mask_start = sprite->maskdata;  /* MASK/DATA for cursor */
-    if (y < 0) {            /* clip top */
-        row_count = y + 16;
-        mask_start -= y << 1;   /* point to first visible row of MASK/FORM */
-        y = 0;                  /* and reset starting row */
-    }
-    else if (y > (V_REZ_VT-15)) {   /* clip bottom */
-        row_count = V_REZ_VT - y + 1;
-    }
-    else {
-        row_count = 16;
-    }
-
-    /*
-     *  Compute the bit offset into the desired word, save it, and remove
-     *  these bits from the x-coordinate.
-     */
-    addr = get_start_addr(x, y);
-    shft = 16 - (x&0x0f);       /* amount to shift forms by */
-
-    /*
-     *  Store values required by unpaint_mouse()
-     */
-    mcs_ptr->len = row_count;       /* number of cursor rows */
-    mcs_ptr->addr = addr;           /* save area: origin of material */
-    mcs_ptr->stat |= MCS_VALID;     /* flag the buffer as being loaded */
-
-    /*
-     *  To allow performance optimisations in this function, we handle
-     *  L/R clipping in a separate function
-     */
-    if (op) {
-        paint_clipped_mouse(op,sprite, mcs_ptr, mask_start, shft);
-        return;
-    }
-
-    /*
-     * The rest of this function handles the no-L/R clipping case
-     */
-    inc = v_planes;             /* # distance to next word in same plane */
-    dst_inc = v_lin_wr >> 1;    /* calculate number of words in a scan line */
-
-    save = mcs_ptr->area;           /* for long stores */
-
-    cdb_bg = sprite->bg_col;    /* get mouse background color bits */
-    cdb_fg = sprite->fg_col;    /* get mouse foreground color bits */
-
-    /* plane controller, draw cursor in each graphic plane */
-    for (plane = v_planes - 1, cdb_mask = 0x0001; plane >= 0; plane--) {
-        int row;
-        UWORD * src, * dst;
-
-        /* setup the things we need for each plane again */
-        src = mask_start;               /* calculated mask data begin */
-        dst = addr++;                   /* current destination address */
-
-        /* loop through rows */
-        for (row = row_count - 1; row >= 0; row--) {
-            ULONG bits;                 /* our graphics data */
-            ULONG fg;                   /* the foreground color */
-            ULONG bg;                   /* the background color */
-
-            /*
-             * first, save the existing data
-             */
-            bits = ((ULONG)*dst) << 16; /* bring to left pos. */
-            bits |= *(dst + inc);
-            *save++ = bits;
-
-            /*
-             * align the forms with the cursor position on the screen
-             */
-
-            /* get and align background & foreground forms */
-            bg = (ULONG)*src++ << shft;
-            fg = (ULONG)*src++ << shft;
-
-            /*
-             * logical operation for cursor interaction with screen
-             * note that this only implements the "VDI" mode
-             */
-
-            /* select operation for mouse mask background color */
-            if (cdb_bg & cdb_mask)
-                bits |= bg;
-            else
-                bits &= ~bg;
-
-            /* select operation for mouse mask foreground color */
-            if (cdb_fg & cdb_mask)
-                bits |= fg;
-            else
-                bits &= ~fg;
-
-            /*
-             * update the screen with the new data
-             */
-            *dst = (UWORD)(bits >> 16);
-            *(dst + inc) = (UWORD)bits;
-            dst += dst_inc;             /* next row of screen */
-        } /* loop through rows */
-
-        cdb_mask <<= 1;
-    } /* loop through planes */
+    linea_sprite_hide_atari(mcs_ptr);
 }
 
 
-/*
- * paint_clipped_mouse()
- *
- * handles cursor display for cursors that are subject to L/R clipping
- */
-static void paint_clipped_mouse(WORD op,MCDB *sprite,MCS *mcs,UWORD *mask_start,UWORD shft)
+static void mouse_move_to(WORD x, WORD y)
 {
-    WORD dst_inc, plane;
-    UWORD cdb_fg, cdb_bg;
-    UWORD cdb_mask;             /* for checking cdb_bg/cdb_fg */
-    UWORD *addr, *save;
-
-    dst_inc = v_lin_wr >> 1;    /* calculate number of words in a scan line */
-
-    addr = mcs->addr;           /* starting screen address */
-    save = (UWORD *)mcs->area;  /* we save words, not longwords */
-
-    cdb_bg = sprite->bg_col;    /* get mouse background color bits */
-    cdb_fg = sprite->fg_col;    /* get mouse foreground color bits */
-
-    /* plane controller, draw cursor in each graphic plane */
-    for (plane = v_planes - 1, cdb_mask = 0x0001; plane >= 0; plane--) {
-        WORD row;
-        UWORD *src, *dst;
-
-        /* setup the things we need for each plane again */
-        src = mask_start;               /* calculated mask data begin */
-        dst = addr++;                   /* current destination address */
-
-        /* loop through rows */
-        for (row = mcs->len - 1; row >= 0; row--) {
-            ULONG bits;                 /* our graphics data */
-            ULONG fg;                   /* the foreground color */
-            ULONG bg;                   /* the background color */
-
-            /*
-             * first, save the existing data
-             */
-            *save++ = *dst;
-            if (op == 1) {          /* right word only */
-                bits = *dst;            /* dst already at right word */
-            } else {                /* left word only  */
-                bits = ((ULONG)*dst) << 16; /* move to left posn */
-            }
-
-            /*
-             * align the forms with the cursor position on the screen
-             */
-
-            /* get and align background & foreground forms */
-            bg = (ULONG)*src++ << shft;
-            fg = (ULONG)*src++ << shft;
-
-            /*
-             * logical operation for cursor interaction with screen
-             */
-
-            /* select operation for mouse mask background color */
-            if (cdb_bg & cdb_mask)
-                bits |= bg;
-            else
-                bits &= ~bg;
-
-            /* select operation for mouse mask foreground color */
-            if (cdb_fg & cdb_mask)
-                bits |= fg;
-            else
-                bits &= ~fg;
-
-            /*
-             * update the screen with the new data
-             */
-            if (op == 1) {          /* right word only */
-                *dst = (UWORD)bits;
-            } else {                /* left word only */
-                *dst = (UWORD)(bits >> 16);
-            }
-
-            dst += dst_inc;             /* a1 -> next row of screen */
-        } /* loop through rows */
-
-        cdb_mask <<= 1;
-    } /* loop through planes */
-}
-
-
-/*
- * unpaint_mouse - replace cursor with data in save area
- *
- * note: the near-duplication of loops for the word and longword cases
- * is done deliberately for performance reasons
- *
- * input:
- *      v_planes    number of planes in destination
- *      v_lin_wr    line wrap (byte width of form)
- */
-void unpaint_mouse_atari(void)
-{
-    WORD plane, row;
-    UWORD *addr, *src, *dst;
-    const WORD inc = v_planes;      /* # words to next word in same plane */
-    const WORD dst_inc = v_lin_wr >> 1; /* # words in a scan line */
-
-    if (!(mcs_ptr->stat & MCS_VALID))   /* does save area contain valid data ? */
-        return;
-    mcs_ptr->stat &= ~MCS_VALID;        /* yes but (like TOS) don't allow reuse */
-
-    addr = mcs_ptr->addr;
-    src = (UWORD *)mcs_ptr->area;
-
-    /*
-     * handle longword data
-     */
-    if (mcs_ptr->stat & MCS_LONGS) {
-        /* plane controller, draw cursor in each graphic plane */
-        for (plane = v_planes - 1; plane >= 0; plane--) {
-            dst = addr++;           /* current destination address */
-            /* loop through rows */
-            for (row = mcs_ptr->len - 1; row >= 0; row--) {
-                *dst = *src++;
-                *(dst + inc) = *src++;
-                dst += dst_inc;     /* next row of screen */
-            }
-        }
-        return;
-    }
-
-    /*
-     * handle word data
-     */
-
-    /* plane controller, draw cursor in each graphic plane */
-    for (plane = v_planes - 1; plane >= 0; plane--) {
-        dst = addr++;               /* current destination address */
-        /* loop through rows */
-        for (row = mcs_ptr->len - 1; row >= 0; row--) {
-            *dst = *src++;
-            dst += dst_inc;         /* next row of screen */
-        }
-    }
+    linea_sprite_hide_atari(mcs_ptr);  /* remove the old cursor from the screen */
+    linea_sprite_show_atari(&mouse_cdb, mcs_ptr, x, y); /* display the cursor */    
 }
 
 
@@ -375,11 +82,9 @@ static void resolution_changed(void)
 
 
 const LINEA_MOUSE_RENDERER mouse_display_driver = {
-    .init = just_rts,
-    .deinit = just_rts,
-    vbl_draw,
-    paint_mouse_atari,
-    unpaint_mouse_atari,
+    mouse_set_visible,
+    mouse_set_invisible,
+    mouse_move_to,
     set_mouse_cursor,
     resolution_changed
 };

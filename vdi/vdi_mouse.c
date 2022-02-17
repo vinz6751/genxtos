@@ -30,7 +30,6 @@
 
 
 /* prototypes */
-static void vbl_draw(void);             /* user button vector */
 static void mform_color_validator(const MFORM *src, MCDB *dst);
 
 /* prototypes for functions in vdi_asm.S */

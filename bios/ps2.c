@@ -72,9 +72,6 @@ enum ps2_target
 	dev2 = 1
 };
 
-/* Must be a power of 2 and no greater than 256, which should be large enough if the buffer
- * is processed (emptied) on VBL, ie at least 50 times per second. */
-#define IN_BUFFER_SIZE 128
 
 /* Levels of safety checks */
 #define ENABLE_DEVICES_RESET_CHECKS    1 /* If you have problems with reseting devices, you can ignore it */
@@ -91,10 +88,6 @@ struct ps2_device_t
 	uint16_t status;
 	const struct ps2_driver_t *driver; /* Driver currently attached to the device */
 	struct ps2_driver_api_t api; /* Interface with the driver */
-	/* Reception buffer. Bytes received from the device are stored here */
-	uint16_t in_read;
-	uint16_t in_write;
-	uint8_t  in_buffer[IN_BUFFER_SIZE];
 };
 
 struct ps2_global_t
@@ -140,8 +133,6 @@ static bool attach_driver(struct ps2_device_t *dev);
 static bool setup_driver_api(struct ps2_device_t *dev);
 static bool enable_irqs(uint8_t *config);
 static bool disable_irqs(uint8_t *config);
-static void on_irq(struct ps2_device_t *dev);
-static void process(struct ps2_device_t *dev);
 
 
 /* Initialise the PS/2 system */
@@ -317,7 +308,7 @@ static bool setup_driver_api(struct ps2_device_t *dev)
 	dev->api.os_callbacks.on_key_down = P.os_callbacks.on_key_down;
 	dev->api.os_callbacks.on_key_up = on_key_up;
 	dev->api.os_callbacks.on_mouse = P.os_callbacks.on_mouse;
-	dev->in_read = dev->in_write = 0;
+
 	while (get_data());
 	
 	return dev->driver->init(&dev->api);
@@ -333,47 +324,6 @@ void ps2_channel1_irq_handler(void)
 void ps2_channel2_irq_handler(void)
 {
 	L.dev2.driver->process(&L.dev2.api, get_data_no_wait());
-}
-
-/* This isn't used. It thought we would try to handle the IRQ as quickly as possible
- * so to avoid missing bytes (especially for the mouse), and let the OS tell us when we want to process.
- * I have not played with the mouse yet so i don't know if that's required. For the time
- * being, the keyboard IRQ handlers call driver->process directly and it "seems" ok.
- * So that function is not used but we shall see if should be used for the mouse at least, later. */
-static void on_irq(struct ps2_device_t *dev)
-{
-    uint8_t b = get_data_no_wait();
-    int     new_write;
-
-	a2560u_debug("dev %d received 0x%02x",dev->id, b);
-	
-    /* Put the byte into the circular buffer */
-    new_write = (dev->in_write + 1) & (IN_BUFFER_SIZE - 1);
-    if (new_write == dev->in_read)
-        return; /* buffer full, we loose the new data */
-
-    dev->in_buffer[new_write] = b;
-    dev->in_write = new_write;
-	
-	process(dev);
-}
-
-
-static void process(struct ps2_device_t *dev)
-{
-    uint8_t read;
-    uint8_t b;
-
-    read = (dev->in_read + 1) & (IN_BUFFER_SIZE - 1);
-    while (read != dev->in_write)
-    {
-        /* Pull from circular buffer */
-        b = dev->in_buffer[read];
-        dev->in_read = read;        
-        a2560u_debug("driver-process(%02x)", b);
-        
-		read = (dev->in_read + 1) & (IN_BUFFER_SIZE - 1);
-    }
 }
 
 

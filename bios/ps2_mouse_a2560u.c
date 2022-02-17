@@ -64,11 +64,14 @@ static bool init(struct ps2_driver_api_t *api)
         return ERROR;
 
     DRIVER_DATA->state = SM_IDLE;
-#if 0    
+#if 0   
     DRIVER_DATA->prev_x = VICKY_MOUSE->x = GCURX;
     DRIVER_DATA->prev_y = VICKY_MOUSE->y = GCURY;
 #endif    
     DRIVER_DATA->buttons = 0;
+
+    // DEBUG
+    R16(VICKY_MOUSE_CTRL) = VICKY_MOUSE_ENABLE;
 
     return SUCCESS;
 }
@@ -91,31 +94,38 @@ static bool can_drive(const uint8_t ps2_device_type[])
  * Remember we can have 9600 interrupts per second... */
 void process(const struct ps2_driver_api_t *api, uint8_t byte)
 {
-    a2560u_debug("%02x", byte);
     if (DRIVER_DATA->state == SM_IDLE && (byte & 0x08) != 0x08)
         return; /* We're lost. Ignore the packet. This is not even safe because if the packet contains a 08 we're fooled. */
 
 #if 0
-    DRIVER_DATA->ps2packet[DRIVER_DATA->state++] = (int8_t)byte;
-    if (DRIVER_DATA->state == SM_RECEIVED)
-    {        
-        /* Emulate an IKBD mouse packet. */
-        int8_t *packet = (int8_t*)(DRIVER_DATA->ps2packet); /* Tweaking the PS/2 packet into a IKBD one saves us from copying... */
-        packet[0] = 0xf8 | (DRIVER_DATA->ps2packet[0] & 3); /* Relative mouse report + buttons */
-        // TODO: manage overflow
-
-        api->os_callbacks.on_mouse(packet);
-        DRIVER_DATA->state = SM_IDLE;
-    } 
-#else
     volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
-    packet[DRIVER_DATA->state] = (uint16_t)byte;
-    DRIVER_DATA->state++;
+    packet[DRIVER_DATA->state++] = (uint16_t)byte;
     if (DRIVER_DATA->state >= SM_RECEIVED)
     {
-        a2560u_debug(".", byte);
-        GCURX = R16(VICKY_MOUSE_X);
-        GCURY = R16(VICKY_MOUSE_Y);
+        DRIVER_DATA->state = SM_IDLE;
+        GCURX = *((uint16_t*)VICKY_MOUSE_X);
+        GCURY = *((uint16_t*)VICKY_MOUSE_Y);
+        a2560u_debug("%d,%d", GCURX, GCURY);
+    }
+#else 
+    uint8_t *packet = DRIVER_DATA->ps2packet;
+    packet[DRIVER_DATA->state++] = byte;
+    if (DRIVER_DATA->state >= SM_RECEIVED)    
+    {
+        DRIVER_DATA->state = SM_IDLE;
+        volatile uint16_t * const vicky_ps2 = (uint16_t*)VICKY_MOUSE_PACKET;
+        vicky_ps2[0] = (uint16_t)packet[0];
+        vicky_ps2[1] = (uint16_t)packet[1];
+        vicky_ps2[2] = (uint16_t)packet[2];
+
+        // Emulate a IKBD mouse packet
+        packet[0] = 0xf8 | DRIVER_DATA->buttons;
+        api->os_callbacks.on_mouse(packet);
+        //a2560u_debug("%d,%d", GCURX, GCURY);
+        // GCURX = R16(VICKY_MOUSE_X);
+        // GCURY = R16(VICKY_MOUSE_Y);
+        //a2560u_debug("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
+
 #if 0        
         /* Emulate an IKBD mouse packet. */
         uint8_t packet[3];
@@ -132,7 +142,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         DRIVER_DATA->prev_y = VICKY_MOUSE->y;
         /* This is deliberately done last so that in case of overruns we ignore the incoming packet */
 #endif
-        DRIVER_DATA->state = SM_IDLE;
+
     }
 #endif
 }

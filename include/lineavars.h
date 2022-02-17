@@ -39,7 +39,7 @@ typedef struct {
         ULONG   area[8*16];     /* handle up to 8 video planes */
 } MCS;
 
-/* Mouse / sprite structure */
+/* Mouse / sprite structure (16x16) */
 typedef struct {
     WORD    xhot;
     WORD    yhot;
@@ -61,7 +61,7 @@ extern WORD *INTOUT; /* +16  ptr to the INTOUT array */
 extern WORD *PTSOUT; /* +20  ptr to the PTSOUT array */
 
 /* Mouse management variables */
-extern UBYTE vbl_must_draw_mouse;              /* non-zero means draw mouse form on vblank */
+extern UBYTE vbl_must_draw_mouse;    /* non-zero means draw mouse form on vblank */
 extern UBYTE mouse_flag;             /* non-zero while mouse cursor is being modified */
 extern MCS   mouse_cursor_save;      /* in linea variable area */
 extern MCS   ext_mouse_cursor_save;  /* use for v_planes > 4 */
