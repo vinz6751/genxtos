@@ -101,9 +101,10 @@ void vicky2_init(void)
     /* Enable video and bitmap, 640x480 */
     R32(VICKY_CTRL) = 0;
 
-    vicky2_set_video_mode(VICKY_MODE_320x240_60);
+    vicky2_mouse_init();
+
+    vicky2_set_video_mode(VICKY_MODE_640x480_60);
     vicky2_get_video_mode(&mode);
-    vicky2_set_mouse_visible(0);
 
     /* No border. If we used borders we would have to offset/resize all our graphics stuff */
     /* Use instead this to enable border to you can set its color as debugging trace:
@@ -215,15 +216,6 @@ static void convert_color(uint16_t orgb, COLOR32 *dst)
     dst->green = c4to8bits[(orgb & 0x0f0) >> 4];
     dst->blue = c4to8bits[(orgb & 0x00f)];
 }
-
-void vicky2_set_mouse_visible(uint16_t visible)
-{
-    if (visible)
-        R16(VICKY_MOUSE_CTRL) |= VICKY_MOUSE_ENABLE;
-    else
-        R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;    
-}
-
 
 
 /* Text mode support *********************************************************/
@@ -351,14 +343,21 @@ void vicky2_hide_cursor(void)
 
 void vicky2_show_mouse(void)
 {
-        a2560u_debug("SHOWM");
+    a2560u_debug("vicky2_show_mouse");
     R16(VICKY_MOUSE_CTRL) |= VICKY_MOUSE_ENABLE;
 }
 
 void vicky2_hide_mouse(void)
 {
-    a2560u_debug("HIDEM");
+    a2560u_debug("vicky2_hide_mouse");
     R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;
+}
+
+
+void vicky2_mouse_init(void)
+{
+    /* Reset mouse */
+    R16(VICKY_MOUSE_CTRL) = 0;
 }
 
 #endif /* MACHINE_A2560U */

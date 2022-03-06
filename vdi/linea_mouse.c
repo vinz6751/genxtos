@@ -69,7 +69,8 @@ static BOOL linea_mouse_inited;
 void linea_mouse_init(void)
 {    
     a2560u_debug("linea_mouse_init");
-    
+    mouse_display_driver.init();
+
     /* Mouse settings */
     HIDE_CNT = 1;               /* mouse is initially hidden */
     GCURX = V_REZ_HZ / 2;       /* initialize the mouse to center */
@@ -78,9 +79,11 @@ void linea_mouse_init(void)
     cur_ms_stat = 0;            /* clear the mouse status */
     mouse_flag = 0;             /* clear the mouse flag */    
     linea_mouse_set_form(&arrow_mform);
+    // FIXME: 18Feb2022 there is a bug that after setting the form the mouse
+    // cursor is displayed as a white box, and you can't hide it.
 
     /* Mouse event handlers */
-    user_cur = linea_mouse_moved_handler;    
+    user_cur = linea_mouse_moved_handler;
     user_but = just_rts;
     user_mot = just_rts;
 #if CONF_WITH_EXTENDED_MOUSE
@@ -99,7 +102,7 @@ void linea_mouse_init(void)
     Initmous(1, (LONG)&mouse_params, (LONG)linea_mouse_packet_received_handler);
 
     linea_mouse_inited = TRUE;
-    a2560u_debug("linea_mouse_init done");    
+    a2560u_debug("linea_mouse_init done");
 }
 
 
@@ -108,7 +111,11 @@ void linea_mouse_deinit(void)
     if (!linea_mouse_inited)
         return;
     
+#ifdef MACHINE_A2560U
+    // On the Foenix, VICKY moves the mouse automatically as part of processing PS/2 packets.
+#else    
     vblqueue[0] = 0L;
+#endif    
     Initmous(0, 0, 0);
     linea_mouse_inited = FALSE;
 }

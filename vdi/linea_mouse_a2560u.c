@@ -29,7 +29,7 @@ static void mouse_set_visible(WORD x, WORD y)
 
 static void mouse_set_invisible(void)
 {
-    a2560u_debug("mouse_set_visible");
+    a2560u_debug("mouse_set_invisible");
     vicky2_hide_mouse();
 }
 
@@ -95,6 +95,7 @@ static void set_mouse_cursor(const MFORM *src)
 
 
 const LINEA_MOUSE_RENDERER mouse_display_driver = {
+    just_rts,//vicky2_mouse_init,
     mouse_set_visible,
     mouse_set_invisible,
 #if USE_MOUSE_MOVE_TO    

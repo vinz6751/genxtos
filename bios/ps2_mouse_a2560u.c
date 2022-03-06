@@ -15,7 +15,7 @@
  #include "a2560u.h"
 
 /* Settings */
-#define MAXIMUM_TOS_COMPATIBILITY 1
+#define MAXIMUM_TOS_COMPATIBILITY 0
 
  /* Prototypes */
 static const char driver_name[] = "PS/2 Mouse";
@@ -63,13 +63,6 @@ static bool init(struct ps2_driver_api_t *api)
         return ERROR;
 
     DRIVER_DATA->state = SM_IDLE;
-#if 0   
-    DRIVER_DATA->prev_x = VICKY_MOUSE->x = GCURX;
-    DRIVER_DATA->prev_y = VICKY_MOUSE->y = GCURY;
-#endif
-
-    // DEBUG
-    R16(VICKY_MOUSE_CTRL) = VICKY_MOUSE_ENABLE;
 
     return SUCCESS;
 }
@@ -114,7 +107,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         //a2560u_debug("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
     }
 #else
-    // This is maximum speed setup. No TOS vectors are called, only variables are updated.
+    // This is maximum speed setup. No TOS vectors are called, only internal mouse variables are updated.
     // This is probably not something you want to use unless in a game/demo as the VDI/AES stuff will not work.
     volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
     packet[DRIVER_DATA->state++] = (uint16_t)byte;
@@ -122,12 +115,50 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
     {
         DRIVER_DATA->state = SM_IDLE;
 
-        // This is not currently working (06 Jan 2022), VICKY calculates the new coords
-        // but the values are not copied into the VICKY_MOUSE registers so they always
-        // return the same value.
-        GCURX = *((uint16_t*)VICKY_MOUSE_X);
-        GCURY = *((uint16_t*)VICKY_MOUSE_Y);
-        //a2560u_debug("%d,%d", GCURX, GCURY);
-    }
+        
+        uint16_t new_cur_ms_stat;
+        uint16_t x,y;
+        uint16_t buttons;
+
+        x = R16(VICKY_MOUSE_X);
+        y = R16(VICKY_MOUSE_Y);
+        buttons = packet[0] & 3;
+    
+        /* Update cur_ms_stat flags:
+         * 0x01 Left mouse button status  (0=up)
+         * 0x02 Right mouse button status (0=up)
+         * 0x04 Reserved
+         * 0x08 Reserved
+         * 0x10 Reserved
+         * 0x20 Mouse move flag (1=moved)
+         * 0x40 Right mouse button status flag (0=hasn't changed)
+         *  0x80 Left mouse button status flag  (0=hasn't changed) */         
+        if (GCURX != x || GCURY != y)
+            new_cur_ms_stat = 0x20; /* Mouse moved flag */
+        else
+            new_cur_ms_stat = 0;
+
+        if ((buttons & 2) != (cur_ms_stat & 2))
+            new_cur_ms_stat |= 0x40; /* Right button changed */
+
+        if ((buttons & 1) != (cur_ms_stat & 1))
+            new_cur_ms_stat |= 0x80; /* Left button changed */
+
+        new_cur_ms_stat |= buttons;
+
+        /* Update Line-A variables */
+        /* Note: for VICKY, mouse (0,0) top is top left of the screen, while for VDI it's bottom left */
+        GCURX = linea_max_x - R16(VICKY_MOUSE_X);
+        GCURY = linea_max_y - R16(VICKY_MOUSE_Y);
+        MOUSE_BT = (MOUSE_BT & 0xfffc) | buttons;
+        cur_ms_stat = new_cur_ms_stat;
+        
+        /* Fire callbacks */
+        if (cur_ms_stat & (0x40|0x80))
+            user_but();
+        if (cur_ms_stat & 0x20)
+            user_mot();            
+        /* user_cur is not supported since VICKY is in charge of drawing */
+   }
 #endif
 }

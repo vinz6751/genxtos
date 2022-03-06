@@ -109,6 +109,7 @@ extern uint32_t vicky_vbl_freq; /* VBL frequency */
 
 void vicky2_init(void);
 void vicky2_text_init(void);
+void vicky2_mouse_init(void);
 void vicky2_set_background_color(uint32_t color);
 void vicky2_set_border_color(uint32_t color);
 void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg);
