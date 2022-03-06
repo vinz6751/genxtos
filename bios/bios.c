@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "biosext.h"
@@ -590,6 +590,9 @@ static void init_default_environment(void)
     *p += bootdev;                      /* fix up drive letter */
     p += sizeof(DEF_PATH);
     *p = '\0';                          /* terminate with double nul */
+
+    /* Set "the_env" TOS variable */
+    *((char**)0x4be) = default_env;
 }
 
 #if ENABLE_RESET_RESIDENT
@@ -790,8 +793,10 @@ void biosmain(void)
     run_reset_resident();       /* see comments above */
 #endif
 
-#if WITH_CLI && defined(MACHINE_A2560U) /* Can't run user programs from flash */
-    if (bootflags & BOOTFLAG_EARLY_CLI || 1) {
+
+
+#if WITH_CLI
+    if (bootflags & BOOTFLAG_EARLY_CLI) {
         /*
          * run an early console, passing the default environment
          */
@@ -803,7 +808,7 @@ void biosmain(void)
 #endif
 
     autoexec();                 /* autoexec PRGs from AUTO folder */
-
+    char *the_env = *((char**)0x4be);
     /* clear commandline */
 
     if(cmdload != 0) {
@@ -812,16 +817,26 @@ void biosmain(void)
          * like Atari TOS, it inherits an empty environment
          */
         Pexec(PE_LOADGO, "COMMAND.PRG", "", NULL);
-    } else if (exec_os) {
-        /*
-         * start the default (ROM) shell
-         * like Atari TOS, we pass the default environment
-         */
+    } 
+    else {
         PD *pd;
-        pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", default_env);
-        pd->p_tbase = (UBYTE *) exec_os;
+        pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
         pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
-        Pexec(PE_GO, "", (char *)pd, default_env);
+        
+#ifdef MACHINE_A2560U
+        // We don't have GEM/desktop yet.
+        pd->p_tbase = (UBYTE *) coma_start;
+#else
+        if (exec_os) {
+            /*
+            * start the default (ROM) shell
+            * like Atari TOS, we pass the default environment
+            */
+            pd->p_tbase = (UBYTE *) exec_os;
+        }
+#endif
+
+        Pexec(PE_GO, "", (char *)pd, the_env);
     }
 
 #if CONF_WITH_SHUTDOWN
