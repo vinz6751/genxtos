@@ -205,7 +205,8 @@ static const struct a2560u_timer_t {
     uint32_t control;  /* Control register */
     uint32_t value;    /* Value register   */
     uint32_t compare;  /* Compare register */
-    uint32_t deprog;   /* AND the control register with this to clear timer settings */
+    uint32_t deprog;   /* AND the control register with this to clear all settings */
+    uint32_t reset;    /* OR the control register with this to reset value/compare */
     uint32_t prog;     /* OR the control register with this to program the timer in countdown mode */
     uint32_t start;    /* OR the control register with this to start the timer in countdown mode */
     uint16_t irq_mask; /* OR this to the irq_pending_group to acknowledge the interrupt */
@@ -213,14 +214,20 @@ static const struct a2560u_timer_t {
     uint32_t dummy;    /* Useless but having the structure 32-byte larges makes it quicker to generate an offset with lsl #5 */
 } a2560u_timers[] = 
 {
-    #define COUNT_DOWN 0xA4L
-    /* 0xA4 is TIMER_CTRL_IRQ|TIMER_CTRL_LOAD||TIMER_CTRL_RELOAD (count down)
-     * 0x9A is TIMER_CTRL_IRQ|TIMER_CTRL_CLEAR|TIMER_CTRL_RECLEAR (count up) */
+/* Whether to count up or count down. Both work, it really doesn't make a difference */
+#define TIMER_COUNT_UP 1
+#if TIMER_COUNT_UP    
+    #define TIMER_PROG  (TIMER_CTRL_IRQ|TIMER_CTRL_RECLEAR|TIMER_CTRL_UPDOWN)
+    #define TIMER_RESET TIMER_CTRL_CLEAR
+#else
+    #define TIMER_PROG (TIMER_CTRL_IRQ|TIMER_CTRL_RELOAD)
+    #define TIMER_RESET TIMER_CTRL_LOAD
+#endif    
     /* TODO 1L as "start" is really TIMER_CTRL_ENABLE but I get a "left shift count >= width of type" warning I can't get rid of */
-    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, COUNT_DOWN << 0,  1L << 0,  0x0100, INT_TIMER0_VECN },
-    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, COUNT_DOWN << 8,  1L << 8,  0x0200, INT_TIMER1_VECN },
-    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, COUNT_DOWN << 16, 1L << 16, 0x0400, INT_TIMER2_VECN },
-    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, COUNT_DOWN << 0,  1L << 0,  0x0800, INT_TIMER3_VECN }
+    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  0x0100, INT_TIMER0_VECN },
+    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, TIMER_RESET << 8,  TIMER_PROG << 8,  TIMER_CTRL_ENABLE << 8,  0x0200, INT_TIMER1_VECN },
+    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, TIMER_RESET << 16, TIMER_PROG << 16, TIMER_CTRL_ENABLE << 16, 0x0400, INT_TIMER2_VECN },
+    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  0x0800, INT_TIMER3_VECN }
 };
 
 
@@ -266,15 +273,29 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* TODO: In case of control register 0, we write the config of 3 timers at once because
      * the timers control register has to be addressed as long word.
      * Can that have nasty effects on any other running timers ? */
-    R32(t->control) = (R32(t->control) & t->deprog) | t->prog;
+    R32(t->control) = R32(t->control) & t->deprog;
 
     /* Set timer period */
-    {
-        uint32_t value = cpu_freq / frequency;
-        uint32_t compare = 0L;        
-        R32(t->value) = value;
-        R32(t->compare) = compare;        
-    }
+#if TIMER_COUNT_UP
+    R32(t->compare) = cpu_freq / frequency;
+# define TIMER_USE_OFFICIAL_WAY 0
+# if TIMER_USE_OFFICIAL_WAY
+    R32(t->control) |= t->reset;   
+    R32(t->control) &= ~t->reset;
+# else
+    /* This works just as well and is a quicker */
+    R32(t->value) = 0L;
+# endif    
+    
+#else    
+    R32(t->value) = cpu_freq / frequency;
+    R32(t->compare) = 0L;
+#endif    
+
+    /* When counting up, the Value register is cleared whenever CLEAR **OR** RECLEAR is set.
+     * Likewise when counting down, Value register is loaded whenever LOAD **OR** RELOAD is set. */    
+    
+    R32(t->control) |= t->prog;
 
     /* Set handler */
     setexc(t->vector, (uint32_t)handler);

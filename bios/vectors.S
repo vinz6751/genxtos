@@ -445,7 +445,7 @@ vbl_end:
 _int_timerc:
         addq.l  #1, _hz_200.w           // increment 200 Hz counter
 #ifdef MACHINE_A2560U
-        move.w  #0x0200,0xb00102        // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
+        move.w  #0x0400,0xb00102        // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
 #endif 
  
         rol.w   _timer_c_sieve          // check for 4th call

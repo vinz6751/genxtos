@@ -128,7 +128,7 @@ uint32_t a2560u_bcostat1(void);
 void a2560u_bconout1(uint8_t byte);
 
 /* Timing stuff */
-#define HZ200_TIMER_NUMBER 1 /* There is a problem with timer 2 */
+#define HZ200_TIMER_NUMBER 2
 void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector);
 void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
 void a2560u_timer_enable(uint16_t timer, bool enable);
