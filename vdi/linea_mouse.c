@@ -69,7 +69,6 @@ static BOOL linea_mouse_inited;
 void linea_mouse_init(void)
 {    
     a2560u_debug("linea_mouse_init");
-    mouse_display_driver.init();
 
     /* Mouse settings */
     HIDE_CNT = 1;               /* mouse is initially hidden */

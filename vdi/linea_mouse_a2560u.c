@@ -95,7 +95,6 @@ static void set_mouse_cursor(const MFORM *src)
 
 
 const LINEA_MOUSE_RENDERER mouse_display_driver = {
-    just_rts,//vicky2_mouse_init,
     mouse_set_visible,
     mouse_set_invisible,
 #if USE_MOUSE_MOVE_TO    
