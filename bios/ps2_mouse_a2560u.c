@@ -146,9 +146,9 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
 
         new_cur_ms_stat |= buttons;
 
-        /* Update Line-A variables */
+        /* Update Line-A variables */        
+        GCURX = R16(VICKY_MOUSE_X);
         /* Note: for VICKY, mouse (0,0) top is top left of the screen, while for VDI it's bottom left */
-        GCURX = linea_max_x - R16(VICKY_MOUSE_X);
         GCURY = linea_max_y - R16(VICKY_MOUSE_Y);
         MOUSE_BT = (MOUSE_BT & 0xfffc) | buttons;
         cur_ms_stat = new_cur_ms_stat;
