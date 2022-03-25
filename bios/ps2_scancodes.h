@@ -70,7 +70,7 @@
 #define KEY_LEFTALT		56
 #define KEY_SPACE		57
 #define KEY_CAPSLOCK	58
-#define KEY_F1			59
+#define KEY_F1			59 /* 0x3B */
 #define KEY_F2			60
 #define KEY_F3			61
 #define KEY_F4			62
@@ -79,7 +79,7 @@
 #define KEY_F7			65
 #define KEY_F8			66
 #define KEY_F9			67
-#define KEY_F10			68
+#define KEY_F10			68 /* 0x44 */
 #define KEY_NUMLOCK		69
 #define KEY_SCROLLLOCK	70
 #define KEY_KP7			71
@@ -109,20 +109,20 @@
 #define KEY_KPJPCOMMA	95
 #define KEY_KPENTER		96
 #define KEY_RIGHTCTRL	97
-#define KEY_KPSLASH		98
+#define KEY_KPSLASH		98 /* 0x62 */
 #define KEY_SYSRQ		99
 #define KEY_RIGHTALT	100
 #define KEY_LINEFEED	101
-#define KEY_HOME		102
-#define KEY_UP			103
-#define KEY_PAGEUP		104
-#define KEY_LEFT		105
-#define KEY_RIGHT		106
-#define KEY_END			107
-#define KEY_DOWN		108
-#define KEY_PAGEDOWN	109
-#define KEY_INSERT		110
-#define KEY_DELETE		111
+#define KEY_HOME		102 /* 0x66 */
+#define KEY_UP			103 /* 0x67 */
+#define KEY_PAGEUP		104 /* 0x68 */
+#define KEY_LEFT		105 /* 0x69 */
+#define KEY_RIGHT		106 /* 0x6A */
+#define KEY_END			107 /* 0x6B */
+#define KEY_DOWN		108 /* 0x6C */
+#define KEY_PAGEDOWN	109 /* 0x6D */
+#define KEY_INSERT		110 /* 0x6E */
+#define KEY_DELETE		111 /* 0x6F */
 #define KEY_MACRO		112
 #define KEY_MUTE		113
 #define KEY_VOLUMEDOWN	114
@@ -133,7 +133,7 @@
 #define KEY_PAUSE		119
 #define KEY_SCALE		120	/* AL Compiz Scale (Expose) */
 
-#define KEY_KPCOMMA		121
+#define KEY_KPCOMMA		121 /* 0x79 */
 #define KEY_HANGEUL		122
 #define KEY_HANGUEL		KEY_HANGEUL
 #define KEY_HANJA		123
