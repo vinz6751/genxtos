@@ -37,7 +37,7 @@
 
 void uart16550_init(UART16550 *uart)
 {
-    uart16550_set_bps(uart, UART16550_9600BPS);
+    uart16550_set_bps(uart, UART16550_19200BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
 
     R8(uart)[FCR] = 0xC1; /* Clear FIFOs, one byte buffer */
