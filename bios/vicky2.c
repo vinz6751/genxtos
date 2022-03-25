@@ -319,8 +319,11 @@ void vicky2_text_init(void)
     }
 
     /* Set cursor */
-    R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_CHAR;
-    R32(VICKY_A_CURSOR_CTRL) |= (((uint32_t)0x00L) << 16); /* 0 is a filled cell */
+    R32(VICKY_A_CURSOR_CTRL) = 0;
+    //R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_CHAR;
+    R32(VICKY_A_CURSOR_CTRL) |=
+        (((uint32_t)0x00L) << 16) /* 0 is a filled cell */
+        | 6; /* Flash quickly */
 
     /* Enable text mode. Can't have text mode and gfx without overlay otherwise it crashes.
      * If we have overlay, then the inverse video doesn't work as the background is transparent. */
