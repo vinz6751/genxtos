@@ -133,23 +133,24 @@ LOCAL const char * const help_edit[] = {
  N_("left/right arrow = previous/next character"),
  N_("control-left/right arrow = previous/next word"), NULL };
 
-
-LONG run_test(WORD argc, char **argv); // in cmdtest.S
+// TODO CLEAN ME
+LONG run_showmouse(WORD argc, char **argv); // in cmdtest.S
+LONG run_hidemouse(WORD argc, char **argv); // in cmdtest.S
 #include "lineavars.h"
 #include <stdio.h>
 
-static LONG run_testc(WORD argc, char **argv) 
+static LONG run_testmouse(WORD argc, char **argv) 
 {
     WORD oldx = GCURX;
     WORD oldy = GCURY;
     WORD oldbuts = MOUSE_BT;
-    outputnl("Testing the mouse...");
-    for (;;)
+    outputnl("Testing the mouse, any key to exit...");
+    while (!Bconstat(2))
     {
         if (oldx != GCURX || oldy != GCURY || oldbuts != MOUSE_BT)
         {
             char buf[40];
-            sprintf(buf, "X:%04d Y:%04d B:%02x\r\n", GCURX, GCURY, MOUSE_BT);
+            sprintf(buf, "X:%04d Y:%04d B:%02x  Stat:%04x\r\n", GCURX, GCURY, MOUSE_BT,cur_ms_stat);
             outputnl(buf);
             oldx = GCURX;
             oldy = GCURY;
@@ -157,6 +158,7 @@ static LONG run_testc(WORD argc, char **argv)
         }
     }
 }
+
 
 /*
  *  command table
@@ -183,8 +185,9 @@ LOCAL const COMMAND cmdtable[] = {
     { "show", NULL, 0, 1, run_show, help_show },
     { "version", NULL, 0, 0, run_version, help_version },
     { "wrap", NULL, 0, 1, run_wrap, help_wrap },
-    { "test", NULL, 0, 0, run_test, NULL},
-    { "testc", NULL, 0, 0, run_testc, NULL},    
+    { "showmouse", NULL, 0, 0, run_showmouse, NULL},
+    { "hidemouse", NULL, 0, 0, run_hidemouse, NULL},
+    { "testmouse", NULL, 0, 0, run_testmouse, NULL},    
     { "", NULL, 0, 255, NULL, NULL }                    /* end marker */
 };
 

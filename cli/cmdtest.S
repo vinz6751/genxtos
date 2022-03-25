@@ -1,8 +1,9 @@
-    .GLOBL _run_test
+    .GLOBL _run_showmouse
+    .GLOBL _run_hidemouse
     .GLOBL _a2560u_dirty_cells
     .GLOBL _v_bas_ad
     .text
-_run_test:
+_run_showmouse:
     movem.l d1-a6,-(sp)
 
     .dc.w   0xa000     // Line A
@@ -14,7 +15,21 @@ _run_test:
     move.w  #0,(a1)           // intin[0] = show mouse now
     .dc.w   0xa009            // Show mouse
 
+
+    movem.l (sp)+,d1-a6
+    moveq   #0,d0
+    rts
+
+_run_hidemouse:
+    movem.l d1-a6,-(sp)
+    .dc.w   0xa00a     // Hide mouse
+    movem.l (sp)+,d1-a6
+    moveq   #0,d0
+    rts
+
+// For later...
     // Put pixel
+    #if 0
     move.l    lineaprms,a0      // Pointer parameter block LINEA
     move.l    8(a0),a1          // Address of intin
     move.w    #4,(a1)           // Colour in intin[0]
@@ -28,9 +43,7 @@ _run_test:
     move.b   #1,(a0)
 
     move.w  #-1,_a2560u_dirty_cells+4 // DEBUG: force full screen redraw
-    movem.l (sp)+,d1-a6
-    moveq   #0,d0
-    rts
+    #endif
 
     .bss
 lineavars:  ds.l 1
