@@ -680,6 +680,8 @@
 # endif
 #define CONF_WITH_A2560U_TEXT_MODE 1          /* Use VICKY's text mode if possible rather than a bitmap screen buffer */
 #define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 1 /* Use shadow framebuffer for rendering 8x16 */
+#define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
+#define RS232_DEBUG_PRINT 1
 #endif
 
 /*

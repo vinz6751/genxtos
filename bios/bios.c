@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-//#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "biosext.h"
@@ -360,6 +360,7 @@ static void bios_init(void)
     swv_vec = just_rts;
 
     /* setup default VBL queue with vbl_list[] */
+    KDEBUG(("VBL queue\n"));
     nvbls = ARRAY_SIZE(vbl_list);
     vblqueue = vbl_list;
     {
@@ -436,6 +437,9 @@ static void bios_init(void)
     KDEBUG(("after init_acia_vecs()\n"));
     boot_status |= MIDI_AVAILABLE;  /* track progress */
 
+    KDEBUG(("linea_mouse_init()\n")); /* we have to do that after keyboard vectors are setup */
+    linea_mouse_init();
+
     /* Enable 50 Hz processing */
     timer_c_sieve = 0x1111;
 
@@ -494,7 +498,7 @@ static void bios_init(void)
     if (HAS_NOVA && !(kbshift(-1) & MODE_CTRL)) {
         KDEBUG(("init_nova()\n"));
         if (init_nova()) {
-            set_rez_hacked();   /* also reinitializes the vt52 console */
+            screen_set_rez_hacked();   /* also reinitializes the vt52 console */
         }
     }
 #endif
@@ -586,6 +590,9 @@ static void init_default_environment(void)
     *p += bootdev;                      /* fix up drive letter */
     p += sizeof(DEF_PATH);
     *p = '\0';                          /* terminate with double nul */
+
+    /* Set "the_env" TOS variable */
+    *((char**)0x4be) = default_env;
 }
 
 #if ENABLE_RESET_RESIDENT
@@ -786,8 +793,10 @@ void biosmain(void)
     run_reset_resident();       /* see comments above */
 #endif
 
-#if WITH_CLI || defined(MACHINE_A2560U)
-    if (bootflags & BOOTFLAG_EARLY_CLI || 1) {
+
+
+#if WITH_CLI
+    if (bootflags & BOOTFLAG_EARLY_CLI) {
         /*
          * run an early console, passing the default environment
          */
@@ -799,7 +808,7 @@ void biosmain(void)
 #endif
 
     autoexec();                 /* autoexec PRGs from AUTO folder */
-
+    char *the_env = *((char**)0x4be);
     /* clear commandline */
 
     if(cmdload != 0) {
@@ -808,16 +817,26 @@ void biosmain(void)
          * like Atari TOS, it inherits an empty environment
          */
         Pexec(PE_LOADGO, "COMMAND.PRG", "", NULL);
-    } else if (exec_os) {
-        /*
-         * start the default (ROM) shell
-         * like Atari TOS, we pass the default environment
-         */
+    } 
+    else {
         PD *pd;
-        pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", default_env);
-        pd->p_tbase = (UBYTE *) exec_os;
+        pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
         pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
-        Pexec(PE_GO, "", (char *)pd, default_env);
+        
+#ifdef MACHINE_A2560U
+        // We don't have GEM/desktop yet.
+        pd->p_tbase = (UBYTE *) coma_start;
+#else
+        if (exec_os) {
+            /*
+            * start the default (ROM) shell
+            * like Atari TOS, we pass the default environment
+            */
+            pd->p_tbase = (UBYTE *) exec_os;
+        }
+#endif
+
+        Pexec(PE_GO, "", (char *)pd, the_env);
     }
 
 #if CONF_WITH_SHUTDOWN

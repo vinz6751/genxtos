@@ -10,6 +10,8 @@
 #ifndef _AESDEFS_H
 #define _AESDEFS_H
 
+#include "mform.h"
+
 /*
  * AES opcodes
  */
@@ -434,18 +436,6 @@
 #define M_SAVE      258     /* save current mouse form in AESPD */
 #define M_RESTORE   259     /* restore saved mouse form from AESPD */
 #define M_PREVIOUS  260     /* restore previously-used global mouse form */
-
-/* mouse form used by graf_mouse() etc */
-typedef struct mform
-{
-        WORD    mf_xhot;
-        WORD    mf_yhot;
-        WORD    mf_nplanes;
-        WORD    mf_bg;          /* mask colour index */
-        WORD    mf_fg;          /* data colour index */
-        UWORD   mf_mask[16];
-        UWORD   mf_data[16];
-} MFORM;
 
 
 /*

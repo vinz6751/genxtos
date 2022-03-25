@@ -1,7 +1,10 @@
+// Assembler routines for the Foenix Retro Systems A2560U
+
 #include "config.h"
 #ifdef MACHINE_A2560U
+.EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560u.h.
+                                   // The smaller this is, the higher MAX_CELLS_RENDERED_PER_FRAME needs to be.
 
-.EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560h
 .EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
 
 | 
@@ -39,7 +42,6 @@
 .EQU IRQ_PENDING_GRP1,  GAVIN+0x102
     .EQU PS2KEYB_INT,   0x0001
     .EQU PS2MOUSE_INT,  0x0004
-    .EQU PS2MOUSE_INT,  0x0004    
     .EQU COM1_INT,      0x0008
     .EQU TIMER0_INT,    0x0100
     .EQU RTC_INT,       0x8000
@@ -130,17 +132,17 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
 
 _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
     move.w  #PS2KEYB_INT,IRQ_PENDING_GRP1
-    movem.l d0-a6,-(sp) // TODO optimize
-    jsr    _ps2_channel1_irq_handler
-    movem.l (sp)+,d0-a6
+    movem.l d0-d7/a0-a6,-(sp) // Save GCC scratch registers
+    jbsr    _ps2_channel1_irq_handler
+    movem.l (sp)+,d0-d7/a0-a6
     rte
 
 
 _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     move.w  #PS2MOUSE_INT,IRQ_PENDING_GRP1
-    movem.l d0-a6,-(sp) // TODO optimize
-    jsr    _ps2_channel2_irq_handler
-    movem.l (sp)+,d0-a6
+    movem.l d0-d7/a0-a6,-(sp) // Save GCC scratch registers
+    jbsr    _ps2_channel2_irq_handler
+    movem.l (sp)+,d0-d7/a0-a6
     rte
 
 
@@ -177,22 +179,16 @@ a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     .GLOBAL _v_lin_wr
     .GLOBAL _v_cel_ht    
 
-// Performance options:
-// Disable the rendering during VBL so VICKY can concentrate on pumping bytes from the FIFO.
-// Actually this has little or no effect since VICKY doesn't do much doing the VBL.
-#define DISABLE_RENDERING_DURING_VBL 1
 // Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
 // If it's not enough the dirty cells array may be too small and we loose data. If it's too high, we may spend
 // too much time copying data and miss lower-priority interrupts (e.g. keyboard/mouse).
 // Note: this doesn't apply to full screen refresh
-#define MAX_CELLS_RENDERED_PER_FRAME 80
+#define MAX_CELLS_RENDERED_PER_FRAME 20
 
 #if MAX_CELLS_RENDERED_PER_FRAME != -1
     move.l  #MAX_CELLS_RENDERED_PER_FRAME-1,d6 // max number of characters we render per frame
 #endif
 
-    // move.w  #16,0xb00000 // Bip ON
-    
     lea     _a2560u_dirty_cells,a0
     tst.w   4(a0)           // Copy whole frame buffer to VRAM ?
     jne     copy_whole_screen  // Yes -> go there
@@ -208,12 +204,7 @@ copy_cell_to_vram:
     subq.w  #1,d4           // For the dbra of cell height
     clr.l   d5
     move.w  _v_lin_wr,d5    // Cache for moving to next line of the frame buffer
-    subq.w  #7,d5           // We use post incrementation 7 times
-#if DISABLE_RENDERING_DURING_VBL
-    move.l  0xb40000,d7 // Disable graphics rendering    
-    ori.l   #VICKY_CTRL_DISABLE_RENDER,d7
-    move.l  d7,0xb40000    
-#endif    
+    subq.w  #6,d5           // We use post incrementation 6 times
 cell_copy:
     addq.w  #4,d0           // Advance reader and wrap at 256 (offset 1024)
     andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0
@@ -223,21 +214,15 @@ cell_copy:
     adda.l  a3,a2
     move.w  d4,d3           // Prepare line decounter
 copy_cell_to_fb:
-    // Copy one row
-#if 1
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1)+,(a2)+
-    move.b  (a1),(a2)
+    // Copy one row (8 bytes)
+    move.w  (a1)+,(a2)+
+    move.w  (a1)+,(a2)+
+    move.w  (a1)+,(a2)+
+    move.w  (a1),(a2)
     adda.l  d5,a1   // Next line    
     adda.l  d5,a2
-#endif    
     dbra    d3,copy_cell_to_fb
-#if MAX_CELLS_RENDERED_PER_FRAME > 1    
+#if MAX_CELLS_RENDERED_PER_FRAME != 1
     dbra    d6,cell_copy_more
     bra.s   cell_copy_done
 #endif
@@ -246,12 +231,6 @@ cell_copy_more:
     bne.s   cell_copy  // If so, nothing more to read
 cell_copy_done:
     move.w  d0,2(a0)    // Update reader    
-#if DISABLE_RENDERING_DURING_VBL    
-    move.l  0xb40000,d6 // Re-enable graphics rendering
-    andi.l  #~VICKY_CTRL_DISABLE_RENDER,d6
-    move.l  d6,0xb40000
-#endif
-    // move.w  #0,0xb00000 // Bip OFF
     rts    
 
 copy_whole_screen:
@@ -260,70 +239,27 @@ copy_whole_screen:
     move.w  #0,4(a0)            // Put down the flag to force full copy, as we're doing it now
     move.l  _a2560u_fb_size,d0
     movea.l  _v_bas_ad,a1       // Source
-    movea.l _a2560u_vram_fb,a3  // Destination
-
-#if 1
-    // For now with the 11-Nov-2021 FPGA load we can only copy byte per byte because there's a mixup in LOW/HI when copying
-    // to VRAM. That will be fixed in the next version so we can use words (but not long words)
-    lsr.l   #4,d0               // We unroll the loop to copy 16 bytes at a time
+    movea.l _a2560u_vram_fb,a3  // Destination  
+    lsr.l   #5,d0               // We unroll the loop to copy 32 bytes at a time
 fbcpy:
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    move.b (a1)+,(a3)+
-    dbra    d0,fbcpy    // CAVEAT: by using dbra we assume that d0 < 65536, ie frame bufer size is 1048KB max.
-                        // That works even for 1024*768 so we're good. 
-#else // Not tested (needs FPGA fix, see above)    
-fbcpy: // ACHTUNG WE'RE WRITTING BEYOND THE ALLOCATED FB IN THE VRAM
-    // This is 40+% faster than the above but is not working.
-    lsr.l   #5,d0               // We unroll the loop to copy 16 bytes at a time
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    move.w (a1)+,(a3)+
-    dbra    d0,fbcpy
-
-    // Yet another method but which doesn't work
-    # movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    # movem.w d0-d7/a0/a2/a4-a6,(a3)
-    # lea     13*2(a3),a3
-    # movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    # movem.w d0-d7/a0/a2/a4-a6,(a3)
-    # lea     13*2(a3),a3        
-    # cmpa.l  #0xc4b000,a3 // FIXME don't hardcode end of FB
-    # bmi.s   fbcpy
-#endif /* Full screen transfer */    
-
-#if DISABLE_RENDERING_DURING_VBL    
-    move.l  0xb40000,d6 // Disable graphics rendering
-    andi.l  #~0x80,d6
-    move.l  d6,0xb40000
-#endif
-    // move.w  #0,0xb00000 // Bip OFF
+    // Another method, faster but which can but which doesn't work
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a6
+    movem.w d0-d7/a0/a2/a4-a6,(a3)
+    lea     13*2(a3),a3
+    movem.w (a1)+,d0-d7/a0/a2/a4-a5 // We do one less register here so an iteration is 128 bytes.
+    movem.w d0-d7/a0/a2/a4-a5,(a3)  // As all resolutions have a screensize multiple of 128,
+    lea     12*2(a3),a3             // That ensures we won't copy beyond the end of the FB in VRAM.
+    cmpa.l  #0xc4b000,a3            // FIXME don't hardcode end of FB
+    bmi.s   fbcpy
     rts
 
 
@@ -332,7 +268,7 @@ _a2560u_mark_cell_dirty:
     lea     _a2560u_dirty_cells,a0
     move.w  (a0),d0     // Writer
     addq.w  #4,d0       // Next position
-    andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap at position 256 (offset 1024)
+    andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap if needed
     move.l  4(sp),6(a0,d0)     
     move.w  d0,(a0)     // write writer
     rts

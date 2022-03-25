@@ -868,7 +868,7 @@ Start... early ages
 - vdi/vdiinput.c - implemented gloc_key in C, more will follow (MAD)
 
 2002-05-16
-- vdi/vdimouse.S - moved/rewrote DIS_CUR to monobj.c:dis_cur()  (MAD)
+- vdi/vdimouse.S - moved/rewrote DIS_CUR to monobj.c:linea_mouse_show()  (MAD)
 - vdi/vdiinput.c - moved/rewrote vdimouse_init/exit to here (MAD)
 - vdi/vdimouse.S - move rest of asm routines from mousedrv.S to here (MAD)
 - vdi/mousedrv.S - deleted
@@ -981,7 +981,7 @@ Start... early ages
 - vdi/gsxdef.h - empty, deleted  (MAD)
 
 2002-07-30
-- vdi/vdiinput.c - fixed bug in vb_draw routine (MAD)
+- vdi/vdiinput.c - fixed bug in vbl_draw routine (MAD)
 
 2002-09-01
 - bios/blkdev.c - booting from harddisk enabled (PES)
@@ -1815,7 +1815,7 @@ Start... early ages
 - aes/gemwmlib.c: Default owner of the desktop window is now the current
   application, not the screen manager. This fixes the problem that some
   programs did not receive mouse button events. (THH)
-- bios/linea.S vdi/vdi_mouse.c: Enabled the Line-A functions dis_cur & hide_cur
+- bios/linea.S vdi/vdi_mouse.c: Enabled the Line-A functions linea_mouse_show & hide_mouse
   again (they still seem to work fine and are needed for GFA Basic). (THH)
 
 2005-04-29
@@ -1831,7 +1831,7 @@ Start... early ages
   XBIOS function (for ST screen modes only at the moment). (THH)
 
 2005-05-09
-- bios/linea.S: Line-A #9 must be v_show_c() and not dis_cur(). (THH)
+- bios/linea.S: Line-A #9 must be v_show_c() and not linea_mouse_show(). (THH)
 - vdi/vdi_mouse.c: Mouse must not be displayed again if it is already visible.
 
 2005-05-11

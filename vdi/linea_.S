@@ -24,7 +24,7 @@
         .extern _kprintf
 
         .extern _linea_show_mouse
-        .extern _linea_hide_mouse
+        .extern _linea_mouse_hide
         .extern _linea_transform_mouse
 
         .extern _get_pix
@@ -38,8 +38,8 @@
         .extern _linea_blit
         .extern _text_blt
 
-        .extern _cur_replace
-        .extern _cur_display
+        .extern _linea_sprite_hide_atari
+        .extern _linea_sprite_show_atari
         .extern _linea_raster
         .extern _linea_fill
 
@@ -164,13 +164,16 @@ _linea_0:
 
 hide_mouse:
         move.l  d0,-(sp)
-        jsr     _linea_hide_mouse
+        jsr     _linea_mouse_hide
         move.l  (sp)+,d0
         rts
 
 undraw_sprite:
         move.l  a2,-(sp)        /* save area ptr */
-        jsr     _cur_replace
+#ifdef MACHINE_A2560U
+#else        
+        jsr     _linea_sprite_hide_atari
+#endif
         addq.l  #4,sp
         rts
 
@@ -179,12 +182,15 @@ draw_sprite:
         move.w  d0,-(sp)        /* x coord */
         move.l  a2,-(sp)        /* save area ptr */
         move.l  a0,-(sp)        /* new sprite */
-        jsr     _cur_display
+#ifdef MACHINE_A2560U
+#else
+        jsr     _linea_sprite_show_atari
+#endif        
         lea     12(sp),sp
         rts
 
 linea_blit:
-        move.l  a6,-(sp)                // blit frame structure addr
+        move.l  a6,-(sp)        /* blit frame structure addr */
         jsr     _linea_blit
         addq.l  #4,sp
         rts
@@ -237,9 +243,9 @@ linea_vecs:
         .dc.l   _linea_polygon  /* $6 - draw 1 line of polygon */
         .dc.l   linea_blit      /* $7 - area blit */
         .dc.l   _text_blt       /* $8 - text blitting */
-        .dc.l   _linea_show_mouse      /* $9 - show mouse */
+        .dc.l   _linea_mouse_force_show  /* $9 - show mouse */
         .dc.l   hide_mouse      /* $A - hide mouse cursor */
-        .dc.l   _linea_transform_mouse /* $B - transform mouse */
+        .dc.l   _linea_mouse_transform /* $B - transform mouse */
         .dc.l   undraw_sprite   /* $C - undraw sprite */
         .dc.l   draw_sprite     /* $D - draw sprite */
         .dc.l   _linea_raster   /* $E - copy raster form */

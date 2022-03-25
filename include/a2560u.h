@@ -21,8 +21,6 @@
 #include "foenix.h"
 
 
-
-
 /* IDE support */
 struct IDE
 {   
@@ -104,6 +102,7 @@ void a2560u_beeper(bool on);
 void a2560u_disk_led(bool on);
 void a2560u_system_info(struct foenix_system_info_t *result);
 void a2560u_debug(const char *, ...);
+void a2560u_debugnl(const char* __restrict__ s, ...);
 
 /* Video */
 void a2560u_screen_init(void);
@@ -129,7 +128,7 @@ uint32_t a2560u_bcostat1(void);
 void a2560u_bconout1(uint8_t byte);
 
 /* Timing stuff */
-#define HZ200_TIMER_NUMBER 1 /* There is a problem with timer 2 */
+#define HZ200_TIMER_NUMBER 2
 void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector);
 void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
 void a2560u_timer_enable(uint16_t timer, bool enable);
@@ -146,7 +145,7 @@ void a2560u_irq_mask_all(uint16_t *save);
 void a2560u_irq_restore(const uint16_t *save);
 void a2560u_irq_enable(uint16_t irq_id);
 void a2560u_irq_disable(uint16_t irq_id);
-void a2560u_irq_acknowledge(uint16_t irq_id);
+void a2560u_irq_acknowledge(uint8_t irq_id);
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);
 
 void a2560u_kbd_init(void);

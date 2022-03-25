@@ -311,12 +311,14 @@ _int_vbl:
         subq.w  #1, _vblsem.w           // check VBL semaphore
         jmi     vbl_end                 // if VBL routine disabled -> end
 
+        addq.l  #1, _vbclock.w          // count number of processed VBL interrupts
+
 #ifdef MACHINE_A2560U
         movem.l d1-d7/a1-a6, -(sp)      // save registers (d0/a0 already saved by VICKY interrupt handler)
 #else
         movem.l d0-d7/a0-a6, -(sp)      // save registers
 #endif        
-        addq.l  #1, _vbclock.w          // count number of VBL interrupts
+
 
 #if CONF_WITH_ATARI_VIDEO
 // check for monitor switching and jump to _swv_vec if necessary...
@@ -443,7 +445,7 @@ vbl_end:
 _int_timerc:
         addq.l  #1, _hz_200.w           // increment 200 Hz counter
 #ifdef MACHINE_A2560U
-        move.w  #0x0200,0xb00102        // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
+        move.w  #0x0400,0xb00102        // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
 #endif 
  
         rol.w   _timer_c_sieve          // check for 4th call

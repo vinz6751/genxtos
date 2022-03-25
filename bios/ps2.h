@@ -45,6 +45,13 @@ struct ps2_driver_t
 	void	(*process)(const struct ps2_driver_api_t *this, uint8_t byte);
 };
 
+/* OS callbacks that the driver will call as it does its job */
+struct ps2_os_callbacks_t {
+	void (*on_key_down)(uint8_t scancode);
+	void (*on_key_up)(uint8_t scancode);
+	void (*on_mouse)(const int8_t *packet);
+};
+
 /* This is the interface between the driver and the rest */
 struct ps2_driver_api_t
 {
@@ -53,9 +60,7 @@ struct ps2_driver_api_t
 	uint8_t (*get_data)(void);
 	void*   (*malloc)(size_t size);
 
-	/* OS callbacks that the driver will call as it does its job */
-	void	(*on_key_down)(uint8_t scancode);
-	void	(*on_key_up)(uint8_t scancode);
+	struct ps2_os_callbacks_t os_callbacks;
 
 	struct ps2_driver_t *driver;
 
@@ -69,12 +74,6 @@ struct ps2_api_t
 {
 	/* DONT CHANGE THE ORDER otherwise the irq handler will break */
 	
-	/* Events OS -> PS/2 */
-	/* These are called by the system interrupt handler when a PS/2 device interrupt occurs.
-	 * They are placed at the top of the struct so their offset is easier to compute (0 and 4). */
-	void (*on_device1_irq)(void);
-	void (*on_device2_irq)(void);
-
 	/* --- INPUT parameters (provided by OS) --- */
 	/* Ever increasing counter and its frequency in Hz */
 	volatile uint32_t *counter;
@@ -94,8 +93,7 @@ struct ps2_api_t
 	void (*on_do_events)(void);
 
 	/* Events PS/2 -> OS. Ultimately, calling these are the purpose in life of drivers */
-	void (*on_key_down)(uint8_t scancode);
-	void (*on_key_up)(uint8_t scancode);
+	struct ps2_os_callbacks_t os_callbacks;
 };
 
 extern struct ps2_api_t ps2_config;
@@ -104,7 +102,7 @@ extern struct ps2_api_t ps2_config;
 /* Initialises the PS/2 system (to be called by OS) */
 uint16_t ps2_init(void);
 
-/* To be called by IRQ handlers to handle interrupts */
+/* To be called by IRQ handlers to handle an interrupt */
 void ps2_channel1_irq_handler(void);
 void ps2_channel2_irq_handler(void);
 

@@ -13,6 +13,7 @@
 #define ENABLE_KDEBUG
 
 #include "emutos.h"
+#include "bios.h" /* boot_status */
 #include "cookie.h"
 #include "machine.h"
 #include "has.h"
@@ -604,6 +605,8 @@ void machine_init(void)
 {
 #ifdef MACHINE_A2560U
     a2560u_init();
+    /* There is an early setup of the UART so we can use KDEBUG earlier. */
+    boot_status |= RS232_AVAILABLE;
 #endif
 #if !CONF_WITH_RESET
 /*

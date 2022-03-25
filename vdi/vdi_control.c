@@ -16,6 +16,7 @@
 #include "xbiosbind.h"
 #include "biosext.h"
 #include "asm.h"
+#include "linea.h"
 #include "string.h"
 #include "intmath.h"
 #include "bdosbind.h"
@@ -24,11 +25,6 @@
 #define FIRST_VDI_HANDLE    1
 #define LAST_VDI_HANDLE     (FIRST_VDI_HANDLE+NUM_VDI_HANDLES-1)
 #define VDI_PHYS_HANDLE     FIRST_VDI_HANDLE
-
-/*
- * ptr to current mouse cursor save area, based on v_planes
- */
-MCS *mcs_ptr;
 
 
 /*
@@ -176,20 +172,12 @@ Vwk * get_vwk_by_handle(WORD handle)
 /*
  * update resolution-dependent VDI/lineA variables
  *
- * this function assumes that v_planes, V_REZ_HZ, V_REZ_VT are already set
+ * this function assumes that v_planes, linea_max_x, linea_max_y are already set
  */
-void update_rez_dependent(void)
+void vdi_resolution_changed(void)
 {
-    BYTES_LIN = v_lin_wr = V_REZ_HZ / 8 * v_planes;
-
-#if EXTENDED_PALETTE
-    mcs_ptr = (v_planes <= 4) ? &mouse_cursor_save : &ext_mouse_cursor_save;
-#else
-    mcs_ptr = &mouse_cursor_save;
-#endif
-
-    DEV_TAB[0] = V_REZ_HZ - 1;
-    DEV_TAB[1] = V_REZ_VT - 1;
+    DEV_TAB[0] = linea_max_x;
+    DEV_TAB[1] = linea_max_y;
     get_pixel_size(&DEV_TAB[3],&DEV_TAB[4]);
     DEV_TAB[13] = (v_planes<8) ? (1 << v_planes) : 256;
     DEV_TAB[35] = (v_planes==1) ? 0 : 1;
@@ -460,6 +448,7 @@ void vdi_v_opnwk(Vwk * vwk)
     /*
      * Programs can request a video mode switch by passing the desired
      * mode + 2 in INTIN[0].
+     * Setscreen will call linea
      */
     newrez = INTIN[0] - 2;
     if (
@@ -468,7 +457,7 @@ void vdi_v_opnwk(Vwk * vwk)
         || (newrez == TT_LOW) || (newrez == TT_MEDIUM)
 #endif
        ) {
-        if (newrez != Getrez()) {
+        if (newrez != Getrez()) {            
             Setscreen(0L, 0L, newrez, 0);
         }
     }
@@ -494,7 +483,8 @@ void vdi_v_opnwk(Vwk * vwk)
     }
 
     /* update resolution-dependent values */
-    update_rez_dependent();
+    linea_on_resolution_changed = vdi_resolution_changed;
+    vdi_resolution_changed();
 
     /* initialize the vwk pointer array */
     vwk = &phys_work;

@@ -281,7 +281,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
 			 conout.c conout_atarifb.c \
 			 country.c \
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
-             kprint.c kprintasm.S linea.S lineainit.c lineavars.S machine.c \
+             kprint.c kprintasm.S machine.c \
              mfp.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c serport.c sound.c videl.c vt52.c xhdi.c \
              pmmu030.c 68040_pmmu.S \
@@ -290,7 +290,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              delay.c delayasm.S sd.c memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S \
 			 uart16550.c sn76489.c wm8776.c bq4802ly.c vicky2.c \
-			 ps2.c ps2_keyboard.c ps2_mouse.c \
+			 ps2.c ps2_keyboard.c ps2_mouse_a2560u.c \
 			 a2560u_s.S a2560u.c a2560u_conout_text.c a2560u_conout_bmp.c
 #			 c256genx.c c256genx2.S c256genx_kbd.S \
 
@@ -325,7 +325,12 @@ endif
 vdi_src = vdi_asm.S vdi_bezier.c vdi_col.c vdi_control.c vdi_esc.c \
           vdi_fill.c vdi_gdp.c vdi_input.c vdi_line.c vdi_main.c \
           vdi_marker.c vdi_misc.c vdi_mouse.c vdi_raster.c vdi_text.c \
-          vdi_textblit.c
+          vdi_textblit.c vdi_locator.c \
+		  mform.c \
+		  linea_.S linea.c lineavars.S \
+		  linea_mouse.c linea_mouse_.S \
+		  linea_mouse_atari.c linea_mouse_a2560u.c \
+		  linea_sprite_atari.c
 
 ifeq (1,$(COLDFIRE))
 vdi_src += vdi_tblit_cf.S

@@ -11,13 +11,12 @@
 #ifndef VDIDEFS_H
 #define VDIDEFS_H
 
+#include "lineavars.h"
 #include "fonthdr.h"
 #include "aesext.h"
 #include "vdiext.h"
 
 #define HAVE_BEZIER 0           /* switch on bezier capability - entirely untested */
-
-#define EXTENDED_PALETTE (CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER)
 
 #if CONF_WITH_VIDEL
 # define UDPAT_PLANES   32      /* actually 16, but each plane occupies 2 WORDs */
@@ -241,10 +240,7 @@ extern const UWORD HOLLOW;
 extern WORD SIZ_TAB[];          /* initial ptsout array for open workstation */
 extern WORD INQ_TAB[];          /* extended inquire values */
 
-extern WORD *CONTRL, *INTIN, *PTSIN, *INTOUT, *PTSOUT;
-
 extern WORD LN_MASK, LSTLIN;
-extern WORD TERM_CH;
 
 extern WORD MAP_COL[], REV_MAP_COL[];
 
@@ -256,19 +252,6 @@ extern WORD MFILL;
 extern Vwk *CUR_WORK;           /* pointer to currently-open virtual workstation */
 extern WORD (*SEEDABORT)(void); /* ptr to function called to signal early abort */
 
-/* Mouse specific externals */
-extern WORD GCURX;              /* mouse X position */
-extern WORD GCURY;              /* mouse Y position */
-extern WORD HIDE_CNT;           /* Number of levels the mouse is hidden */
-
-/* Mouse related variables */
-extern WORD     newx;           /* new mouse x&y position */
-extern WORD     newy;           /* new mouse x&y position */
-extern UBYTE    draw_flag;      /* non-zero means draw mouse form on vblank */
-extern UBYTE    mouse_flag;     /* non-zero while mouse cursor is being modified */
-extern UBYTE    cur_ms_stat;    /* current mouse status */
-
-
 BOOL clip_line(Vwk *vwk, Line *line);
 void arb_corner(Rect *rect);
 void arb_line(Line *line);
@@ -276,7 +259,6 @@ void arb_line(Line *line);
 
 /* C Support routines */
 Vwk *get_vwk_by_handle(WORD);
-UWORD *get_start_addr(const WORD x, const WORD y);
 void set_LN_MASK(Vwk *vwk);
 void st_fl_ptr(Vwk *);
 void gdp_justified(Vwk *);

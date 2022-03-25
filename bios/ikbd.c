@@ -78,10 +78,6 @@ static WORD convert_scancode(UBYTE *scancodeptr);
 #define KEY_EMULATE_RIGHT_BUTTON    KEY_HOME
 #endif
 
-#define MOUSE_REL_POS_REPORT    0xf8    /* values for mouse_packet[0] */
-#define RIGHT_BUTTON_DOWN       0x01    /* these values are OR'ed in */
-#define LEFT_BUTTON_DOWN        0x02
-
 /*
  * the following stores the packet that is passed to mousevec();
  * a non-zero value in mouse_packet[0] indicates we are currently

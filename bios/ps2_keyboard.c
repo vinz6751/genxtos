@@ -75,7 +75,7 @@ static const uint8_t scancodeSet1_E0_to_key[128] =
  };
 
 /* Internal state of the driver */
-static struct ps2_keyboard_local_t
+struct ps2_keyboard_local_t
 {
     sm_state_t state;  /* State of the state machine */   
 };
@@ -134,13 +134,13 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
 
     #define check_and_down(expected, pressed) \
         if (scancode == expected) \
-            api->on_key_down(pressed); \
+            api->os_callbacks.on_key_down(pressed); \
         /* On success we're ideal, on failure we swallow the scan code */ \
         STATE = SM_IDLE;
 
     #define check_and_up(expected, released) \
         if (scancode == expected) \
-            api->on_key_up(scancode); \
+            api->os_callbacks.on_key_up(scancode); \
         /* On success we're ideal, on failure we swallow the scan code */ \
         STATE = SM_IDLE;
 
@@ -161,9 +161,9 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
 
                 default:
                     if (IS_BREAK(scancode))
-                        api->on_key_up(scancode & 0x7f);
+                        api->os_callbacks.on_key_up(scancode & 0x7f);
                     else
-                        api->on_key_down(scancode);
+                        api->os_callbacks.on_key_down(scancode);
                     break;
             }
             break;
@@ -184,9 +184,9 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
                         uint8_t translated_code = scancodeSet1_E0_to_key[scancode & 0x7f];
                         if (translated_code != 0) {
                             if (IS_BREAK(scancode))
-                                api->on_key_up(translated_code);
+                                api->os_callbacks.on_key_up(translated_code);
                             else
-                                api->on_key_down(translated_code);
+                                api->os_callbacks.on_key_down(translated_code);
                         }
                         STATE = SM_IDLE;
                     }

@@ -27,6 +27,12 @@
 
 #define HOTSWITCH_MODE (MODE_LSHIFT|MODE_ALT)
 
+/* Mouse protocol (part of) */
+#define MOUSE_REL_POS_REPORT    0xf8    /* values for mouse_packet[0] */
+#define RIGHT_BUTTON_DOWN       0x01    /* these values are OR'ed in */
+#define LEFT_BUTTON_DOWN        0x02
+
+
 extern UBYTE shifty;
 
 /*

@@ -74,8 +74,16 @@ typedef struct __attribute__((__packed__)) {
 #define VICKY_NLUTS           8            /* Number of luts */
 #define VICKY_LUTS            (VICKY+0x2000) /* Color lookup tables, 0x400 bytes each */
 /* Mouse */
-#define MOUSE_POINTER_MEMORY  (VICKY+0x0400)
-#define MOUSE_POINTER_CTRL    (VICKY+0x0C00)
+#define VICKY_MOUSE_MEM         (VICKY+0x0400)
+#define VICKY_MOUSE_CTRL        (VICKY+0x0C00)
+    #define VICKY_MOUSE_ENABLE  1
+    #define VICKY_MOUSE_CHOICE  2
+#define VICKY_MOUSE_SUPPORT   (VICKY+0x0C02)
+#define VICKY_MOUSE_X         (VICKY_MOUSE_SUPPORT)
+#define VICKY_MOUSE_Y         (VICKY_MOUSE_SUPPORT+2)
+#define VICKY_MOUSE_PACKET    (VICKY_MOUSE_SUPPORT+8) /* 3 words (16bits)/ PS/2 mouse packet that VICKY knows how to interpret */
+
+
 /* Text mode */
 #define VICKY_FONT            (VICKY+0x8000)      /* Font memory (-> 0xbff) */
 /* Text memory */
@@ -101,6 +109,7 @@ extern uint32_t vicky_vbl_freq; /* VBL frequency */
 
 void vicky2_init(void);
 void vicky2_text_init(void);
+void vicky2_mouse_init(void);
 void vicky2_set_background_color(uint32_t color);
 void vicky2_set_border_color(uint32_t color);
 void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg);
@@ -112,6 +121,8 @@ void vicky2_set_lut_color(uint16_t lut, uint16_t number, COLOR32 *color);
 void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result);
 void vicky2_show_cursor(void);
 void vicky2_hide_cursor(void);
+void vicky2_show_mouse(void);
+void vicky2_hide_mouse(void);
 
 #endif // MACHINE_A2560U
 

@@ -12,6 +12,13 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+/* The VT-52 module is responsible for console output. This includes:
+ * - Book keeping of text cursor location (automatic advance, wrap,
+ *   scroll, etc.).
+ * - Displaying of characters using the conout module.
+ * - Manage text cursor visibility / blinking.
+ */
+
 #include "emutos.h"
 #include "lineavars.h"
 #include "font.h"

@@ -12,7 +12,7 @@
 
 #include "asmdefs.h"
 
-#define EXTENDED_PALETTE (CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER)
+#define EXTENDED_PALETTE (CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER || defined(MACHINE_A2560U))
 
                 .bss
 
@@ -24,7 +24,7 @@
                 .globl  _CUR_FONT
                 .globl  _cur_ms_stat
                 .globl  _disab_cnt
-                .globl  _draw_flag
+                .globl  _vbl_must_draw_mouse
 
                 .globl  _mouse_cdb
                 .globl  _m_pos_hx
@@ -150,7 +150,7 @@ _cur_ms_stat:   .ds.b   1       // -348 current mouse status
 _disab_cnt:     .ds.w   1       // -346 disable depth count. (>0 => disabled)
 _newx:          .ds.w   1       // -344 new mouse x&y position
 _newy:          .ds.w   1
-_draw_flag:     .ds.b   1       // -340 non-zero means draw mouse form on vblank
+_vbl_must_draw_mouse: .ds.b 1   // -340 (_draw_flag) non-zero means draw mouse form on vblank
 _mouse_flag:    .ds.b   1       // -339 non-zero while mouse cursor is being modified
 
 _sav_cur_x:     .ds.w   1       // -338 save area for cursor cell coords.
@@ -168,6 +168,8 @@ _save_area:     .ds.l   64      // -322 form save area
 /* Timer vectors */
 _tim_addr:      .ds.l   1       // -66  timer interrupt vector
 _tim_chain:     .ds.l   1       // -62  timer interrupt vector save
+
+/* Mouse vectors */
 _user_but:      .ds.l   1       // -58  user button vector
 _user_cur:      .ds.l   1       // -54  user cursor vector
 _user_mot:      .ds.l   1       // -50  user motion vector
@@ -261,6 +263,9 @@ _BYTES_LIN:     .ds.w   1       // -2   byte per screen line
                 .globl  _COPYTRAN
                 .globl  _SEEDABORT
 
+                .globl _linea_max_x
+                .globl _linea_max_y
+                
 // ==== Global GSX Variables =================================================
 
 line_a_vars:                            // This is the base line-a pointer
@@ -355,3 +360,7 @@ _ext_save_stat: .ds.b   1           // 1636 save status
                 .ds.b   1
 _ext_save_area: .ds.l   128         // 1638 form save area
 #endif
+
+// The following are extensions
+_linea_max_x:   .ds.w   1       // Max screen X coordinate, ie _V_REZ_HZ - 1
+_linea_max_y:   .ds.w   1       // Max screen Y coordinate, ie _V_REZ_VT - 1
