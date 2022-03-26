@@ -529,8 +529,9 @@ uint32_t a2560u_getdt(void)
     uint16_t year;    
 
     bq4802ly_get_datetime(&day, &month, &year, &hour, &minute, &second);
+    a2560u_debug("RTC time= %02d/%02d/%04d %02d:%02d:%02d", day, month, year, hour, minute, second);
     
-    return MAKE_ULONG((year << 9) + (month << 5) + day, (hour << 11) + (minute << 5) + second);
+    return MAKE_ULONG(((year-1980) << 9) | (month << 5) | day, (hour << 11) | (minute << 5) | (second>>1)/*seconds are of units of 2*/);
 }
 
 
