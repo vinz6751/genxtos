@@ -21,7 +21,7 @@ default: $(TARGET)
 all: default
 
 VPATH = ../util
-OBJECTS = cmdasm.o cmdmain.o cmdedit.o cmdexec.o cmdint.o cmdparse.o cmdutil.o \
+OBJECTS = cmdasm.o cmdmain.o cmdedit.o cmdexec.o cmdint.o cmdparse.o cmdutil.o cmdtest.S\
           version.o doprintf.o
 HEADERS = cmd.h
 
