@@ -365,7 +365,7 @@ desk_src = deskstart.S deskmain.c gembind.c deskact.c deskapp.c deskdir.c \
 # source code in cli/ for EmuTOS console EmuCON
 #
 
-cli_src = cmdasm.S cmdmain.c cmdedit.c cmdexec.c cmdint.c cmdparse.c cmdutil.c
+cli_src = cmdasm.S cmdmain.c cmdedit.c cmdexec.c cmdint.c cmdparse.c cmdutil.c cmdtest.S
 
 #
 # source code to put at the end of the ROM
