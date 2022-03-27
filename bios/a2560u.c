@@ -543,10 +543,10 @@ void a2560u_setdt(uint32_t datetime)
     bq4802ly_set_datetime(
         (date & 0b0000000000011111),       /* day */
         (date & 0b0000000111100000) >> 5,  /* month */
-        (date & 0b1111111000000000) >> 9,  /* year */                
+        (date & 0b1111111000000000) >> 9 + 1980,  /* year */
         (time & 0b1111100000000000) >> 11, /* hour */
         (time & 0b0000011111100000) >> 5,  /* minute */
-        (time & 0b0000000000011111));      /* second */
+        (time & 0b0000000000011111) << 1); /* second are divided by 2 in TOS*/
 }
 
 
