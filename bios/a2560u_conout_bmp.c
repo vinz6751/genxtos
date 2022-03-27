@@ -70,31 +70,63 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
         bg = v_col_bg;
     }
 
-    int i,j; /* Source bitshift */
-    UBYTE bsrc;
-    UBYTE *c = dst.pxaddr;
+    int j; /* line of the cell */
+    UBYTE bsrc;    
+    UBYTE *d = dst.pxaddr;
+    /* precompute so we don't have to do that in the loop */
+    UWORD v_lin_wr_advance = v_lin_wr - 8;
+    UWORD bgbg;
+
+    /* We take the bet at least one line will be blank */
+    ((UBYTE*)&bgbg)[0] = bg;
+    ((UBYTE*)&bgbg)[1] = bg;
 
     for (j = 0; j < v_cel_ht; j++)
     {
-        bsrc = *(src.pxaddr);
+        if ((bsrc = *(src.pxaddr))) {
+        
+#if 0
+        int i;
         for (i = 0; i < 8/*font width*/; i++)
         {                
             dst.pxaddr[i] = bsrc & 0x80 ? fg : bg;
             bsrc <<= 1;
         }
-        dst.pxaddr += v_lin_wr;
+#elif 1
+        /* Faster version, for fixed 8-pixel font */
+        *d++ = bsrc & 0x80 ? fg : bg;
+        *d++ = bsrc & 0x40 ? fg : bg;
+        *d++ = bsrc & 0x20 ? fg : bg;
+        *d++ = bsrc & 0x10 ? fg : bg;
+        *d++ = bsrc & 0x08 ? fg : bg;
+        *d++ = bsrc & 0x04 ? fg : bg;
+        *d++ = bsrc & 0x02 ? fg : bg;
+        *d++ = bsrc & 0x01 ? fg : bg;
+        d += v_lin_wr_advance;
+#endif
+        }
+        else {
+            UWORD *e = (UWORD*)d;
+            /* Optimise for white space */
+            *e++ = bgbg;
+            *e++ = bgbg;            
+            *e++ = bgbg;
+            *e++ = bgbg;
+            d += v_lin_wr;
+        }
+
         src.pxaddr += v_fnt_wr;        
     }
 
 #ifdef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_mark_cell_dirty(c);
+    a2560u_mark_cell_dirty(dst.pxaddr);
 #endif
 }
 
 
 static void neg_cell(CHAR_ADDR cell)
 {
-    const int inc = v_lin_wr - 4 * sizeof(UWORD);
+    const int inc = v_lin_wr - 3 * sizeof(UWORD);
     int i;
     UBYTE *c = cell.pxaddr;
 
