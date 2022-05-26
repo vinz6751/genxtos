@@ -117,12 +117,15 @@ void vicky2_set_video_mode(uint16_t mode); /* video mode number */
 void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result);
 void vicky2_set_bitmap0_address(const uint8_t *address); /* address is relative to VRAM */
 void vicky2_set_mouse_visible(uint16_t visible);
-void vicky2_set_lut_color(uint16_t lut, uint16_t number, COLOR32 *color);
+void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color);
 void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result);
 void vicky2_show_cursor(void);
 void vicky2_hide_cursor(void);
 void vicky2_show_mouse(void);
 void vicky2_hide_mouse(void);
+
+// Utility
+uint32_t convert_atari2vicky_color(uint16_t orgb);
 
 #endif // MACHINE_A2560U
 

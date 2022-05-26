@@ -201,8 +201,6 @@ void conout_move_cursor(int x, int y)
             /* set new coordinates and paint there */
             v_cur_ad = cell_addr(x, y);
             con_paint_cursor();
-
-            v_stat_0 |= M_CVIS;                 /* end of critical section. */
         }
     }
     else {
@@ -266,7 +264,6 @@ void conout_ascii_out(int ch)
     /* if visible */
     if (visible) {
         con_paint_cursor();             /* display cursor. */
-        v_stat_0 |= M_CVIS;             /* end of critical section. */
     }
 }
 
@@ -335,6 +332,7 @@ void con_paint_cursor(void)
     conout->con_paint_cursor();
 
     v_cur_tim = v_period; /* reset the timer for blinking */
+    v_stat_0 |= M_CVIS;   /* set visibility bit */
 }
 
 

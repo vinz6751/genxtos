@@ -87,7 +87,6 @@ const FOENIX_VIDEO_MODE foenix_video_modes[] = {
     { VICKY_MODE_640x400_70, 640, 400, 256, 70 }
 };
 
-static void convert_color(uint16_t orgb, COLOR32 *dst);
 
 uint32_t vicky_vbl_freq; /* VBL frequency */
 
@@ -95,7 +94,6 @@ uint32_t vicky_vbl_freq; /* VBL frequency */
 void vicky2_init(void)
 {    
     int i;
-    COLOR32 color;
     FOENIX_VIDEO_MODE mode;
 
     /* Enable video and bitmap, 640x480 */
@@ -124,10 +122,7 @@ void vicky2_init(void)
 
     /* Initialise the LUT0 which we use for the screen */    
     for (i = 0; i < 256; i++)
-    {        
-        convert_color(tt_dflt_palette[i],&color);
-        vicky2_set_lut_color(0, i, &color);         
-    }
+        vicky2_set_lut_color(0, i, convert_atari2vicky_color(tt_dflt_palette[i]));
 
     memset((void*)VRAM_Bank0,0,(uint32_t)mode.w * mode.h);
 }
@@ -144,12 +139,14 @@ void vicky2_set_border_color(uint32_t color)
     R32(VICKY_A_BORDER_COLOR) = color;    
 }
 
-void vicky2_set_lut_color(uint16_t lut, uint16_t number, COLOR32 *color)
+void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color)
 {
-    volatile uint8_t * c = (uint8_t*)(0xB42000 + lut*0x400 + number*4);        
-    c[0] = color->blue; // B
-    c[1] = color->green; // G
-    c[2] = color->red; // R
+    volatile uint8_t * c = (uint8_t*)(0xB42000 + lut*0x400 + number*4);
+    COLOR32 *clr = (COLOR32*)&color;
+    c[0] = clr->blue; // B
+    c[1] = clr->green; // G
+    c[2] = clr->red; // R
+
     c[3] = 0xff; // A
 }
 
@@ -203,18 +200,22 @@ void vicky2_set_bitmap0_address(const uint8_t *address)
     R32(VICKY_A_BMP_FB) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */  
 }
 
-/* For quick 4bit to 8bit scaling */
-const uint8_t c4to8bits[] = {
-    0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-    0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
 /* Convert an Atari 0x0RGB (4 bytes each) colour to FOENIX format */
-static void convert_color(uint16_t orgb, COLOR32 *dst)
+uint32_t convert_atari2vicky_color(uint16_t orgb)
 {
-    dst->alpha = 0xff;
-    dst->red = c4to8bits[(orgb & 0xf00) >> 8];
-    dst->green = c4to8bits[(orgb & 0x0f0) >> 4];
-    dst->blue = c4to8bits[(orgb & 0x00f)];
+    COLOR32 dst;
+
+    /* For quick 4bit to 8bit scaling */
+    const uint8_t c4to8bits[] = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+    dst.alpha = 0xff;
+    dst.red = c4to8bits[(orgb & 0xf00) >> 8];
+    dst.green = c4to8bits[(orgb & 0x0f0) >> 4];
+    dst.blue = c4to8bits[(orgb & 0x00f)];
+    return *((uint32_t*)&dst);
 }
 
 

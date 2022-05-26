@@ -52,9 +52,9 @@ void uart16550_init(UART16550 *uart);
 void uart16550_set_bps(UART16550 *uart, uint16_t bps_code);
 void uart16550_set_line(UART16550 *uart, uint8_t flags);
 void uart16550_put(UART16550 *uart, const uint8_t *bytes, uint32_t count);
-uint8_t uart16550_get(const UART16550 *uart);
+uint8_t uart16550_get_nowait(const UART16550 *uart); // Make sure there's something to read otherwize you'll get garbage
 bool uart16550_can_get(const UART16550 *uart);
 bool uart16550_can_put(const UART16550 *uart);
-
+void uart16550_rx_irq_enable(UART16550 *uart, bool);
 
 #endif

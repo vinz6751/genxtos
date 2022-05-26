@@ -94,6 +94,7 @@ LONG kpgmld(PD *p, FH h, PGMHDR01 *hd)
     return r;
 }
 
+extern long os_header;
 
 /*
  * pgmld01 - oldest known gemdos load format
@@ -221,7 +222,12 @@ static LONG pgmld01(FH h, PD *pdptr, PGMHDR01 *hd)
     }
     else
     {
-        flen = (long)p->p_hitpa - (long)pi->pi_bbase;   /* clear the whole heap */
+        // FIXME: Dirty hack, when we directly upload the OS in RAM for debug purposes,
+        // we don't want it to be overwritten accidentaly when clearing the BSS.
+        // This should be improved somehow so we don't need this. We should see how emutos.prg
+        // is produce and how it's located in RAM and somehow do the same.
+        long maxtop = (long)(&os_header) < (long)p->p_hitpa ? (long)&os_header : (long)p->p_hitpa;
+        flen = maxtop - (long)pi->pi_bbase;   /* clear the whole heap */
     }
     if (flen > 0)
         bzero(pi->pi_bbase, flen);

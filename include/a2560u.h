@@ -126,6 +126,7 @@ extern volatile struct a2560u_dirty_cells_t a2560u_dirty_cells;
 /* Serial port */
 uint32_t a2560u_bcostat1(void);
 void a2560u_bconout1(uint8_t byte);
+void a2560u_rs232_init(void);
 
 /* Timing stuff */
 #define HZ200_TIMER_NUMBER 2

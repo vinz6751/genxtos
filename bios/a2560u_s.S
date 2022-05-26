@@ -7,66 +7,7 @@
 
 .EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
 
-| 
-| VICKY -----------------------------------------------------------------------
-.EQU VICKYII,               0xB40000 | VICKYII base address
-.EQU VICKY,                 VICKYII
-.EQU VICKY_CTRL,            VICKY
-    .EQU VICKY_CTRL_DISABLE_RENDER, 0x80
-
-| Channel A (first screen)
-.EQU VICKY_A_BORDER_CTRL_L, VICKY+0x0004 | Border control
-.EQU VICKY_A_BORDER_COLOR,  VICKY+0x0008
-.EQU VICKY_A_BG_COLOR,      VICKY+0x000C | Background control
-.EQU VICKY_A_BMP_FG_CTRL,   VICKY+0x0100 | Bitmap layer 0 control
-.EQU VICKY_A_BMP_FB,        VICKY+0x0104 | Framebuffer address relative to VRAM
-
-.EQU VICKY_LUT,             VICKY+0x2000 | Color lookup tables, 0x400 bytes each
-
-| Mouse
-.EQU MOUSE_POINTER_MEMORY,  VICKY+0x0400
-.EQU MOUSE_POINTER_CTRL,    VICKY+0x0C00
-
-| Video memory sections
-.EQU VRAM_Bank0,             0x00C00000 | 2MB (until 0xDFFFFF)
-
-
-| GAVIN -----------------------------------------------------------------------
-.EQU GAVIN,             0xB00000
-    .EQU RTC,               (GAVIN+0x80)
-        .EQU RTC_FLAGS,     (RTC+0x26)
-| Interrupts
-.EQU IRQ_PENDING_GRP0,  GAVIN+0x100
-    .EQU VICKY_INT_VBL, 0x1
-    .EQU VICKY_INT_HBL, 0x2
-.EQU IRQ_PENDING_GRP1,  GAVIN+0x102
-    .EQU PS2KEYB_INT,   0x0001
-    .EQU PS2MOUSE_INT,  0x0004
-    .EQU COM1_INT,      0x0008
-    .EQU TIMER0_INT,    0x0100
-    .EQU RTC_INT,       0x8000
-.EQU IRQ_PENDING_GRP2,  GAVIN+0x104
-.EQU IRQ_POL_GRP0,      GAVIN+0x108
-.EQU IRQ_POL_GRP1,      GAVIN+0x10A
-.EQU IRQ_POL_GRP2,      GAVIN+0x10C
-.EQU IRQ_EDGE_GRP0, 	GAVIN+0x110
-.EQU IRQ_EDGE_GRP1, 	GAVIN+0x112
-.EQU IRQ_EDGE_GRP2, 	GAVIN+0x114
-.EQU IRQ_MASK_GRP0, 	GAVIN+0x118
-.EQU IRQ_MASK_GRP1, 	GAVIN+0x11A
-.EQU IRQ_MASK_GRP2, 	GAVIN+0x11C
-.EQU TIMER_CTRL0,       GAVIN+0x200
-.EQU UART0,             GAVIN+0x28F8
-
-| BEATRIX ---------------------------------------------------------------------
-.EQU BEATRIX,           0xB20000
-.EQU PSG_PORT,          BEATRIX+0x130  | Control register for the SN76489
-.EQU OPL3_PORT,         BEATRIX+0x200  | Access port for the OPL3
-.EQU OPM_INT_BASE,      BEATRIX+0xC00  | Internal OPM base address
-.EQU OPN2_INT_BASE,     BEATRIX+0xA00  | Internal OPN2 base address
-.EQU CODEC,             BEATRIX+0xE00  | Control register for the CODEC
-
-
+#include "foenix.i"
 
 
 | Exports ---------------------------------------------------------------------
@@ -75,6 +16,7 @@
     .GLOBAL _a2560u_irq_bq4802ly
     .GLOBAL _a2560u_irq_ps2kbd
     .GLOBAL _a2560u_irq_ps2mouse
+    .GLOBAL _a2560u_irq_com1
     .GLOBAL _a2560u_run_calibration
     .GLOBAL _a2560u_irq_calibration
     .GLOBAL a2560u_copy_fb_to_vram
@@ -91,7 +33,7 @@
     .GLOBAL _a2560u_fb_size
     .GLOBAL _a2560u_vram_fb
     .GLOBAL _v_bas_ad
-
+    .GLOBAL _push_serial_iorec
         
 a2560u_memconf: // Called from memory.S to detect memory setup
     move.l  #0x200000,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
@@ -144,6 +86,47 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     jbsr    _ps2_channel2_irq_handler
     movem.l (sp)+,d0-d7/a0-a6
     rte
+
+
+_a2560u_irq_com1: // UART COM1 interrupt handler    
+    move.w  #COM1_INT,IRQ_PENDING_GRP1  // Acknowledge GAVIN interrupt  
+
+    //move.w  #16,0xb00000 // BEEP
+    movem.l d0-d1/a0-a1,-(sp)
+#if 1
+    move.b  UART0+UART16750_ISR,d0
+   
+    move.w  UART0,-(sp)
+    jbsr    _push_serial_iorec
+    addq.l  #2,sp
+
+    movem.l (sp)+,d0-d1/a0-a1
+    //move.w  #0,0xb00000     // Stop BEEP
+    rte    
+#endif
+com1_do_irq:
+    move.b  UART0+UART16750_ISR,d1 // Interrupt pending ? (this SHOULD acknowledge the current/highest UART interrupt but it doesn't...)
+    btst    #0,d1
+    bne.s   com1_done       // Spurious interrupt or no more interrupt to handle
+    andi.b  #0b00001110,d1  // Only keep interrupt level
+    cmpi.b  #6,d1           // Received Line Status Register interrupt ?
+    beq.s   com1_lsr
+    // Don't know how to handle that interrupt type, so ignore it
+#if 0 // Because the acknowledgement of interrupts doesn't need to work we can't do that because it goes into endless loop
+    bra.s   com1_do_irq
+#endif
+
+com1_done:
+    movem.l (sp)+,d0-d1/a0-a1
+    move.w  #0,0xb00000     // Stop BEEP
+    rte
+
+com1_lsr: // A byte is received
+    move.b  UART0,d0    // Read the byte
+    move.w  d0,-(sp)    // Don't try use .b, it won't work !
+    jbsr    _push_serial_iorec
+    addq.l  #2,sp
+    bra.s   com1_do_irq
 
 
 _a2560u_run_calibration: // Calibration loop

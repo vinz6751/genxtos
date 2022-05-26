@@ -380,7 +380,7 @@ static void cursor_up(void)
  */
 static void cursor_down_impl(void)
 {
-    if ( v_cur_cy != v_cel_my)
+    if (v_cur_cy != v_cel_my)
         conout_move_cursor(v_cur_cx, v_cur_cy + 1);
 }
 
@@ -619,12 +619,7 @@ static void erase_from_home(void)
  */
 static void do_cnt_esce(void)
 {
-#if CONF_WITH_A2560U_TEXT_MODE
-    vicky2_show_cursor();
-#else
     con_paint_cursor();
-#endif    
-    v_stat_0 |= M_CVIS;                     /* set visibility bit */
 }
 
 
@@ -844,9 +839,6 @@ static void ascii_lf(void)
  */
 void blink(void)
 {
-#if CONF_WITH_A2560U_TEXT_MODE
-    /* VICKY is in charge of blinking the cursor */
-#else
     /* test visibility/semaphore bit */
     if (!(v_stat_0 & M_CVIS) )
         return;    /* if invisible or blocked, return */
@@ -866,9 +858,8 @@ void blink(void)
         con_unpaint_cursor();
     }
     else {
-        con_paint_cursor();        
+        con_paint_cursor();
     }
-#endif    
 }
 
 

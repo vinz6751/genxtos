@@ -182,7 +182,7 @@ static LONG get_iorecbuf(IOREC *in)
 
     /* disable interrupts */
     old_sr = set_sr(0x2700);
-
+    
     in->head++;
     if (in->head >= in->size) {
         in->head = 0;
@@ -191,7 +191,7 @@ static LONG get_iorecbuf(IOREC *in)
 
     /* restore interrupts */
     set_sr(old_sr);
-
+    
     return value;
 }
 
@@ -919,6 +919,10 @@ void init_serport(void)
 # if !RS232_DEBUG_PRINT
     mfpint(MFP_TBE,(LONG)mfp_rs232_tx_interrupt);
 # endif
+#endif
+
+#ifdef MACHINE_A2560U
+    a2560u_rs232_init();
 #endif
 
 #ifdef __mcoldfire__

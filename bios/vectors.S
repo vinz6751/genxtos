@@ -12,6 +12,10 @@
 #include "asmdefs.h"
 #include "panicasm.i"
 
+#ifdef MACHINE_A2560U
+#include "foenix.i"
+#endif
+
 // ==== Definitions ==========================================================
 
         .globl  _init_exc_vec
@@ -332,6 +336,33 @@ _int_vbl:
         jbsr    a2560u_copy_fb_to_vram
 #endif
 
+#if defined(MACHINE_A2560U) && 0
+        // Support of Setpalette
+        .globl _convert_atari2vicky_color
+        .globl _vicky2_set_lut_color
+        move.l  _colorptr.w,d0
+        jeq     scrnpt
+        // Load new color palette
+        lea     _colorptr.w,a3
+        move.l  d0,VICKY_A_BG_COLOR     // Color 0 in LUT is "transparent" so has no effect
+        moveq   #0,d3
+palcpy: move.w  (a3)+,-(sp)             // First, convert Atari 4 bit to 8 bit Foenix color spec
+        jbsr    _convert_atari2vicky_color
+        move.l  d0,-(sp)                // VICKY color
+        move.w  d3,-(sp)                // Color number
+        move.w  #0,-(sp)                // LUT number, avoid RMW
+        jbsr    _vicky2_set_lut_color
+        addq.w  #8,sp
+        addq.w  #1,d3
+        cmpi.w  #16,d3                  // We only copy the first 16 color entries. TT/Falcon-specific progs are rare enough.
+        bne.s   palcpy;
+
+        // Support of set new video address at VBL (_screenpt variable)
+scrnpt: move.l  _screenpt.w,d0
+        jeq     vbl_no_screenpt
+        move.l  d0,_v_bas_ad.w        
+#endif
+
 #if CONF_WITH_ATARI_VIDEO
 // the contents of colorptr indicate the palette processing required; since
 // the source address must be on a word boundary, we use bit 0 as a flag:
@@ -389,8 +420,8 @@ st_shifter:
         move.b  d0,0xffff8203.w
         swap    d0
         move.b  d0,0xffff8201.w
-vbl_no_screenpt:
 #endif /* CONF_WITH_ATARI_VIDEO */
+vbl_no_screenpt:
 
 #if CONF_WITH_FDC
         // flopvbl

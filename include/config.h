@@ -632,6 +632,8 @@
  * Defaults for the A2560U from Foenix Retro Systems
  */
 #ifdef MACHINE_A2560U
+#define MACHINE_A2560U_DEBUG 1
+
 # ifndef CONF_ATARI_HARDWARE
 #  define CONF_ATARI_HARDWARE 0
 # endif
@@ -644,12 +646,11 @@
 # ifndef CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF
 #  define CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF 0
 # endif
-# ifdef WITH_AES
-#  undef WITH_AES
-# endif
+# ifndef WITH_AES
 # define WITH_AES 0 /* Not supported yet */
+# endif
 # ifndef WITH_CLI
-#  define WITH_CLI 1 /* Doesn't work yet but we need to startup something... */
+#  define WITH_CLI 1
 # endif
 # ifndef CONF_WITH_SN76489
 #  define CONF_WITH_SN76489 1
@@ -668,6 +669,24 @@
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
+/* Use VICKY's text mode if possible rather than a bitmap screen buffer when using 8 pixel-heigh font.
+ * No graphics possible. */
+#define CONF_WITH_A2560U_TEXT_MODE 1 
+/* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
+#define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 1 
+/* Enforce sanity */
+#if 0
+#if CONF_WITH_A2560U_TEXT_MODE
+   /* No graphics possible, we can't use text mode and bitmap at the same time without using overlay,
+    * but then no inverse video is possible, and we can't use text + VDI at the same. Endless troubles. */
+   #ifdef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+   #  undef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+   #endif
+   #define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
+   /* VICKY II only supports 8x8 font in text mode */
+   #define CONF_WITH_FORCE_8x8_FONT 0
+#endif
+#endif
 # ifndef CONF_WITH_FORCE_8x8_FONT
 #  define CONF_WITH_FORCE_8x8_FONT 1
 # endif
@@ -678,10 +697,11 @@
 #  undef USE_STOP_INSN_TO_FREE_HOST_CPU
 #  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
 # endif
-#define CONF_WITH_A2560U_TEXT_MODE 1          /* Use VICKY's text mode if possible rather than a bitmap screen buffer */
-#define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 1 /* Use shadow framebuffer for rendering 8x16 */
-#define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
-#define RS232_DEBUG_PRINT 1
+
+#ifdef MACHINE_A2560U_DEBUG
+# define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
+# define RS232_DEBUG_PRINT 1
+#endif
 #endif
 
 /*
