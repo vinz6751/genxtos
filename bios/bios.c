@@ -650,7 +650,7 @@ static void run_auto_program(const char* filename)
     strcat(path, filename);
 
     KDEBUG(("Loading %s ...\n", path));
-    Pexec(PE_LOADGO, path, "", NULL);
+    Pexec(PE_LOADGO, path, "", *((char**)0x4be)/*_the_env*/);
     KDEBUG(("[OK]\n"));
 }
 
