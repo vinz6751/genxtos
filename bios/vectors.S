@@ -329,7 +329,9 @@ _int_vbl:
         jsr     _detect_monitor_change
 #endif
 
+#if !defined(MACHINE_A2560U) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
         jsr     _blink                  // blink cursor
+#endif
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
         .GLOBAL a2560u_copy_fb_to_vram
