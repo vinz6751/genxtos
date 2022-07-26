@@ -86,7 +86,7 @@ static void cursor_moved(void)
 
 static void blank_out(int topx, int topy, int botx, int boty)
 {
-    UWORD next_line;    
+    UWORD next_line;
     int nrows,ncolumns;
     int row,column;
     uint8_t *line;
@@ -141,7 +141,7 @@ static void scroll_down(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD st
 static void paint_cursor(void)
 {
     /* VICKY is in charge */
-    vicky2_show_cursor();        
+    vicky2_show_cursor();
 }
 
 

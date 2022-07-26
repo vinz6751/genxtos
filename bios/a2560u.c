@@ -10,7 +10,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#define ENABLE_KDEBUG
+//#define ENABLE_KDEBUG
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -356,7 +356,7 @@ void a2560u_timer_enable(uint16_t timer, bool enable)
 void a2560u_debug(const char* __restrict__ s, ...)
 {
 #ifdef ENABLE_KDEBUG
-    char msg[80];    
+    char msg[80];
     va_list ap;
     va_start(ap, s);
     sprintf(msg,s,ap);
@@ -369,7 +369,7 @@ void a2560u_debug(const char* __restrict__ s, ...)
 void a2560u_debugnl(const char* __restrict__ s, ...)
 {
 #ifdef ENABLE_KDEBUG
-    char msg[80];    
+    char msg[80];
     va_list ap;
     va_start(ap, s);
     sprintf(msg,s,ap);
