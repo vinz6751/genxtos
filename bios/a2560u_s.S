@@ -88,46 +88,26 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     rte
 
 
-_a2560u_irq_com1: // UART COM1 interrupt handler    
-    move.w  #COM1_INT,IRQ_PENDING_GRP1  // Acknowledge GAVIN interrupt  
-
-    //move.w  #16,0xb00000 // BEEP
-    movem.l d0-d1/a0-a1,-(sp)
-#if 1
-    move.b  UART0+UART16750_ISR,d0
-   
-    move.w  UART0,-(sp)
-    jbsr    _push_serial_iorec
-    addq.l  #2,sp
-
-    movem.l (sp)+,d0-d1/a0-a1
-    //move.w  #0,0xb00000     // Stop BEEP
-    rte    
-#endif
-com1_do_irq:
-    move.b  UART0+UART16750_ISR,d1 // Interrupt pending ? (this SHOULD acknowledge the current/highest UART interrupt but it doesn't...)
+_a2560u_irq_com1: // UART COM1 interrupt handler
+    // This is not completely working as it should because it seems the interrupts don't get acknowledged correctly
+    // when we read the Interrupt Status Register (UART0+UART16750_ISR). As a result we can't acknowledge the
+    // interrupts so we always get the highest priority one masking the others.
+    // So instead of checking interrupts we examine the Line Status Register to find out the cause of the interrupt.
+    movem.l d0-d1/a0-a2,-(sp)
+com1_do:
+    move.w  #COM1_INT,IRQ_PENDING_GRP1  // Acknowledge GAVIN interrupt
+    move.b  UART0+UART16750_LSR,d1 // That "should" acknowledge the interrupt (but doesn't)
     btst    #0,d1
-    bne.s   com1_done       // Spurious interrupt or no more interrupt to handle
-    andi.b  #0b00001110,d1  // Only keep interrupt level
-    cmpi.b  #6,d1           // Received Line Status Register interrupt ?
-    beq.s   com1_lsr
-    // Don't know how to handle that interrupt type, so ignore it
-#if 0 // Because the acknowledgement of interrupts doesn't need to work we can't do that because it goes into endless loop
-    bra.s   com1_do_irq
-#endif
-
-com1_done:
-    movem.l (sp)+,d0-d1/a0-a1
-    move.w  #0,0xb00000     // Stop BEEP
-    rte
-
-com1_lsr: // A byte is received
-    move.b  UART0,d0    // Read the byte
-    move.w  d0,-(sp)    // Don't try use .b, it won't work !
+    beq.s   com1_done // No data received
+    // Data received
+    move.b  UART0,d0
+    move.w  d0,-(sp)
     jbsr    _push_serial_iorec
     addq.l  #2,sp
-    bra.s   com1_do_irq
-
+    bra.s   com1_do
+com1_done:
+    movem.l (sp)+,d0-d1/a0-a2
+    rte
 
 _a2560u_run_calibration: // Calibration loop
     // We should ideally be using a2560u_timer_enable in this function but we don't because we
@@ -160,7 +140,7 @@ _a2560u_irq_calibration: // Timer 0 handler used for calibration loop, equivalen
 a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     .GLOBAL _a2560u_dirty_cells
     .GLOBAL _v_lin_wr
-    .GLOBAL _v_cel_ht    
+    .GLOBAL _v_cel_ht
 
 // Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
 // If it's not enough the dirty cells array may be too small and we loose data. If it's too high, we may spend

@@ -50,7 +50,8 @@
 .EQU TIMER_CTRL0,       GAVIN+0x200
 .EQU UART0,             GAVIN+0x28F8
 
-.EQU UART16750_ISR,     2 | Interrupt service register
+.EQU UART16750_ISR,     2 | Interrupt status register
+.EQU UART16750_LSR,     5 | Line status register
 
 | BEATRIX ---------------------------------------------------------------------
 .EQU BEATRIX,           0xB20000

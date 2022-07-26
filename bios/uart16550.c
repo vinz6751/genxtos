@@ -48,8 +48,8 @@ void uart16550_init(UART16550 *uart)
     uart16550_set_bps(uart, UART16550_19200BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
     
-    uart[FCR] = 0b00100111; //0b00000110; // No FIFO, reset FIFOs. See 16C750B doc
-    // 0xC1; /* 16550: Clear FIFOs, one byte buffer */
+    //uart[FCR] = 0b00100111; //0b00000110; // No FIFO, reset FIFOs. See 16C750B doc
+    uart[FCR] = 0xC1; /* 16550: Clear FIFOs, one byte buffer */
     
     // Don't enable interrupts by default
     R8(uart)[IER] = 0;
