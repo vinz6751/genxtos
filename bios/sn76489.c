@@ -1,7 +1,7 @@
 /*
  * SN76489 - Functions for the SN76489 Programmable Sound Generator
  *
- * Copyright (C) 2013-2021 The EmuTOS development team
+ * Copyright (C) 2013-2022 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -30,7 +30,7 @@ void sn76489_mute_all(void) {
 
     /* Set attenuation on all voices to full */
     for (voice = 0; voice < 3; voice++)
-        sn76489_attenuation(voice, 15);    
+        sn76489_attenuation(voice, 15);
 }
 
 /*

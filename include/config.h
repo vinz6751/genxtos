@@ -673,7 +673,7 @@
  * No graphics possible. */
 #define CONF_WITH_A2560U_TEXT_MODE 1 
 /* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
-#define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 1 
+#define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
 /* Enforce sanity */
 #if 0
 #if CONF_WITH_A2560U_TEXT_MODE

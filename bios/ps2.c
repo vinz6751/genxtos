@@ -18,8 +18,8 @@
 #include "emutos.h"
 #include "ps2.h"
 
-#define DEBUG 0
-#if DEBUG
+//#define ENABLE_KDEBUG
+#ifdef ENABLE_KDEBUG
 	 void a2560u_debug(const char *s,...);
 #else
 	#define a2560u_debug(a,...)
@@ -75,7 +75,7 @@ enum ps2_target
 
 /* Levels of safety checks */
 #define ENABLE_DEVICES_RESET_CHECKS    1 /* If you have problems with reseting devices, you can ignore it */
-#define ENABLE_DEVICE_IDENTIFICATION   1 /* if you have problems with identifying devices you can make assumptions */
+#define ENABLE_DEVICE_IDENTIFICATION   0 /* if you have problems with identifying devices you can make assumptions */
 #define ENABLE_SELF_TEST		   	   1 /* Consider the outcome of self tests */
 #define RESEND_CONFIG_AFTER_SELFTEST   1 /* OS wiki says that on some keyboard, self test can reset config */
 #define FORCE_SELF_TEST_SUCCESS		   1 /* Force the self test results to appear successful */
@@ -238,7 +238,7 @@ static bool identify_device(struct ps2_device_t *dev)
 	if (!get_data())
 	{
 		a2560u_debug("Timeout when getting response to DEVCMD_GET_ID from  device %d", dev->id);
-		return false;		
+		return false;
 	}
 
 	if (L.in_data != ACK)
@@ -479,7 +479,7 @@ static bool reset_device(struct ps2_device_t *dev)
 			if (L.in_data == 0xaa)
 			{
 				dev->status |= STAT_RESET_OK;
-				a2560u_debug("Device %d reset successfull", dev->id);
+				a2560u_debug("Device %d reset successful", dev->id);
 				return SUCCESS;
 			}
 			else
@@ -511,10 +511,11 @@ static bool enable_scanning(void)
 		{
 			L.status |= STAT_DEV1_ENABLED;
 			get_data(); /* Flush */
-			a2560u_debug("Device 0 scanning ENABLED %02x", L.in_data);
+			a2560u_debug("Device 0 responded to DEVCMD_SCAN_ON with %02x", L.in_data);
 		}
 	}
-	else a2560u_debug("Device 0 no driver attached");
+	else
+		a2560u_debug("Device 0 no driver attached");
 
 	if (L.dev2.status & STAT_ATTACHED)
 	{
@@ -540,7 +541,13 @@ static void identify_devices(void)
 {
 #if ENABLE_DEVICE_IDENTIFICATION
 	/* Identify connected devices */
-	identify_device(&L.dev1);
+	if (!identify_device(&L.dev1))
+	{
+		a2560u_debug("Assume device 0 is keyboard with set 1 translation");
+		L.dev1.type[0] = 0xAB;
+		L.dev1.type[1] = 0x41;
+		L.dev1.status |= STAT_IDENTIFIED;
+	}
 	identify_device(&L.dev2);
 #else
 	/* Checks are disabled, we could be getting rubbish. Assume keyboard for device 1 */
