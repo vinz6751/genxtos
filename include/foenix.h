@@ -145,7 +145,12 @@
 #define TIMER_CTRL_IRQ      0x80L /* Set this to enable interrupts */
 
 /* BEATRIX */
-#define SN76489_PORT  ((volatile uint8_t*)(BEATRIX+0x0130)) /* Control register for the SN76489 */
+#define SN76489_CLOCK 357954500
+#define SN76489_COUNT 2
+#define SN76489_L     ((uint8_t*const)(BEATRIX+0x0110)) /* Left SN76489 */
+#define SN76489_R     ((uint8_t*const)(BEATRIX+0x0120)) /* Right SN76489 */
+#define SN76489_BOTH  ((uint8_t*const)(BEATRIX+0x0130)) /* Writes both SN76489s */
+
 #define OPL3_PORT     ((volatile uint8_t*)(BEATRIX+0x0200)) /* Access port for the OPL3 */
 #define OPM_INT_BASE  ((volatile uint8_t*)(BEATRIX+0x0C00)) /* Internal OPM base address */
 #define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00)) /* Internal OPN2 base address */
