@@ -1,7 +1,7 @@
 #
 # version.mk - Makefile fragment for version numbers
 #
-# Copyright (C) 2017-2020 The EmuTOS development team.
+# Copyright (C) 2017-2022 The EmuTOS development team.
 #
 # Authors:
 #  VRI      Vincent Rivière
@@ -20,7 +20,7 @@
 # and are used to create the VERSION string for official releases.
 #
 MAJOR_VERSION = 1
-MINOR_VERSION = 1
+MINOR_VERSION = 2
 FIX_VERSION = 1
 
 empty =

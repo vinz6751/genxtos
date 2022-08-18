@@ -1,7 +1,7 @@
 /*
  * vectors.S - exception vectors
  *
- * Copyright (C) 2001-2021 The EmuTOS development team
+ * Copyright (C) 2001-2022 The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -10,7 +10,6 @@
 #define DBG_CHECK_READ_BYTE 0   // to trace check_read_byte() calls
 
 #include "asmdefs.h"
-#include "panicasm.i"
 
 #ifdef MACHINE_A2560U
 #include "foenix.i"
@@ -46,13 +45,6 @@
         .globl  _call_etv_critic
         .globl  _default_etv_critic
 
-        .global _def_vecs_table // panic handling needs it
-
-        .globl  _halt
-        .globl  _kill_program
-        .globl  _warm_reset
-        .globl  _cold_reset
-
 // ==== References ===========================================================
 
         // TOS System variables
@@ -74,7 +66,15 @@
 // for vectors 2 to 63 even if working on a 32bit address bus.
 // LVL.
 
-        .extern _bell
+        .extern _dopanic
+
+        .extern _proc_lives
+        .extern _proc_dregs
+        .extern _proc_aregs
+        .extern _proc_enum
+        .extern _proc_usp
+        .extern _proc_stk
+
         .extern _GSX_ENTRY
         .extern _vblsem
         .extern _colorptr
@@ -90,6 +90,8 @@
         .extern _timer_c_sieve
         .extern _kb_timerc_int
         .extern _sndirq
+        .extern _etv_timer
+        .extern _etv_critic
         .extern _mcpu
         .extern _bios_ent
         .extern _bios_vecs
@@ -103,15 +105,19 @@
 
 /* basically initialize the 62 exception vectors. */
 _init_exc_vec:
-        jsr     _panic_init
-
-        lea     _def_vecs_table, a0
+        clr.l   _proc_lives.w
+        lea     deflt_vec_table, a0
         lea     8, a1
         move.l  #61, d0
 set_vec:
         move.l  a0, (a1)+
         add.l   #2, a0
+#ifdef __mcoldfire__
+        subq.l  #1, d0
+        jpl     set_vec
+#else
         dbra    d0, set_vec
+#endif
 // The RTS below is shared for other purposes.
 buggy_jit_save_registers_before_bus_error:
         rts
@@ -123,7 +129,12 @@ _init_user_vec:
         move.l  #191, d0
 set_uvec:
         move.l  a0, (a1)+
+#ifdef __mcoldfire__
+        subq.l  #1, d0
+        jpl     set_uvec
+#else
         dbra    d0, set_uvec
+#endif
         rts
 
 /* this table holds the default exception vectors for vectors 2 to 63.
@@ -135,7 +146,7 @@ set_uvec:
  * the former method will allow any_vec to display the correct vector
  * number and report a meaningful panic message.
  */
-_def_vecs_table:
+deflt_vec_table:
 buserr_vec:
         bsr.s   any_vec         // vector 2
         bsr.s   any_vec
@@ -204,80 +215,67 @@ unimp_vec:
         bsr.s   any_vec
 
 user_vec:
-        pea     _def_vecs_table(pc)
+        pea     deflt_vec_table(pc)
 
 // at this point, stack contains:
 // 0:exception vector address 4:sr 6:pc
 // we copy debug data in the structure at address 0x380, then go in dopanic()
 any_vec:
-        jmp _panic_exception
-
-/* void halt(void)
- * simply halt the machine.
- */
-_halt:
-#if !USE_STOP_INSN_TO_FREE_HOST_CPU
-        // disable the interrupts
-        move.w  #0x2700,sr
-#endif
-haltloop:
-        // endless loop
-#if USE_STOP_INSN_TO_FREE_HOST_CPU
-        stop    #0x2700
-        // only an NMI could theroretically wake up the CPU here
-#endif
-        jra     haltloop
-
-/* void kill_program(void)
- * try to terminate via Pterm(); if Pterm() returns here (!),
- * we do a warm reset
- */
-_kill_program:
-        move.w  #-1,-(sp)               // error code for program killed by OS
-        move.w  #0x4C,-(sp)             // Pterm
-        trap    #1
-        // fall through _warm_reset (should not happen!)
-
-/* void warm_reset(void)
- * Restart this OS
- */
-_warm_reset:
-        jsr     _flush_data_cache
-        jmp     _main
-
-/* void cold_reset(void)
- * Invalidate the RAM configuration and reset the computer to the ROM OS.
- * It is important to flush the data cache so the values of the magic variables
- * are really pushed to the RAM. Next OS may use different cache settings.
- */
-_cold_reset:
-        clr.l   resvalid.w      // Don't allow jump to reset vector in startup.S
-        clr.l   resvector.w
-#if CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF
-        clr.l   _warm_magic.w   // Next boot will be a first boot
-#endif
-#ifdef MACHINE_AMIGA
-        clr.l   memvalid.w      // Invalidate memvalid
-        jsr     _flush_data_cache
-        move.l  0x00fc0004,a0   // Get the entry adress from offset 4 in the ROM
-        reset                   // The entry usually points just after reset
-        jmp     (a0)
-#elif defined(MACHINE_FIREBEE)
-        // Do not invalidate memvalid, to keep the RAM settings
-        jsr     _flush_data_cache
-        move.l  0x00e00004,a0   // Get the entry adress from offset 4 in the ROM
-        jmp     (a0)
-#elif CONF_ATARI_HARDWARE
-        clr.l   memvalid.w      // Invalidate memvalid
-        jsr     _flush_data_cache
-        move.l  0x004,a0        // The 2 first longs are mapped to the ROM
-        jmp     (a0)
+        move.w  #0x2700, sr
+        // dump the registers, including USP
+#ifdef __mcoldfire__
+        move.l  a0,(_proc_dregs+32).w
+        lea     _proc_dregs.w,a0
+        movem.l d0-d7,(a0)
+        movem.l a1-a6,36(a0)
 #else
-        jsr     _flush_data_cache
-        // We don't know how to cold reset, so just warm reset this OS
-        jmp     _main
+        movem.l d0-d7/a0-a6,_proc_dregs.w
 #endif
+        move.l  usp,a0
+        move.l  a0,_proc_usp.w
+        // compute and dump the exception number
+        move.l  (sp)+,d0
+        // dump the correct value for sp
+        move.l  sp,(_proc_aregs+28).w
+        lea     deflt_vec_table(pc), a0
+        sub.l   a0, d0
+        lsr.l   #1, d0
+        add.l   #1, d0
+        move.l  d0, _proc_enum.w
 
+#if CONF_WITH_ADVANCED_CPU && !defined(__mcoldfire__)
+        // D0 is 1 if the exception number could not be computed
+        subq    #1, d0
+        bne     dump_stack
+        // exception vector offset is present on stack for 68010 and above
+        tst.w   _longframe
+        beq     dump_stack
+        move.w  6(sp), d0
+        ext.l   d0
+        andi.l  #0xfff, d0
+        lsr.l   #2, d0
+        move.l  d0, _proc_enum.w
+#endif /* CONF_WITH_ADVANCED_CPU && !defined(__mcoldfire__) */
+
+dump_stack:
+        // dump 16 words from the stack
+        movem.l (sp),d0-d7
+#ifdef __mcoldfire__
+        lea     _proc_stk.w,a0
+        movem.l d0-d7,(a0)
+        // magic value
+        lea     _proc_lives.w, a0
+        move.l  #0x12345678, (a0)
+#else
+        movem.l d0-d7,_proc_stk.w
+        // magic value
+        move.l  #0x12345678, _proc_lives.w
+#endif
+        // restore a sane stack
+        // this stack must be large enough for dopanic(); as of
+        // may 2015, this is about 460 bytes
+        lea     panic_stack,sp
+        jmp     _dopanic
 
 #if CONF_WITH_ATARI_VIDEO
 
@@ -286,6 +284,21 @@ _cold_reset:
  */
 
 _int_hbl:
+#ifdef __mcoldfire__
+// Beware: On ColdFire, the first word on the stack is the Format/Vector word,
+// and the user SR comes after. Furthermore, we need to backup the whole d0.l.
+// As a result the user status register is at 6(sp) instead of 2(sp)
+        move.l  d0, -(sp)       // save d0
+        moveq   #0, d0
+        move.w  6(sp), d0       // get status register from stack
+        and.l   #0x0700, d0     // isolate just IPL-mask from sr
+        jne     is_ipl          // if IPL is nonzero, then end
+        move.w  6(sp), d0
+        or.l    #0x0300, d0     // else set IPL3 in status register
+        move.w  d0, 6(sp)
+is_ipl:
+        move.l  (sp)+, d0       // restore d0
+#else
         move.w  d0, -(sp)       // save d0
         move.w  2(sp), d0       // get status register from stack
         and.w   #0x0700, d0     // isolate just IPL-mask from sr
@@ -293,6 +306,7 @@ _int_hbl:
         or.w    #0x0300, 2(sp)  // else set IPL3 in status register
 is_ipl:
         move.w  (sp)+, d0       // restore d0
+#endif
         rte
 
 #endif /* CONF_WITH_ATARI_VIDEO */
@@ -312,17 +326,26 @@ is_ipl:
 
 _int_vbl:
         addq.l  #1, _frclock.w          // increase num of happened ints
+#ifdef __mcoldfire__
+        move.l  d0, -(sp)               // ColdFire specific
+        moveq   #0, d0
+        move.w  _vblsem.w, d0
+        subq.l  #1, d0
+        move.w  d0, _vblsem.w
+#else
         subq.w  #1, _vblsem.w           // check VBL semaphore
+#endif
         jmi     vbl_end                 // if VBL routine disabled -> end
 
-        addq.l  #1, _vbclock.w          // count number of processed VBL interrupts
-
-#ifdef MACHINE_A2560U
+#ifdef __mcoldfire__
+        lea     -56(sp), sp
+        movem.l d1-d7/a0-a6, (sp)       // save registers
+#elif defined(MACHINE_A2560U)
         movem.l d1-d7/a1-a6, -(sp)      // save registers (d0/a0 already saved by VICKY interrupt handler)
 #else
         movem.l d0-d7/a0-a6, -(sp)      // save registers
-#endif        
-
+#endif
+        addq.l  #1, _vbclock.w          // count number of processed VBL interrupts
 
 #if CONF_WITH_ATARI_VIDEO
 // check for monitor switching and jump to _swv_vec if necessary...
@@ -393,13 +416,29 @@ docopy:
         move.l  d0,a0                       // a0 -> source
 vbl_palette_loop:
         move.l  (a0)+,(a1)+
+#ifdef __mcoldfire__
+        subq.l  #1,d1
+        jpl     vbl_palette_loop
+#else
         dbra    d1,vbl_palette_loop
+#endif
 vbl_no_palette:
 
         // set new video address
         move.l  _screenpt.w,d0
         jeq     vbl_no_screenpt
         move.l  d0,_v_bas_ad.w
+        // middle & high bytes of address are valid for all shifters
+#ifdef __mcoldfire__
+        lsr.l   #8,d0
+        move.b  d0,0xffff8203.w
+        lsr.l   #8,d0
+#else
+        lsr.w   #8,d0
+        move.b  d0,0xffff8203.w
+        swap    d0
+#endif
+        move.b  d0,0xffff8201.w
 #if CONF_WITH_VIDEL
         tst.w   _has_videl
         jne     set_video_low
@@ -415,15 +454,13 @@ vbl_no_palette:
 #if CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER || CONF_WITH_STE_SHIFTER
         jra     st_shifter
 set_video_low:
+        // this must be set *after* setting mid/hi bytes
+        move.l  _screenpt.w,d0              // recover low address byte
         move.b  d0,0xffff820d.w
 st_shifter:
 #endif
-        lsr.w   #8,d0
-        move.b  d0,0xffff8203.w
-        swap    d0
-        move.b  d0,0xffff8201.w
-#endif /* CONF_WITH_ATARI_VIDEO */
 vbl_no_screenpt:
+#endif /* CONF_WITH_ATARI_VIDEO */
 
 #if CONF_WITH_FDC
         // flopvbl
@@ -431,9 +468,16 @@ vbl_no_screenpt:
 #endif
 
         // vblqueue
+#ifdef __mcoldfire__
+        moveq   #0,d0
+#endif
         move.w  _nvbls.w,d0
         jeq     vbl_no_queue
+#ifdef __mcoldfire__
+        sub.l   #1,d0
+#else
         sub.w   #1,d0
+#endif
         move.l  _vblqueue.w,a0
 vbl_queue_loop:
         move.l  (a0)+,a1
@@ -445,7 +489,12 @@ vbl_queue_loop:
         move.l  (sp)+,d0
         move.l  (sp)+,a0
 vbl_queue_next:
+#ifdef __mcoldfire__
+        subq.l  #1,d0
+        jpl     vbl_queue_loop
+#else
         dbra    d0,vbl_queue_loop
+#endif
 vbl_no_queue:
 
         // screen hardcopy
@@ -457,13 +506,24 @@ vbl_no_queue:
         move.w  d0,_dumpflg.w
 vbl_no_dump:
 
-#ifdef MACHINE_A2560U
+#ifdef __mcoldfire__
+        movem.l (sp), d1-d7/a0-a6       // restore registers
+        lea     56(sp), sp
+#elif defined(MACHINE_A2560U)
         movem.l (sp)+, d1-d7/a1-a6      // restore registers
 #else
         movem.l (sp)+, d0-d7/a0-a6      // restore registers
-#endif        
+#endif
 vbl_end:
+#ifdef __mcoldfire__
+        moveq   #0,d0
+        move.w  _vblsem.w,d0
+        addq.l  #1,d0
+        move.w  d0,_vblsem.w
+        move.l  (sp)+,d0                // ColdFire specific
+#else
         addq.w  #1,_vblsem.w
+#endif
 
 #if CONF_WITH_ATARI_VIDEO
         rte
@@ -477,14 +537,35 @@ vbl_end:
 
 _int_timerc:
         addq.l  #1, _hz_200.w           // increment 200 Hz counter
-#ifdef MACHINE_A2560U
+#ifdef __mcoldfire__
+        // Save early ColdFire registers
+        move.l  d0,-(sp)
+        move.l  a0,-(sp)
+#elif defined(MACHINE_A2560U)
         move.w  #0x0400,0xb00102        // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
-#endif 
- 
+#endif
+
+#ifdef __mcoldfire__
+        lea     _timer_c_sieve,a0
+        move.w  (a0),d0
+        swap    d0
+        move.w  (a0),d0
+        lsl.l   #1,d0                   // check for 4th call
+        swap    d0
+        move.w  d0,(a0)
+        jpl     timerc_end
+#else
         rol.w   _timer_c_sieve          // check for 4th call
         jpl     timerc_end
+#endif
 
+#ifdef __mcoldfire__
+        // On ColdFire, d0 and a0 were saved earlier
+        lea     -52(sp),sp
+        movem.l d1-d7/a1-a6,(sp)        // save registers
+#else
         movem.l d0-d7/a0-a6,-(sp)       // save registers
+#endif
 
         // repeat keys
         jsr     _kb_timerc_int
@@ -499,12 +580,29 @@ _int_timerc:
         jsr     (a0)                    // jump to etv_timer routine
         addq.l  #2, sp                  // correct stack
 
+#ifdef __mcoldfire__
+        // On ColdFire, d0 and a0 will be restored later
+        movem.l (sp),d1-d7/a1-a6
+        lea     52(sp),sp
+#else
         movem.l (sp)+,d0-d7/a0-a6
+#endif
 
 timerc_end:
 #if REAL_TIMER_C_HANDLER
+#ifdef __mcoldfire__
+        lea     0xfffffa11.w, a0
+        move.b  #0xdf,(a0)              // clear interrupt service bit
+#else
         move.b  #0xdf,0xfffffa11.w      // clear interrupt service bit
+#endif
 #endif /* REAL_TIMER_C_HANDLER */
+
+#ifdef __mcoldfire__
+        // Restore late ColdFire registers
+        move.l  (sp)+, a0
+        move.l  (sp)+, d0
+#endif
 
         // Note for non-Atari hardware:
         // It is important to return with RTE here, because FreeMiNT may have
@@ -522,18 +620,38 @@ timerc_end:
         .globl _mfp_rs232_tx_interrupt
 
 _mfp_rs232_rx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
         movem.l d0-d1/a0-a1,-(sp)
+#endif
 
         jbsr    _mfp_rs232_rx_interrupt_handler
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
         movem.l (sp)+,d0-d1/a0-a1
+#endif
         rte
 
 _mfp_rs232_tx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
         movem.l d0-d1/a0-a1,-(sp)
+#endif
 
         jbsr    _mfp_rs232_tx_interrupt_handler
 
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
         movem.l (sp)+,d0-d1/a0-a1
+#endif
         rte
 
 #endif
@@ -546,21 +664,174 @@ _mfp_rs232_tx_interrupt:
         .globl _mfp_tt_tx_interrupt
 
 _mfp_tt_rx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
         movem.l d0-d1/a0-a1,-(sp)
+#endif
 
         jbsr    _mfp_tt_rx_interrupt_handler
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
         movem.l (sp)+,d0-d1/a0-a1
+#endif
         rte
 
 _mfp_tt_tx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
         movem.l d0-d1/a0-a1,-(sp)
+#endif
 
         jbsr    _mfp_tt_tx_interrupt_handler
 
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
         movem.l (sp)+,d0-d1/a0-a1
+#endif
         rte
 
 #endif
+
+#if CONF_WITH_SCC
+
+// ==== SCC interrupt handlers ============================================
+
+        .globl _scca_rx_interrupt
+        .globl _scca_tx_interrupt
+        .globl _scca_es_interrupt
+        .globl _sccb_rx_interrupt
+        .globl _sccb_tx_interrupt
+        .globl _sccb_es_interrupt
+
+_scca_rx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
+        movem.l d0-d1/a0-a1,-(sp)
+#endif
+
+        move.w  #0,-(sp)                // indicate port A
+        jbsr    _scc_rx_interrupt_handler
+        lea     2(sp),sp
+
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
+        movem.l (sp)+,d0-d1/a0-a1
+#endif
+        rte
+
+_scca_tx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
+        movem.l d0-d1/a0-a1,-(sp)
+#endif
+
+        move.w  #0,-(sp)                // indicate port A
+        jbsr    _scc_tx_interrupt_handler
+        lea     2(sp),sp
+
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
+        movem.l (sp)+,d0-d1/a0-a1
+#endif
+        rte
+
+_scca_es_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
+        movem.l d0-d1/a0-a1,-(sp)
+#endif
+
+        move.w  #0,-(sp)                // indicate port A
+        jbsr    _scc_es_interrupt_handler
+        lea     2(sp),sp
+
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
+        movem.l (sp)+,d0-d1/a0-a1
+#endif
+        rte
+
+_sccb_rx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
+        movem.l d0-d1/a0-a1,-(sp)
+#endif
+
+        move.w  #1,-(sp)                // indicate port B
+        jbsr    _scc_rx_interrupt_handler
+        lea     2(sp),sp
+
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
+        movem.l (sp)+,d0-d1/a0-a1
+#endif
+        rte
+
+_sccb_tx_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
+        movem.l d0-d1/a0-a1,-(sp)
+#endif
+
+        move.w  #1,-(sp)                // indicate port B
+        jbsr    _scc_tx_interrupt_handler
+        lea     2(sp),sp
+
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
+        movem.l (sp)+,d0-d1/a0-a1
+#endif
+        rte
+
+_sccb_es_interrupt:
+#ifdef __mcoldfire__
+        lea     -16(sp),sp
+        movem.l d0-d1/a0-a1,(sp)
+#else
+        movem.l d0-d1/a0-a1,-(sp)
+#endif
+
+        move.w  #1,-(sp)                // indicate port B
+        jbsr    _scc_es_interrupt_handler
+        lea     2(sp),sp
+
+#ifdef __mcoldfire__
+        movem.l (sp),d0-d1/a0-a1
+        lea     16(sp),sp
+#else
+        movem.l (sp)+,d0-d1/a0-a1
+#endif
+        rte
+
+#endif  //CONF_WITH_SCC
 
 
 // ==== Critical error handler functions =====================================
@@ -591,6 +862,7 @@ _default_etv_critic:
         ext.l   d0
         rts
 
+#ifndef __mcoldfire__
 
 /*
  * _int_illegal - illegal instruction handler
@@ -665,6 +937,7 @@ pi_back:
         movem.l (sp)+,d0/a0
         jra     priv_vec                // go directly to our panic handler
 
+#endif /* __mcoldfire__ */
 
 #if CONF_WITH_ADVANCED_CPU
 
@@ -1044,17 +1317,39 @@ _xbiostrap:
 
 biosxbios:
         move.l  _savptr.w, a1
+#ifdef __mcoldfire__
+        move.w  (sp)+,d0        // Format/Vector Word
+        andi.l  #0x3000,d0      // Keep the filler bits
+        jeq     bx_cf_nofiller
+
+        // Assume a 2-byte filler after the exception frame
+        move.w  (sp)+,d0        // Status register -> d0
+        move.w  d0,-(a1)        // and save in save_area
+        move.l  (sp)+,-(a1)     // save return address
+        addq.l  #2,sp           // discard the filler word
+        jra     bx_nolongframe
+
+bx_cf_nofiller:
+        move.w  (sp)+,d0        // Status register -> d0
+        move.w  d0,-(a1)        // and save in save_area
+        move.l  (sp)+,-(a1)     // save return address
+#else
         move.w  (sp)+,d0        // Status register -> d0
         move.w  d0,-(a1)        // and save in save_area
         move.l  (sp)+,-(a1)     // save return address
 
-#if CONF_WITH_ADVANCED_CPU
         tst.w   _longframe.w    // Check processor type
         jeq     bx_nolongframe  // ...when we support CPU >=68000
         move.w  (sp)+,-(a1)
-bx_nolongframe:
 #endif
+
+bx_nolongframe:
+#ifdef __mcoldfire__
+        lea     -40(a1), a1
+        movem.l d3-d7/a3-a7, (a1)       // regs, including stack pointer
+#else
         movem.l d3-d7/a3-a7, -(a1)      // regs, including stack pointer
+#endif
         move.l  a1, _savptr.w
 
         btst    #13,d0          // were we in user mode?
@@ -1074,18 +1369,26 @@ bx_sp_ok:
 
 bx_ret_exc:
         move.l  _savptr.w, a1
+#ifdef __mcoldfire__
+        movem.l (a1), d3-d7/a3-a7       // Get regs back, including sp
+        lea     40(a1), a1
+#else
         movem.l (a1)+, d3-d7/a3-a7      // Get regs back, including sp
+#endif
 
-#if CONF_WITH_ADVANCED_CPU
+#ifdef __mcoldfire__
+        move.l  (a1)+,-(sp)     // return adress
+        move.w  (a1)+,-(sp)     // sr
+        move.w  #0x40B4,-(sp)   // store a fake Format/Vector Word
+#else
         tst.w   _longframe.w    // Check longframe again: Is CPU >= 68000?
         jeq     bx_nolong2
         move.w  (a1)+,-(sp)
+
 bx_nolong2:
+        move.l  (a1)+,-(sp)
+        move.w  (a1)+,-(sp)
 #endif
-
-        move.l  (a1)+,-(sp)     // unstack return address 
-        move.w  (a1)+,-(sp)     // unstack status register
-
         move.l  a1, _savptr.w
 // The RTE below is shared for other purposes.
 _just_rte:
@@ -1174,6 +1477,9 @@ _keyclick:
 
         .bss
         .even
+
+        .ds.w    256            // this stack is only used by dopanic()
+panic_stack:
 
 /* save area for trap13/14. */
 save_beg:       .ds.w   24*3    // d3-d7/a3-a7, sr, pc, vo = 24 words,

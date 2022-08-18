@@ -4,7 +4,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2021 The EmuTOS development team
+*                 2002-2022 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -48,6 +48,7 @@
 #include "gemmnlib.h"
 
 #include "string.h"
+#include "miscutil.h"
 
 #include "gemshlib.h"
 #include "../desk/deskstub.h"
@@ -112,12 +113,12 @@ static void sh_curdrvdir(char *ppath)
     /* remember current directory */
     drive = dos_gdrv();
     *ppath++ = drive + 'A';
-    *ppath++ = ':';
+    *ppath++ = DRIVESEP;
     *ppath = '\0';
     dos_gdir(drive+1, ppath);
     if (*ppath == '\0')
     {
-        *ppath++ = '\\';
+        *ppath++ = PATHSEP;
         *ppath = '\0';
     }
 }
@@ -310,7 +311,7 @@ char *sh_name(char *ppath)
      * within the path, so we handle a path like X:AAAAAAAA.BBB before
      * calling the general function
      */
-    if (ppath[0] && (ppath[1] == ':'))
+    if (extract_drive_number(pname) >= 0)   /* valid prefix exists */
         pname += 2;
 
     return filename_start(pname);
@@ -373,9 +374,9 @@ static char *sh_path(char *src, char *dest, char *pname)
         *dest++ = *p++;
     }
 
-    /* see if extra slash is needed */
-    if ((last != '\\') && (last != ':'))
-        *dest++ = '\\';
+    /* see if extra path separator is needed */
+    if ((last != PATHSEP) && (last != DRIVESEP))
+        *dest++ = PATHSEP;
 
     /* append file name */
     strcpy(dest, pname);
@@ -434,7 +435,7 @@ static WORD findfile(char *pspec)
     }
 
     /* (3) search in the root directory of the current drive */
-    D.g_work[0] = '\\';
+    D.g_work[0] = PATHSEP;
     strcpy(D.g_work+1, pname);
     if (dos_sfirst(D.g_work, FA_RO | FA_HIDDEN | FA_SYSTEM) == 0)   /* found */
     {
@@ -524,8 +525,11 @@ static void sh_chgrf(SHELL *psh)
 
 static void set_drvdir(char *path)
 {
-    if (path[1] == ':')     /* set default drive (if specified) */
-        dos_sdrv(path[0] - 'A');
+    WORD drive;
+
+    drive = extract_drive_number(path);
+    if (drive >= 0)         /* set default drive (if specified) */
+        dos_sdrv(drive);
     dos_chdir(path);        /* and default directory */
 }
 
@@ -555,7 +559,7 @@ static void sh_chdef(SHELL *psh)
             strcpy(D.s_cmd, psh->sh_cdir);
             n = strlen(D.s_cmd);
             if (n)
-                D.s_cmd[n++] = '\\';
+                D.s_cmd[n++] = PATHSEP;
         }
         strcpy(D.s_cmd+n, psh->sh_desk);
         break;
@@ -673,23 +677,15 @@ static WORD sh_ldapp(SHELL *psh)
             wm_new();
 
         KDEBUG(("sh_ldapp: %s exited with rc=%ld\n",D.s_cmd,ret));
-        switch(ret)
-        {
-        case EFILNF:
-        case EPTHNF:
-            ret = AL18ERR;      /* "This application cannot find ..." */
-            break;
-        default:
-            if (ret < 0L)
-                ret = AL08ERR;  /* "There is not enough memory ..." */
-            else
-                ret = 0L;
-        }
-        return ret;
+
+        if (ret < 0)
+            return ret;
+        else
+            return 0;
     }
 
     set_default_desktop(psh);   /* ensure something valid will run */
-    return AL18ERR;
+    return EFILNF;
 }
 
 
@@ -723,8 +719,8 @@ void sh_main(BOOL isauto, BOOL isgem)
             sh_draw(D.s_cmd, TRUE);     /* clear the screen */
         }
 
-        if (rc)                         /* display alert for most recent error */
-            fm_show(rc, NULL, 1);
+        if (rc && !IS_BIOS_ERROR(rc))   /* display alert for most recent error */
+            fm_error(-rc-31);
 
         rc = sh_ldapp(psh);             /* run the desktop/console/app */
 

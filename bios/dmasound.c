@@ -1,7 +1,7 @@
 /*
  * dmasound.c - STe/TT/Falcon DMA sound routines
  *
- * Copyright (C) 2011-2021 The EmuTOS development team
+ * Copyright (C) 2011-2022 The EmuTOS development team
  *
  * Authors:
  *  VRI   Vincent Rivière
@@ -131,12 +131,15 @@ void detect_dmasound(void)
     has_dmasound = check_read_byte((long)&DMASOUND->control);
     KDEBUG(("has_dmasound = %d\n", has_dmasound));
 
-    /* Then detect advanced Falcon DMA sound */
     if (has_dmasound)
     {
+        /* Then detect advanced Falcon DMA sound */
         /* Warning: The Falcon registers below GPx do not exist on STe/TT
          * but they don't cause a bus error. */
         has_falcon_dmasound = check_read_byte((long)&DMASOUND->gpx_data_port);
+
+        /* Stop all sound */
+        DMASOUND->control = 0;
     }
     KDEBUG(("has_falcon_dmasound = %d\n", has_falcon_dmasound));
 

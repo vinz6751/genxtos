@@ -3,7 +3,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2021 The EmuTOS development team
+*                 2002-2022 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -24,6 +24,7 @@
 #include "intmath.h"
 #include "aesdefs.h"
 #include "aesext.h"
+#include "aesvars.h"
 #include "gemlib.h"
 #include "gem_rsc.h"
 
@@ -37,6 +38,7 @@
 #include "gemwmlib.h"
 #include "rectfunc.h"
 #include "gemfmalt.h"
+#include "geminput.h"
 
 /* TOS standard form_alert() maximum values */
 #define TOS_MAX_LINELEN 32
@@ -364,8 +366,18 @@ WORD fm_alert(WORD defbut, char *palstr)
     gsx_sclip(&d);
     ob_draw(tree, ROOT, MAX_DEPTH);
 
-    /* turn on the mouse    */
+    /*
+     * turn on the mouse and set the mouse owner.  the latter is required
+     * for DAs to be able to issue form_alert()s.
+     * 
+     * if we don't update mouse ownership, the desktop will remain the
+     * mouse owner, and the system will queue any mouse clicks to the
+     * desktop's evnt_multi(), rather than the evnt_multi() issued by
+     * the fm_do() below.  this will result in the DA (and then the whole
+     * system) hanging.
+     */
     ct_mouse(TRUE);
+    gl_mowner = rlr;
 
     /* let user pick button */
     i = fm_do(tree, 0);
