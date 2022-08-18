@@ -244,6 +244,14 @@ static void paint_cursor(void)
 
 static void unpaint_cursor(void)
 {
+    // FIXME if you remove this, when doing cr/lf the cursor may not be unpainted from the original line
+    // I have no idea why ! It may be time related, or something to do with the shadow frame buffer copy
+    // to VRAM during the VBL.
+    long i;
+    volatile int truc;
+    for (i=1; i<5; i++)
+        truc++;
+
     neg_cell(v_cur_ad);
 }
 
