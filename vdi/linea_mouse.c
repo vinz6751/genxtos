@@ -75,8 +75,6 @@ void linea_mouse_init(void)
     cur_ms_stat = 0;            /* clear the mouse status */
     mouse_flag = 0;             /* clear the mouse flag */    
     linea_mouse_set_form(&arrow_mform);
-    // FIXME: 18Feb2022 there is a bug that after setting the form the mouse
-    // cursor is displayed as a white box, and you can't hide it.
 
     /* Mouse event handlers */
     user_cur = linea_mouse_moved_handler;
