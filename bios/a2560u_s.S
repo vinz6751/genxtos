@@ -163,11 +163,10 @@ copy_cell_to_vram:
     // Cache information in registers
     movea.l _a2560u_vram_fb,a3
     move.l  _v_bas_ad.w,d2    // Cache
-    move.w  _v_cel_ht.w,d4    // Cache. d3 is the actual decounter used in the loop
-    subq.w  #1,d4           // For the dbra of cell height
+    //move.w  _v_cel_ht.w,d4    // Cache. d3 is the actual decounter used in the loop
+    //subq.w  #1,d4           // For the dbra of cell height
     clr.l   d5
     move.w  _v_lin_wr,d5    // Cache for moving to next line of the frame buffer
-    subq.w  #6,d5           // We use post incrementation 6 times
 cell_copy:
     addq.w  #4,d0           // Advance reader and wrap at 256 (offset 1024)
     andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0
@@ -175,26 +174,28 @@ cell_copy:
     movea.l a1,a2           // Compute target VRAM address
     suba.l  d2,a2           // d2: offset of dirty cell in frame buffer
     adda.l  a3,a2
-    move.w  d4,d3           // Prepare line decounter
+    //move.w  d4,d3           // Prepare line decounter
 copy_cell_to_fb:
     // Copy one row (8 bytes)
     // TODO copy 32bits at a time once possible (with current flash, it's not)
-    move.w  (a1)+,(a2)+
-    move.w  (a1)+,(a2)+
-    move.w  (a1)+,(a2)+
-    move.w  (a1),(a2)
+    .rept 16 // Font height 
+    move.w  0(a1),0(a2)
+    move.w  2(a1),2(a2)
+    move.w  4(a1),4(a2)
+    move.w  6(a1),6(a2)
     adda.l  d5,a1   // Next line
     adda.l  d5,a2
-    dbra    d3,copy_cell_to_fb
+    .endr
+    //dbra    d3,copy_cell_to_fb // If we're short on ROM space or the font is not 16pixcels high we can use dbra instead of .rept
 #if MAX_CELLS_RENDERED_PER_FRAME != 1
     dbra    d6,cell_copy_more
-    bra.s   cell_copy_done
+    jbra    cell_copy_done
 #endif
 cell_copy_more:
     cmp.w   (a0),d0    // More to read ?
-    bne.s   cell_copy  // If so, nothing more to read
+    jne     cell_copy  // If so, nothing more to read
 cell_copy_done:
-    move.w  d0,2(a0)    // Update reader    
+    move.w  d0,2(a0)   // Update reader
     rts    
 
 copy_whole_screen:
@@ -233,7 +234,7 @@ _a2560u_mark_cell_dirty:
     move.w  (a0),d0     // Writer
     addq.w  #4,d0       // Next position
     andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap if needed
-    move.l  4(sp),6(a0,d0)     
+    move.l  4(sp),6(a0,d0)
     move.w  d0,(a0)     // write writer
     rts
 
