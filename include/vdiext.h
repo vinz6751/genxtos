@@ -57,7 +57,9 @@ typedef union {
 /* External definitions for internal use */
 extern VDISHARE vdishare;
 
-
+#if CONF_WITH_EXTENDED_MOUSE
+extern PFVOID user_wheel;  /* user mouse wheel vector provided by vdi_vex_wheelv() */
+#endif
 
 /* functions used by VDI & lineA */
 void vdi_resolution_changed(void);

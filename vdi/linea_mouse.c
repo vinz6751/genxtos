@@ -20,7 +20,6 @@
 #include "tosvars.h"   /* vblqueue */
 #include "xbiosbind.h" /* Initmous */
 #include "vdiext.h"
-#include "a2560u.h"
 
 /* In .S file */
 void linea_mouse_packet_received_handler(void);  /* Responds to incoming mouse packet */
@@ -68,8 +67,6 @@ static BOOL linea_mouse_inited;
 
 void linea_mouse_init(void)
 {    
-    a2560u_debug("linea_mouse_init");
-
     /* Mouse settings */
     HIDE_CNT = 1;               /* mouse is initially hidden */
     GCURX = V_REZ_HZ / 2;       /* initialize the mouse to center */
@@ -101,7 +98,6 @@ void linea_mouse_init(void)
     Initmous(1, (LONG)&mouse_params, (LONG)linea_mouse_packet_received_handler);
 
     linea_mouse_inited = TRUE;
-    a2560u_debug("linea_mouse_init done");
 }
 
 
@@ -144,8 +140,6 @@ void linea_mouse_force_show(void)
  */
 void linea_mouse_show(void)
 {
-    a2560u_debug("linea_mouse_show HIDE_CNT=%d",HIDE_CNT);
-
     if (HIDE_CNT != 1)      /* if not about to be shown: */
     {
         HIDE_CNT--;             /* just decrement hide count */

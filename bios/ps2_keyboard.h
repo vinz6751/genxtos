@@ -14,6 +14,8 @@
  * callbacks from the OS.
  */
 
+#ifdef MACHINE_A2560U
+
 #ifndef PS2_KEYBOARD_H
 #define PS2_KEYBOARD_H
 
@@ -22,3 +24,5 @@
 extern const struct ps2_driver_t ps2_keyboard_driver;
 
 #endif
+
+#endif // MACHINE_A2560U

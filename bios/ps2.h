@@ -7,6 +7,8 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+#ifdef MACHINE_A2560U
+
  #ifndef _PS2_H_
  #define _PS2_H_
 
@@ -107,3 +109,5 @@ void ps2_channel1_irq_handler(void);
 void ps2_channel2_irq_handler(void);
 
 #endif
+
+#endif // MACHINE_A2560U

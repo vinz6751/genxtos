@@ -66,7 +66,7 @@ void linea_init(void)
 
 void linea_resolution_changed(void)
 {
-#ifdef CONF_WITH_CHUNKY8
+#if CONF_WITH_CHUNKY8
     BYTES_LIN = v_lin_wr = V_REZ_HZ; /* 1 byte per pixel makes it easy */
 #else
     BYTES_LIN = v_lin_wr = V_REZ_HZ / 8 * v_planes;
