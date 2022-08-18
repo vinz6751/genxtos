@@ -233,10 +233,13 @@ static const uint16_t text_palette[32] =
 {
 /*  0xHHLL, 0xHHLL
  *  0xGGBB, 0xAARR */
-#define BLUE_THEME 1
+#define BLUE_THEME 0
+#define GREEN_THEME 1
 #if BLUE_THEME
     0x2b4f, 0xff0e, /* A2560 background */
-#else    
+#elif GREEN_THEME
+    0x1100, 0xff00,
+#else
 	0x0000, 0xFF00,	/* Black (transparent) */
 #endif
 	0x0000, 0xFF80, /* Mid-Tone Red */
@@ -255,7 +258,9 @@ static const uint16_t text_palette[32] =
 	0xFFFF, 0xFF55, /* Bright Cyan */
 #if BLUE_THEME
 	0x55BB, 0xFF55, /* A2560 light blue */
-#else    
+#elif GREEN_THEME
+    0xee00, 0xff00,
+#else
     0xFFFF, 0xFFFF 	/* White */
 #endif
 };
