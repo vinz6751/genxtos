@@ -136,6 +136,7 @@ LOCAL const char * const help_edit[] = {
 // TODO CLEAN ME
 LONG run_showmouse(WORD argc, char **argv); // in cmdtest.S
 LONG run_hidemouse(WORD argc, char **argv); // in cmdtest.S
+#if 0
 #include "lineavars.h"
 #include <stdio.h>
 
@@ -158,7 +159,7 @@ static LONG run_testmouse(WORD argc, char **argv)
         }
     }
 }
-
+#endif
 
 /*
  *  command table
@@ -187,7 +188,9 @@ LOCAL const COMMAND cmdtable[] = {
     { "wrap", NULL, 0, 1, run_wrap, help_wrap },
     { "showmouse", NULL, 0, 0, run_showmouse, NULL},
     { "hidemouse", NULL, 0, 0, run_hidemouse, NULL},
+#if 0
     { "testmouse", NULL, 0, 0, run_testmouse, NULL},    
+#endif
     { "", NULL, 0, 255, NULL, NULL }                    /* end marker */
 };
 
