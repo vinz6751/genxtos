@@ -50,8 +50,8 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
 
 static int get_char_source(unsigned char c, CHAR_ADDR *src)
 {
-    (*src).pxaddr = char_addr(c);     /* a0 -> get character source */
-    return src != NULL;               /* return false if no valid character */
+    (*src).pxaddr = char_addr(c);   /* a0 -> get character source */
+    return src != NULL;             /* return false if no valid character */
 }
 
 

@@ -1172,7 +1172,7 @@ WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
 
 void screen_init_services(void)
 {
-    KDEBUG(("screen_init_services"));
+    KDEBUG(("screen_init_services\n"));
     /* Re-initialize line-a, VT52 etc: */
     linea_init();
     vt52_init();
