@@ -162,8 +162,8 @@ a2560u_copy_fb_to_vram: // Copies our SRAM buffer to video ram
 copy_cell_to_vram:
     // Cache information in registers
     movea.l _a2560u_vram_fb,a3
-    move.l  _v_bas_ad,d2    // Cache
-    move.w  _v_cel_ht,d4    // Cache. d3 is the actual decounter used in the loop
+    move.l  _v_bas_ad.w,d2    // Cache
+    move.w  _v_cel_ht.w,d4    // Cache. d3 is the actual decounter used in the loop
     subq.w  #1,d4           // For the dbra of cell height
     clr.l   d5
     move.w  _v_lin_wr,d5    // Cache for moving to next line of the frame buffer
@@ -178,11 +178,12 @@ cell_copy:
     move.w  d4,d3           // Prepare line decounter
 copy_cell_to_fb:
     // Copy one row (8 bytes)
+    // TODO copy 32bits at a time once possible (with current flash, it's not)
     move.w  (a1)+,(a2)+
     move.w  (a1)+,(a2)+
     move.w  (a1)+,(a2)+
     move.w  (a1),(a2)
-    adda.l  d5,a1   // Next line    
+    adda.l  d5,a1   // Next line
     adda.l  d5,a2
     dbra    d3,copy_cell_to_fb
 #if MAX_CELLS_RENDERED_PER_FRAME != 1
@@ -197,6 +198,7 @@ cell_copy_done:
     rts    
 
 copy_whole_screen:
+    // TODO Use DMA once available
     // Copy the whole SRAM frame buffer to VRAM
     move.w  (a0),2(a0)          // Flush the ring buffer (reader <- writer)
     move.w  #0,4(a0)            // Put down the flag to force full copy, as we're doing it now
@@ -205,7 +207,6 @@ copy_whole_screen:
     movea.l _a2560u_vram_fb,a3  // Destination  
     lsr.l   #5,d0               // We unroll the loop to copy 32 bytes at a time
 fbcpy:
-    // Another method, faster but which can but which doesn't work
     movem.w (a1)+,d0-d7/a0/a2/a4-a6
     movem.w d0-d7/a0/a2/a4-a6,(a3)
     lea     13*2(a3),a3
@@ -221,7 +222,7 @@ fbcpy:
     movem.w (a1)+,d0-d7/a0/a2/a4-a5 // We do one less register here so an iteration is 128 bytes.
     movem.w d0-d7/a0/a2/a4-a5,(a3)  // As all resolutions have a screensize multiple of 128,
     lea     12*2(a3),a3             // That ensures we won't copy beyond the end of the FB in VRAM.
-    cmpa.l  #0xc4b000,a3            // FIXME don't hardcode end of FB
+    cmpa.l  #0xc4b000,a3            // TODO BUG FIXME don't hardcode end of FB
     bmi.s   fbcpy
     rts
 

@@ -109,13 +109,13 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
             UWORD *e = (UWORD*)d;
             /* Optimise for white space */
             *e++ = bgbg;
-            *e++ = bgbg;            
+            *e++ = bgbg;
             *e++ = bgbg;
             *e++ = bgbg;
             d += v_lin_wr;
         }
 
-        src.pxaddr += v_fnt_wr;        
+        src.pxaddr += v_fnt_wr;
     }
 
 #ifdef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
