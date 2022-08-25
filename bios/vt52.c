@@ -19,6 +19,8 @@
  * - Manage text cursor visibility / blinking.
  */
 
+#define ENABLE_KDEBUG
+
 #include "emutos.h"
 #include "lineavars.h"
 #include "font.h"
@@ -619,7 +621,20 @@ static void erase_from_home(void)
  */
 static void do_cnt_esce(void)
 {
-    con_paint_cursor();
+    #if 1
+        con_paint_cursor();
+    #else // Previous EmuTOS code
+    conout_invert_cell(v_cur_cx, v_cur_cy);        /* complement cursor */
+    v_stat_0 |= M_CVIS;                     /* set visibility bit */
+
+    /* see if flashing is enabled */
+    if ( v_stat_0 & M_CFLASH ) {
+        v_stat_0 |= M_CSTATE;                   /* set cursor on */
+
+        /* do not flash the cursor when it moves */
+        v_cur_tim = v_period;                   /* reset the timer */
+    }
+    #endif
 }
 
 
@@ -669,13 +684,32 @@ static void cursor_off(void)
 
     disab_cnt++;                        /* increment the disable counter */
 
+    #if 1
     if (v_stat_0 & M_CVIS) {
         v_stat_0 &= ~M_CVIS;                /* make invisible! */
 
         if (!(v_stat_0 & M_CFLASH) || (v_stat_0 & M_CSTATE)) {
             con_unpaint_cursor();
         }
+        v_stat_0 |= M_CVIS;
     }
+    #else // Previous EmuTOS code
+    /* test and clear the visible state bit */
+    if (!(v_stat_0 & M_CVIS) )
+        return;                         /* if already invisible, just return */
+
+    v_stat_0 &= ~M_CVIS;                /* make invisible! */
+
+    /* see, if flashing is disabled */
+    if ( ! (v_stat_0 & M_CFLASH) ) {
+        conout_invert_cell(v_cur_cx, v_cur_cy);
+    }
+    /* see, if cursor is on or off */
+    else if ( v_stat_0 & M_CSTATE ) {
+        v_stat_0 &= ~M_CSTATE;    /* cursor off? */
+        conout_invert_cell(v_cur_cx, v_cur_cy);
+    }
+    #endif
 }
 
 
@@ -889,7 +923,7 @@ WORD cursconf(WORD function, WORD operand)
     case 1:
         cursor_on();                    /* set cursor visible */
         break;
-    case 2:    
+    case 2:
         v_stat_0 &= ~M_CFLASH;          /* unset cursor flash bit */
         break;
     case 3:
@@ -910,7 +944,7 @@ WORD cursconf(WORD function, WORD operand)
  */
 void vt52_init(void)
 {
-    /* set font-related lineA variables */    
+    /* set font-related lineA variables */
     conout_init(font_set_default());
 
     /* Initial cursor settings */

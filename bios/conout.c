@@ -185,7 +185,7 @@ void conout_move_cursor(int x, int y)
 
     v_cur_cx = x;
     v_cur_cy = y;
-
+#if 1
     if (conout->cursor_moved)
         conout->cursor_moved();
 
@@ -207,6 +207,45 @@ void conout_move_cursor(int x, int y)
         /* not visible */
         v_cur_ad = cell_addr(x, y);             /* just set new coordinates */
     }  
+#else
+    /* is cursor visible? */
+    if (!(v_stat_0 & M_CVIS)) {
+        /* not visible */
+        v_cur_ad = cell_addr(x, y);             /* just set new coordinates */
+        return;                                 /* and quit */
+    }
+
+    /* is cursor flashing? */
+    if (v_stat_0 & M_CFLASH) {
+        v_stat_0 &= ~M_CVIS;                    /* yes, make invisible...semaphore. */
+
+        /* is cursor presently displayed ? */
+        if (!(v_stat_0 & M_CSTATE)) {
+            /* not displayed */
+            v_cur_ad = cell_addr(x, y);         /* just set new coordinates */
+
+            /* show the cursor when it moves */
+            neg_cell(v_cur_ad);                 /* complement cursor. */
+            v_stat_0 |= M_CSTATE;
+            v_cur_tim = v_period;               /* reset the timer. */
+
+            v_stat_0 |= M_CVIS;                 /* end of critical section. */
+            return;
+        }
+    }
+
+    /* move the cursor after all special checks failed */
+    neg_cell(v_cur_ad);                         /* erase present cursor */
+
+    v_cur_ad = cell_addr(x, y);                 /* fetch x and y coords. */
+    neg_cell(v_cur_ad);                         /* complement cursor. */
+
+    /* do not flash the cursor when it moves */
+    v_cur_tim = v_period;                       /* reset the timer. */
+
+    v_stat_0 |= M_CVIS;                         /* end of critical section. */
+
+#endif
 }
 
 
@@ -263,7 +302,18 @@ void conout_ascii_out(int ch)
 
     /* if visible */
     if (visible) {
+#if 1
         con_paint_cursor();             /* display cursor. */
+#else
+        neg_cell(v_cur_ad);             /* display cursor. */
+        v_stat_0 |= M_CSTATE;           /* set state flag (cursor on). */
+        v_stat_0 |= M_CVIS;             /* end of critical section. */
+
+        /* do not flash the cursor when it moves */
+        if (v_stat_0 & M_CFLASH) {
+            v_cur_tim = v_period;       /* reset the timer. */
+        }
+#endif
     }
 }
 

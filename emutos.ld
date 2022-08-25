@@ -17,12 +17,84 @@
 /* Create a plain binary file, without any header */
 OUTPUT_FORMAT(binary)
 
-INCLUDE linker/memorymap.ld
+#if !EMUTOS_LIVES_IN_RAM
+
+/* The ROM address depends on the target */
+#if defined(MACHINE_AMIGA)
+# define ROM_ORIGIN 0x00fc0000
+#elif defined(TARGET_CART)
+# define ROM_ORIGIN 0x00fa0000
+#elif defined(TARGET_192)
+# define ROM_ORIGIN 0x00fc0000
+#elif defined(MACHINE_A2560U)
+    // Normal flash location is FLASH bank 1 0xf00000 because it allows
+    // execution of user-lescode (not supervisor), which is required
+    // e.g. for running EmuCON.
+    # define ROM_ORIGIN 0x00100000
+#else
+# define ROM_ORIGIN 0x00e00000
+#endif
+
+/* Always assume there is a lot of ROM space, so the link will always succeed.
+ * Then our padding tool will eventually report an overflow, with a better
+ * diagnostic message than the linker.
+ */
+#ifdef MACHINE_A2560U
+# define ROM_LENGTH 2M /* Maximum size before I/O area */
+#else
+# define ROM_LENGTH 1M /* Maximum size before I/O area */
+#endif
+
+#endif /* !EMUTOS_LIVES_IN_RAM */
+
+/* Memory regions of a typical Atari computer.
+ * Only start addresses matter. Lengths just need to be large enough.
+ */
+MEMORY
+{
+    stram : ORIGIN = 0x00000000, LENGTH = 14M
+#if !EMUTOS_LIVES_IN_RAM
+    rom : ORIGIN = ROM_ORIGIN, LENGTH = ROM_LENGTH
+#endif
+#if CONF_WITH_STATIC_ALT_RAM
+    altram : ORIGIN = STATIC_ALT_RAM_ADDRESS, LENGTH = 1M
+#endif
+}
+
+/* Region used as read/write memory */
+#if CONF_WITH_STATIC_ALT_RAM
+REGION_ALIAS("REGION_RAM", altram)
+#else
+REGION_ALIAS("REGION_RAM", stram)
+#endif
+
+/* Regions used by EmuTOS sections */
+#if EMUTOS_LIVES_IN_RAM
+REGION_ALIAS("REGION_READ_ONLY", REGION_RAM)
+#else
+REGION_ALIAS("REGION_READ_ONLY", rom)
+#endif
+REGION_ALIAS("REGION_READ_WRITE", REGION_RAM)
+
 
 SECTIONS
 {
-    INCLUDE linker/section_first_stram.ld
-    INCLUDE linker/section_alt_ram.ld
+    /* First section in ST-RAM */
+    .first_stram :
+    {
+        /* System variables are located at fixed addresses */
+#include "tosvars.ld"
+        . = 0x800; /* Extend sysvars area upto end of supervisor-only RAM */
+        sysvars_end = .;
+    } >stram
+
+#if CONF_WITH_STATIC_ALT_RAM
+    /* First section in static Alt-RAM */
+    .first_altram :
+    {
+        __static_altram_start = .;
+    } >altram
+#endif
 
     /* This section is the internal BIOS stack.
      * It will *not* be cleared on startup or reset.
@@ -50,7 +122,17 @@ SECTIONS
         ASSERT(ABSOLUTE(__low_stram_end) <= 0x8000, "error: .low_stram section extends beyond 32k");
     } >stram
 
-    INCLUDE linker/section_text.ld
+    /* The TEXT segment contains EmuTOS executable code and read-only data.
+     * It is always read-only, so it can safely live in ROM.
+     */
+    .text : SUBALIGN(2)
+    {
+        CREATE_OBJECT_SYMBOLS
+        __text = .;
+        *(.text)
+        *(.rodata .rodata.*) /* Only present in ELF objects */
+        __etext = .;
+    } >REGION_READ_ONLY =0x4afc
 
     /* FIXME: Our DATA segment is currently read-only.
      * It currently lives in the ROM, just after the TEXT segment.
@@ -65,7 +147,15 @@ SECTIONS
         __edata = .;
     } >REGION_READ_ONLY
 
-    INCLUDE linker/section_bss.ld
+    /* The BSS segment contains uninitialized global variables.
+     * It will be cleared by the startup code.
+     */
+    .bss : SUBALIGN(2)
+    {
+        __bss = .;
+        *(.bss COMMON)
+        __ebss = .;
+    } >REGION_READ_WRITE
 
     /* This section is always the last one stored in ST-RAM.
      * It is usually empty, just used to calculate the last address

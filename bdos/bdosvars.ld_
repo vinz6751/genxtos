@@ -1,2 +1,0 @@
-_etv_term       = 0x408;        /* GEM program termination vector */
-_bufl           = 0x4b2;        /* pointers to buffer ctrl blocks for GEMDOS */

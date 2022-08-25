@@ -1,7 +1,7 @@
 /*
  * VICKY2 - Functions for VICKY II, the graphics controller of the Foenix A2560U
  *
- * Copyright (C) 2013-2021 The EmuTOS development team
+ * Copyright (C) 2013-2022 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -92,7 +92,7 @@ uint32_t vicky_vbl_freq; /* VBL frequency */
 
 
 void vicky2_init(void)
-{    
+{
     int i;
     FOENIX_VIDEO_MODE mode;
 
@@ -110,7 +110,7 @@ void vicky2_init(void)
      */
 #if defined(ENABLE_KDEBUG)
     R32(VICKY_A_BORDER_CTRL) = 0x030301;
-#else    
+#else
     R32(VICKY_A_BORDER_CTRL) = 0;
 #endif
 
@@ -120,7 +120,7 @@ void vicky2_init(void)
     //R32(VICKY_A_BG_COLOR) = 0xffffffff; /* White background */
     R32(VICKY_A_BG_COLOR) = 0xff0e2b4f; /* Blue-ish background */
 
-    /* Initialise the LUT0 which we use for the screen */    
+    /* Initialise the LUT0 which we use for the screen */
     for (i = 0; i < 256; i++)
         vicky2_set_lut_color(0, i, convert_atari2vicky_color(tt_dflt_palette[i]));
 
@@ -130,13 +130,12 @@ void vicky2_init(void)
 void vicky2_set_background_color(uint32_t color)
 {
     R32(VICKY_A_BG_COLOR) = color;
-    
 }
 
 void vicky2_set_border_color(uint32_t color)
 {
     /* It's important to address these as bytes */
-    R32(VICKY_A_BORDER_COLOR) = color;    
+    R32(VICKY_A_BORDER_COLOR) = color;
 }
 
 void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color)
@@ -174,7 +173,7 @@ void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result)
     {
         result->w -= (border & VICKY_A_BORDER_WIDTH) >> 7;
         result->h -= (border & VICKY_A_BORDER_HEIGHT) >> 15;
-    }    
+    }
 
     /* If pixel doubling, divide resolution by 2 */
     if (video & 0x400)
@@ -197,7 +196,7 @@ void vicky2_set_video_mode(uint16_t mode)
 
 void vicky2_set_bitmap0_address(const uint8_t *address)
 {
-    R32(VICKY_A_BMP_FB) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */  
+    R32(VICKY_A_BMP_FB) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */
 }
 
 
@@ -259,7 +258,7 @@ static const uint16_t text_palette[32] =
 #if BLUE_THEME
 	0x55BB, 0xFF55, /* A2560 light blue */
 #elif GREEN_THEME
-    0xee00, 0xff00,
+    0xee00, 0xff00, /* A2560 light green */
 #else
     0xFFFF, 0xFFFF 	/* White */
 #endif
@@ -274,19 +273,19 @@ static void vicky2_load_font(void)
 
     for (ascii = 0; ascii < 256; ascii++)
     {
-        uint8_t *src = char_addr(ascii);        
-        
-        /* Character 0 is the cursor (filled block) */ 
+        uint8_t *src = char_addr(ascii);
+
+        /* Character 0 is the cursor (filled block) */
         if (ascii && src != 0L)
         {
             for (i = 0; i < v_cel_ht; i++)
-            {        
+            {
                 *dst++ = *src;
                 src += v_fnt_wr;
-            }            
+            }
         }
         else
-        {            
+        { 
             for (i = 0; i < v_cel_ht ; i++)
                 *dst++ = 0xff;
         }
@@ -302,9 +301,9 @@ void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg)
 
     for (i = 0; i < VICKY_TEXT_COLOR_SIZE; i++)
     {
-		fglut[i] = fg[i];
-		bglut[i] = bg[i];
-	}
+	fglut[i] = fg[i];
+	bglut[i] = bg[i];
+    }
 }
 
 
@@ -349,6 +348,9 @@ void vicky2_hide_cursor(void)
 {
     R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_ENABLE;
 }
+
+
+/********** Mouse support ***************/
 
 void vicky2_show_mouse(void)
 {
