@@ -10,9 +10,6 @@
  * This is a keyboard driver for PS/2 keyboard.
  */
 
-/* This file is nothing specific to the A2560U but it's only built for that target */
-#ifdef MACHINE_A2560U
-
 #include <stdint.h>
 #include <stddef.h>
 #include "ps2.h"
@@ -230,5 +227,3 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
             ;
     }
 }
-
-#endif // MACHINE_A2560U

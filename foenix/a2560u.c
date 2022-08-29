@@ -17,15 +17,21 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+typedef signed char     SBYTE;                  /*  Signed byte         */
+typedef unsigned char   UBYTE;                  /*  Unsigned byte       */
+typedef unsigned long   ULONG;                  /*  unsigned 32 bit word*/
+typedef int             BOOL;                   /*  boolean, TRUE or FALSE */
+typedef short int       WORD;                   /*  signed 16 bit word  */
+typedef unsigned short  UWORD;                  /*  unsigned 16 bit word*/
+typedef long            LONG;                   /*  signed 32 bit word  */
+#define MAKE_UWORD(hi,lo) (((UWORD)(UBYTE)(hi) << 8) | (UBYTE)(lo))
+#define MAKE_ULONG(hi,lo) (((ULONG)(UWORD)(hi) << 16) | (UWORD)(lo))
+#define LOWORD(x) ((UWORD)(ULONG)(x))
+#define HIWORD(x) ((UWORD)((ULONG)(x) >> 16))
+#define LOBYTE(x) ((UBYTE)(UWORD)(x))
+#define HIBYTE(x) ((UBYTE)((UWORD)(x) >> 8))
 
-#ifdef MACHINE_A2560U
 
-#include "portab.h"
-#include "doprintf.h"
-
-
-
-#include "stdint.h"
 #include "foenix.h"
 #include "uart16550.h" /* Serial port */
 #include "sn76489.h"   /* Programmable Sound Generator */
@@ -87,7 +93,7 @@ void a2560u_init(void)
     sn76489_mute_all();
 
     /* Clear screen and home */
-    a2560u_debugnl(("\033Ea2560u_init()"));
+    a2560u_debugnl("\033Ea2560u_init()");
     a2560u_beeper(false);
 }
 
@@ -612,5 +618,3 @@ static uint32_t set_vector(uint16_t num, uint32_t vector)
     }
     return oldvector;
 }
-
-#endif /* MACHINE_A2560U */

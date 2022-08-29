@@ -67,5 +67,5 @@ static void wm8776_wait(void)
 {
     DECLARE_codec;
     while (*codec & 0x8000)
-        ;    
+        ;
 }

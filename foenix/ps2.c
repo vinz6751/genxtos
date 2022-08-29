@@ -13,11 +13,8 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#ifdef MACHINE_A2560U
-
 #include <stdint.h>
 #include <stdbool.h>
-#include "emutos.h"
 #include "ps2.h"
 
 //#define ENABLE_KDEBUG
@@ -757,4 +754,3 @@ static bool send_config(uint8_t config)
 	return true;
 }
 
-#endif // MACHINE_A2560U

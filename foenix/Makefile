@@ -9,7 +9,7 @@ STRIP=$(TOOLCHAIN)strip
 CFLAGS=-I$(LIBCMINI)/include -DLIBCMINI -fomit-frame-pointer -Os -std=c99
 LDFLAGS=-L$(LIBCMINI)/build -lcmini -lgcc
 
-LIB=liba2560U.a
+LIB=liba2560u.a
 
 SRC_C=a2560u.c bq4802ly.c \
 	ps2_keyboard.c ps2_mouse_a2560u.c ps2.c \
@@ -17,10 +17,10 @@ SRC_C=a2560u.c bq4802ly.c \
 SRC_S=a2560u_s.S
 SRC=$(SRC_C) $(SRC_S)
 OBJ_C=$(SRC_C:.c=.o)
-OBJ_S=$(SRC_S:.s=.o)
+OBJ_S=$(SRC_S:.S=.o)
 OBJ=$(OBJ_C) $(OBJ_S)
 
-# all: $(EXEC)
+# all: $(LIB)
 # ifeq ($(DEBUG),yes)
 #     @echo "Génération en mode debug"
 # else

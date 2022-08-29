@@ -14,8 +14,6 @@
  * callbacks from the OS.
  */
 
-#ifdef MACHINE_A2560U
-
 #ifndef PS2_MOUSE_A2560U_H
 #define PS2_MOUSE_A2560U_H
 
@@ -24,5 +22,3 @@
 extern const struct ps2_driver_t ps2_mouse_driver_a2560u;
 
 #endif
-
-#endif // MACHINE_A2560U
