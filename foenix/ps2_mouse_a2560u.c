@@ -8,16 +8,14 @@
  *
  */
 
-#ifdef MACHINE_A2560U
-
- #include <stdint.h>
- #include <stddef.h>
- #include "ps2.h"
- #include "lineavars.h"
- #include "a2560u.h"
+#include <stdint.h>
+#include <stddef.h>
+#include "ps2.h"
+//#include "lineavars.h"
+#include "a2560u.h"
 
 /* Settings */
-#define MAXIMUM_TOS_COMPATIBILITY 0
+#define MAXIMUM_TOS_COMPATIBILITY 1
 
  /* Prototypes */
 static const char driver_name[] = "PS/2 Mouse";
@@ -135,7 +133,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
          * 0x10 Reserved
          * 0x20 Mouse move flag (1=moved)
          * 0x40 Right mouse button status flag (0=hasn't changed)
-         *  0x80 Left mouse button status flag  (0=hasn't changed) */         
+         *  0x80 Left mouse button status flag  (0=hasn't changed) */
         if (GCURX != x || GCURY != y)
             new_cur_ms_stat = 0x20; /* Mouse moved flag */
         else
@@ -165,5 +163,3 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
    }
 #endif
 }
-
-#endif // MACHINE_A2560U

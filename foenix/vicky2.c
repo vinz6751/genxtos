@@ -11,17 +11,9 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/*#define ENABLE_KDEBUG*/
-
+#include <stdint.h>
 #include "vicky2.h"
 #include "a2560u.h"
-
-#ifdef MACHINE_A2560U
-
-#include <stdint.h>
-#include "emutos.h"
-#include "string.h"
-
 #include "foenix.h"
 
 #define TTRGB_BLACK     0x0000          /* TT palette */
@@ -94,7 +86,9 @@ uint32_t vicky_vbl_freq; /* VBL frequency */
 void vicky2_init(void)
 {
     int i;
+    uint32_t fb_size;
     FOENIX_VIDEO_MODE mode;
+    uint16_t *w;
 
     /* Enable video and bitmap, 640x480 */
     R32(VICKY_CTRL) = 0;
@@ -108,11 +102,7 @@ void vicky2_init(void)
     /* Use instead this to enable border to you can set its color as debugging trace:
      * R32(VICKY_A_BORDER_CTRL) = 0x00030301;
      */
-#if defined(ENABLE_KDEBUG)
-    R32(VICKY_A_BORDER_CTRL) = 0x030301;
-#else
     R32(VICKY_A_BORDER_CTRL) = 0;
-#endif
 
     /* Setup framebuffer to point to beginning of video RAM */
     R32(VICKY_A_BMP_FG_CTRL) = 1;       /* Enable bitmap layer 0, LUT 0 */
@@ -124,7 +114,12 @@ void vicky2_init(void)
     for (i = 0; i < 256; i++)
         vicky2_set_lut_color(0, i, convert_atari2vicky_color(tt_dflt_palette[i]));
 
-    memset((void*)VRAM_Bank0,0,(uint32_t)mode.w * mode.h);
+    /* Clear the screen */
+    fb_size = (uint32_t)mode.w * mode.h / sizeof(uint16_t);
+    fb_size -= 1;
+    w = (uint16_t*)VRAM_Bank0;
+    while (fb_size--)
+        *w++ = 0;
 }
 
 void vicky2_set_background_color(uint32_t color)
@@ -247,7 +242,7 @@ void vicky2_hide_cursor(void)
 
 void vicky2_set_text_cursor_xy(uint16_t x, uint16_t y)
 {
-    R32(VICKY_A_CURSOR_POS) = MAKE_ULONG(x, y);
+    R32(VICKY_A_CURSOR_POS) = ((uint32_t)x) << 16 | y;
 }
 
 /********** Mouse support ***************/
@@ -270,5 +265,3 @@ void vicky2_mouse_init(void)
     /* Reset mouse */
     R16(VICKY_MOUSE_CTRL) = 0;
 }
-
-#endif /* MACHINE_A2560U */
