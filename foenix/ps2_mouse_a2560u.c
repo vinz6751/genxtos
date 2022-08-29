@@ -57,7 +57,7 @@ struct ps2_mouse_local_t
 
 static bool init(struct ps2_driver_api_t *api)
 {
-    a2560u_debug("ps2_mouse_a2560u->init()");
+    a2560u_debugnl("ps2_mouse_a2560u->init()");
     api->driver->process = process;
 
     api->driver_data = (api->malloc)(sizeof(struct ps2_mouse_local_t));
@@ -94,7 +94,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
     // packet and pass it to the "mousevec" vector of the TOS so all TOS hooks etc. can work.
     int8_t *packet = DRIVER_DATA->ps2packet;
     packet[DRIVER_DATA->state++] = (int8_t)byte;
-    if (DRIVER_DATA->state >= SM_RECEIVED)    
+    if (DRIVER_DATA->state >= SM_RECEIVED)
     {
         DRIVER_DATA->state = SM_IDLE;
         volatile uint16_t * const vicky_ps2 = (uint16_t*)VICKY_MOUSE_PACKET;
@@ -106,18 +106,19 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         packet[0] = 0xf8 | (packet[0] & 3);
         api->os_callbacks.on_mouse(packet);
 
-        //a2560u_debug("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
+        //a2560u_debugnl("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
     }
 #else
-    // This is maximum speed setup. No TOS vectors are called, only internal mouse variables are updated.
-    // This is probably not something you want to use unless in a game/demo as the VDI/AES stuff will not work.
+    // This is maximum speed setup. The IKBD handling stuff (mousevec) is bypassed, we directly update line-A variables
+    // and call vectors.
+    // So if apps hook into the XBIOS (mousevec) they won't receive anything. But if they hook at the line-A / VDI level
+    // they're ok.
     volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
     packet[DRIVER_DATA->state++] = (uint16_t)byte;
     if (DRIVER_DATA->state >= SM_RECEIVED)
     {
         DRIVER_DATA->state = SM_IDLE;
 
-        
         uint16_t new_cur_ms_stat;
         uint16_t x,y;
         uint16_t buttons;
@@ -148,7 +149,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
 
         new_cur_ms_stat |= buttons;
 
-        /* Update Line-A variables */        
+        /* Update Line-A variables */
         GCURX = R16(VICKY_MOUSE_X);
         /* Note: for VICKY, mouse (0,0) top is top left of the screen, while for VDI it's bottom left */
         GCURY = linea_max_y - R16(VICKY_MOUSE_Y);
@@ -159,7 +160,7 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
         if (cur_ms_stat & (0x40|0x80))
             user_but();
         if (cur_ms_stat & 0x20)
-            user_mot();            
+            user_mot();
         /* user_cur is not supported since VICKY is in charge of drawing */
    }
 #endif

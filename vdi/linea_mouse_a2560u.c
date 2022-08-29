@@ -15,21 +15,21 @@
 #ifdef MACHINE_A2560U
 
 #include "linea.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 #define USE_MOUSE_MOVE_TO 0 // This is disabled because the caller vbl_draw itself is disabled, see comment there
 
 static void mouse_set_visible(WORD x, WORD y)
 {
     // TODO: fake a PS/2 packet here to set coordinates
-    a2560u_debug("mouse_set_visible @ %d,%d", x, y);
+    a2560u_debugnl("mouse_set_visible @ %d,%d", x, y);
     vicky2_show_mouse();
 }
 
 
 static void mouse_set_invisible(void)
 {
-    a2560u_debug("mouse_set_invisible");
+    a2560u_debugnl("mouse_set_invisible");
     vicky2_hide_mouse();
 }
 
@@ -58,7 +58,7 @@ static void set_mouse_cursor(const MFORM *src)
         mask = src->mf_mask[r];
         data = src->mf_data[r];
 
-        //a2560u_debug("%04x %04x", mask, data);
+        //a2560u_debugnl("%04x %04x", mask, data);
         for (c = 0; c < 16; c++)
         {
             if (mask & 0x8000)
@@ -66,14 +66,14 @@ static void set_mouse_cursor(const MFORM *src)
                 // 2 words, GB AR then GB
                 if (data & 0x8000)
                 {
-                    //a2560u_debugnl("X");
+                    //a2560u_debug("X");
                     /* Black */
                     *v++= 0x0000;
                     *v++= 0xff00;                
                 }
                 else
                 {
-                    //a2560u_debugnl("O");
+                    //a2560u_debug("O");
                     /* White */
                     *v++ = 0xffff;
                     *v++ = 0xffff;                       
@@ -81,7 +81,7 @@ static void set_mouse_cursor(const MFORM *src)
             }
             else
             {
-                //a2560u_debugnl("-");
+                //a2560u_debug("-");
                 /* Transparent */
                 *v++ = 0;
                 *v++ = 0;
@@ -89,7 +89,7 @@ static void set_mouse_cursor(const MFORM *src)
             mask <<= 1;
             data <<= 1;
         }
-        //a2560u_debug("");
+        //a2560u_debugnl("");
     }    
 }
 

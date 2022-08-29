@@ -28,7 +28,7 @@
 #include "string.h"
 #include "conout.h"
 #include "font.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 
 static void init(const Fonthead *font)
@@ -119,7 +119,7 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
     }
 
 #ifdef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_mark_cell_dirty(dst.pxaddr);
+    a2560u_bios_mark_cell_dirty(dst.pxaddr);
 #endif
 }
 
@@ -144,7 +144,7 @@ static void neg_cell(CHAR_ADDR cell)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_mark_cell_dirty(c);
+    a2560u_bios_mark_cell_dirty(c);
 #endif
 }
 
@@ -211,7 +211,7 @@ static void blank_out(int topx, int topy, int botx, int boty)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_mark_screen_dirty();
+    a2560u_bios_mark_screen_dirty();
 #endif
 }
 

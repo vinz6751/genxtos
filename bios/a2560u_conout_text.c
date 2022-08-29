@@ -28,7 +28,9 @@
 #include "string.h"
 #include "conout.h"
 #include "font.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
+
+static void cursor_moved(void);
 
 
 static void init(const Fonthead *font)
@@ -36,8 +38,8 @@ static void init(const Fonthead *font)
     v_cel_mx++;
     v_cel_wr = v_cel_mx;
     v_cur_ad.cellno = 0; /* First cell in text memory */
-    vicky2_text_init();
-    a2560u_update_cursor();
+    a2560u_bios_text_init();
+    cursor_moved();
 }
 
 
@@ -80,7 +82,7 @@ static void next_cell(void)
 
 static void cursor_moved(void)
 {
-    a2560u_update_cursor();
+    vicky2_set_text_cursor_xy(v_cur_cy, v_cur_cx);
 }
 
 

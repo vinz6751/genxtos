@@ -190,7 +190,7 @@ void vicky2_set_video_mode(uint16_t mode)
     R32(VICKY_CTRL) = (R32(VICKY_CTRL) & ~VICKY_MODE_MASK) | ((mode & 0x07) << 8);
     vicky_vbl_freq = foenix_video_modes[mode & 0x03].fps;
 
-    a2560u_debug("Video mode %d set, new VICKY ctrl: %p", mode, (void*)R32(VICKY_CTRL));
+    a2560u_debugnl("Video mode %d set, new VICKY ctrl: %p", mode, (void*)R32(VICKY_CTRL));
 }
 
 
@@ -218,83 +218,9 @@ uint32_t convert_atari2vicky_color(uint16_t orgb)
 }
 
 
-/* Text mode support *********************************************************/
-#include "font.h"
-#include "lineavars.h"
-#include "biosext.h"
-
-/* Line-A variables */
-extern uint16_t v_col_fg; /* Font background */
-extern uint16_t v_col_bg; /* Font foreground */
-extern uint16_t v_cur_ad; /* Current cursor address */
-
-static const uint16_t text_palette[32] =
-{
-/*  0xHHLL, 0xHHLL
- *  0xGGBB, 0xAARR */
-#define BLUE_THEME 0
-#define GREEN_THEME 1
-#if BLUE_THEME
-    0x2b4f, 0xff0e, /* A2560 background */
-#elif GREEN_THEME
-    0x1100, 0xff00,
-#else
-	0x0000, 0xFF00,	/* Black (transparent) */
-#endif
-	0x0000, 0xFF80, /* Mid-Tone Red */
-	0x8000, 0xFF00, /* Mid-Tone Green */
-	0x8000, 0xFF80, /* Mid-Tone Yellow */
-	0x0080, 0xFF00, /* Mid-Tone Blue */
-	0x5500, 0xFFAA, /* Mid-Tone Orange */
-	0x8080, 0xFF00, /* Mid-Tone Cian */
-	0x8080, 0xFF80, /* 50% Grey */
-	0x5555, 0xFF55, /* Dark Grey */
-    0x5555, 0xFFFF, /* Bright Red */
-	0xFF55, 0xFF55, /* Bright Green */
-	0xFF55, 0xFFFF, /* Bright Yellow */
-	0x55FF, 0xFF55, /* Bright Blue */
-	0x7FFF, 0xFFFF, /* Bright Orange */
-	0xFFFF, 0xFF55, /* Bright Cyan */
-#if BLUE_THEME
-	0x55BB, 0xFF55, /* A2560 light blue */
-#elif GREEN_THEME
-    0xee00, 0xff00, /* A2560 light green */
-#else
-    0xFFFF, 0xFFFF 	/* White */
-#endif
-};
-
-static void vicky2_load_font(void)
-{
-    int ascii;
-    int i;
-
-    uint8_t *dst = (uint8_t*)VICKY_FONT;
-
-    for (ascii = 0; ascii < 256; ascii++)
-    {
-        uint8_t *src = char_addr(ascii);
-
-        /* Character 0 is the cursor (filled block) */
-        if (ascii && src != 0L)
-        {
-            for (i = 0; i < v_cel_ht; i++)
-            {
-                *dst++ = *src;
-                src += v_fnt_wr;
-            }
-        }
-        else
-        { 
-            for (i = 0; i < v_cel_ht ; i++)
-                *dst++ = 0xff;
-        }
-    }
-}
-
-
 void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg)
 {
+    /* Colors are represented as GGBB AARR, 2 words for each palette entry. */
     int i;
     volatile uint16_t * const fglut = (uint16_t*)VICKY_TEXT_COLOR_FG;
     volatile uint16_t * const bglut = (uint16_t*)VICKY_TEXT_COLOR_BG;
@@ -304,37 +230,6 @@ void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg)
 	fglut[i] = fg[i];
 	bglut[i] = bg[i];
     }
-}
-
-
-void vicky2_text_init(void)
-{
-    vicky2_load_font();
-    vicky2_set_text_lut(text_palette, text_palette);
-
-    int i;
-    volatile uint8_t *c = (volatile uint8_t*)VICKY_TEXT_COLOR;
-    volatile uint8_t *t = (uint8_t*)VICKY_TEXT;
-    uint8_t color = (uint8_t)(v_col_fg << 4 | v_col_fg);
-
-    for (i = 0 ; i < VICKY_TEXT_SIZE ; i++)
-    {
-         *c++ = color;
-         *t++ = ' ';
-    }
-
-    /* Set cursor */
-    R32(VICKY_A_CURSOR_CTRL) = 0;
-    //R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_CHAR;
-    R32(VICKY_A_CURSOR_CTRL) |=
-        (((uint32_t)0x00L) << 16) /* 0 is a filled cell */
-        | 6; /* Flash quickly */
-
-    /* Enable text mode. Can't have text mode and gfx without overlay otherwise it crashes.
-     * If we have overlay, then the inverse video doesn't work as the background is transparent. */
-    R32(VICKY_CTRL) &= ~(VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP);
-    R32(VICKY_CTRL) |= VICKY_A_CTRL_TEXT;
-    vicky2_hide_cursor();
 }
 
 
@@ -350,17 +245,22 @@ void vicky2_hide_cursor(void)
 }
 
 
+void vicky2_set_text_cursor_xy(uint16_t x, uint16_t y)
+{
+    R32(VICKY_A_CURSOR_POS) = MAKE_ULONG(x, y);
+}
+
 /********** Mouse support ***************/
 
 void vicky2_show_mouse(void)
 {
-    a2560u_debug("vicky2_show_mouse");
+    a2560u_debugnl("vicky2_show_mouse");
     R16(VICKY_MOUSE_CTRL) |= VICKY_MOUSE_ENABLE;
 }
 
 void vicky2_hide_mouse(void)
 {
-    a2560u_debug("vicky2_hide_mouse");
+    a2560u_debugnl("vicky2_hide_mouse");
     R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;
 }
 

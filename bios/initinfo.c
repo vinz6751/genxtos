@@ -33,7 +33,7 @@
 #include "biosext.h"
 #include "version.h"
 #include "bios.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 #include "initinfo.h"
 #include "conout.h"

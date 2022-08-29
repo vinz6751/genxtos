@@ -16,10 +16,6 @@
 
 #include <stdint.h>
 
-#if CONF_WITH_WM8776
-# include "foenix.h"
-#endif
-
 void wm8776_init(void);
 void wm8776_send(uint16_t data);
 void wm8776_set_digital_volume(uint8_t volume);

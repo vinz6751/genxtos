@@ -12,7 +12,7 @@
 #include "asmdefs.h"
 
 #ifdef MACHINE_A2560U
-#include "foenix.i"
+#include "../foenix/foenix.i"
 #endif
 
 // ==== Definitions ==========================================================
@@ -357,8 +357,8 @@ _int_vbl:
 #endif
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-        .GLOBAL a2560u_copy_fb_to_vram
-        jbsr    a2560u_copy_fb_to_vram
+        .GLOBAL a2560u_bios_copy_fb_to_vram
+        jbsr    a2560u_bios_copy_fb_to_vram
 #endif
 
 #if defined(MACHINE_A2560U) && 0

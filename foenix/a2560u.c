@@ -15,32 +15,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <stdio.h>
 
-#include "emutos.h"
 
 #ifdef MACHINE_A2560U
 
 #include "portab.h"
-#include "vectors.h"
-#include "tosvars.h"
-#include "bios.h"
-#include "processor.h"
-#include "biosext.h"            /* for cache control routines */
-#include "gemerror.h"
-#include "ikbd.h"               /* for call_mousevec() */
-#include "screen.h"
-#include "delay.h"
-#include "asm.h"
-#include "lineavars.h"
-#include "string.h"
-#include "disk.h"
-#include "biosmem.h"
-#include "bootparams.h"
 #include "doprintf.h"
-#include "machine.h"
-#include "has.h"
-#include "../bdos/bdosstub.h"
-#include "screen.h"
+
+
+
 #include "stdint.h"
 #include "foenix.h"
 #include "uart16550.h" /* Serial port */
@@ -53,6 +37,19 @@
 #include "vicky2.h"    /* VICKY II graphics controller */
 #include "a2560u.h"
 
+#define set_sr(a)                         \
+__extension__                             \
+({short _r, _a = (a);                     \
+  __asm__ volatile                        \
+  ("move.w sr,%0\n\t"                     \
+   "move.w %1,sr"                         \
+  : "=&d"(_r)        /* outputs */        \
+  : "nd"(_a)         /* inputs  */        \
+  : "cc", "memory"   /* clobbered */      \
+  );                                      \
+  _r;                                     \
+})
+
 /* Local variables ***********************************************************/
 static uint32_t cpu_freq; /* CPU frequency */
 
@@ -61,7 +58,7 @@ static uint32_t cpu_freq; /* CPU frequency */
 
 void a2560u_init_lut0(void);
 static void timer_init(void);
-
+static uint32_t set_vector(uint16_t num, uint32_t vector);
 /* Interrupt */
 static void irq_init(void);
 void irq_mask_all(uint16_t *save);
@@ -70,10 +67,11 @@ void a2560u_irq_bq4802ly(void);
 void a2560u_irq_vicky(void);
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
-
+void a2560u_rte(void); /* Actually, just the RTE instruction. Not a function */
+void a2560u_rts(void); /* Actually, just the RTS instruction. */
 
 /* Implementation ************************************************************/
-/* To speed up the copy from RAM to VRAM we manage a list of dirty cells */
+
 
 void a2560u_init(void)
 {
@@ -89,56 +87,24 @@ void a2560u_init(void)
     sn76489_mute_all();
 
     /* Clear screen and home */
-    a2560u_debug(("\033Ea2560u_init()"));
+    a2560u_debugnl(("\033Ea2560u_init()"));
     a2560u_beeper(false);
 }
 
 
 /* Video  ********************************************************************/
 
-uint32_t a2560u_fb_size;
-uint8_t *a2560u_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
-volatile struct a2560u_dirty_cells_t a2560u_dirty_cells;
+uint8_t *_a2560u_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
 
-void a2560u_screen_init(void)
+
+void a2560u_text_init(const uint8_t *address)
 {
-    vicky2_init();
-
-    /* Setup VICKY interrupts handler (VBL, HBL etc.) */
-    vblsem = 0;
-    a2560u_dirty_cells.writer = a2560u_dirty_cells.reader = a2560u_dirty_cells.full_copy = 0;
-    a2560u_irq_set_handler(INT_SOF_A, int_vbl);
-}
-
-
-uint32_t a2560u_calc_vram_size(void)
-{
-    /* Get video mode */
-    a2560u_fb_size = (uint32_t)BYTES_LIN * V_REZ_VT;
-    return a2560u_fb_size;
-}
-
-
-void a2560u_mark_screen_dirty(void)
-{
-    a2560u_dirty_cells.full_copy = -1;
-}
-
-
-void a2560u_setphys(const uint8_t *address)
-{
-    a2560u_vram_fb = (uint8_t*)address;
+    _a2560u_bios_vram_fb = (uint8_t*)address;
     vicky2_set_bitmap0_address((uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
 }
 
 
-void a2560u_set_border_color(uint32_t color)
-{
-    vicky2_set_border_color(color);
-}
-
-
-void a2560u_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
+void a2560u_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez)
 {
     FOENIX_VIDEO_MODE mode;
 
@@ -149,59 +115,12 @@ void a2560u_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
 }
 
 
-/* Serial port support*/
-
-uint32_t a2560u_bcostat1(void)
-{
-    return uart16550_can_put(UART0);
-}
-
-void a2560u_bconout1(uint8_t byte)
-{
-    return uart16550_put(UART0,&byte, 1);
-}
+/* Serial port support *******************************************************/
 
 void a2560u_irq_com1(void); // Event handler in a2560u_s.S
 
-void a2560u_rs232_init(void) {
-    // The uart16550_init is called really earlier
-    setexc(INT_COM1_VECN, (uint32_t)a2560u_irq_com1);
-    a2560u_irq_enable(INT_COM1);
-    uart16550_rx_irq_enable(UART0, true);
-}
 
-/* For being able to translate settings of the ST's MFP68901 we need this */
-static const uint16_t mfp_timer_prediv[] = { 0,4,10,16,50,64,100,200 };
-#define MFP68901_FREQ 2457600 /* The ST's 68901 MFP is clocked at 2.4576MHZ */
-
-void a2560u_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector)
-{
-    uint32_t frequency;
-    uint32_t timer_clock;
-
-    if (timer > 3)
-        return;
-
-    /* Read the intent of the caller */
-    if (timer == 2)
-        control >>= 4; /* TCDCR has control bit for Timer C and D but D has bits 4,5,6 */
-    if (control & 0x8)
-    {
-        /* We only support "delay mode. Other modes have bit 3 set */
-        KDEBUG(("Not supported MFP timer %d mode %04x\n", 'A' + timer, control));
-        return;
-    }
-    /* Quantity of 2.4576MHz ticks before the timer fires */
-    frequency = mfp_timer_prediv[frequency];
-    if (data != 0)
-        frequency *= data;
-
-    /* Convert that according to our timer's clock */
-    timer_clock = timer == 3 ? vicky_vbl_freq : cpu_freq;
-    frequency = (frequency * timer_clock) / MFP68901_FREQ;
-
-    a2560u_set_timer(timer, frequency, false, vector);
-}
+/* Timers ********************************************************************/
 
 /* This holds all readily usable details of timers per timer number,
  * so we don't have to compute anything when setting a timer.
@@ -276,7 +195,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* Stop the timer while we configure */
     a2560u_timer_enable(timer, false);
 
-    /* Stop and reprogram and the timer, but don't start. */
+    /* Stop and reprogram the timer, but don't start. */
     /* TODO: In case of control register 0, we write the config of 3 timers at once because
      * the timers control register has to be addressed as long word.
      * Can that have nasty effects on any other running timers ? */
@@ -304,8 +223,8 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
 
     R32(t->control) |= t->prog;
 
-    /* Set handler */
-    setexc(t->vector, (uint32_t)handler);
+    /* Set handler */    
+    set_vector(t->vector, (uint32_t)handler);
 
     /* Before starting the timer, ignore any previous pending interrupt from it */
     if (R16(IRQ_PENDING_GRP1) & t->irq_mask)
@@ -318,7 +237,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
 #if 0
     KDEBUG(("AFTER SETTING TIMER %d\n", timer));
     KDEBUG(("CPU          sr=%04x\n", get_sr()));
-    KDEBUG(("vector       0x%02x=%p\n",t->vector,(void*)setexc(t->vector, -1L)));
+    KDEBUG(("vector       0x%02x=%p\n",t->vector,(void*)set_vector(t->vector, -1L)));
     KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
     KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
     KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));
@@ -350,34 +269,50 @@ void a2560u_timer_enable(uint16_t timer, bool enable)
 
 /*
  * Output the string on the serial port.
- * Use this if the KDEBUG is not available yet.
  */
-void a2560u_debug(const char* __restrict__ s, ...)
-{
-#ifdef ENABLE_KDEBUG
-    char msg[80];
-    va_list ap;
-    va_start(ap, s);
-    sprintf(msg,s,ap);
-    doprintf((void(*)(int))a2560u_bconout1, s, ap);
-    va_end(ap);
-    uart16550_put(UART0, (uint8_t*)"\r\n", 2);
-#endif
-}
-
 void a2560u_debugnl(const char* __restrict__ s, ...)
 {
 #ifdef ENABLE_KDEBUG
     char msg[80];
+    int length;
+    char *c;
     va_list ap;
     va_start(ap, s);
     sprintf(msg,s,ap);
-    doprintf((void(*)(int))a2560u_bconout1, s, ap);
     va_end(ap);
+
+    c = (char*)msg;
+    while (*c++)
+        ;
+    length = c - msg -1;
+
+    uart16550_put(UART0, (uint8_t*const)msg, length);
+    uart16550_put(UART0, (uint8_t*)"\r\n", 2);
 #endif
 }
 
-/* Interrupts management */
+void a2560u_debug(const char* __restrict__ s, ...)
+{
+#ifdef ENABLE_KDEBUG
+    char msg[80];
+    int length;
+    char *c;
+    va_list ap;
+    va_start(ap, s);
+    sprintf(msg,s,ap);
+    va_end(ap);
+
+    c = (char*)msg;
+    while (*c++)
+        ;
+    length = c - msg -1;
+
+    uart16550_put(UART0, (uint8_t*const)msg, length);
+    uart16550_put(UART0, (uint8_t*)"\r\n", 2);
+#endif
+}
+
+/* Interrupts management *****************************************************/
 static void irq_init(void)
 {
     int i, j;
@@ -394,13 +329,13 @@ static void irq_init(void)
         polarity[i] = 0;
 
         for (j=0; j<16; j++)
-            a2560_irq_vectors[i][j] = just_rts;
+            a2560_irq_vectors[i][j] = a2560u_rts;
     }
 
     for (i=0x40; i<0x60; i++)
-        setexc(i,(uint32_t)just_rte); /* That's not even correct because it doesn't acknowledge interrupts */
+        set_vector(i,(uint32_t)a2560u_rte); /* That's not even correct because it doesn't acknowledge interrupts */
 
-    setexc(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
+    set_vector(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
 }
 
 
@@ -471,53 +406,12 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
 
     // char msg[50];
     // sprintf(msg, "a2560_irq_vectors=%p\r\n", (void*)a2560_irq_vectors);
-    // a2560u_debug(msg);
+    // a2560u_debugnl(msg);
     // sprintf(msg,"handler(%d) irq_handler(irq_id)=%p value=%p\r\n",irq_id, &irq_handler(irq_id), irq_handler(irq_id));
-    // a2560u_debug(msg);
+    // a2560u_debugnl(msg);
 
-    KDEBUG(("Handler %04ux: %p\n", irq_id, handler));
+    a2560u_debugnl("Handler %04ux: %p", irq_id, handler);
     return old_handler;
-}
-
-/* Calibration ***************************************************************/
-uint32_t calibration_interrupt_count;
-uint32_t calibration_loop_count;
-void a2560u_irq_calibration(void);
-void a2560u_run_calibration(void);
-
-void a2560u_calibrate_delay(uint32_t calibration_time)
-{
-    uint16_t masks[IRQ_GROUPS];
-    uint32_t old_timer_vector;
-
-    calibration_interrupt_count = 0;
-    calibration_loop_count = calibration_time;
-
-    KDEBUG(("a2560u_calibrate_delay(0x%ld)\n", calibration_time));
-    /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
-
-    /* Backup all interrupts masks because a2560u_run_calibration will mask everything. We'll need to restore */
-    a2560u_irq_mask_all(masks);
-
-    /* Setup timer for 960Hz, same as what EmuTOS for ST does with using MFP Timer D (UART clock baud rate generator) for 9600 bauds */
-    old_timer_vector = setexc(INT_TIMER0_VECN, -1L);
-    a2560u_set_timer(0, 960, true, a2560u_irq_calibration);
-
-    /* This counts the number of wait loops we can do in about 100ms */
-    a2560u_run_calibration();
-
-    /* Restore previous timer vector */
-    setexc(INT_TIMER0_VECN, old_timer_vector);
-
-    /* Restore interrupt masks */
-    a2560u_irq_restore(masks);
-
-    KDEBUG(("loopcount_1_msec (old)= 0x%08lx, calibration_interrupt_count = %ld\n", loopcount_1_msec, calibration_interrupt_count));
-    /* See delay.c for explaination */
-    if (calibration_interrupt_count)
-        loopcount_1_msec = (calibration_time * 24) / (calibration_interrupt_count * 25);
-
-    KDEBUG(("loopcount_1_msec (new)= 0x%08lx\n", loopcount_1_msec));
 }
 
 
@@ -525,7 +419,7 @@ void a2560u_calibrate_delay(uint32_t calibration_time)
 
 void a2560u_clock_init(void)
 {
-    setexc(INT_BQ4802LY_VECN, (uint32_t)a2560u_irq_bq4802ly);
+    set_vector(INT_BQ4802LY_VECN, (uint32_t)a2560u_irq_bq4802ly);
     bq4802ly_init();
 }
 
@@ -536,9 +430,11 @@ uint32_t a2560u_getdt(void)
     uint16_t year;
 
     bq4802ly_get_datetime(&day, &month, &year, &hour, &minute, &second);
-    a2560u_debug("RTC time= %02d/%02d/%04d %02d:%02d:%02d", day, month, year, hour, minute, second);
+    a2560u_debugnl("RTC time= %02d/%02d/%04d %02d:%02d:%02d", day, month, year, hour, minute, second);
 
-    return MAKE_ULONG(((year-1980) << 9) | (month << 5) | day, (hour << 11) | (minute << 5) | (second>>1)/*seconds are of units of 2*/);
+    return MAKE_ULONG(
+        ((year-1980) << 9) | (month << 5) | day,
+        (hour << 11) | (minute << 5) | (second>>1)/*seconds are of units of 2*/);
 }
 
 
@@ -559,12 +455,6 @@ void a2560u_setdt(uint32_t datetime)
 
 /* PS/2 setup  ***************************************************************/
 
-static void *balloc_proxy(size_t howmuch)
-{
-    return balloc_stram(howmuch, false);
-}
-
-
 static const struct ps2_driver_t * const drivers[] = {
     &ps2_keyboard_driver,
     &ps2_mouse_driver_a2560u
@@ -573,28 +463,31 @@ static const struct ps2_driver_t * const drivers[] = {
 
 void a2560u_kbd_init(void)
 {
-    /* Disable IEQ while we're configuring */
+    /* Disable IRQ while we're configuring */
     a2560u_irq_disable(INT_KBD_PS2);
     a2560u_irq_disable(INT_MOUSE);
 
     /* Explain our setup to the PS/2 subsystem */
-    ps2_config.counter      = (uint32_t*)&frclock; /* FIXME we're using the VBL counter */
-    ps2_config.counter_freq = 60;
     ps2_config.port_data    = (uint8_t*)PS2_DATA;
     ps2_config.port_status  = (uint8_t*)PS2_CMD;
     ps2_config.port_cmd     = (uint8_t*)PS2_CMD;
     ps2_config.n_drivers    = sizeof(drivers)/sizeof(struct ps2_driver_t*);
     ps2_config.drivers      = drivers;
-    ps2_config.malloc       = balloc_proxy;
-    ps2_config.os_callbacks.on_key_down = kbd_int;
-    ps2_config.os_callbacks.on_key_up   = kbd_int;
-    ps2_config.os_callbacks.on_mouse    = call_mousevec;
+
+    /* The following must be set by the calling OS prior to calling kbd_init
+    ps2_config.counter      = ;
+    ps2_config.counter_freq = ;
+    ps2_config.malloc       = ;
+    ps2_config.os_callbacks.on_key_down = ;
+    ps2_config.os_callbacks.on_key_up   = ;
+    ps2_config.os_callbacks.on_mouse    = ;
+    */
 
     ps2_init();
 
     /* Register GAVIN interrupt handlers */
-    setexc(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);
-    setexc(INT_PS2MOUSE_VECN, (uint32_t)a2560u_irq_ps2mouse);
+    set_vector(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);
+    set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560u_irq_ps2mouse);
 
     /* Acknowledge any pending interrupt */
     a2560u_irq_acknowledge(INT_KBD_PS2);
@@ -702,52 +595,22 @@ void a2560u_disk_led(bool on)
         R16(GAVIN_CTRL) &= ~GAVIN_CTRL_DISKLED;
 }
 
-/* SD card *******************************************************************/
-
-#include "spi.h"
-
-
-/* Nothing needed there, it's all handled by GAVIN */
-void spi_clock_sd(void) { }
-void spi_clock_mmc(void) { }
-void spi_clock_ident(void) { }
-void spi_cs_assert(void) { }
-void spi_cs_unassert(void) { }
-
-void spi_initialise(void)
-{
-    /* We use plain SPI and EmuTOS's SD layer on top of it */
-    sdc_controller->transfer_type = SDC_TRANS_DIRECT;
-}
-
-
-static uint8_t clock_byte(uint8_t value)
-{
-    sdc_controller->data = value;
-    sdc_controller->transfer_control = SDC_TRANS_START;
-    while (sdc_controller->transfer_status & SDC_TRANS_BUSY)
-        ;
-    return sdc_controller->data;
-}
-
-
-void spi_send_byte(uint8_t c)
-{
-    (void)clock_byte(c);
-}
-
-
-uint8_t spi_recv_byte(void)
-{
-    return clock_byte(0xff);
-}
-
-
 /* Console support ***********************************************************/
 
-void a2560u_update_cursor(void)
+
+
+/* Utility functions *********************************************************/
+
+static uint32_t set_vector(uint16_t num, uint32_t vector)
 {
-    R32(VICKY_A_CURSOR_POS) = MAKE_ULONG(v_cur_cy,v_cur_cx);
+    uint32_t oldvector;
+    uint32_t *addr = (uint32_t *) (4L * num);
+    oldvector = *addr;
+
+    if(vector != -1) {
+        *addr = vector;
+    }
+    return oldvector;
 }
 
 #endif /* MACHINE_A2560U */

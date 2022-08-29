@@ -22,7 +22,7 @@
 #include "spi.h"
 #include "string.h"
 #include "tosvars.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 #if CONF_WITH_SDMMC
 

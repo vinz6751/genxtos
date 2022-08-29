@@ -1,4 +1,4 @@
-/* PS/2 system 
+/* PS/2 system
  * 
  * Authors:
  *	Vincent Barrilliot
@@ -51,7 +51,7 @@ struct ps2_driver_t
 struct ps2_os_callbacks_t {
 	void (*on_key_down)(uint8_t scancode);
 	void (*on_key_up)(uint8_t scancode);
-	void (*on_mouse)(const int8_t *packet);
+	void (*on_mouse)(int8_t *packet);
 };
 
 /* This is the interface between the driver and the rest */
@@ -89,10 +89,6 @@ struct ps2_api_t
 	const struct ps2_driver_t * const *drivers;
 	/* OS functions that we can use */
 	void* (*malloc)(size_t size);
-
-	/* Called by the OS to instruct the devices to process the data they have buffered 
-	 * and act accordingly by calling OS events (key up, key down etc.) */
-	void (*on_do_events)(void);
 
 	/* Events PS/2 -> OS. Ultimately, calling these are the purpose in life of drivers */
 	struct ps2_os_callbacks_t os_callbacks;

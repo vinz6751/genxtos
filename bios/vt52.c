@@ -30,7 +30,7 @@
 #include "conout.h"
 #include "vt52.h"
 #include "bios.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 #if CONF_SERIAL_CONSOLE_ANSI
 /* We disable cursor home commands because it is more convenient */

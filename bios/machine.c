@@ -41,7 +41,7 @@
 #include "nova.h"
 #include "biosext.h"
 #include "amiga.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 #if CONF_WITH_ADVANCED_CPU
 UBYTE is_bus32; /* 1 if address bus is 32-bit, 0 if it is 24-bit */
@@ -604,7 +604,7 @@ void machine_detect(void)
 void machine_init(void)
 {
 #ifdef MACHINE_A2560U
-    a2560u_init();
+    a2560u_bios_init();
     /* There is an early setup of the UART so we can use KDEBUG earlier. */
     boot_status |= RS232_AVAILABLE;
 #endif

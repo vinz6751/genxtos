@@ -40,7 +40,7 @@
 #include "coldfire.h"
 #include "amiga.h"
 #include "lisa.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 
 /* forward declarations */
@@ -1081,7 +1081,7 @@ void kbd_init(void)
 #endif
 
 #ifdef MACHINE_A2560U
-    a2560u_kbd_init();
+    a2560u_bios_kbd_init();
 #endif
 
 #if CONF_WITH_IKBD_ACIA

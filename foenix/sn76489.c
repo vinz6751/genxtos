@@ -11,20 +11,14 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#include "config.h"
-
-#if CONF_WITH_SN76489
-
+#include <stdint.h>
 #include "sn76489.h"
 #include "foenix.h"
-#include <stdint.h>
 
-# ifdef MACHINE_A2560U
-#  include "foenix.h"
+
 static const uint8_t* psgs_ports[] = {
     SN76489_L, SN76489_R, SN76489_BOTH
 };
-# endif
 
 static uint8_t *sn76489_current;
 
@@ -105,5 +99,3 @@ void sn76489_noise_source(uint8_t type, uint8_t source) {
     v |= source & 3;
     R8(sn76489_current) = v;
 }
-
-#endif /* CONF_WITH_SN76489 */

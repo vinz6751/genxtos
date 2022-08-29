@@ -7,20 +7,16 @@
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
  *
- * This is a keyboard driver. It is notified by on_irq when an interrupt occurred
- * for the device. It quickly stores the received data in a buffer and returns.
- * When the OS allows for more expensive processing to occur, to decode the received data,
- * it calles process(). That method then analyses the buffer and fires the key_up / key_down
- * callbacks from the OS.
+ * This is a keyboard driver for PS/2 keyboard.
  */
 
+/* This file is nothing specific to the A2560U but it's only built for that target */
 #ifdef MACHINE_A2560U
 
 #include <stdint.h>
 #include <stddef.h>
 #include "ps2.h"
 #include "ps2_scancodes.h"
-#include "a2560u.h"
 
  /* Prototypes */
 static const char driver_name[] = "PS/2 Keyboard";
@@ -182,7 +178,7 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
 
                 default:
                     {
-                        // Lookup the translation of the E0 prefixed code...                        
+                        // Lookup the translation of the E0 prefixed code...
                         uint8_t translated_code = scancodeSet1_E0_to_key[scancode & 0x7f];
                         if (translated_code != 0) {
                             if (IS_BREAK(scancode))

@@ -17,13 +17,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "config.h"
 
-#if CONF_WITH_BQ4802LY
-
-#ifdef MACHINE_A2560U
-# include "a2560u.h"
-#endif
 
 struct __attribute__((aligned(16))) bq4802ly_t 
 {
@@ -88,12 +82,12 @@ extern struct bq4802ly_t bq4802;
 #define BQ4802LY_2412        0x02
 #define BQ4802LY_DSE         0x01
 
-extern uint32_t rtc_ticks; /* Not working yet (problem with interrupts) */
+extern uint32_t rtc_ticks;
 
 void bq4802ly_init(void);
 void bq4802ly_enable_ticks(bool enable);
+uint32_t bq4802ly_get_ticks(void);
 void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t hour, uint8_t minute, uint8_t second);
 void bq4802ly_get_datetime(uint8_t *day, uint8_t *month, uint16_t *year, uint8_t *hour, uint8_t *minute, uint8_t *second);
 
-#endif /* CONF_WITH_BQ4802LY */
 #endif /* BQ4802LY_H */

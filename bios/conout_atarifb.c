@@ -32,7 +32,7 @@
 #include "string.h"
 #include "conout.h"
 #include "font.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 #define PLANE_OFFSET    2       /* interleaved planes */
 

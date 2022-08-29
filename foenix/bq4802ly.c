@@ -12,15 +12,9 @@
  * See doc/license.txt for details.
  */
 
-#define ENABLE_KDEBUG
-
 #include <stdint.h>
-#include "config.h"
-#include "emutos.h"
 #include "bq4802ly.h"
 #include "a2560u.h"
-
-#if CONF_WITH_BQ4802LY
 
 uint32_t bq4802ly_ticks;
 
@@ -62,6 +56,12 @@ void bq4802ly_enable_ticks(bool enable)
         bq4802ly->enables &= BQ4802LY_PIE;
     }
 }
+
+
+uint32_t bq4802ly_get_ticks(void) {
+    return bq4802ly_ticks;
+}
+
 
 void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t hour, uint8_t minute, uint8_t second)
 {
@@ -176,5 +176,3 @@ static void start(uint8_t control)
 {
     bq4802ly->control = (control & 0x7f) | BQ4802LY_STOP;
 }
-
-#endif /* CONF_WITH_BQ4802LY */

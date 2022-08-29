@@ -18,7 +18,7 @@
 #include "serport.h"
 #include "processor.h"
 #include "delay.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 /*
  * initial 1 millisecond delay loop values
@@ -90,7 +90,7 @@ void init_delay(void)
 void calibrate_delay(void)
 {
 #ifdef MACHINE_A2560U
-    a2560u_calibrate_delay(CALIBRATION_TIME * loopcount_1_msec);
+    a2560u_bios_calibrate_delay(CALIBRATION_TIME * loopcount_1_msec);
 #elif CONF_WITH_MFP
     ULONG loopcount, intcount;
 

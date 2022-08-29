@@ -282,8 +282,9 @@ OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 # the native C compiler, for tools
 NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -W $(BUILD_TOOLS_OPTFLAGS)
 
-#obj/a2560u_s.o: bios/a2560u_s.asm
-#	$(ASM) $< -o $@ $(ASMFLAGS)
+foenix_src = a2560u_s.S a2560u.c \
+	ps2_mouse_a2560u.c ps2.c ps2_keyboard.c \
+	uart16550.c sn76489.c wm8776.c bq4802ly.c vicky2.c
 
 #
 # source code in bios/
@@ -298,8 +299,8 @@ bios_src += lowstram.c
 # Other BIOS sources can be put in any order
 bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
-			 conout.c conout_atarifb.c \
-			 country.c \
+             conout.c conout_atarifb.c \
+             country.c \
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
              kprint.c kprintasm.S machine.c \
              mfp.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
@@ -309,10 +310,8 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S \
-			 uart16550.c sn76489.c wm8776.c bq4802ly.c vicky2.c \
-			 ps2.c ps2_keyboard.c ps2_mouse_a2560u.c \
-			 a2560u_s.S a2560u.c a2560u_conout_text.c a2560u_conout_bmp.c
-#			 c256genx.c c256genx2.S c256genx_kbd.S \
+             a2560u_bios.c a2560u_bios_s.S a2560u_conout_text.c a2560u_conout_bmp.c
+
 
 ifeq (1,$(COLDFIRE))
   bios_src += coldfire.c coldfire2.S spi_cf.c
@@ -448,7 +447,7 @@ MEMBOT_TOS404 = 0x0000f99c
 #
 
 # Core directories are essential for basic OS operation
-core_dirs = bios bdos util
+core_dirs = bios bdos util foenix
 
 # Optional directories may be disabled for reduced features
 optional_dirs = vdi
@@ -1382,7 +1381,7 @@ TOCLEAN += *.sym
 # checkindent - check for indent warnings, but do not alter files
 #
 
-INDENTFILES = bdos/*.c bios/*.c util/*.c tools/*.c desk/*.c aes/*.c vdi/*.c
+INDENTFILES = bdos/*.c bios/*.c util/*.c tools/*.c desk/*.c aes/*.c vdi/*.c foenix/*.c
 
 .PHONY: checkindent
 checkindent:

@@ -19,7 +19,7 @@
 #include "linea.h"
 #include "../bios/screen.h" /* Fixme */
 #include "tosvars.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 /*
  * Precomputed value of log2(8/v_planes), used to derive v_planes_shift.

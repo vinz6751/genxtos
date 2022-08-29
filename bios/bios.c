@@ -63,7 +63,8 @@
 #include "amiga.h"
 #include "lisa.h"
 #include "coldfire.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
+
 #if WITH_CLI
 #include "../cli/clistub.h"
 #endif

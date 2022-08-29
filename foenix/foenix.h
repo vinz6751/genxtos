@@ -26,9 +26,7 @@
 #endif
 
 
-#ifdef MACHINE_A2560U
-
-#define CPU_FREQ    20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
+#define CPU_FREQ        20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
 
 /* General memory map */
 #define GAVIN           0x00B00000
@@ -155,7 +153,5 @@
 #define OPM_INT_BASE  ((volatile uint8_t*)(BEATRIX+0x0C00)) /* Internal OPM base address */
 #define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00)) /* Internal OPN2 base address */
 #define WM8776_PORT   ((uint16_t*)(BEATRIX+0x0E00))         /* Mixer/codec port */
-
-#endif
 
 #endif // FOENIX

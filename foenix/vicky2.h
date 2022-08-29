@@ -13,10 +13,6 @@
 #ifndef VICKY2_H
 #define VICKY2_H
 
-#include "config.h"
-
-#ifdef MACHINE_A2560U
-
 #include <stdint.h>
 #include "foenix.h"
 
@@ -108,25 +104,34 @@ extern const FOENIX_VIDEO_MODE foenix_video_modes[];
 extern uint32_t vicky_vbl_freq; /* VBL frequency */
 
 void vicky2_init(void);
-void vicky2_text_init(void);
-void vicky2_mouse_init(void);
+
+
+/* Color management */
 void vicky2_set_background_color(uint32_t color);
 void vicky2_set_border_color(uint32_t color);
-void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg);
+void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color);
+void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result);
+
+/* Video mode */
 void vicky2_set_video_mode(uint16_t mode); /* video mode number */
 void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result);
 void vicky2_set_bitmap0_address(const uint8_t *address); /* address is relative to VRAM */
-void vicky2_set_mouse_visible(uint16_t visible);
-void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color);
-void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result);
+
+/* Text output support */
+void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg);
+
+/* Text cursor support */
 void vicky2_show_cursor(void);
 void vicky2_hide_cursor(void);
+void vicky2_set_text_cursor_xy(uint16_t x, uint16_t y);
+
+/* Mouse support */
+void vicky2_mouse_init(void);
+void vicky2_set_mouse_visible(uint16_t visible);
 void vicky2_show_mouse(void);
 void vicky2_hide_mouse(void);
 
 // Utility
 uint32_t convert_atari2vicky_color(uint16_t orgb);
-
-#endif // MACHINE_A2560U
 
 #endif // VICKY2_H

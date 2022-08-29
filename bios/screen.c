@@ -38,7 +38,7 @@
 #include "amiga.h"
 #include "lisa.h"
 #include "nova.h"
-#include "a2560u.h"
+#include "a2560u_bios.h"
 
 void detect_monitor_change(void);
 static void setphys(const UBYTE *addr);
@@ -630,7 +630,7 @@ void screen_init_mode(void)
 #endif
 
 #ifdef MACHINE_A2560U
-    a2560u_screen_init();
+    a2560u_bios_screen_init();
 #endif
 
     rez_was_hacked = FALSE; /* initial assumption */
@@ -760,7 +760,7 @@ ULONG calc_vram_size(void)
 #elif defined(MACHINE_LISA)
     return 32*1024UL;
 #elif defined(MACHINE_A2560U)
-    return a2560u_calc_vram_size();
+    return a2560u_bios_calc_vram_size();
 #else
     ULONG vram_size;
 
@@ -1073,7 +1073,7 @@ static void setphys(const UBYTE *addr)
 #elif defined(MACHINE_LISA)
     lisa_setphys(addr);
 #elif defined(MACHINE_A2560U)
-    a2560u_setphys(addr);
+    a2560u_text_init(addr);
 #elif CONF_WITH_ATARI_VIDEO
     atari_setphys(addr);
 #endif

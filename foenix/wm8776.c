@@ -11,16 +11,9 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#include "config.h"
-
-#if CONF_WITH_WM8776
-
-#include "wm8776.h"
 #include <stdint.h>
-
-# ifdef MACHINE_A2560U
-#  include "foenix.h"
-# endif
+#include "foenix.h"
+#include "wm8776.h"
 
 
 /* We keep track of the last volume set */
@@ -76,5 +69,3 @@ static void wm8776_wait(void)
     while (*codec & 0x8000)
         ;    
 }
-
-#endif
