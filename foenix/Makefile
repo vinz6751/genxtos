@@ -33,7 +33,7 @@ $(LIB): $(OBJ)
 %.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-%.o: %.s
+%.o: %.S
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 

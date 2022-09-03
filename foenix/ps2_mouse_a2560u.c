@@ -11,7 +11,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "ps2.h"
-//#include "lineavars.h"
 #include "a2560u.h"
 
 /* Settings */

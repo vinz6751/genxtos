@@ -41,6 +41,7 @@
 #include "has.h"
 #include "../bdos/bdosstub.h"
 #include "screen.h"
+#include "serport.h" // push_serial_iorec
 #include "stdint.h"
 #include "../foenix/foenix.h"
 #include "../foenix/uart16550.h" /* Serial port */
@@ -128,6 +129,7 @@ void a2560u_irq_com1(void); // Event handler in a2560u_s.S
 
 void a2560u_bios_rs232_init(void) {
     // The UART's base settings are setup earlier
+    uart16550_rx_handler = push_serial_iorec;
     setexc(INT_COM1_VECN, (uint32_t)a2560u_irq_com1);
     a2560u_irq_enable(INT_COM1);
     uart16550_rx_irq_enable(UART0, true);

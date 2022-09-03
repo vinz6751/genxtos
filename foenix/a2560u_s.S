@@ -29,7 +29,7 @@
     .GLOBAL _a2560u_fb_size
     .GLOBAL __a2560u_bios_vram_fb
     .GLOBAL _v_bas_ad
-    .GLOBAL _push_serial_iorec
+    .GLOBAL _uart16550_rx_handler
         
 
 _a2560u_rts:
@@ -67,7 +67,6 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
     tst.b   RTC_FLAGS  // Acknowledge interrupt on the bq4802LY by reading the flags
     move.w  #RTC_INT,IRQ_PENDING_GRP1 // Acknowledge GAVIN interrupt
     addq.l  #1,_bq4802ly_ticks
-    move.l  _bq4802ly_ticks,_hz_200 // We use the RTC timer as 200hz source. Not quite 200Hz since it's 3.90625ms rather than 5ms though.
     rte
 
 
@@ -94,14 +93,15 @@ _a2560u_irq_com1: // UART COM1 interrupt handler
     // So instead of checking interrupts we examine the Line Status Register to find out the cause of the interrupt.
     movem.l d0-d1/a0-a2,-(sp)
 com1_do:
-    move.w  #COM1_INT,IRQ_PENDING_GRP1  // Acknowledge GAVIN interrupt
+    move.w  #COM1_INT,IRQ_PENDING_GRP1  // Acknowledge GAVIN interrupt (if any)
     move.b  UART0+UART16750_LSR,d1 // That "should" acknowledge the interrupt (but doesn't)
     btst    #0,d1
     beq.s   com1_done // No data received
     // Data received
     move.b  UART0,d0
     move.w  d0,-(sp)
-    jbsr    _push_serial_iorec
+    movea.l _uart16550_rx_handler,a0
+    jbsr    (a0)
     addq.l  #2,sp
     bra.s   com1_do
 com1_done:

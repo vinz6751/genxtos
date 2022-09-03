@@ -85,6 +85,7 @@ extern struct bq4802ly_t bq4802;
 extern uint32_t rtc_ticks;
 
 void bq4802ly_init(void);
+void bq4802ly_set_tick_rate(uint16_t rate);
 void bq4802ly_enable_ticks(bool enable);
 uint32_t bq4802ly_get_ticks(void);
 void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t hour, uint8_t minute, uint8_t second);

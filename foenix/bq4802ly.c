@@ -31,29 +31,33 @@ void bq4802ly_init(void)
 {
     a2560u_irq_disable(INT_RTC);
 
-    /* Make sure the RTC is on */
+    /* Make sure the RTC is on. Yes the way this works is awkward :) */
     bq4802ly->control = BQ4802LY_STOP;
 
-    bq4802ly_enable_ticks(true);
-
-    a2560u_irq_enable(INT_RTC);
+    bq4802ly_set_tick_rate(BQ4802LY_RATE_500ms);
+    bq4802ly_enable_ticks(false);
 }
 
+/* Set the frequency of the ticking interrupt. Possible values are BQ4802LY_RATE_xxx */
+void bq4802ly_set_tick_rate(uint16_t rate)
+{
+    bq4802ly->rates = rate;
+}
 
 /* Enable the RTC interrupts ticking. This doesn't unmask GAVIN interrupts. */
 void bq4802ly_enable_ticks(bool enable)
 {
     if (enable)
     {
-        /* Set the periodic interrupt to 4 millisecs (that's the closest to the ST's 5ms / 200Hz) */
-        bq4802ly->rates = BQ4802LY_RATE_4ms;
         /* Acknowledge any previous pending interrupt */
         bq4802ly->flags;
         bq4802ly->enables |= BQ4802LY_PIE;
+        a2560u_irq_enable(INT_RTC);
     }
     else
     {
         bq4802ly->enables &= BQ4802LY_PIE;
+        a2560u_irq_disable(INT_RTC);
     }
 }
 
@@ -83,7 +87,7 @@ void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t ho
 //    if (!time->is_24hours && time->is_pm)
 //        hour_bcd = hour_bcd | 0x80;
     minute_bcd = i_to_bcd(minute);
-    second_bcd = i_to_bcd(second);    
+    second_bcd = i_to_bcd(second);
 
     /* Temporarily disable updates to the clock */
     stop(&control);
