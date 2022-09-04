@@ -665,7 +665,9 @@
  * Defaults for the A2560U from Foenix Retro Systems
  */
 #ifdef MACHINE_A2560U
-#define MACHINE_A2560U_DEBUG 1
+# ifndef MACHINE_A2560U_DEBUG
+#  define MACHINE_A2560U_DEBUG 0
+# endif
 
 # ifndef CONF_ATARI_HARDWARE
 #  define CONF_ATARI_HARDWARE 0
