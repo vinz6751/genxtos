@@ -44,12 +44,12 @@
 
 void a2560u_rts(uint16_t);
 
-void (*uart16550_rx_handler)(uint16_t byte);
+void (*uart16550_rx_handler)(uint8_t byte);
 
 
 void uart16550_init(UART16550 *uart)
 {
-    uart16550_set_bps(uart, UART16550_19200BPS);
+    uart16550_set_bps(uart, UART16550_57600BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
     uart16550_rx_handler = a2560u_rts;
     //uart[FCR] = 0b00100111; //0b00000110; // No FIFO, reset FIFOs. See 16C750B doc

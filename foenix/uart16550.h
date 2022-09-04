@@ -58,5 +58,5 @@ bool uart16550_can_put(const UART16550 *uart);
 void uart16550_rx_irq_enable(UART16550 *uart, bool);
 
 /* Called by when a byte is received from the UART */
-extern void (*uart16550_rx_handler)(uint16_t byte);
+extern void (*uart16550_rx_handler)(uint8_t byte);
 #endif
