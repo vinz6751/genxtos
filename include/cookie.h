@@ -53,6 +53,7 @@ struct cookie {
 #define MCH_FALCON  0x00030000L
 #define MCH_MILAN_C 0x00040000L
 #define MCH_ARANYM  0x00050000L
+#define MCH_A2560U  0x000F256UL /* Foenix A2560U */
 
 /*
  * values of _VDO cookie
@@ -63,6 +64,7 @@ struct cookie {
 #define VDO_STE     0x00010000L
 #define VDO_TT      0x00020000L
 #define VDO_FALCON  0x00030000L
+#define VDO_VICKY2  0x000F0002L /* Vicky 2, the A2560U's video engine */
 
 /*
  * value of _FDC cookie

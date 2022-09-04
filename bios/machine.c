@@ -369,6 +369,8 @@ static void setvalue_vdo(void)
         cookie_vdo = VDO_STE;
     else
         cookie_vdo = VDO_ST;
+#elif defined(MACHINE_A2560U)
+    cookie_vdo = MCH_A2560U;
 #else
     cookie_vdo = VDO_NOHARD;
 #endif /* CONF_ATARI_HARDWARE */
@@ -395,6 +397,8 @@ static void setvalue_mch(void)
     }
     else
         cookie_mch = MCH_ST;
+#elif defined(MACHINE_A2560U)
+    cookie_mch = MCH_A2560U;
 #else
     cookie_mch = MCH_NOHARD;
 #endif /* CONF_ATARI_HARDWARE */
