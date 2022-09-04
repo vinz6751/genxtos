@@ -118,7 +118,7 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
         src.pxaddr += v_fnt_wr;
     }
 
-#ifdef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
     a2560u_bios_mark_cell_dirty(dst.pxaddr);
 #endif
 }
@@ -128,11 +128,13 @@ static void neg_cell(CHAR_ADDR cell)
 {
     const int inc = v_lin_wr - 3 * sizeof(UWORD);
     int i;
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
     UBYTE *c = cell.pxaddr;
+#endif
 
     for (i = 0; i < v_cel_ht; i++)
     {
-        /* We process 2 bytes at a time and loop to render 8 pixels (width of the font) is unrolled for performance */
+        /* We process 2 bytes at a time and loop to render 8 pixels (width of the font), is unrolled for performance */
         *((UWORD*)cell.pxaddr) = ~*((UWORD*)cell.pxaddr);
         cell.pxaddr += sizeof(UWORD);
         *((UWORD*)cell.pxaddr) = ~*((UWORD*)cell.pxaddr);

@@ -2,10 +2,13 @@
 
 #include "config.h"
 #ifdef MACHINE_A2560U
+
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
 .EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560u_bios.h.
                                    // The smaller this is, the higher MAX_CELLS_RENDERED_PER_FRAME needs to be.
 
 .EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
+#endif
 
 #include "../foenix/foenix.i"
 
@@ -14,7 +17,9 @@
     .GLOBAL _a2560u_run_calibration
     .GLOBAL _a2560u_bios_irq_calibration
     .GLOBAL a2560u_bios_copy_fb_to_vram
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
     .GLOBAL _a2560u_bios_mark_cell_dirty
+#endif
 
 a2560u_memconf: // Called from memory.S to detect memory setup
     move.l  #0x200000,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
@@ -49,7 +54,7 @@ _a2560u_bios_irq_calibration: // Timer 0 handler used for calibration loop, equi
     addq.l #1,_calibration_interrupt_count
     rte
 
-
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
 a2560u_bios_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     .GLOBAL _a2560u_bios_dirty_cells
     .GLOBAL _v_lin_wr
@@ -150,5 +155,5 @@ _a2560u_bios_mark_cell_dirty:
     move.l  4(sp),6(a0,d0)
     move.w  d0,(a0)     // write writer
     rts
-
+#endif // CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
 #endif // MACHINE_A2560U
