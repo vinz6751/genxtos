@@ -17,7 +17,7 @@
 #include "foenix.h"
 
 typedef struct {
-    uint8_t  id;
+    uint16_t id;
     uint16_t w;
     uint16_t h;
     uint16_t colors;
@@ -64,8 +64,11 @@ typedef struct __attribute__((__packed__)) {
     #define VICKY_CURSOR_X          0x0000ffff
     #define VICKY_CURSOR_Y          0xffff0000
 #define VICKY_A_BG_COLOR            (VICKY+0x000C) /* Background control */
-#define VICKY_A_BMP_FG_CTRL         (VICKY+0x0100) /* Bitmap layer 0 control */
-#define VICKY_A_BMP_FB              (VICKY+0x0104) /* Framebuffer address relative to VRAM */
+#define VICKY_A_BMP0_FG_CTRL        (VICKY+0x0100) /* Bitmap layer 0 control */
+#define VICKY_A_BMP0_FB             (VICKY+0x0104) /* Bitmap layer 0 framebuffer address relative to VRAM */
+#define VICKY_A_BMP1_FG_CTRL        (VICKY+0x0108) /* Bitmap layer 1 control */
+#define VICKY_A_BMP1_FB             (VICKY+0x010c) /* Bitmap layer 1 framebuffer address relative to VRAM */
+
 /* Color palettes */
 #define VICKY_NLUTS           8            /* Number of luts */
 #define VICKY_LUTS            (VICKY+0x2000) /* Color lookup tables, 0x400 bytes each */
@@ -114,8 +117,9 @@ void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result);
 
 /* Video mode */
 void vicky2_set_video_mode(uint16_t mode); /* video mode number */
-void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result);
-void vicky2_set_bitmap0_address(const uint8_t *address); /* address is relative to VRAM */
+void vicky2_read_video_mode(FOENIX_VIDEO_MODE *result);
+void vicky2_set_bitmap_address(uint16_t layer, const uint8_t *address); /* address is relative to VRAM */
+uint8_t *vicky2_get_bitmap_address(uint16_t layer); /* address is relative to VRAM */
 
 /* Text output support */
 void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg);

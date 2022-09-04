@@ -662,7 +662,7 @@ void screen_init_address(void)
     KDEBUG(("v_bas_ad = %p, vram_size = %lu\n", v_bas_ad, vram_size));
 
 #ifdef MACHINE_A2560U
-    /* We use a fake framebuffer, and have code in place to copy it to the VRAM */
+    /* We use a shadow framebuffer, and have code in place to copy it to the VRAM */
     setphys((const UBYTE *)VRAM_Bank0);
 #else
     /* correct physical address */
@@ -720,7 +720,7 @@ WORD get_monitor_type(void)
 #if CONF_WITH_ATARI_VIDEO
     return shifter_get_monitor_type();
 #elif defined(MACHINE_A2560U)
-    return MON_COLOR;
+    return a2560u_bios_vmontype();
 #else
     return MON_MONO;    /* fake monochrome monitor */
 #endif
@@ -820,7 +820,7 @@ void screen_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
     *hz_rez = 720;
     *vt_rez = 364;
 #elif defined(MACHINE_A2560U)
-    a2560u_get_current_mode_info(planes, hz_rez, vt_rez);
+    a2560u_bios_get_current_mode_info(planes, hz_rez, vt_rez);
 #else
     atari_get_current_mode_info(planes, hz_rez, vt_rez);
 #endif
@@ -837,9 +837,9 @@ WORD get_palette(void)
     return 2;               /* we currently only support monochrome */
 #endif
 #ifdef MACHINE_A2560U
-    /* VICKY can do 24bit but this function only returns 16 bits and
+    /* All modes are 256 coloursVICKY can do 24bit but this function only returns 16 bits and
      * the VDI, EmuDesk etc. don't support more than 256 colors.
-     * So we limit ourselves to 256 as it's done in videl.c */  
+     * So we limit ourselves to 256 as it's done in videl.c */
     return 256;
 #else
     WORD palette;
@@ -1054,6 +1054,8 @@ const UBYTE *physbase(void)
     return amiga_physbase();
 #elif defined(MACHINE_LISA)
     return lisa_physbase();
+#elif defined(MACHINE_A2560U)
+    return a2560u_bios_physbase();
 #elif CONF_WITH_ATARI_VIDEO
     return atari_physbase();
 #else
@@ -1161,6 +1163,8 @@ WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
 
 #ifdef MACHINE_AMIGA
     amiga_setrez(rez, videlmode);
+#elif defined(MACHINE_A2560U)
+    a2560u_bios_setrez(rez, videlmode);
 #elif CONF_WITH_ATARI_VIDEO
     atari_setrez(rez, videlmode);
 #endif

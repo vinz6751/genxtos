@@ -10,8 +10,8 @@
 .EQU VICKY_A_BORDER_CTRL_L, VICKY+0x0004 | Border control
 .EQU VICKY_A_BORDER_COLOR,  VICKY+0x0008
 .EQU VICKY_A_BG_COLOR,      VICKY+0x000C | Background control
-.EQU VICKY_A_BMP_FG_CTRL,   VICKY+0x0100 | Bitmap layer 0 control
-.EQU VICKY_A_BMP_FB,        VICKY+0x0104 | Framebuffer address relative to VRAM
+.EQU VICKY_A_BMP0_FG_CTRL,   VICKY+0x0100 | Bitmap layer 0 control
+.EQU VICKY_A_BMP0_FB,        VICKY+0x0104 | Framebuffer address relative to VRAM
 
 .EQU VICKY_LUT,             VICKY+0x2000 | Color lookup tables, 0x400 bytes each
 

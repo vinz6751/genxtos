@@ -73,10 +73,14 @@ static const uint16_t tt_dflt_palette[] = {
 };
 
 const FOENIX_VIDEO_MODE foenix_video_modes[] = {
-    { VICKY_MODE_640x480_60, 640, 480, 256, 60 },
-    { VICKY_MODE_800x600_60, 800, 600, 256, 60 },
-    { VICKY_MODE_RESERVED2, 0,   0,   0,   0 }, /* Reserved */
-    { VICKY_MODE_640x400_70, 640, 400, 256, 70 }
+    { VICKY_MODE_640x480_60, 640, 480, 256, 60 }, /* VICKY_MODE_640x480_60 */
+    { VICKY_MODE_800x600_60, 800, 600, 256, 60 }, /* VICKY_MODE_800x600_60 */
+    { 0,   0,   0,   0 },  /* Reserved */
+    { VICKY_MODE_640x400_70, 640, 400, 256, 70 }, /* VICKY_MODE_640x400_70 */
+    { VICKY_MODE_320x240_60, 320, 240, 256, 60 }, /* VICKY_MODE_320x240_60 */
+    { VICKY_MODE_400x300_60, 400, 300, 256, 60 }, /* VICKY_MODE_400x300_60 */
+    { 0,   0,   0,   0 },  /* Reserved */
+    { VICKY_MODE_320x200_70, 320, 200, 256, 70 } /* VICKY_MODE_320x200_70 */
 };
 
 
@@ -96,7 +100,7 @@ void vicky2_init(void)
     vicky2_mouse_init();
 
     vicky2_set_video_mode(VICKY_MODE_640x480_60);
-    vicky2_get_video_mode(&mode);
+    vicky2_read_video_mode(&mode);
 
     /* No border. If we used borders we would have to offset/resize all our graphics stuff */
     /* Use instead this to enable border to you can set its color as debugging trace:
@@ -105,8 +109,8 @@ void vicky2_init(void)
     R32(VICKY_A_BORDER_CTRL) = 0;
 
     /* Setup framebuffer to point to beginning of video RAM */
-    R32(VICKY_A_BMP_FG_CTRL) = 1;       /* Enable bitmap layer 0, LUT 0 */
-    R32(VICKY_A_BMP_FB) = 0L;           /* Set framebuffer address (relative to VRAM) */
+    R32(VICKY_A_BMP0_FG_CTRL) = 1;       /* Enable bitmap layer 0, LUT 0 */
+    R32(VICKY_A_BMP0_FB) = 0L;           /* Set framebuffer address (relative to VRAM) */
     //R32(VICKY_A_BG_COLOR) = 0xffffffff; /* White background */
     R32(VICKY_A_BG_COLOR) = 0xff0e2b4f; /* Blue-ish background */
 
@@ -140,7 +144,6 @@ void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color)
     c[0] = clr->blue; // B
     c[1] = clr->green; // G
     c[2] = clr->red; // R
-
     c[3] = 0xff; // A
 }
 
@@ -154,7 +157,7 @@ void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result)
     result->blue = lut_entry->blue;
 }
 
-void vicky2_get_video_mode(FOENIX_VIDEO_MODE *result)
+void vicky2_read_video_mode(FOENIX_VIDEO_MODE *result)
 {
     uint32_t video;
     uint32_t border;
@@ -189,11 +192,22 @@ void vicky2_set_video_mode(uint16_t mode)
 }
 
 
-void vicky2_set_bitmap0_address(const uint8_t *address)
+static const uint32_t *bmp_layer_control[] = {
+    (uint32_t * const)VICKY_A_BMP0_FB,
+    (uint32_t * const)VICKY_A_BMP1_FB 
+};
+
+
+void vicky2_set_bitmap_address(uint16_t layer,const uint8_t *address)
 {
-    R32(VICKY_A_BMP_FB) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */
+    R32(bmp_layer_control[layer]) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */
 }
 
+
+uint8_t *vicky2_get_bitmap_address(uint16_t layer) /* address is relative to VRAM */
+{
+    return (uint8_t*)R32(bmp_layer_control[layer]);
+}
 
 /* Convert an Atari 0x0RGB (4 bytes each) colour to FOENIX format */
 uint32_t convert_atari2vicky_color(uint16_t orgb)

@@ -24,6 +24,7 @@
 #include "vectors.h"
 #include "tosvars.h"
 #include "bios.h"
+#include "biosdefs.h"
 #include "processor.h"
 #include "biosext.h"            /* for cache control routines */
 #include "gemerror.h"
@@ -70,12 +71,21 @@ void a2560u_bios_init(void)
 
 
 /* Video  ********************************************************************/
-
+#define VICKY_VIDEO_MODE_FLAG (1<<13) /* In the TOS video mode, indicates this is a VICKY mode */
 uint32_t a2560u_fb_size;
 
+static int videl_to_foenix_mode(uint16_t videlmode)
+{
+    return videlmode & ~VICKY_VIDEO_MODE_FLAG;
+}
+
+
+static int foenix_to_videl_mode(uint16_t foenixmode)
+{
+    return foenixmode | VICKY_VIDEO_MODE_FLAG;
+}
+
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_bios_mark_cell_dirty(c);
-#endif
 
 /* To speed up the copy from RAM to VRAM we manage a list of dirty cells */
 #define A2560U_DIRTY_CELLS_SIZE 1024
@@ -88,29 +98,136 @@ volatile struct
 } a2560u_bios_dirty_cells;
 
 
-void a2560u_bios_screen_init(void)
-{
-    vicky2_init();
-
-    /* Setup VICKY interrupts handler (VBL, HBL etc.) */
-    vblsem = 0;
-    a2560u_bios_dirty_cells.writer = a2560u_bios_dirty_cells.reader = a2560u_bios_dirty_cells.full_copy = 0;
-    a2560u_irq_set_handler(INT_SOF_A, int_vbl);
-}
-
-uint32_t a2560u_bios_calc_vram_size(void)
-{
-    /* Get video mode */
-    a2560u_fb_size = (uint32_t)BYTES_LIN * V_REZ_VT;
-    return a2560u_fb_size;
-}
-
-#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
 void a2560u_bios_mark_screen_dirty(void)
 {
     a2560u_bios_dirty_cells.full_copy = -1;
 }
+
+
+void a2560u_bios_mark_screen_dirty(void)
+{
+    a2560u_bios_dirty_cells.full_copy = -1;
+}
+
 #endif
+
+
+void a2560u_bios_screen_init(void)
+{
+    KDEBUG(("a2560u_bios_screen_init\n"));
+    vicky2_init();
+
+    /* Setup VICKY interrupts handler (VBL, HBL etc.) */
+    vblsem = 0;
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+    a2560u_bios_dirty_cells.writer = a2560u_bios_dirty_cells.reader = a2560u_bios_dirty_cells.full_copy = 0;
+#endif
+
+    a2560u_irq_set_handler(INT_SOF_A, int_vbl);
+}
+
+
+void a2560u_bios_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez)
+{
+    FOENIX_VIDEO_MODE mode;
+
+    vicky2_read_video_mode(&mode);
+    *planes = 8; /* We have 8bits per pixel */
+    *hz_rez = mode.w;
+    *vt_rez = mode.h;
+}
+
+
+uint8_t *a2560u_bios_physbase(void)
+{
+    KDEBUG(("a2560u_bios_physbase: %p\n", vicky2_get_bitmap_address(0) + VRAM_Bank0));
+    return vicky2_get_bitmap_address(0) + VRAM_Bank0;
+}
+
+
+int16_t a2560u_bios_vmontype(void)
+{
+    KDEBUG(("a2560u_bios_vmontype\n"));
+    return MON_VGA; /* VGA. 5 (DVI) would be more correct but is only known for CT60/Radeon so probably not known about by a lot of software */
+}
+
+
+int32_t a2560u_bios_vgetsize(int16_t videlmode)
+{
+    int foenix_mode_nr;
+    FOENIX_VIDEO_MODE *foenix_mode;
+
+    foenix_mode_nr = videl_to_foenix_mode(videlmode);
+    foenix_mode = (FOENIX_VIDEO_MODE*)&foenix_video_modes[foenix_mode_nr];
+    KDEBUG(("a2560u_bios_vgetsize returns %ld\n", (uint32_t)foenix_mode->w * (uint32_t)foenix_video_modes->h));
+    return  (uint32_t)foenix_mode->w * (uint32_t)foenix_video_modes->h; /* 1 byte = 1 pixel on the Foenix, easy */
+}
+
+
+uint32_t a2560u_bios_calc_vram_size(void)
+{
+    FOENIX_VIDEO_MODE mode;
+    vicky2_read_video_mode(&mode);
+    KDEBUG(("a2560u_bios_calc_vram_size returns mode:%d, size=%ld\n", mode.id, mode.w * mode. h + EXTRA_VRAM_SIZE));
+    return (uint32_t)mode.w * (uint32_t)mode. h + EXTRA_VRAM_SIZE;
+}
+
+
+/* Also acts as Vsetscreen */
+void a2560u_bios_setrez(int16_t rez, int16_t mode)
+{
+    if (rez != FALCON_REZ)
+        return;
+
+    KDEBUG(("a2560u_bios_setrez(%d, %d)\n", rez, mode));
+    vicky2_set_video_mode(videl_to_foenix_mode(mode));
+}
+
+
+uint16_t a2560u_bios_vsetmode(int16_t mode)
+{
+    FOENIX_VIDEO_MODE fm;
+    KDEBUG(("a2560u_bios_vsetmode(%d)\n",mode));
+    
+    if (mode != -1 && (mode & VICKY_VIDEO_MODE_FLAG))
+        vicky2_set_video_mode(mode);
+
+    vicky2_read_video_mode(&fm);
+    KDEBUG(("a2560u_bios_vsetmode returns %d\n", foenix_to_videl_mode(fm.id)));
+    return foenix_to_videl_mode(fm.id);
+}
+
+
+void a2560u_bios_vsetrgb(int16_t index,int16_t count,const uint32_t *rgb)
+{
+    int i;
+    COLOR32 fc; /* Foenix colour */
+    uint8_t *argb;
+
+    for (i = index; i <= count; i++) {
+        argb = (uint8_t*)&rgb[i];
+        fc.red = argb[1];
+        fc.green = argb[2];
+        fc.blue = argb[3];
+        fc.alpha = 0xff;
+        vicky2_set_lut_color(0, i, *((uint32_t*)&fc));
+    }
+}
+
+
+void a2560u_bios_vgetrgb(int16_t index,int16_t count,uint32_t *rgb) {
+    int i;
+    COLOR32 fc; /* Foenix colour */
+    uint8_t *argb;
+
+    for (i = index; i <= count; i++) {
+        vicky2_get_lut_color(0, i, &fc);
+        argb = (uint8_t*)&rgb[i];
+        argb[1] = fc.red;
+        argb[2] = fc.green;
+        argb[3] = fc.blue;
+    }
+}
 
 
 /* Serial port ***************************************************************/

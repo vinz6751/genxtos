@@ -1,7 +1,7 @@
 /*
  * a2560u - Foenix Retro Systems A2560U specific functions
  *
- * Copyright (C) 2013-2021 The EmuTOS development team
+ * Copyright (C) 2013-2022 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -22,11 +22,22 @@
 
 /* C entry point for initialisation */
 void a2560u_bios_init(void);
+
 void a2560u_bios_screen_init(void);
-void a2560u_bios_kbd_init(void);
 void a2560u_bios_mark_cell_dirty(const uint8_t *cell_address);
 void a2560u_bios_mark_screen_dirty(void);
+void a2560u_bios_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez);
+void a2560u_bios_setrez(int16_t rez, int16_t mode);
+int16_t a2560u_bios_vmontype(void);
+uint8_t *a2560u_bios_physbase(void);
+int32_t a2560u_bios_vgetsize(int16_t mode);
+uint16_t a2560u_bios_vsetmode(int16_t mode);
 uint32_t a2560u_bios_calc_vram_size(void);
+void a2560u_bios_vsetrgb(int16_t index,int16_t count,const uint32_t *rgb);
+void a2560u_bios_vgetrgb(int16_t index,int16_t count,uint32_t *rgb);
+
+void a2560u_bios_kbd_init(void);
+
 void a2560u_bios_calibrate_delay(uint32_t calibration_time);
 void a2560u_bios_text_init(void);
 

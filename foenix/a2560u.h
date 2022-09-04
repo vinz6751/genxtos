@@ -25,16 +25,8 @@ struct IDE
     uint8_t command; /* Read: status */
     uint8_t filler0f[1];
     uint8_t control;  /* Read: Alternate status */
-
-#if 0    
-    UBYTE filler1e[4091];
-    UBYTE control; /* Read: Alternate status */
-    UBYTE filler1019[3];
-    UBYTE address; /* Write: Not used */
-    UBYTE filler02[4067];
-#endif
 };
-#define ide_interface ((volatile struct IDE*)IDE_BASE)
+#define ide_interface ((volatile struct IDE* const)IDE_BASE)
 
 
 /* SD card support */
@@ -63,7 +55,7 @@ struct sdc_controller_t
     uint8_t dummy21[3];
     uint8_t tx_fifo_control;
 };
-#define sdc_controller ((volatile struct sdc_controller_t*)SDC_BASE)
+#define sdc_controller ((volatile struct sdc_controller_t* const)SDC_BASE)
 
 
 /* System info from GAVIN and VICKY */
@@ -91,7 +83,6 @@ void a2560u_debugnl(const char *, ...);
 void a2560u_debug(const char* __restrict__ s, ...);
 
 /* Video */
-void a2560u_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez);
 void a2560u_text_init(const uint8_t *address);
 
 
@@ -102,7 +93,9 @@ uint32_t a2560u_getdt(void);
 void a2560u_setdt(uint32_t datetime);
 
 
-extern void *a2560_irq_vectors[IRQ_GROUPS][16];
+void a2560u_rte(void); /* Actually, just the RTE instruction. Not a function */
+void a2560u_rts(void); /* Actually, just the RTS instruction. */
+
 /* Backup all IRQ mask registers and mask all interrupts */
 void a2560u_irq_mask_all(uint16_t *save);
 /* Restore interrupts backed up with a2560u_irq_mask_all */
@@ -113,7 +106,5 @@ void a2560u_irq_acknowledge(uint8_t irq_id);
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);
 
 void a2560u_kbd_init(void);
-
-
 
 #endif

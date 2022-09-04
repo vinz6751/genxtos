@@ -10,12 +10,13 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#define ENABLE_KDEBUG
+#define MACHINE_A2560U_DEBUG 0
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include <stdio.h>
+
+int sprintf(char *__restrict__ str, const char *__restrict__ fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
 typedef signed char     SBYTE;                  /*  Signed byte         */
 typedef unsigned char   UBYTE;                  /*  Unsigned byte       */
@@ -73,8 +74,6 @@ void a2560u_irq_bq4802ly(void);
 void a2560u_irq_vicky(void);
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
-void a2560u_rte(void); /* Actually, just the RTE instruction. Not a function */
-void a2560u_rts(void); /* Actually, just the RTS instruction. */
 
 /* Implementation ************************************************************/
 
@@ -106,18 +105,7 @@ uint8_t *_a2560u_bios_vram_fb; /* Address of framebuffer in video ram (from CPU'
 void a2560u_text_init(const uint8_t *address)
 {
     _a2560u_bios_vram_fb = (uint8_t*)address;
-    vicky2_set_bitmap0_address((uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
-}
-
-
-void a2560u_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez)
-{
-    FOENIX_VIDEO_MODE mode;
-
-    vicky2_get_video_mode(&mode);
-    *planes = 8; /* We have 8bits per pixel */
-    *hz_rez = mode.w;
-    *vt_rez = mode.h;
+    vicky2_set_bitmap_address(0, (uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
 }
 
 
@@ -190,7 +178,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     if (timer > 3)
         return;
 
-    //KDEBUG(("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler));
+    //a2560u_debugnl("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler);
 
     /* Identify timer control register to use */
     t = (struct a2560u_timer_t *)&a2560u_timers[timer];
@@ -241,13 +229,13 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
 
     set_sr(sr);
 #if 0
-    KDEBUG(("AFTER SETTING TIMER %d\n", timer));
-    KDEBUG(("CPU          sr=%04x\n", get_sr()));
-    KDEBUG(("vector       0x%02x=%p\n",t->vector,(void*)set_vector(t->vector, -1L)));
-    KDEBUG(("value        %p=%08lx\n",(void*)t->value,R32(t->value)));
-    KDEBUG(("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1)));
-    KDEBUG(("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1)));
-    KDEBUG(("control      %p=%08lx\n",(void*)t->control,R32(t->control)));
+    a2560u_debugnl("AFTER SETTING TIMER %d\n", timer);
+    a2560u_debugnl("CPU          sr=%04x\n", get_sr());
+    a2560u_debugnl("vector       0x%02x=%p\n",t->vector,(void*)set_vector(t->vector, -1L));
+    a2560u_debugnl("value        %p=%08lx\n",(void*)t->value,R32(t->value));
+    a2560u_debugnl("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1));
+    a2560u_debugnl("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1));
+    a2560u_debugnl("control      %p=%08lx\n",(void*)t->control,R32(t->control));
 #endif
 }
 
@@ -265,11 +253,11 @@ void a2560u_timer_enable(uint16_t timer, bool enable)
     else
         R32(t->control) &= ~t->start;
 
-// KDEBUG(("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control)));
+// a2560u_debugnl("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control));
 //     if (R32(t->value) != R32(t->value))
-//         KDEBUG(("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value)));
+//         a2560u_debugnl("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value));
 //     else
-//         KDEBUG(("Timer is not running\n"));
+//         a2560u_debugnl("Timer is not running\n");
 }
 
 
@@ -278,7 +266,7 @@ void a2560u_timer_enable(uint16_t timer, bool enable)
  */
 void a2560u_debugnl(const char* __restrict__ s, ...)
 {
-#ifdef ENABLE_KDEBUG
+#if MACHINE_A2560U_DEBUG
     char msg[80];
     int length;
     char *c;
@@ -299,7 +287,7 @@ void a2560u_debugnl(const char* __restrict__ s, ...)
 
 void a2560u_debug(const char* __restrict__ s, ...)
 {
-#ifdef ENABLE_KDEBUG
+#if MACHINE_A2560U_DEBUG
     char msg[80];
     int length;
     char *c;
@@ -318,7 +306,12 @@ void a2560u_debug(const char* __restrict__ s, ...)
 #endif
 }
 
+
 /* Interrupts management *****************************************************/
+
+/* Interrupt handlers for each of the IRQ groups */
+void *a2560_irq_vectors[IRQ_GROUPS][16];
+
 static void irq_init(void)
 {
     int i, j;
@@ -368,8 +361,6 @@ void a2560u_irq_restore(const uint16_t *save)
         ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = save[i];
 }
 
-/* Interrupt handlers for each of the IRQ groups */
-void *a2560_irq_vectors[IRQ_GROUPS][16];
 /* Utility functions, don't use directly */
 static inline uint16_t irq_group(uint16_t irq_id) { return irq_id >> 4; }
 static inline uint16_t irq_number(uint16_t irq_id) { return irq_id & 0xf; }
@@ -384,7 +375,7 @@ void a2560u_irq_enable(uint16_t irq_id)
 {
     a2560u_irq_acknowledge(irq_id);
     R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
-    // KDEBUG(("a2560u_irq_enable(%02x) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+    a2560u_debugnl("a2560u_irq_enable(%02x) -> Mask %p=%04x", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
 }
 
 
@@ -392,7 +383,7 @@ void a2560u_irq_enable(uint16_t irq_id)
 void a2560u_irq_disable(uint16_t irq_id)
 {
     R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
-    // KDEBUG(("a2560u_irq_disable(%02x) -> Mask %p=%04x\n", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id))));
+    a2560u_debugnl("a2560u_irq_disable(%02x) -> Mask %p=%04x", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
 }
 
 
@@ -405,16 +396,8 @@ void a2560u_irq_acknowledge(uint8_t irq_id)
 /* Set an interrupt handler for IRQ managed through GAVIN interrupt registers */
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
 {
-//    a2560_irq_vectors[0][0] = handler;
-//    return 0L;
     void *old_handler = irq_handler(irq_id);
     irq_handler(irq_id) = (void*)handler;
-
-    // char msg[50];
-    // sprintf(msg, "a2560_irq_vectors=%p\r\n", (void*)a2560_irq_vectors);
-    // a2560u_debugnl(msg);
-    // sprintf(msg,"handler(%d) irq_handler(irq_id)=%p value=%p\r\n",irq_id, &irq_handler(irq_id), irq_handler(irq_id));
-    // a2560u_debugnl(msg);
 
     a2560u_debugnl("Handler %04ux: %p", irq_id, handler);
     return old_handler;
@@ -461,12 +444,21 @@ void a2560u_setdt(uint32_t datetime)
 
 /* PS/2 setup  ***************************************************************/
 
+/* List here all drivers we support */
 static const struct ps2_driver_t * const drivers[] = {
     &ps2_keyboard_driver,
     &ps2_mouse_driver_a2560u
 };
 
 
+/* The following must be set by the calling OS prior to calling a2560u_kbd_init
+ * ps2_config.counter      = ;
+ * ps2_config.counter_freq = ;
+ * ps2_config.malloc       = ;
+ * ps2_config.os_callbacks.on_key_down = ;
+ * ps2_config.os_callbacks.on_key_up   = ;
+ * ps2_config.os_callbacks.on_mouse    = ;
+ */
 void a2560u_kbd_init(void)
 {
     /* Disable IRQ while we're configuring */
@@ -479,15 +471,6 @@ void a2560u_kbd_init(void)
     ps2_config.port_cmd     = (uint8_t*)PS2_CMD;
     ps2_config.n_drivers    = sizeof(drivers)/sizeof(struct ps2_driver_t*);
     ps2_config.drivers      = drivers;
-
-    /* The following must be set by the calling OS prior to calling kbd_init
-    ps2_config.counter      = ;
-    ps2_config.counter_freq = ;
-    ps2_config.malloc       = ;
-    ps2_config.os_callbacks.on_key_down = ;
-    ps2_config.os_callbacks.on_key_up   = ;
-    ps2_config.os_callbacks.on_mouse    = ;
-    */
 
     ps2_init();
 
@@ -600,9 +583,6 @@ void a2560u_disk_led(bool on)
     else
         R16(GAVIN_CTRL) &= ~GAVIN_CTRL_DISKLED;
 }
-
-/* Console support ***********************************************************/
-
 
 
 /* Utility functions *********************************************************/
