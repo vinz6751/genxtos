@@ -26,7 +26,6 @@
     .GLOBAL _ps2_channel2_irq_handler
     .GLOBAL _calibration_loop_count
     .GLOBAL _calibration_interrupt_count
-    .GLOBAL _a2560u_fb_size
     .GLOBAL __a2560u_bios_vram_fb
     .GLOBAL _v_bas_ad
     .GLOBAL _uart16550_rx_handler
