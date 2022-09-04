@@ -51,7 +51,7 @@ void uart16550_init(UART16550 *uart)
 {
     uart16550_set_bps(uart, UART16550_57600BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
-    uart16550_rx_handler = a2560u_rts;
+    uart16550_rx_handler = (void(*)(uint8_t))a2560u_rts;
     //uart[FCR] = 0b00100111; //0b00000110; // No FIFO, reset FIFOs. See 16C750B doc
     uart[FCR] = 0xC1; /* 16550: Clear FIFOs, one byte buffer */
     
@@ -68,7 +68,7 @@ void uart16550_init(UART16550 *uart)
 void uart16550_set_bps(UART16550 *uart, uint16_t bps_code)
 {
     /* Set DLAB */
-    R8(uart)[LCR] |= DLAB;   
+    R8(uart)[LCR] |= DLAB;
 
     R8(uart)[DLL] = ((uint8_t*)&bps_code)[1];
     R8(uart)[DLM] = ((uint8_t*)&bps_code)[0];
