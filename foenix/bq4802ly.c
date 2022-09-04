@@ -2,7 +2,7 @@
  * bq4802LY.c - bq4802LY real time clock handling routines
  *
  *
- * Copyright (C) 2021 The EmuTOS development team
+ * Copyright (C) 2022 The EmuTOS development team
  *
  * Authors:
  *  Vincent Barrilliot
@@ -16,15 +16,18 @@
 #include "bq4802ly.h"
 #include "a2560u.h"
 
+typedef void (*tick_handler_t)(void);
+
 uint32_t bq4802ly_ticks;
+void (*bq4802ly_tick_handler)(void);
+
 
 /* Private stuff */ 
 static struct bq4802ly_t* const bq4802ly = (struct bq4802ly_t *)BQ4802LY_BASE;
 static void stop(uint8_t *control);
 static void start(uint8_t control);
-
-uint8_t i_to_bcd(uint16_t n);
-uint16_t bcd_to_i(uint8_t bcd);
+static uint8_t i_to_bcd(uint16_t n);
+static uint16_t bcd_to_i(uint8_t bcd);
 
 
 void bq4802ly_init(void)
@@ -35,14 +38,17 @@ void bq4802ly_init(void)
     bq4802ly->control = BQ4802LY_STOP;
 
     bq4802ly_set_tick_rate(BQ4802LY_RATE_500ms);
+    bq4802ly_set_tick_handler(a2560u_rte);
     bq4802ly_enable_ticks(false);
 }
+
 
 /* Set the frequency of the ticking interrupt. Possible values are BQ4802LY_RATE_xxx */
 void bq4802ly_set_tick_rate(uint16_t rate)
 {
     bq4802ly->rates = rate;
 }
+
 
 /* Enable the RTC interrupts ticking. This doesn't unmask GAVIN interrupts. */
 void bq4802ly_enable_ticks(bool enable)
@@ -64,6 +70,15 @@ void bq4802ly_enable_ticks(bool enable)
 
 uint32_t bq4802ly_get_ticks(void) {
     return bq4802ly_ticks;
+}
+
+
+tick_handler_t bq4802ly_get_tick_handler(void) {
+    return bq4802ly_tick_handler;
+}
+
+void bq4802ly_set_tick_handler(tick_handler_t handler) {
+    bq4802ly_tick_handler = handler;
 }
 
 
@@ -99,7 +114,7 @@ void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t ho
     bq4802ly->day = day_bcd;
     bq4802ly->hours = hour_bcd;
     bq4802ly->minutes = minute_bcd;
-    bq4802ly->seconds = second_bcd;    
+    bq4802ly->seconds = second_bcd;
 
 //    if (time->is_24hours)
         control = control | BQ4802LY_2412;
@@ -140,7 +155,7 @@ void bq4802ly_get_datetime(uint8_t *day, uint8_t *month, uint16_t *year, uint8_t
 /* Convert a number from 0 to 99 to BCD
  * n = a binary number from 0 to 99
  * Returns a byte containing n as a BCD number, 0 if error. */
-uint8_t i_to_bcd(uint16_t n)
+static uint8_t i_to_bcd(uint16_t n)
 {
     if (n > 99) 
         return 0; /* Input was out of range */
@@ -152,7 +167,7 @@ uint8_t i_to_bcd(uint16_t n)
 }
 
 
-uint16_t bcd_to_i(uint8_t bcd)
+static uint16_t bcd_to_i(uint8_t bcd)
 {
     uint16_t tens = (bcd >> 4) & 0x0f;
     uint16_t ones = bcd & 0x0f;

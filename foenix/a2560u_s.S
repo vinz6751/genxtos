@@ -29,7 +29,8 @@
     .GLOBAL __a2560u_bios_vram_fb
     .GLOBAL _v_bas_ad
     .GLOBAL _uart16550_rx_handler
-        
+    .GLOBAL _bq4802ly_tick_handler
+
 
 _a2560u_rts:
     rts
@@ -66,7 +67,8 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
     tst.b   RTC_FLAGS  // Acknowledge interrupt on the bq4802LY by reading the flags
     move.w  #RTC_INT,IRQ_PENDING_GRP1 // Acknowledge GAVIN interrupt
     addq.l  #1,_bq4802ly_ticks
-    rte
+    move.l  _bq4802ly_tick_handler,-(sp)
+    rts     // The handler must save register and terminate with rte
 
 
 _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
