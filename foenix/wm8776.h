@@ -247,7 +247,7 @@
  * meanings in automatic gain and limiter modes. */
 #define WM8776_R18_ADC_AUTOLEVEL_ATTACK_DECAY (0x12<<9)
 #define   ATK_MASK                (15<<0) /* Attack time. Default is 2 (33.6ms in ALC, 1ms in Limiter) */
-#define   DCY_MASK                (15<<4) /* Decay time. Default is 3, (269ms in ALC, 9.6ms in limiter)
+#define   DCY_MASK                (15<<4) /* Decay time. Default is 3, (269ms in ALC, 9.6ms in limiter) */
  
  /* Noise gate */
 #define WM8776_R19_NOISE_GATE (0x13<<9)

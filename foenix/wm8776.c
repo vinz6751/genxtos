@@ -17,9 +17,6 @@
 /* We can't read from the WM8776, so we shadow the registers. */
 static uint16_t wm8776_regs[23];
 
-/* Forward declarations */
-static void wm8776_wait(void);
-
 /* Convenience */
 static volatile uint16_t * const wm8776 = WM8776_PORT;
 
@@ -32,7 +29,7 @@ static uint16_t wm8776_init_data[] = {
     /* Input mixer, ADC mute */
     WM8776_R21_ADC_INPUT_MIXER_AND_MUTE | AMX_AIN1 | AMX_AIN2 | AMX_AIN3 | AMX_AIN4 | AMX_AIN5 | MUTERA_NORMAL | MUTELA_NORMAL,
     /* Auto-level control */
-    WM8776_R17_ADC_ANALOG_AUTO_LEVEL_CONTROL | LCEN | HLD_MASK & 1,
+    WM8776_R17_ADC_ANALOG_AUTO_LEVEL_CONTROL | LCEN_ENABLED | HLD_MASK,
     /* Output mixer */
     WM8776_R22_OUTPUT_MIXER | MX_DAC | MX_AUX | MX_BYPASS,
     /* DAC interface control */
@@ -47,10 +44,11 @@ static uint16_t wm8776_init_data[] = {
 void wm8776_init(void)
 {
     int i;
-    uint16_t v;
+
+    /* TODO: initalize wm8776_regs with documented default values */
+
     for (i = 0; i < sizeof(wm8776_init_data)/sizeof(uint16_t); i++)
     {
-        v = wm8776_init_data[i];
         wm8776_send(wm8776_init_data[i]);
     }
 }
@@ -79,13 +77,14 @@ void wm8776_send(uint16_t data)
 
 void wm8776_set_digital_volume(uint8_t volume)
 {
-    wm8776_send(WM8776_R05_DAC_VOLUME_ALL | (0xFF - (volume & 0xFF)));
-    wm8776_send(WM8776_R02_HEADPHONE_ATTENUATION_ALL | ((volume >> 1) & 0xff));
+    wm8776_send(WM8776_R05_DAC_VOLUME_ALL | (0xFF - (volume & MASTDA_MASK)));
+
+    /* Is this really correct ? above 0x79 we'll be amplifying */
+    wm8776_send(WM8776_R02_HEADPHONE_ATTENUATION_ALL | ((volume >> 1) & HPRMASTA_MASK));
 }
 
 
 uint8_t wm8776_get_digital_volume(void)
 {
-    return wm8776_volume;
+    return 255- (wm8776_regs[5/*WM8776_R05_DAC_VOLUME_ALL*/] && MASTDA_MASK);
 }
-
