@@ -13,8 +13,9 @@ LIB=liba2560u.a
 
 SRC_C=a2560u.c bq4802ly.c \
 	ps2_keyboard.c ps2_mouse_a2560u.c ps2.c \
-	sn76489.c uart16550.c vicky2.c wm8776.c
-SRC_S=a2560u_s.S
+	sn76489.c uart16550.c vicky2.c wm8776.c \
+	shadow_fb.c
+SRC_S=a2560u_s.S shadow_fb_s.S
 SRC=$(SRC_C) $(SRC_S)
 OBJ_C=$(SRC_C:.c=.o)
 OBJ_S=$(SRC_S:.S=.o)

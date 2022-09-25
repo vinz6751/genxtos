@@ -42,6 +42,7 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #include "ps2_keyboard.h"
 #include "ps2_mouse_a2560u.h"
 #include "vicky2.h"    /* VICKY II graphics controller */
+#include "a2560u_debug.h"
 #include "a2560u.h"
 
 #define set_sr(a)                         \
@@ -99,12 +100,12 @@ void a2560u_init(void)
 
 /* Video  ********************************************************************/
 
-uint8_t *_a2560u_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
+uint8_t *a2560u_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
 
 
-void a2560u_text_init(const uint8_t *address)
+void a2560u_setphys(const uint8_t *address)
 {
-    _a2560u_bios_vram_fb = (uint8_t*)address;
+    a2560u_bios_vram_fb = (uint8_t*)address;
     vicky2_set_bitmap_address(0, (uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
 }
 
@@ -399,7 +400,7 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
     void *old_handler = irq_handler(irq_id);
     irq_handler(irq_id) = (void*)handler;
 
-    a2560u_debugnl("Handler %04ux: %p", irq_id, handler);
+    a2560u_debugnl("a2560u_irq_set_handler(%04x,%p)", irq_id, handler);
     return old_handler;
 }
 

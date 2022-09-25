@@ -32,10 +32,7 @@
 /* Driver in use for outputing text */
 static CONOUT_DRIVER *conout;
 
-#ifdef MACHINE_A2560U
-extern const CONOUT_DRIVER a2560u_conout_text;
-extern const CONOUT_DRIVER a2560u_conout_bmp;
-#else
+#if !defined(MACHINE_A2560U)
 extern const CONOUT_DRIVER conout_atarifb;
 #endif
 
@@ -46,14 +43,14 @@ void conout_init(const Fonthead *font)
     v_cel_my = (V_REZ_VT / font->form_height) - 1;
 
 #ifdef MACHINE_A2560U
-    conout = (v_cel_ht == 8)
-     ? (CONOUT_DRIVER*)&a2560u_conout_text
-     : (CONOUT_DRIVER*)&a2560u_conout_bmp;    
+    conout = a2560u_bios_get_conout();
 #else
     conout = &conout_atarifb;
 #endif
+    KDEBUG(("conout_init calling init of driver\n"));
+    conout->init(font);
 
-    conout->init(font);    
+    KDEBUG(("conout_init exiting\n"));
 }
 
 
@@ -101,7 +98,6 @@ static void neg_cell(CHAR_ADDR cell)
 
     v_stat_0 &= ~M_CRIT;                /* end of critical section. */
 }
-
 
 
 /*
@@ -196,11 +192,11 @@ void conout_move_cursor(int x, int y)
 
             /* if cursor flashing enabled and cursor is presently painted, unpaint */
             if (v_stat_0 & M_CSTATE)
-                con_unpaint_cursor();
+                conout_unpaint_cursor();
 
             /* set new coordinates and paint there */
             v_cur_ad = cell_addr(x, y);
-            con_paint_cursor();
+            conout_paint_cursor();
         }
     }
     else {
@@ -303,7 +299,7 @@ void conout_ascii_out(int ch)
     /* if visible */
     if (visible) {
 #if 1
-        con_paint_cursor();             /* display cursor. */
+        conout_paint_cursor();             /* display cursor. */
 #else
         neg_cell(v_cur_ad);             /* display cursor. */
         v_stat_0 |= M_CSTATE;           /* set state flag (cursor on). */
@@ -375,7 +371,7 @@ void conout_scroll_down(UWORD start_line)
 }
 
 
-void con_paint_cursor(void)
+void conout_paint_cursor(void)
 {
     v_stat_0 |= M_CSTATE;
 
@@ -386,9 +382,48 @@ void con_paint_cursor(void)
 }
 
 
-void con_unpaint_cursor(void)
+void conout_unpaint_cursor(void)
 {
     v_stat_0 &= ~M_CSTATE;
 
-    conout->con_unpaint_cursor();
+    conout->unpaint_cursor();
+}
+
+
+/*
+ * blink - cursor blink interrupt routine
+ *
+ * This used to be in vt52.c where it arguably belong but since the behaviour depends
+ * on the underlying conout driver.
+ */
+void conout_blink_cursor(void)
+{
+    if (conout->blink_cursor)
+    {
+        conout->blink_cursor();
+    }
+    else
+    {
+        /* test visibility/semaphore bit */
+        if (!(v_stat_0 & M_CVIS) )
+            return;    /* if invisible or blocked, return */
+
+        /* test flash bit */
+        if (!(v_stat_0 & M_CFLASH) )
+            return;    /* if not flashing, return */
+
+        /* decrement cursor flash timer */
+        if ( --v_cur_tim )
+            return;    /* if <> 0, return */
+
+        v_cur_tim = v_period;       /* else reset timer */
+
+        /* toggle cursor state */
+        if ( v_stat_0 & M_CSTATE ) {
+            conout_unpaint_cursor();
+        }
+        else {
+            conout_paint_cursor();
+        }
+    }
 }

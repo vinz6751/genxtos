@@ -18,7 +18,7 @@
 
 void vt52_init(void);               /* initialize the vt52 console */
 WORD cursconf(WORD, WORD);          /* XBIOS cursor configuration */
-
+void blink(void);                   /* Take care of blinking the cursor */
 void cputc(WORD);
 
 #endif /* VT52_H */

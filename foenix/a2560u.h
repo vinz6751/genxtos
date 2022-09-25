@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "a2560u_debug.h"
 #include "vicky2.h"
 #include "foenix.h"
 
@@ -79,12 +80,9 @@ void a2560u_init(void);
 void a2560u_beeper(bool on);
 void a2560u_disk_led(bool on);
 void a2560u_system_info(struct foenix_system_info_t *result);
-void a2560u_debugnl(const char *, ...);
-void a2560u_debug(const char* __restrict__ s, ...);
 
 /* Video */
-void a2560u_text_init(const uint8_t *address);
-
+void a2560u_setphys(const uint8_t *address);
 
 void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
 void a2560u_timer_enable(uint16_t timer, bool enable);

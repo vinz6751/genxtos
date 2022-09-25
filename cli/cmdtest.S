@@ -1,6 +1,6 @@
     .GLOBL _run_showmouse
     .GLOBL _run_hidemouse
-    .GLOBL _a2560u_bios_dirty_cells
+    .GLOBL _a2560u_sfb_dirty_cells
     .GLOBL _v_bas_ad
     .text
 _run_showmouse:
@@ -42,7 +42,7 @@ _run_hidemouse:
     adda.l   100 + 640*60,a0
     move.b   #1,(a0)
 
-    move.w  #-1,_a2560u_bios_dirty_cells+4 // DEBUG: force full screen redraw
+    move.w  #-1,_a2560u_sfb_dirty_cells+4 // DEBUG: force full screen redraw
     #endif
 
     .bss

@@ -1075,7 +1075,7 @@ static void setphys(const UBYTE *addr)
 #elif defined(MACHINE_LISA)
     lisa_setphys(addr);
 #elif defined(MACHINE_A2560U)
-    a2560u_text_init(addr);
+    a2560u_setphys(addr);
 #elif CONF_WITH_ATARI_VIDEO
     atari_setphys(addr);
 #endif

@@ -352,13 +352,20 @@ _int_vbl:
         jsr     _detect_monitor_change
 #endif
 
-#if !defined(MACHINE_A2560U) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+#if !defined(MACHINE_A2560U) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
         jsr     _blink                  // blink cursor
 #endif
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-        .GLOBAL a2560u_bios_copy_fb_to_vram
-        jbsr    a2560u_bios_copy_fb_to_vram
+        .GLOBAL a2560u_sfb_copy_fb_to_vram
+        .GLOBAL _a2560u_bios_sfb_is_active
+        .GLOBAL _a2560u_sfb_addr
+
+        tst.w   _a2560u_bios_sfb_is_active
+        beq.s   skip_sfb_copy
+        move.l  _v_bas_ad.w, _a2560u_sfb_addr
+        jbsr    a2560u_sfb_copy_fb_to_vram
+skip_sfb_copy:
 #endif
 
 #if defined(MACHINE_A2560U) && 0

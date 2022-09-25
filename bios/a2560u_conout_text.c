@@ -154,6 +154,12 @@ static void unpaint_cursor(void)
 }
 
 
+
+static void blink_cursor(void)
+{
+    /* Do nothing. VICKY blinks the cursor */
+}
+
 const CONOUT_DRIVER a2560u_conout_text =
 {
     init,
@@ -167,7 +173,8 @@ const CONOUT_DRIVER a2560u_conout_text =
     cell_addr,
     cell_xfer,
     paint_cursor,
-    unpaint_cursor
+    unpaint_cursor,
+    blink_cursor
 };
 
 #endif /* MACHINE_A2560U */ 

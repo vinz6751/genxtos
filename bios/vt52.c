@@ -86,8 +86,6 @@ static void esc_ch1(WORD);
 static void get_row(WORD);
 static void get_column(WORD);
 
-void blink(void);
-
 
 /* jumptable for ESC + uppercase character */
 static void (* const am_tab[])(void) = {
@@ -622,7 +620,7 @@ static void erase_from_home(void)
 static void do_cnt_esce(void)
 {
     #if 1
-        con_paint_cursor();
+        conout_paint_cursor();
     #else // Previous EmuTOS code
     conout_invert_cell(v_cur_cx, v_cur_cy);        /* complement cursor */
     v_stat_0 |= M_CVIS;                     /* set visibility bit */
@@ -689,7 +687,7 @@ static void cursor_off(void)
         v_stat_0 &= ~M_CVIS;                /* make invisible! */
 
         if (!(v_stat_0 & M_CFLASH) || (v_stat_0 & M_CSTATE)) {
-            con_unpaint_cursor();
+            conout_unpaint_cursor();
         }
         v_stat_0 |= M_CVIS;
     }
@@ -873,27 +871,7 @@ static void ascii_lf(void)
  */
 void blink(void)
 {
-    /* test visibility/semaphore bit */
-    if (!(v_stat_0 & M_CVIS) )
-        return;    /* if invisible or blocked, return */
-
-    /* test flash bit */
-    if (!(v_stat_0 & M_CFLASH) )
-        return;    /* if not flashing, return */
-
-    /* decrement cursor flash timer */
-    if ( --v_cur_tim )
-        return;    /* if <> 0, return */
-
-    v_cur_tim = v_period;       /* else reset timer */
-
-    /* toggle cursor state */
-    if ( v_stat_0 & M_CSTATE ) {
-        con_unpaint_cursor();
-    }
-    else {
-        con_paint_cursor();
-    }
+    conout_blink_cursor();
 }
 
 

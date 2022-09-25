@@ -395,7 +395,8 @@ const CONOUT_DRIVER conout_atarifb =
     cell_addr,
     cell_xfer,
     paint_cursor,
-    unpaint_cursor
+    unpaint_cursor,
+    0L /* Use default method for blinking */
 };
 
 #endif

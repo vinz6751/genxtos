@@ -12,6 +12,10 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+#ifndef CONOUT_H
+#define CONOUT_H
+
+#include "portab.h"
 #include "fonthdr.h"
 
 /* Defines for cursor */
@@ -44,7 +48,7 @@ typedef union {
 
 /* Cursor related linea variables */
 
-extern CHAR_ADDR v_cur_ad;         /* current cursor address */
+extern CHAR_ADDR v_cur_ad;      /* current cursor address */
 extern WORD v_cur_of;           /* cursor offset */
 extern UBYTE v_cur_tim;         /* cursor blink timer */
 
@@ -62,10 +66,11 @@ void conout_blank_out (int, int, int, int);
 void conout_invert_cell(int, int);
 void conout_scroll_up(UWORD top_line);
 void conout_scroll_down(UWORD start_line);
-void con_paint_cursor(void);
-void con_unpaint_cursor(void);
+void conout_paint_cursor(void);
+void conout_unpaint_cursor(void);
+void conout_blink_cursor(void);
 
-typedef struct {    
+typedef struct {
     void (*init)(const Fonthead *font);
     void (*blank_out)(int, int, int, int);
     void (*neg_cell)(CHAR_ADDR cell);
@@ -77,6 +82,8 @@ typedef struct {
     CHAR_ADDR (*cell_addr)(UWORD x, UWORD y);
     void (*cell_xfer)(const CHAR_ADDR src, CHAR_ADDR dst);
     void (*con_paint_cursor)(void);
-    void (*con_unpaint_cursor)(void);
+    void (*unpaint_cursor)(void);
+    void (*blink_cursor)(void); /* If null, a fallback is used */
 } CONOUT_DRIVER;
 
+#endif

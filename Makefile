@@ -284,7 +284,8 @@ NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -W $(BUILD_TOOLS_OPTFLAGS)
 
 foenix_src = a2560u_s.S a2560u.c \
 	ps2_mouse_a2560u.c ps2.c ps2_keyboard.c \
-	uart16550.c sn76489.c wm8776.c bq4802ly.c vicky2.c
+	uart16550.c sn76489.c wm8776.c bq4802ly.c vicky2.c \
+	shadow_fb.c shadow_fb_s.S
 
 #
 # source code in bios/

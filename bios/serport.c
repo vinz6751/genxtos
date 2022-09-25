@@ -388,6 +388,8 @@ ULONG rsconf1(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr)
 {
 #if CONF_WITH_MFP_RS232
     return rsconf_mfp(MFP_BASE,&iorec1,baud,ctrl,ucr,rsr,tsr,scr);
+#elif defined(MACHINE_A2560U)
+    a2560u_bios_rsconf1(baud, ctrl, ucr, rsr, tsr, scr);
 #else
     return 0UL;
 #endif  /* CONF_WITH_MFP_RS232 */

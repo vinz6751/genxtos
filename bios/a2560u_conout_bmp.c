@@ -29,16 +29,19 @@
 #include "conout.h"
 #include "font.h"
 #include "a2560u_bios.h"
+#include "../foenix/shadow_fb.h"
 
 
 static void init(const Fonthead *font)
 {
+    KDEBUG(("conout_bmp->init\n"));
     v_cel_wr = v_lin_wr * v_cel_ht;
     v_cur_ad.pxaddr = v_bas_ad;
 
     /* Stop text mode and start bitmap */
     R32(VICKY_CTRL) &= ~VICKY_A_CTRL_TEXT; 
     R32(VICKY_CTRL) = VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP;
+    KDEBUG(("conout_bmp->init done\n"));
 }
 
 
@@ -119,7 +122,7 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_bios_mark_cell_dirty(dst.pxaddr);
+    a2560u_sfb_mark_cell_dirty(dst.pxaddr);
 #endif
 }
 
@@ -146,7 +149,7 @@ static void neg_cell(CHAR_ADDR cell)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_bios_mark_cell_dirty(c);
+    a2560u_sfb_mark_cell_dirty(c);
 #endif
 }
 
@@ -213,7 +216,7 @@ static void blank_out(int topx, int topy, int botx, int boty)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_bios_mark_screen_dirty();
+    a2560u_sfb_mark_screen_dirty();
 #endif
 }
 
@@ -271,7 +274,8 @@ const CONOUT_DRIVER a2560u_conout_bmp =
     cell_addr,
     cell_xfer,
     paint_cursor,
-    unpaint_cursor
+    unpaint_cursor,
+    0L, /* Use default method for blinking */
 };
 
 #endif /* MACHINE_A2560U */

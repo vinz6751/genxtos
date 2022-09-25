@@ -32,6 +32,7 @@
 #include "screen.h"
 #include "delay.h"
 #include "asm.h"
+#include "conout.h"
 #include "lineavars.h"
 #include "string.h"
 #include "disk.h"
@@ -47,7 +48,10 @@
 #include "../foenix/foenix.h"
 #include "../foenix/uart16550.h" /* Serial port */
 #include "../foenix/a2560u.h"
+#include "../foenix/shadow_fb.h"
 #include "a2560u_bios.h"
+
+bool a2560u_bios_sfb_is_active;
 
 /* Prototypes ****************************************************************/
 
@@ -72,7 +76,6 @@ void a2560u_bios_init(void)
 
 /* Video  ********************************************************************/
 #define VICKY_VIDEO_MODE_FLAG (1<<13) /* In the TOS video mode, indicates this is a VICKY mode */
-uint32_t a2560u_fb_size;
 
 static int videl_to_foenix_mode(uint16_t videlmode)
 {
@@ -85,32 +88,6 @@ static int foenix_to_videl_mode(uint16_t foenixmode)
     return foenixmode | VICKY_VIDEO_MODE_FLAG;
 }
 
-#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-
-/* To speed up the copy from RAM to VRAM we manage a list of dirty cells */
-#define A2560U_DIRTY_CELLS_SIZE 1024
-volatile struct
-{
-    uint16_t writer;
-    uint16_t reader;
-    uint16_t full_copy; /* Set this to non-zero to copy the whole frame buffer and flush the ring buffer */
-    uint8_t *cells[A2560U_DIRTY_CELLS_SIZE];
-} a2560u_bios_dirty_cells;
-
-
-void a2560u_bios_mark_screen_dirty(void)
-{
-    a2560u_bios_dirty_cells.full_copy = -1;
-}
-
-
-void a2560u_bios_mark_screen_dirty(void)
-{
-    a2560u_bios_dirty_cells.full_copy = -1;
-}
-
-#endif
-
 
 void a2560u_bios_screen_init(void)
 {
@@ -119,11 +96,13 @@ void a2560u_bios_screen_init(void)
 
     /* Setup VICKY interrupts handler (VBL, HBL etc.) */
     vblsem = 0;
+
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_bios_dirty_cells.writer = a2560u_bios_dirty_cells.reader = a2560u_bios_dirty_cells.full_copy = 0;
+    a2560u_sfb_init();
 #endif
 
     a2560u_irq_set_handler(INT_SOF_A, int_vbl);
+    KDEBUG(("a2560u_bios_screen_init exiting\n"));
 }
 
 
@@ -251,6 +230,63 @@ void a2560u_bios_rs232_init(void) {
     a2560u_irq_enable(INT_COM1);
     uart16550_rx_irq_enable(UART0, true);
 }
+
+/* This does not perfectly emulate the MFP but may enough */
+uint32_t a2560u_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
+{
+    const int16_t bauds[] = {
+        UART16550_19200BPS, UART16550_9600BPS, UART16550_4800BPS, UART16550_3600BPS,
+        UART16550_2400BPS, UART16550_2000BPS, UART16550_1800BPS, UART16550_1200BPS,
+        UART16550_600BPS, UART16550_300BPS, UART16550_200BPS, UART16550_150BPS,
+        // This is not TOS compliant but we need to be able to use higher speeds than 19200bps...
+        // 12               13                  14                   15
+        UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS 
+    };
+    const uint8_t dsize[] = {
+        UART16550_8D, UART16550_7D, UART16550_6D, UART16550_5D
+    };
+    uint8_t flags;
+    uint8_t data_size;
+    uint8_t data_format;
+
+    if (baud == -1)
+    {
+        // TODO
+        return bauds[13]; /* 57600 */
+    }
+
+    flags = 0;
+    data_size = dsize[(ucr & 0x60) >> 5];
+    data_format = (ucr & 0x18) >> 3;
+
+    if (ucr >= 0) 
+    {
+        // Speed
+        uart16550_set_bps(UART0, bauds[baud]);
+        // Parity
+        if (ucr & 2)
+            flags |= ucr & 1 ? UART16550_ODD : UART16550_EVEN;
+        // Data size
+        flags |= data_size;
+        // Stop bits
+        if (data_size != UART16550_5D)
+        {
+            if (data_format == 3/* 1 start 2 stops*/)
+                flags |= UART16550_2S;
+        }
+        else if (data_format == 2/* 1 start 1.5 stop */)
+                flags |= UART16550_1_5S;
+
+        uart16550_set_line(UART0, flags);
+    }
+    KDEBUG(("a2560u_bios_rsconf1 setting flags %d and speed %d\n", flags, bauds[baud]));
+
+    // RTS/CTS and XON/XOFF not supported ! A2560U doesn't have RTS/CTS pins connected anyway
+    return 0L; // TODO.
+}
+
+
+/* Timers *********************************************************************/
 
 /* For being able to translate settings of the ST's MFP68901 we need this */
 static const uint16_t mfp_timer_prediv[] = { 0,4,10,16,50,64,100,200 };
@@ -396,11 +432,6 @@ uint8_t spi_recv_byte(void)
 #include "lineavars.h"
 #include "biosext.h"
 
-/* Line-A variables */
-extern uint16_t v_col_fg; /* Font background */
-extern uint16_t v_col_bg; /* Font foreground */
-extern uint16_t v_cur_ad; /* Current cursor address */
-
 static const uint16_t text_palette[32] =
 {
 /*  0xHHLL, 0xHHLL
@@ -437,6 +468,44 @@ static const uint16_t text_palette[32] =
 #endif
 };
 
+void a2560u_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height)
+{
+    a2560u_debugnl("a2560u_bios_sfb_setup(%p,%d)", addr, text_cell_height);
+    a2560u_sfb_setup(addr, text_cell_height);
+    a2560u_bios_sfb_is_active = true;
+}
+
+extern const CONOUT_DRIVER a2560u_conout_text;
+extern const CONOUT_DRIVER a2560u_conout_bmp;
+
+CONOUT_DRIVER *a2560u_bios_get_conout(void)
+{
+    CONOUT_DRIVER *driver;
+    driver = NULL;
+
+    a2560u_debugnl("a2560u_bios_get_conout");
+
+    if (v_cel_ht == 8 && CONF_WITH_A2560U_TEXT_MODE)
+    {
+        a2560u_debugnl("a2560u_bios_get_conout selected the text driver");
+        /* VICKY helps us with the 8x8 font and cursor blinking */
+        a2560u_bios_sfb_is_active = false;
+        driver =  (CONOUT_DRIVER*)&a2560u_conout_text;
+    }
+# if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+    else
+    {
+        a2560u_debugnl("a2560u_bios_get_conout selected the bitmap driver %p", v_bas_ad);
+        /* Use the shadow framebuffer */
+        driver = (CONOUT_DRIVER*)&a2560u_conout_bmp;
+        a2560u_sfb_setup(v_bas_ad, v_cel_ht);
+    }
+#endif
+    if (driver == NULL)
+        panic("Cannot select conout driver\n");
+    
+    return driver;
+}
 
 static void a2560u_bios_load_font(void)
 {

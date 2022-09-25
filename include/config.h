@@ -666,7 +666,7 @@
  */
 #ifdef MACHINE_A2560U
 # ifndef MACHINE_A2560U_DEBUG
-#  define MACHINE_A2560U_DEBUG 0
+#  define MACHINE_A2560U_DEBUG 1
 # endif
 
 # ifndef CONF_ATARI_HARDWARE
@@ -704,24 +704,12 @@
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
-/* Use VICKY's text mode if possible rather than a bitmap screen buffer when using 8 pixel-heigh font.
+/* At least one of CONF_WITH_A2560U_TEXT_MODE and CONF_WITH_A2560U_SHADOW_FRAMEBUFFER must be enabled */
+/* Use VICKY's text mode if possible rather than a bitmap screen buffer when using 8 pixel-high font.
  * No graphics possible. */
-#define CONF_WITH_A2560U_TEXT_MODE 1 
+#define CONF_WITH_A2560U_TEXT_MODE 1
 /* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
-#define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
-/* Enforce sanity */
-#if 0
-#if CONF_WITH_A2560U_TEXT_MODE
-   /* No graphics possible, we can't use text mode and bitmap at the same time without using overlay,
-    * but then no inverse video is possible, and we can't use text + VDI at the same. Endless troubles. */
-   #ifdef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-   #  undef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-   #endif
-   #define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
-   /* VICKY II only supports 8x8 font in text mode */
-   #define CONF_WITH_FORCE_8x8_FONT 0
-#endif
-#endif
+#define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 1
 # ifndef CONF_WITH_FORCE_8x8_FONT
 #  define CONF_WITH_FORCE_8x8_FONT 1
 # endif

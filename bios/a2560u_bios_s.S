@@ -16,10 +16,7 @@
     .GLOBAL a2560u_memconf
     .GLOBAL _a2560u_run_calibration
     .GLOBAL _a2560u_bios_irq_calibration
-    .GLOBAL a2560u_bios_copy_fb_to_vram
-#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    .GLOBAL _a2560u_bios_mark_cell_dirty
-#endif
+
 
 a2560u_memconf: // Called from memory.S to detect memory setup
     move.l  #0x200000,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
@@ -54,106 +51,4 @@ _a2560u_bios_irq_calibration: // Timer 0 handler used for calibration loop, equi
     addq.l #1,_calibration_interrupt_count
     rte
 
-#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-a2560u_bios_copy_fb_to_vram: // Copies our SRAM buffer to video ram
-    .GLOBAL _a2560u_bios_dirty_cells
-    .GLOBAL _v_lin_wr
-    .GLOBAL _v_cel_ht
-
-// Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
-// If it's not enough the dirty cells array may be too small and we loose data. If it's too high, we may spend
-// too much time copying data and miss lower-priority interrupts (e.g. keyboard/mouse).
-// Note: this doesn't apply to full screen refresh
-#define MAX_CELLS_RENDERED_PER_FRAME 20
-
-#if MAX_CELLS_RENDERED_PER_FRAME != -1
-    move.l  #MAX_CELLS_RENDERED_PER_FRAME-1,d6 // max number of characters we render per frame
-#endif
-
-    lea     _a2560u_bios_dirty_cells,a0
-    tst.w   4(a0)           // Copy whole frame buffer to VRAM ?
-    jne     copy_whole_screen  // Yes -> go there
-    // Otherwise process the list of dirty cells from the ring buffer  
-    move.w  2(a0),d0        // Get reader
-    cmp.w   (a0),d0         // Compare with writer
-    jeq     cell_copy_done  // Nothing to read -> end    
-copy_cell_to_vram:
-    // Cache information in registers
-    movea.l __a2560u_bios_vram_fb,a3
-    move.l  _v_bas_ad.w,d2    // Cache
-    //move.w  _v_cel_ht.w,d4    // Cache. d3 is the actual decounter used in the loop
-    //subq.w  #1,d4           // For the dbra of cell height
-    clr.l   d5
-    move.w  _v_lin_wr,d5    // Cache for moving to next line of the frame buffer
-cell_copy:
-    addq.w  #4,d0           // Advance reader and wrap at 256 (offset 1024)
-    andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0
-    move.l  6(a0,d0),a1     // Get dirty cell address (in RAM frame buffer)
-    movea.l a1,a2           // Compute target VRAM address
-    suba.l  d2,a2           // d2: offset of dirty cell in frame buffer
-    adda.l  a3,a2
-    //move.w  d4,d3           // Prepare line decounter
-copy_cell_to_fb:
-    // Copy one row (8 bytes)
-    // TODO copy 32bits at a time once possible (with current flash, it's not)
-    .rept 16 // Font height 
-    move.w  0(a1),0(a2)
-    move.w  2(a1),2(a2)
-    move.w  4(a1),4(a2)
-    move.w  6(a1),6(a2)
-    adda.l  d5,a1   // Next line
-    adda.l  d5,a2
-    .endr
-    //dbra    d3,copy_cell_to_fb // If we're short on ROM space or the font is not 16pixcels high we can use dbra instead of .rept
-#if MAX_CELLS_RENDERED_PER_FRAME != 1
-    dbra    d6,cell_copy_more
-    jbra    cell_copy_done
-#endif
-cell_copy_more:
-    cmp.w   (a0),d0    // More to read ?
-    jne     cell_copy  // If so, nothing more to read
-cell_copy_done:
-    move.w  d0,2(a0)   // Update reader
-    rts    
-
-copy_whole_screen:
-    // TODO Use DMA once available
-    // Copy the whole SRAM frame buffer to VRAM
-    move.w  (a0),2(a0)          // Flush the ring buffer (reader <- writer)
-    move.w  #0,4(a0)            // Put down the flag to force full copy, as we're doing it now
-    move.l  _a2560u_fb_size,d0
-    movea.l  _v_bas_ad,a1       // Source
-    movea.l __a2560u_bios_vram_fb,a3  // Destination  
-    lsr.l   #5,d0               // We unroll the loop to copy 32 bytes at a time
-fbcpy: // We can only do movem.w not movem.l as the later doesn't work (yet ?)
-    movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    movem.w d0-d7/a0/a2/a4-a6,(a3)
-    lea     13*2(a3),a3
-    movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    movem.w d0-d7/a0/a2/a4-a6,(a3)
-    lea     13*2(a3),a3
-    movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    movem.w d0-d7/a0/a2/a4-a6,(a3)
-    lea     13*2(a3),a3
-    movem.w (a1)+,d0-d7/a0/a2/a4-a6
-    movem.w d0-d7/a0/a2/a4-a6,(a3)
-    lea     13*2(a3),a3
-    movem.w (a1)+,d0-d7/a0/a2/a4-a5 // We do one less register here so an iteration is 128 bytes.
-    movem.w d0-d7/a0/a2/a4-a5,(a3)  // As all resolutions have a screensize multiple of 128,
-    lea     12*2(a3),a3             // That ensures we won't copy beyond the end of the FB in VRAM.
-    cmpa.l  #0xc4b000,a3            // TODO BUG FIXME don't hardcode end of FB
-    bmi.s   fbcpy
-    rts
-
-
-_a2560u_bios_mark_cell_dirty:
-    // Add the given cell to the ring buffer of dirty cells
-    lea     _a2560u_bios_dirty_cells,a0
-    move.w  (a0),d0     // Writer
-    addq.w  #4,d0       // Next position
-    andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap if needed
-    move.l  4(sp),6(a0,d0)
-    move.w  d0,(a0)     // write writer
-    rts
-#endif // CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
 #endif // MACHINE_A2560U
