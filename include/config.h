@@ -666,7 +666,7 @@
  */
 #ifdef MACHINE_A2560U
 # ifndef MACHINE_A2560U_DEBUG
-#  define MACHINE_A2560U_DEBUG 1
+#  define MACHINE_A2560U_DEBUG 0
 # endif
 
 # ifndef CONF_ATARI_HARDWARE

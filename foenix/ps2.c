@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include "ps2.h"
 
-//#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 #ifdef ENABLE_KDEBUG
 	 void a2560u_debugnl(const char *s,...);
 #else

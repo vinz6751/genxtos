@@ -18,7 +18,7 @@
  * If we ever add a 16x32 font, the code will need changing!
  */
 
-#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "asm.h"

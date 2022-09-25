@@ -70,6 +70,13 @@ amiga_main:
     // fall through os_entry
 #endif
 
+#if defined(MACHINE_A2560U) && !EMUTOS_LIVES_IN_RAM
+        // 68000 reset vectors. Gavin will copy the first 64k of flash to the system ram then reset the proc.
+        // All we need to do is to provide a reset vector that jumps to the flash.
+        .dc.l 0x800       // Stackk: rubbish, should not be used anyway as the OS should setup its own stack
+        .dc.l _os_header  // jump to the OS
+#endif
+
 /*
  * OSHEADER
  */

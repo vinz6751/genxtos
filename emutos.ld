@@ -27,10 +27,8 @@ OUTPUT_FORMAT(binary)
 #elif defined(TARGET_192)
 # define ROM_ORIGIN 0x00fc0000
 #elif defined(MACHINE_A2560U)
-    // Normal flash location is FLASH bank 1 0xf00000 because it allows
-    // execution of user-lescode (not supervisor), which is required
-    // e.g. for running EmuCON.
-    # define ROM_ORIGIN 0x00100000
+    //# define ROM_ORIGIN 0x00100000
+    # define ROM_ORIGIN 0x00e00000
 #else
 # define ROM_ORIGIN 0x00e00000
 #endif
@@ -40,7 +38,7 @@ OUTPUT_FORMAT(binary)
  * diagnostic message than the linker.
  */
 #ifdef MACHINE_A2560U
-# define ROM_LENGTH 2M /* Maximum size before I/O area */
+# define ROM_LENGTH 2M
 #else
 # define ROM_LENGTH 1M /* Maximum size before I/O area */
 #endif
