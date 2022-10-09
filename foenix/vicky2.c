@@ -15,6 +15,7 @@
 #include "vicky2.h"
 #include "a2560u.h"
 #include "foenix.h"
+#include "regutils.h"
 
 #define TTRGB_BLACK     0x0000          /* TT palette */
 #define TTRGB_BLUE      0x000f

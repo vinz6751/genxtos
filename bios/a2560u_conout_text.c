@@ -29,6 +29,7 @@
 #include "conout.h"
 #include "font.h"
 #include "a2560u_bios.h"
+#include "../foenix/regutils.h"
 
 static void cursor_moved(void);
 

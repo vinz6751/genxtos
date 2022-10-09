@@ -30,6 +30,7 @@
 #include "font.h"
 #include "a2560u_bios.h"
 #include "../foenix/shadow_fb.h"
+#include "../foenix/regutils.h"
 
 
 static void init(const Fonthead *font)

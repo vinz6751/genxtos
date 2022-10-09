@@ -15,16 +15,6 @@
 
 #include <stdint.h>
 
-#ifndef R8
-    #define R8(x) *((volatile int8_t * const)(x))
-#endif
-#ifndef R16
-    #define R16(x) *((volatile uint16_t * const)(x))
-#endif
-#ifndef R32
-    #define R32(x) *((volatile uint32_t * const)(x))
-#endif
-
 
 #define CPU_FREQ        20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
 
@@ -52,15 +42,7 @@
 
 /* Serial port speed codes for a2560u_serial_set_bps */
 #define UART0       (UART16550*)(GAVIN+0x28F8)
-#define UART_300    4167 /* Code for 300 bps */
-#define UART_1200   1042 /* Code for 1200 bps */
-#define UART_2400   521  /* Code for 2400 bps */
-#define UART_4800   260  /* Code for 4800 bps */
-#define UART_9600   130  /* Code for 9600 bps */
-#define UART_19200  65   /* Code for 19200 bps */
-#define UART_38400  33   /* Code for 28400 bps */
-#define UART_57600  22   /* Code for 57600 bps */
-#define UART_115200 11   /* Code for 115200 bps */
+/* For speed codes, checkout uart16550.h */
 
 /* PS2 */
 #define PS2_DATA       PS2_BASE
@@ -154,4 +136,4 @@
 #define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00)) /* Internal OPN2 base address */
 #define WM8776_PORT   ((uint16_t*)(BEATRIX+0x0E00))         /* Mixer/codec port */
 
-#endif // FOENIX
+#endif /* FOENIX */

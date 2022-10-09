@@ -50,6 +50,7 @@
 #include "../foenix/a2560u.h"
 #include "../foenix/shadow_fb.h"
 #include "a2560u_bios.h"
+#include "../foenix/regutils.h"
 
 bool a2560u_bios_sfb_is_active;
 
