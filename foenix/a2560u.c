@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include "regutils.h"
 
 int sprintf(char *__restrict__ str, const char *__restrict__ fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
@@ -36,6 +37,7 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #include "foenix.h"
 #include "uart16550.h" /* Serial port */
 #include "sn76489.h"   /* Programmable Sound Generator */
+#include "ym262.h"     /* YM262 OPL3 FM synthesizer */
 #include "wm8776.h"    /* Audio codec */
 #include "bq4802ly.h"  /* Real time clock */
 #include "ps2.h"
@@ -90,6 +92,7 @@ void a2560u_init(void)
     uart16550_init(UART0); /* So we can debug to serial port early */
     timer_init();
     wm8776_init();
+    ym262_reset();
     sn76489_mute_all();
 
     /* Clear screen and home */
