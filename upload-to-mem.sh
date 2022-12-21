@@ -1,1 +1,1 @@
-c256mgr --binary emutos-a2560u.rom --address 0x100000
+fnxmgr --binary emutos-a2560u.rom --address 0x100000
