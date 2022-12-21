@@ -27,8 +27,10 @@ OUTPUT_FORMAT(binary)
 #elif defined(TARGET_192)
 # define ROM_ORIGIN 0x00fc0000
 #elif defined(MACHINE_A2560U)
-    //# define ROM_ORIGIN 0x00100000
-    # define ROM_ORIGIN 0x00e00000
+    // Use this for debug purposes (load OS to user ram)
+    # define ROM_ORIGIN 0x00100000
+    // Use the below instead, if building EmuTOS for going to the flash1 bank
+    //# define ROM_ORIGIN 0x00f00000
 #else
 # define ROM_ORIGIN 0x00e00000
 #endif

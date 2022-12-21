@@ -71,10 +71,18 @@ amiga_main:
 #endif
 
 #if defined(MACHINE_A2560U) && !EMUTOS_LIVES_IN_RAM
+#if 0
+    // This is disabled because running EmuTOS from flash bank0 (0xe00000) can lead to problems because the A2560U
+    // crashes if we try to run user code from there. This is an issue e.g. for running EmuCON from flash.
+    // So the only option is to install the OS in from flash bank1 (0xf00000), but then the boot process must be
+    // different:
+    // As Gavin copies the first 64k of flash (ie of flash bank 0), these 64Kb don't belong to the EmuTOS image,
+    // and whatever is in flash bank 0, must take care of calling the EmuTOS startup.
         // 68000 reset vectors. Gavin will copy the first 64k of flash to the system ram then reset the proc.
         // All we need to do is to provide a reset vector that jumps to the flash.
-        .dc.l 0x800       // Stackk: rubbish, should not be used anyway as the OS should setup its own stack
+        .dc.l 0x800       // Stack: rubbish, should not be used anyway as the OS should setup its own stack
         .dc.l _os_header  // jump to the OS
+#endif
 #endif
 
 /*
