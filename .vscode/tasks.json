@@ -14,6 +14,16 @@
             }
         },
         {
+            "label": "Upload MCP",
+            "type": "shell",
+            "command": "python3 $FOENIXMGR/FoenixMgr/fnxmgr.py --upload-srec /home/vincent/GenX/FoenixMCP/src/foenixmcp.s68",,
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },        
+        {
             "label": "Upload to A2560U",
             "type": "shell",
             // For this to run, the address 4 must be set to 0x100000
