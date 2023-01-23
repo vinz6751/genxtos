@@ -504,9 +504,7 @@ PRIVATE LONG run_mv(WORD argc,char **argv)
 
 PRIVATE LONG run_path(WORD argc,char **argv)
 {
-char temp[MAXPATHLEN];
 const char *p;
-LONG rc = 0L;
 
     if (argc == 1) {
         p = user_path;
@@ -514,26 +512,12 @@ LONG rc = 0L;
             p = _("(empty)");
         message(" ");
         messagenl(p);
-        return 0L;
-    }
 
-    for (p = argv[1]; *p; ) {
-        if (!get_path_component(&p,temp))
-            break;
-        rc = check_path_component(temp);
-        if (rc < 0L)
-            break;
-    }
-
-    if (rc == 0L) {
-        strcpy(user_path,argv[1]);
     } else {
-        message(" ");
-        message(temp);
-        message(" ");
+        strcpy(user_path,argv[1]);
     }
 
-    return rc;
+    return 0L;
 }
 
 PRIVATE LONG run_pwd(WORD argc,char **argv)
@@ -1084,8 +1068,10 @@ WORD drive;
         strcpy(filespec,"*.*");
     for (p = filespec; *p; p++)
         ;
-    if (*(p-1) == DRIVESEP) {   /* add current path for drive */
-        drive = (*(p-2) | 0x20) - 'a';
+
+    if (*(p-1) == DRIVESEP) {        /* add current path for drive */
+        drive = shellutl_get_drive_number(*(p-2));
+
         Dgetpath(p,drive+1);
         for ( ; *p; p++)
             ;
