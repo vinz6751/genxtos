@@ -553,7 +553,7 @@ static void bios_init(void)
 
         if ((V_REZ_HZ != save_hz) || (V_REZ_VT != save_vt) || (v_planes != save_pl))
         {
-            set_rez_hacked();   /* also reinitializes the vt52 console */
+            screen_set_rez_hacked();   /* also reinitializes the vt52 console */
         }
     }
 #endif
