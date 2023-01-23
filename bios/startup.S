@@ -24,6 +24,9 @@
 
         .globl  _os_header
         .globl  _main         // OS entry point
+#if CONF_WITH_CARTRIDGE
+        .globl  _run_cartridge_applications
+#endif
 
 // ==== References ===========================================================
 
@@ -365,6 +368,52 @@ memdone:
  */
 
         jmp     _biosmain
+
+#if CONF_WITH_CARTRIDGE
+/*
+ * void run_cartridge_applications(WORD typebit);
+ *
+ * Run all cartridge applications of the specified type.
+ *
+ * typebit: application type bit number which must be set to 1 to match
+ */
+_run_cartridge_applications:
+        move.w  4(sp),d0                // application bit number
+        lea     cart_base, a0
+#ifdef __mcoldfire__
+        move.l  #0xABCDEF42, d1
+        cmp.l   (a0)+, d1               // is cartridge present?
+#else
+        cmp.l   #0xABCDEF42, (a0)+      // is cartridge present?
+#endif
+        jne     cartover                // no -> cartover
+testtype:
+        btst    d0, 4(a0)               // What type?
+        jeq     nextapp
+
+#ifdef __mcoldfire__
+        lea     -60(sp), sp
+        movem.l d0-d7/a0-a6, (sp)       // save registers
+#else
+        movem.l d0-d7/a0-a6, -(sp)      // save registers
+#endif
+        move.l  4(a0),d0                // d0 = address of cartridge init
+        andi.l  #0x00ffffff,d0          // make it 24-bit clean
+        movea.l d0,a0
+        jsr     (a0)                    // execute app in cartridge
+#ifdef __mcoldfire__
+        movem.l (sp), d0-d7/a0-a6       // restore registers
+        lea     60(sp), sp
+#else
+        movem.l (sp)+, d0-d7/a0-a6      // restore registers
+#endif
+nextapp:
+        tst.l   (a0)                    // another application?
+        move.l  (a0), a0
+        jne     testtype
+cartover:
+        rts
+#endif /* CONF_WITH_CARTRIDGE */
 
 // ===========================================================================
 // ==== Read-only data =======================================================

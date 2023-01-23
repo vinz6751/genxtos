@@ -11,6 +11,7 @@
  */
 #include "cmd.h"
 #include "string.h"
+#include "shellutl.h"
 
 typedef struct {
     const char *name;
