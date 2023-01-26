@@ -25,13 +25,20 @@
 #include "sysconf.h"
 #include "biosdefs.h"
 #include "bdosdefs.h"
-
+#include "tosvars.h" /* for drvbits */
 
 /*
  *  constants
  */
 
 #define FNAMELEN    (LEN_ZNODE+LEN_ZEXT)    /* as found in dirs etc */
+
+/*
+ * drive numbers used during startup
+ */
+#define FLOPPY_BOOTDEV      0   /* i.e. A: */
+#define HARDDISK_BOOTDEV    2   /* i.e. C: */
+#define DEFAULT_BOOTDEV     HARDDISK_BOOTDEV
 
 /*
  * the following values are used by Atari TOS:
@@ -370,6 +377,8 @@ WORD ckdrv(int d, BOOL checkrem);
 
 /* log in media 'b' on drive 'drv'. */
 WORD log_media(BPB *b, int drv);
+
+LONG is_drive_available(WORD dev);
 
 /*
  * in fshand.c
