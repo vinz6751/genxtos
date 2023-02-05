@@ -49,6 +49,7 @@
 
 #include "string.h"
 #include "miscutil.h"
+#include "shellutl.h"
 
 #include "gemshlib.h"
 #include "../desk/deskstub.h"
@@ -95,8 +96,24 @@ static BOOL gl_shgem;                   /* TRUE iff currently in graphics mode *
  *      gl_changerez: 0=no change, 1=change ST resolution, 2=change Falcon resolution
  *      gl_nextrez: stores the resolution for Setscreen()
  */
-GLOBAL WORD gl_changerez;
+GLOBAL RES_CHANGE_TYPE gl_changerez;
 GLOBAL WORD gl_nextrez;
+
+/*
+ *  Routine to read in the start of a file
+ *
+ *  returns: >=0  number of bytes read
+ *           < 0  error code from dos_open()/dos_read()
+ */
+LONG sh_readfile(char *filename, LONG count, char *buf)
+{
+    char    tmpstr[MAX_LEN];
+
+    strcpy(tmpstr, filename);
+    tmpstr[0] += dos_gdrv();            /* set the drive letter */
+
+    return dos_load_file(tmpstr, count, buf);
+}
 
 
 void sh_read(char *pcmd, char *ptail)
@@ -326,63 +343,7 @@ char *sh_name(char *ppath)
  */
 void sh_envrn(char **ppath, const char *psrch)
 {
-    char *p;
-    WORD len;
-
-    len = strlen(psrch);
-    *ppath = NULL;
-
-    /*
-     * scan environment string until double nul
-     */
-    for (p = ad_envrn; *p; )
-    {
-        if (strncmp(p, psrch, len) == 0)
-        {
-            *ppath = p + len;
-            break;
-        }
-        while(*p++) /* skip to end of current env variable */
-            ;
-    }
-}
-
-
-/*
- *  Search next style routine to pick up each path in the PATH= portion
- *  of the DOS environment.  It returns a pointer to the start of the
- *  following path until there are no more paths to find.
- */
-static char *sh_path(char *src, char *dest, char *pname)
-{
-    char last = 0;
-    char *p;
-
-    if (!src)           /* precautionary */
-        return NULL;
-
-    /* check for end of PATH= env var */
-    if (!*src)
-        return NULL;
-
-    /* copy over path */
-    for (p = src; *p; )
-    {
-        if ((*p == ';') || (*p == ','))
-            break;
-        last = *p;
-        *dest++ = *p++;
-    }
-
-    /* see if extra path separator is needed */
-    if ((last != PATHSEP) && (last != DRIVESEP))
-        *dest++ = PATHSEP;
-
-    /* append file name */
-    strcpy(dest, pname);
-
-    /* point past terminating separator or nul */
-    return p + 1;
+    shellutl_getenv(ad_envrn, psrch, ppath);
 }
 
 
@@ -456,9 +417,11 @@ static WORD findfile(char *pspec)
 
     while(1)
     {
-        path = sh_path(path, D.g_work, pname);
-        if (!path)                  /* end of PATH= */
+        path = shellutl_find_next_path_component(path, D.g_work);
+        if (path == NULL)                  /* end of PATH= */
             break;
+
+        strcat(pname,path);
         if (dos_sfirst(D.g_work, FA_RO | FA_HIDDEN | FA_SYSTEM) == 0)   /* found */
         {
             strcpy(pspec, D.g_work);
@@ -499,7 +462,7 @@ void sh_rdef(char *lpcmd, char *lpdir)
 
 
 /*
- *  Write the default application to invoke
+ *  Write the default application to invoke (autorun)
  */
 void sh_wdef(const char *lpcmd, const char *lpdir)
 {
@@ -587,7 +550,6 @@ static void set_default_desktop(SHELL *psh)
     strcpy(psh->sh_desk, DEF_DESKTOP);
     strcpy(psh->sh_cdir, D.s_cdir);
 }
-
 
 static WORD sh_ldapp(SHELL *psh)
 {
@@ -715,7 +677,7 @@ void sh_main(BOOL isauto, BOOL isgem)
         if (gl_shgem)
         {
             wm_init();                  /* re-init windows, without resetting colours */
-            ratinit();
+            ratinit();                  /* display the mouse */
             sh_draw(D.s_cmd, TRUE);     /* clear the screen */
         }
 

@@ -17,12 +17,16 @@
 
 // ==== Defines ==============================================================
 
-        .equ    cart_base, 0x00fa0000 // Base of ROM port cartridge
+        .equ    cart_base, 0x00fa0000  // Base of ROM port cartridge
+        .equ    cart_magic, 0xfa52235f // diagnostic cartridge magic number
 
 // ==== Definitions ==========================================================
 
         .globl  _os_header
         .globl  _main         // OS entry point
+#if CONF_WITH_CARTRIDGE
+        .globl  _run_cartridge_applications
+#endif
 
 // ==== References ===========================================================
 
@@ -55,7 +59,7 @@
         .text
 
 #if DIAGNOSTIC_CARTRIDGE
-    .dc.l   0xfa52235f  // diagnostic cartridge magic number
+    .dc.l   cart_magic
 #endif
 
 #if defined(MACHINE_AMIGA) && !EMUTOS_LIVES_IN_RAM
@@ -71,10 +75,18 @@ amiga_main:
 #endif
 
 #if defined(MACHINE_A2560U) && !EMUTOS_LIVES_IN_RAM
+#if 0
+    // This is disabled because running EmuTOS from flash bank0 (0xe00000) can lead to problems because the A2560U
+    // crashes if we try to run user code from there. This is an issue e.g. for running EmuCON from flash.
+    // So the only option is to install the OS in from flash bank1 (0xf00000), but then the boot process must be
+    // different:
+    // As Gavin copies the first 64k of flash (ie of flash bank 0), these 64Kb don't belong to the EmuTOS image,
+    // and whatever is in flash bank 0, must take care of calling the EmuTOS startup.
         // 68000 reset vectors. Gavin will copy the first 64k of flash to the system ram then reset the proc.
         // All we need to do is to provide a reset vector that jumps to the flash.
-        .dc.l 0x800       // Stackk: rubbish, should not be used anyway as the OS should setup its own stack
+        .dc.l 0x800       // Stack: rubbish, should not be used anyway as the OS should setup its own stack
         .dc.l _os_header  // jump to the OS
+#endif
 #endif
 
 /*
@@ -261,6 +273,30 @@ main_after_reset_instruction:
 coldfire_startup_ret:
 #endif
 
+#if CONF_WITH_CARTRIDGE
+/*
+ * Check for diagnostic cartridge
+ */
+
+#ifdef __mcoldfire__
+        move.l  cart_base, d0
+        cmp.l   #cart_magic, d0         // magic - is cartridge present?
+#else
+        cmp.l   #cart_magic, cart_base  // magic - is cartridge present?
+#endif
+        jne     nodiag                  // no -> go on
+
+#if EMUTOS_LIVES_IN_RAM
+        move.l  cart_base+0x30, d0
+        cmp.l   #0x45544f53, d0         // 'ETOS' - is this an EmuTOS cartridge?
+        jeq     nodiag                  // -> don't boot it from a RAM version
+#endif
+
+        lea     nodiag(pc), a6          // save return address
+        jmp     cart_base+4             // execute diagnostic cartridge
+nodiag:
+#endif /* CONF_WITH_CARTRIDGE */
+
 /*
  * disable the instruction/data caches
  */
@@ -332,6 +368,52 @@ memdone:
  */
 
         jmp     _biosmain
+
+#if CONF_WITH_CARTRIDGE
+/*
+ * void run_cartridge_applications(WORD typebit);
+ *
+ * Run all cartridge applications of the specified type.
+ *
+ * typebit: application type bit number which must be set to 1 to match
+ */
+_run_cartridge_applications:
+        move.w  4(sp),d0                // application bit number
+        lea     cart_base, a0
+#ifdef __mcoldfire__
+        move.l  #0xABCDEF42, d1
+        cmp.l   (a0)+, d1               // is cartridge present?
+#else
+        cmp.l   #0xABCDEF42, (a0)+      // is cartridge present?
+#endif
+        jne     cartover                // no -> cartover
+testtype:
+        btst    d0, 4(a0)               // What type?
+        jeq     nextapp
+
+#ifdef __mcoldfire__
+        lea     -60(sp), sp
+        movem.l d0-d7/a0-a6, (sp)       // save registers
+#else
+        movem.l d0-d7/a0-a6, -(sp)      // save registers
+#endif
+        move.l  4(a0),d0                // d0 = address of cartridge init
+        andi.l  #0x00ffffff,d0          // make it 24-bit clean
+        movea.l d0,a0
+        jsr     (a0)                    // execute app in cartridge
+#ifdef __mcoldfire__
+        movem.l (sp), d0-d7/a0-a6       // restore registers
+        lea     60(sp), sp
+#else
+        movem.l (sp)+, d0-d7/a0-a6      // restore registers
+#endif
+nextapp:
+        tst.l   (a0)                    // another application?
+        move.l  (a0), a0
+        jne     testtype
+cartover:
+        rts
+#endif /* CONF_WITH_CARTRIDGE */
 
 // ===========================================================================
 // ==== Read-only data =======================================================

@@ -131,6 +131,12 @@ void detect_dmasound(void)
     has_dmasound = check_read_byte((long)&DMASOUND->control);
     KDEBUG(("has_dmasound = %d\n", has_dmasound));
 
+#if MPS_STE_SOUND_ONLY
+    /* Stop all sound */
+    DMASOUND->control = 0;
+    has_microwire = has_dmasound;
+#else
+    /* Then detect advanced Falcon DMA sound */
     if (has_dmasound)
     {
         /* Then detect advanced Falcon DMA sound */
@@ -147,6 +153,7 @@ void detect_dmasound(void)
      * This is not detectable through a bus error. */
     has_microwire = has_dmasound && !has_falcon_dmasound;
     KDEBUG(("has_microwire = %d\n", has_microwire));
+#endif
 }
 
 static void write_microwire(UWORD data)

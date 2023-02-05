@@ -13,6 +13,7 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
+#include "biosmem.h"
 #include "asm.h"
 #include "memory.h"
 #include "tosvars.h"

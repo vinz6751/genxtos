@@ -227,7 +227,7 @@ void freeit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp)
  */
 WORD shrinkit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp, LONG newlen)
 {
-    MEMORY_DESCRIPTOR *f, *p, *q;
+    MEMORY_DESCRIPTOR *f;
 
     /*
      * Create a memory descriptor for the freed portion of memory.
@@ -243,23 +243,21 @@ WORD shrinkit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp, LONG newlen)
     f->m_length = m->m_length - newlen;
 
     /*
-     * Add it to the free list.
+     * Add it to the allocated list.
      */
-    for (p = mp->mp_mfl, q = NULL; p; q = p, p = p->m_link)
-        if (f->m_start <= p->m_start)
-            break;
-
-    f->m_link = p;
-
-    if (q)
-        q->m_link = f;
-    else
-        mp->mp_mfl = f;
+    f->m_link = mp->mp_mal;
+    mp->mp_mal = f;
 
     /*
      * Update existing memory descriptor.
      */
     m->m_length = newlen;
+
+    /*
+     * Free new memory descriptor via freeit() which takes care of
+     * coalescing free blocks (important!).
+     */
+    freeit(f, mp);
 
     return 0;
 }

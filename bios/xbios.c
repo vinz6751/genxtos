@@ -1168,7 +1168,7 @@ static void xbios_7f(LONG sendnum, LONG rcvnum, DSPBLOCK *sendinfo, DSPBLOCK *rc
 /*
  * DMA sound
  */
-#if DBG_XBIOS & CONF_WITH_DMASOUND
+#if DBG_XBIOS & CONF_WITH_XBIOS_SOUND
 static LONG xbios_80(void)
 {
     kprintf("XBIOS: Locksnd\n");
@@ -1506,7 +1506,7 @@ const PFLONG xbios_vecs[] = {
     xbios_unimpl,   /* 7f */
 #endif
 
-#if CONF_WITH_DMASOUND
+#if CONF_WITH_XBIOS_SOUND
     VEC(xbios_80, locksnd),     /* 80 */
     VEC(xbios_81, unlocksnd),   /* 81 */
     VEC(xbios_82, soundcmd),    /* 82 */
@@ -1521,7 +1521,7 @@ const PFLONG xbios_vecs[] = {
     VEC(xbios_8b, devconnect),  /* 8b */
     VEC(xbios_8c, sndstatus),   /* 8c */
     VEC(xbios_8d, buffptr),     /* 8d */
-#endif /* CONF_WITH_DMASOUND */
+#endif /* CONF_WITH_XBIOS_SOUND */
 };
 
 const UWORD xbios_ent = ARRAY_SIZE(xbios_vecs);

@@ -65,6 +65,9 @@
 # ifndef CONF_WITH_IKBD_CLOCK
 #  define CONF_WITH_IKBD_CLOCK 0
 # endif
+# ifndef CONF_WITH_CARTRIDGE
+#  define CONF_WITH_CARTRIDGE 0
+# endif
 # ifndef CONF_WITH_ACSI
 #  define CONF_WITH_ACSI 0
 # endif
@@ -119,9 +122,6 @@
  * Defaults for the FireBee target
  */
 #ifdef MACHINE_FIREBEE
-# ifndef SDCLK_FREQUENCY_MHZ
-#  define SDCLK_FREQUENCY_MHZ 132UL
-# endif
 # ifndef CONF_WITH_TT_MMU
 #  define CONF_WITH_TT_MMU 0
 # endif
@@ -606,9 +606,6 @@
  * Defaults for the M548x machine
  */
 #ifdef MACHINE_M548X
-# ifndef SDCLK_FREQUENCY_MHZ
-#  define SDCLK_FREQUENCY_MHZ 100UL
-# endif
 # ifndef CONF_ATARI_HARDWARE
 #  define CONF_ATARI_HARDWARE 0
 # endif
@@ -783,6 +780,9 @@
 # endif
 # ifndef CONF_WITH_IKBD_CLOCK
 #  define CONF_WITH_IKBD_CLOCK 0
+# endif
+# ifndef CONF_WITH_CARTRIDGE
+#  define CONF_WITH_CARTRIDGE 0
 # endif
 # ifndef CONF_WITH_FDC
 #  define CONF_WITH_FDC 0
@@ -1081,6 +1081,19 @@
  */
 #ifndef CONF_WITH_IKBD_CLOCK
 # define CONF_WITH_IKBD_CLOCK 1
+#endif
+
+/*
+ * Set CONF_WITH_CARTRIDGE to 1 to enable ROM port cartridge support
+ */
+#ifndef CONF_WITH_CARTRIDGE
+# if DIAGNOSTIC_CARTRIDGE
+   /* Diagnostic and Application cartridges have different magic numbers,
+    * so a diagnostic cartridge can't also be an application cartridge. */
+#  define CONF_WITH_CARTRIDGE 0
+# else
+#  define CONF_WITH_CARTRIDGE 1
+# endif
 #endif
 
 /*
@@ -1614,6 +1627,19 @@
 # define HD_DETECT_RETRIES 0
 #endif
 
+/*
+ * Set CONF_WITH_1FAT_SUPPORT to 1 to enable support for filesystems with
+ * only one file allocation table (FAT) instead of the usual two FATs.
+ *
+ * This is disabled by default because all versions of Atari TOS assume
+ * two FATs. There are erroneously mastered disks that claim to have a
+ * single FAT, but in reality have two. For compatibility with Atari TOS
+ * EmuTOS has to assume two FATs by default.
+ *
+ */
+#ifndef CONF_WITH_1FAT_SUPPORT
+# define CONF_WITH_1FAT_SUPPORT 0
+#endif
 
 
 /********************************************************

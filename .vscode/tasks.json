@@ -1,0 +1,44 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "make a2560u UNIQUE=fr -j4",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Upload MCP",
+            "type": "shell",
+            "command": "python3 $FOENIXMGR/FoenixMgr/fnxmgr.py --upload-srec /home/vincent/GenX/FoenixMCP/src/foenixmcp.s68",,
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },        
+        {
+            "label": "Upload to A2560U",
+            "type": "shell",
+            // For this to run, the address 4 must be set to 0x100000
+            "command": "python3 $FOENIXMGR/FoenixMgr/fnxmgr.py --binary emutos-a2560u.rom --address 0x100000",
+            "problemMatcher": [],
+            "group": {
+                "name": "test",
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+              "reveal": "always",
+              "panel": "new"
+            }
+        },
+
+    ]
+}

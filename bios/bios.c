@@ -87,6 +87,10 @@ static char default_env[ENV_SIZE];  /* default environment area */
 void stonx_kprintf_init(void);      /* defined in kprintasm.S */
 #endif
 
+#if CONF_WITH_CARTRIDGE
+void run_cartridge_applications(WORD typebit);  /* defined in startup.S */
+#endif
+
 #if CONF_WITH_68040_PMMU
 long setup_68040_pmmu(void);        /* defined in 68040_pmmu.S */
 #endif
@@ -533,6 +537,26 @@ static void bios_init(void)
     /* Enable VBL processing */
     swv_vec = os_header.reseth; /* reset system on monitor change & jump to _main */
     vblsem = 1;
+
+#if CONF_WITH_CARTRIDGE
+    {
+        WORD save_hz = V_REZ_HZ, save_vt = V_REZ_VT, save_pl = v_planes;
+
+        /* Run all boot applications from the application cartridge.
+         * Beware: Hatari features a special cartridge which is used
+         * for GEMDOS drive emulation. It will hack drvbits and hook Pexec().
+         * It will also hack Line A variables to enable extended VDI video modes.
+         */
+        KDEBUG(("run_cartridge_applications(3)\n"));
+        run_cartridge_applications(3); /* Type "Execute prior to bootdisk" */
+        KDEBUG(("after run_cartridge_applications()\n"));
+
+        if ((V_REZ_HZ != save_hz) || (V_REZ_VT != save_vt) || (v_planes != save_pl))
+        {
+            screen_set_rez_hacked();   /* also reinitializes the vt52 console */
+        }
+    }
+#endif
 
     KDEBUG(("bios_init() end\n"));
 }

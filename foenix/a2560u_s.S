@@ -1,10 +1,5 @@
 // Assembler routines for the Foenix Retro Systems A2560U
 
-.EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560u_bios.h.
-                                   // The smaller this is, the higher MAX_CELLS_RENDERED_PER_FRAME needs to be.
-
-.EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
-
 #include "foenix.i"
 
 
