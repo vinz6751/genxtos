@@ -32,13 +32,15 @@ _proc_stk       = 0x3cc;        /* 16 words from exception stack */
 /* ==== Start of System variables =========================================== */
 sysvars_start   = 0x400;
 
-
+_etv_timer      = 0x400;        /* GEM event timer vector */
 _etv_critic     = 0x404;        /* GEM critical error handler */
-
+_etv_term       = 0x408;        /* GEM program termination vector */
 _etv_xtra       = 0x40c;        /* GEM additional vectors (unused) */
 _memvalid       = 0x420;        /* memory conf valid, if 0x752019f3 */
 memvalid        = _memvalid;
 memctrl         = 0x424;        /* copy of contents of 0xffff8001 */
+resvalid        = 0x426;        /* validates resvector, if 0x31415926 */
+resvector       = 0x42a;        /* reset vector */
 _phystop        = 0x42e;        /* physical top of RAM */
 _membot         = 0x432;        /* start of TPA (user memory) */
 _memtop         = 0x436;        /* end of TPA (user memory) */
@@ -102,6 +104,8 @@ _bconstat_vec   = 0x51e;        /* 8 pointers to input-status routines */
 _bconin_vec     = 0x53e;        /* 8 pointers to input routines */
 _bcostat_vec    = 0x55e;        /* 8 pointers to output-status routines */
 _bconout_vec    = 0x57e;        /* 8 pointers to output routines */
+_longframe      = 0x59e;        /* if not 0, then not 68000 - use long stack frames */
+_p_cookies      = 0x5a0;        /* pointer to cookie jar */
 _ramtop         = 0x5a4;        /* top of TT-RAM, or NULL if no TT-RAM is present */
 _ramvalid       = 0x5a8;        /* if equal to RAMVALID_MAGIC, then ramtop is valid */
 _bell_hook      = 0x5ac;        /* pointer to routine for system bell */
