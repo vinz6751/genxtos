@@ -1,5 +1,9 @@
 // Assembler routines for the Foenix Retro Systems A2560U
 
+// Note: gcc 4.6.4 uses d0-d1/a0-a1 as scratch registers. TOS also uses d2/a2
+// so if somebody hooks in, they may expect these to be saved too. If we call
+// TOS stuff from here that can be hooked, we need to save d2 as well.
+
 #include "foenix.i"
 
 
@@ -66,17 +70,17 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
 
 _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
     move.w  #PS2KEYB_INT,IRQ_PENDING_GRP1
-    movem.l d0-d7/a0-a6,-(sp) // Save GCC scratch registers
+    movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel1_irq_handler
-    movem.l (sp)+,d0-d7/a0-a6
+    movem.l (sp)+,d0-d2/a0-a2
     rte
 
 
 _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     move.w  #PS2MOUSE_INT,IRQ_PENDING_GRP1
-    movem.l d0-d7/a0-a6,-(sp) // Save GCC scratch registers
+    movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel2_irq_handler
-    movem.l (sp)+,d0-d7/a0-a6
+    movem.l (sp)+,d0-d2/a0-a2
     rte
 
 
