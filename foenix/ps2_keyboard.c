@@ -120,12 +120,8 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
     #define STATE ((struct ps2_keyboard_local_t*)(api->driver_data))->state
     #define IS_BREAK(x) (x & 0x80)
 
-    #define check_and_set_next(expected, next) \
-        if (scancode == expected) \
-            STATE = next; \
-        else \
-            /* Bad scan-code... reset the machine and just eat the code */ \
-            STATE = SM_IDLE;
+    /* On unexpected scan code, return the state machine to idle (swallow the code) */
+    #define check_and_set_next(expected, next) STATE = (scancode == expected) ? next : SM_IDLE;
 
     #define check_and_down(expected, pressed) \
         if (scancode == expected) \
