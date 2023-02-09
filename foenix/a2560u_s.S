@@ -64,8 +64,9 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
     tst.b   RTC_FLAGS  // Acknowledge interrupt on the bq4802LY by reading the flags
     move.w  #RTC_INT,IRQ_PENDING_GRP1 // Acknowledge GAVIN interrupt
     addq.l  #1,_bq4802ly_ticks
+    pea     _a2560u_rte  // Send the control to RTE upon handler's RTS
     move.l  _bq4802ly_tick_handler,-(sp)
-    rts     // The handler must save register and terminate with rte
+    rts
 
 
 _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
@@ -89,7 +90,7 @@ _a2560u_irq_com1: // UART COM1 interrupt handler
     // when we read the Interrupt Status Register (UART0+UART16750_ISR). As a result we can't acknowledge the
     // interrupts so we always get the highest priority one masking the others.
     // So instead of checking interrupts we examine the Line Status Register to find out the cause of the interrupt.
-    movem.l d0-d1/a0-a2,-(sp)
+    movem.l d0-d2/a0-a2,-(sp)
 com1_do:
     move.w  #COM1_INT,IRQ_PENDING_GRP1  // Acknowledge GAVIN interrupt (if any)
     move.b  UART0+UART16750_LSR,d1 // That "should" acknowledge the interrupt (but doesn't)
@@ -103,5 +104,5 @@ com1_do:
     addq.l  #2,sp
     bra.s   com1_do
 com1_done:
-    movem.l (sp)+,d0-d1/a0-a2
+    movem.l (sp)+,d0-d2/a0-a2
     rte
