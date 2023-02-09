@@ -24,17 +24,12 @@ typedef struct {
     uint8_t  fps;
 } FOENIX_VIDEO_MODE;
 
-typedef struct __attribute__((__packed__)) {
+typedef struct {
     uint8_t blue;
     uint8_t green;
     uint8_t red; 
     uint8_t alpha;
 } COLOR32;
-
-#define VICKY_LUT(n) ((COLOR32* volatile)(VICKY_LUTS+n*0x400))
-
-/* Number of colors VICKY can produce */
-#define VICKY_PALETTE   (8*8*8)  /* 24 bits palette */
 
 /* VICKY II */
 #define VICKY_CTRL                  VICKY
@@ -70,8 +65,13 @@ typedef struct __attribute__((__packed__)) {
 #define VICKY_A_BMP1_FB             (VICKY+0x010c) /* Bitmap layer 1 framebuffer address relative to VRAM */
 
 /* Color palettes */
-#define VICKY_NLUTS           8            /* Number of luts */
-#define VICKY_LUTS            (VICKY+0x2000) /* Color lookup tables, 0x400 bytes each */
+#define VICKY_NLUTS            8            /* Number of luts */
+#define VICKY_LUTS             (VICKY+0x2000) /* Color lookup tables, 0x400 bytes each */
+#define VICKY_LUT_SIZEOF       0x400        /* Size of a LUT in bytes*/
+#define VICKY_LUT_ENTRY_SIZEOF 4            /* Size of a LUT entry in bytes */
+#define VICKY_LUT(n)           ((uint32_t* volatile)(VICKY_LUTS+n*VICKY_LUT_SIZEOF))
+#define VICKY_PALETTE          (8*8*8)      /* Number of colors VICKY can produce (24 bits palette) */
+
 /* Mouse */
 #define VICKY_MOUSE_MEM         (VICKY+0x0400)
 #define VICKY_MOUSE_CTRL        (VICKY+0x0C00)

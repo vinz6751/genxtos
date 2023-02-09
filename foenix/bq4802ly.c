@@ -16,8 +16,6 @@
 #include "bq4802ly.h"
 #include "a2560u.h"
 
-typedef void (*tick_handler_t)(void);
-
 uint32_t bq4802ly_ticks;
 void (*bq4802ly_tick_handler)(void);
 

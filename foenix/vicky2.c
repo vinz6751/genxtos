@@ -138,9 +138,13 @@ void vicky2_set_border_color(uint32_t color)
     R32(VICKY_A_BORDER_COLOR) = color;
 }
 
+static uint8_t * const vicky2_get_color_address(uint16_t lut, uint16_t number) {
+    return (uint8_t*)(VICKY_LUTS + lut*VICKY_LUT_SIZEOF + number*VICKY_LUT_ENTRY_SIZEOF);
+}
+
 void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color)
 {
-    volatile uint8_t * c = (uint8_t*)(0xB42000 + lut*0x400 + number*4);
+    volatile uint8_t * c = vicky2_get_color_address(lut, number);
     COLOR32 *clr = (COLOR32*)&color;
     c[0] = clr->blue; // B
     c[1] = clr->green; // G
@@ -150,12 +154,12 @@ void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color)
 
 void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result)
 {
-    COLOR32* lut_entry = ((COLOR32*)(VICKY_LUTS+number*0x400));
+    uint8_t* lut_entry = vicky2_get_color_address(lut, number);
 
-    result->alpha = lut_entry->alpha;
-    result->red = lut_entry->red;
-    result->green = lut_entry->green;
-    result->blue = lut_entry->blue;
+    result->blue = lut_entry[0];
+    result->green = lut_entry[1];
+    result->red = lut_entry[2];
+    result->alpha = lut_entry[3];
 }
 
 void vicky2_read_video_mode(FOENIX_VIDEO_MODE *result)

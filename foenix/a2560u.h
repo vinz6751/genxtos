@@ -94,6 +94,9 @@ void a2560u_setdt(uint32_t datetime);
 void a2560u_rte(void); /* Actually, just the RTE instruction. Not a function */
 void a2560u_rts(void); /* Actually, just the RTS instruction. */
 
+typedef void (*vector_t)(void);
+extern vector_t a2560_irq_vectors[IRQ_GROUPS][16];
+
 /* Backup all IRQ mask registers and mask all interrupts */
 void a2560u_irq_mask_all(uint16_t *save);
 /* Restore interrupts backed up with a2560u_irq_mask_all */

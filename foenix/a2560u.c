@@ -47,6 +47,8 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #include "a2560u_debug.h"
 #include "a2560u.h"
 
+// Set the 68k's status register
+#if defined(__GNUC__)
 #define set_sr(a)                         \
 __extension__                             \
 ({short _r, _a = (a);                     \
@@ -59,6 +61,25 @@ __extension__                             \
   );                                      \
   _r;                                     \
 })
+
+#define disable_interrupts(x) set_sr(0x2700)
+#define restore_interrupts(x) set_sr(x)
+#elif defined (__CALYPSI__)
+#include <intrinsics68000.h>
+static short disable_interrupts(void);
+static void restore_interrupts(short sr);
+
+static short disable_interrupts(void)
+{
+    __interrupt_state_t old_sr = __get_interrupt_state();
+    __disable_interrupts();
+    return (short)old_sr;
+}
+static void restore_interrupts(short sr)
+{
+    __restore_interrupt_state((__interrupt_state_t)sr);
+}
+#endif
 
 /* Local variables ***********************************************************/
 static uint32_t cpu_freq; /* CPU frequency */
@@ -188,7 +209,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     t = (struct a2560u_timer_t *)&a2560u_timers[timer];
 
     /* We don't want interrupts while we reprogramming */
-    sr = set_sr(0x2700);
+    sr = disable_interrupts();
 
     /* Stop the timer while we configure */
     a2560u_timer_enable(timer, false);
@@ -231,7 +252,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     /* Unmask interrupts for that timer */
     R16(IRQ_MASK_GRP1) &= ~t->irq_mask;
 
-    set_sr(sr);
+    restore_interrupts(sr);
 #if 0
     a2560u_debugnl("AFTER SETTING TIMER %d\n", timer);
     a2560u_debugnl("CPU          sr=%04x\n", get_sr());
@@ -314,7 +335,7 @@ void a2560u_debug(const char* __restrict__ s, ...)
 /* Interrupts management *****************************************************/
 
 /* Interrupt handlers for each of the IRQ groups */
-void *a2560_irq_vectors[IRQ_GROUPS][16];
+vector_t a2560_irq_vectors[IRQ_GROUPS][16];
 
 static void irq_init(void)
 {
@@ -345,7 +366,7 @@ static void irq_init(void)
 void a2560u_irq_mask_all(uint16_t *save)
 {
     int i;
-    uint16_t sr = set_sr(0x2700);
+    uint16_t sr = disable_interrupts();
 
     for (i = 0; i < IRQ_GROUPS; i++)
     {
@@ -353,7 +374,7 @@ void a2560u_irq_mask_all(uint16_t *save)
         ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = 0xffff;
     }
 
-    set_sr(sr);
+    restore_interrupts(sr);
 }
 
 

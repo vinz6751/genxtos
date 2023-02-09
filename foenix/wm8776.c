@@ -86,5 +86,5 @@ void wm8776_set_digital_volume(uint8_t volume)
 
 uint8_t wm8776_get_digital_volume(void)
 {
-    return 255- (wm8776_regs[5/*WM8776_R05_DAC_VOLUME_ALL*/] && MASTDA_MASK);
+    return 255- (wm8776_regs[5/*WM8776_R05_DAC_VOLUME_ALL*/] & MASTDA_MASK);
 }

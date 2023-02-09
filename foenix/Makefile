@@ -1,13 +1,28 @@
 DEBUG=yes
 #LIBCMINI=/home/vincent/Atari/Crossdev/libcmini
 LIBCMINI=/home/vincent/Atari/Repos/libcmini
-TOOLCHAIN=m68k-atari-mint-
-CC=$(TOOLCHAIN)gcc
-AS=$(TOOLCHAIN)as
-AR=$(TOOLCHAIN)ar
-STRIP=$(TOOLCHAIN)strip
-CFLAGS=-I$(LIBCMINI)/include -DLIBCMINI -fomit-frame-pointer -Os -std=c99
-LDFLAGS=-L$(LIBCMINI)/build -lcmini -lgcc
+
+# Pick a compiler gcc or calypsi
+COMPILER=gcc
+
+ifeq ($(COMPILER),gcc)
+  TOOLCHAIN=m68k-atari-mint-
+  CC=$(TOOLCHAIN)gcc
+  AS=$(TOOLCHAIN)as
+  AR=$(TOOLCHAIN)ar
+  STRIP=$(TOOLCHAIN)strip
+  CFLAGS=-I$(LIBCMINI)/include -DLIBCMINI -fomit-frame-pointer -Os -std=c99
+  LDFLAGS=-L$(LIBCMINI)/build -lcmini -lgcc
+  ARFLAGS=-crs
+else ifeq ($(COMPILER),calypsi)
+  CC=cc68k
+  AS=as68k
+  AR=nlib
+  ARFLAGS=
+else
+  $(error Compiler not recognized)
+endif
+
 
 LIB=liba2560u.a
 
@@ -15,7 +30,14 @@ SRC_C=a2560u.c bq4802ly.c \
 	ps2_keyboard.c ps2_mouse_a2560u.c ps2.c \
 	sn76489.c ym2612.c uart16550.c vicky2.c wm8776.c \
 	shadow_fb.c
-SRC_S=a2560u_s.S shadow_fb_s.S
+SRC_S=
+
+ifeq ($(COMPILER),gcc)
+  SRC_S += a2560u_s.S shadow_fb_s.S
+else ifeq ($(COMPILER),calypsi)
+  SRC_C += a2560u_interrupts.c
+endif
+
 SRC=$(SRC_C) $(SRC_S)
 OBJ_C=$(SRC_C:.c=.o)
 OBJ_S=$(SRC_S:.S=.o)
@@ -29,7 +51,7 @@ OBJ=$(OBJ_C) $(OBJ_S)
 # endif
 
 $(LIB): $(OBJ)
-	$(AR) -crs $@ $^
+	$(AR) $(ARFLAGS) $@ $^
 
 %.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS)
@@ -37,11 +59,11 @@ $(LIB): $(OBJ)
 %.o: %.S
 	$(CC) -o $@ -c $< $(CFLAGS)
 
+#%.o: %.S
+#	$(AS) -o $@ $< $(ASFLAGS)
 
-.PHONY: clean mrproper
+.PHONY: clean
 
 clean:
-	@rm -rf *.o *~
+	@rm -rf *.o *.a *~
 
-mrproper: clean
-	@rm -rf $(EXEC)

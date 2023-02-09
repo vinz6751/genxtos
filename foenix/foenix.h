@@ -1,8 +1,6 @@
 /*
  * foenix.h - Foenix Retro System computer specific defines
  *
- * Copyright (C) 2022 The EmuTOS development team
- *
  * Authors:
  *  VB   Vincent Barrilliot
  *
@@ -41,7 +39,7 @@
   #define GAVIN_CTRL_DISKLED 0x0002
 
 /* Serial port speed codes for a2560u_serial_set_bps */
-#define UART0       (UART16550*)(GAVIN+0x28F8)
+#define UART0       ((UART16550 * const)(GAVIN+0x28F8))
 /* For speed codes, checkout uart16550.h */
 
 /* PS2 */
@@ -131,9 +129,12 @@
 #define SN76489_R     ((uint8_t*const)(BEATRIX+0x0120)) /* Right SN76489 */
 #define SN76489_BOTH  ((uint8_t*const)(BEATRIX+0x0130)) /* Writes both SN76489s */
 
-#define OPL3_PORT     ((volatile uint8_t*)(BEATRIX+0x0200)) /* Access port for the OPL3 */
-#define OPM_INT_BASE  ((volatile uint8_t*)(BEATRIX+0x0C00)) /* Internal OPM base address */
-#define OPN2_INT_BASE ((volatile uint8_t*)(BEATRIX+0x0A00)) /* Internal OPN2 base address */
-#define WM8776_PORT   ((uint16_t*)(BEATRIX+0x0E00))         /* Mixer/codec port */
+#define OPL3_PORT     ((volatile uint8_t*const)(BEATRIX+0x0200)) /* Access port for the OPL3 */
+#define OPM_INT_BASE  ((volatile uint8_t*const)(BEATRIX+0x0C00)) /* Internal OPM base address */
+#define OPN2_INT_BASE ((volatile uint8_t*const)(BEATRIX+0x0A00)) /* Internal OPN2 base address */
+#define WM8776_PORT   ((uint16_t*const)(BEATRIX+0x0E00))         /* Mixer/codec port */
+
+/* bq4802ly real time clock */
+#define BQ4802LY_FLAGS (BQ4802LY_BASE+0x26)
 
 #endif /* FOENIX */

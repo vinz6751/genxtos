@@ -2,8 +2,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h> /* for debug */
 
+#if DEBUG_YM262
+ #include <stdio.h> /* for debug */
+#endif
 
 #define YM262_L              (0xB20300) /* Base address of "Low" registers */
 #define YM262_H              (0xB20200) /* Base address of "High" registers */
@@ -300,8 +302,9 @@ static uint16_t osc_offset(uint16_t channel, uint16_t oscillator)
 
 void ym262_write_reg(unsigned long adr, uint8_t value)
 {
+#ifdef DEBUG_YM262
 	printf("Write %02x to %p\n", value, adr);
-#if 0
+#else
 	*((uint8_t*)adr) = value;
 #endif
 }
@@ -544,7 +547,7 @@ void ym262_create_note_to_freq_lut(uint32_t middleA, uint32_t *lut)
 		lut[i] = tune_table[i] * middleA;
 }
 
-
+#ifdef DEBUG_YM262
 uint16_t main(void)
 {
 	uint16_t i;
@@ -589,4 +592,6 @@ uint16_t main(void)
 	ym262_get_block_fnum_by_freq(4396*100L, &block, &fnum);
 	printf("440Hz: block %d fnum %d\n", block, fnum);
 #endif
+	return 0;
 }
+#endif
