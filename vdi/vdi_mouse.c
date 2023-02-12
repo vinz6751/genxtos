@@ -23,7 +23,7 @@
 #include "biosext.h"
 #include "lineavars.h"
 #include "a2560u_bios.h"
-#include "../foenix/vicky2.h"
+#include "../foenix/drivers/vicky2.h"
 #if WITH_AES
 #include "../aes/aesstub.h"
 #endif

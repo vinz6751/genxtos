@@ -46,23 +46,22 @@
 #include "serport.h" // push_serial_iorec
 #include "stdint.h"
 #include "../foenix/foenix.h"
-#include "../foenix/uart16550.h" /* Serial port */
+#include "../foenix/drivers/uart16550.h" /* Serial port */
+#include "../foenix/drivers/bq4802ly.h" /* Real time clock*/
 #include "../foenix/a2560u.h"
 #include "../foenix/shadow_fb.h"
 #include "a2560u_bios.h"
 #include "../foenix/regutils.h"
+#include "../foenix/drivers/gavin_irq.h"
+#include "../foenix/drivers/gavin_timer.h"
 
 bool a2560u_bios_sfb_is_active;
 
 /* Prototypes ****************************************************************/
 
-void a2560u_init_lut0(void);
-
 /* Interrupt */
-void irq_mask_all(uint16_t *save);
-void irq_add_handler(int id, void *handler);
 void a2560u_irq_bq4802ly(void);
-void a2560u_irq_vicky(void);
+
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
 
@@ -71,7 +70,9 @@ void a2560u_irq_ps2mouse(void);
 
 void a2560u_bios_init(void)
 {
+    a2560u_beeper(true);
 	a2560u_init();
+    a2560u_beeper(false);
 }
 
 
@@ -102,7 +103,7 @@ void a2560u_bios_screen_init(void)
     a2560u_sfb_init();
 #endif
 
-    a2560u_irq_set_handler(INT_SOF_A, int_vbl);
+    gavin_irq_set_handler(INT_SOF_A, int_vbl);
     KDEBUG(("a2560u_bios_screen_init exiting\n"));
 }
 
@@ -228,7 +229,7 @@ void a2560u_bios_rs232_init(void) {
     // The UART's base settings are setup earlier
     uart16550_rx_handler = push_serial_iorec;
     setexc(INT_COM1_VECN, (uint32_t)a2560u_irq_com1);
-    a2560u_irq_enable(INT_COM1);
+    gavin_irq_enable(INT_COM1);
     uart16550_rx_irq_enable(UART0, true);
 }
 
@@ -289,6 +290,15 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rs
 
 /* Timers *********************************************************************/
 
+void a2560u_init_system_timer(void) {
+    gavin_timer_set(HZ200_TIMER_NUMBER, 200, true, int_timerc);
+}
+
+void a2560u_enable_200hz_timer(void) {
+    gavin_timer_enable(HZ200_TIMER_NUMBER,true);
+    gavin_irq_enable(INT_SOF_A);
+}
+
 /* For being able to translate settings of the ST's MFP68901 we need this */
 static const uint16_t mfp_timer_prediv[] = { 0,4,10,16,50,64,100,200 };
 #define MFP68901_FREQ 2457600 /* The ST's 68901 MFP is clocked at 2.4576MHZ */
@@ -319,7 +329,7 @@ void a2560u_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *
     timer_clock = timer == 3 ? vicky_vbl_freq : 20000000/*TODO use cpu_freq*/;
     frequency = (frequency * timer_clock) / MFP68901_FREQ;
 
-    a2560u_set_timer(timer, frequency, false, vector);
+    gavin_timer_set(timer, frequency, false, vector);
 }
 
 
@@ -342,11 +352,11 @@ void a2560u_bios_calibrate_delay(uint32_t calibration_time)
     /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
 
     /* Backup all interrupts masks because a2560u_run_calibration will mask everything. We'll need to restore */
-    a2560u_irq_mask_all(masks);
+    gavin_irq_mask_all(masks);
 
     /* Setup timer for 960Hz, same as what EmuTOS for ST does with using MFP Timer D (UART clock baud rate generator) for 9600 bauds */
     old_timer_vector = setexc(INT_TIMER0_VECN, -1L);
-    a2560u_set_timer(0, 960, true, a2560u_bios_irq_calibration);
+    gavin_timer_set(0, 960, true, a2560u_bios_irq_calibration);
 
     /* This counts the number of wait loops we can do in about 100ms */
     a2560u_run_calibration();
@@ -355,7 +365,7 @@ void a2560u_bios_calibrate_delay(uint32_t calibration_time)
     setexc(INT_TIMER0_VECN, old_timer_vector);
 
     /* Restore interrupt masks */
-    a2560u_irq_restore(masks);
+    gavin_irq_restore(masks);
 
     a2560u_debugnl("loopcount_1_msec (old)= 0x%08lx, calibration_interrupt_count = %ld", loopcount_1_msec, calibration_interrupt_count);
     /* See delay.c for explaination */
@@ -565,6 +575,37 @@ void a2560u_bios_text_init(void)
     R32(VICKY_CTRL) &= ~(VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP);
     R32(VICKY_CTRL) |= VICKY_A_CTRL_TEXT;
     vicky2_hide_cursor();
+}
+
+
+/* Real time clock support ***************************************************/
+
+uint32_t a2560u_getdt(void)
+{
+    uint8_t day, month, hour, minute, second;
+    uint16_t year;
+
+    bq4802ly_get_datetime(&day, &month, &year, &hour, &minute, &second);
+    a2560u_debugnl("RTC time= %02d/%02d/%04d %02d:%02d:%02d", day, month, year, hour, minute, second);
+
+    return MAKE_ULONG(
+        ((year-1980) << 9) | (month << 5) | day,
+        (hour << 11) | (minute << 5) | (second>>1)/*seconds are of units of 2*/);
+}
+
+
+void a2560u_setdt(uint32_t datetime)
+{
+    const uint16_t date = HIWORD(datetime);
+    const uint16_t time = LOWORD(datetime);
+
+    bq4802ly_set_datetime(
+        (date & 0b0000000000011111),       /* day */
+        (date & 0b0000000111100000) >> 5,  /* month */
+        ((date & 0b1111111000000000) >> 9) + 1980,  /* year */
+        (time & 0b1111100000000000) >> 11, /* hour */
+        (time & 0b0000011111100000) >> 5,  /* minute */
+        (time & 0b0000000000011111) << 1); /* second are divided by 2 in TOS*/
 }
 
 #endif /* MACHINE_A2560U */

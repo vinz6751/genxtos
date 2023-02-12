@@ -3,7 +3,7 @@ DEBUG=yes
 LIBCMINI=/home/vincent/Atari/Repos/libcmini
 
 # Pick a compiler gcc or calypsi
-COMPILER=gcc
+COMPILER=calypsi
 
 ifeq ($(COMPILER),gcc)
   TOOLCHAIN=m68k-atari-mint-
@@ -26,9 +26,9 @@ endif
 
 LIB=liba2560u.a
 
-SRC_C=a2560u.c bq4802ly.c \
+SRC_C=a2560u.c fnxlog.c drivers/bq4802ly.c drivers/foenix_cpu.c drivers/gavin_irq.c drivers/gavin_timer.c \
 	ps2_keyboard.c ps2_mouse_a2560u.c ps2.c \
-	sn76489.c ym2612.c uart16550.c vicky2.c wm8776.c \
+	drivers/sn76489.c drivers/ym2612.c drivers/uart16550.c drivers/vicky2.c drivers/wm8776.c \
 	shadow_fb.c
 SRC_S=
 
@@ -65,5 +65,5 @@ $(LIB): $(OBJ)
 .PHONY: clean
 
 clean:
-	@rm -rf *.o *.a *~
+	@rm -rf *.o drivers/*.o *.a *~
 

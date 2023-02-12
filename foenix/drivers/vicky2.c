@@ -13,9 +13,11 @@
 
 #include <stdint.h>
 #include "vicky2.h"
-#include "a2560u.h"
-#include "foenix.h"
-#include "regutils.h"
+//#include "a2560u.h"
+#include "foenix_cpu.h"
+#include "../foenix.h"
+#include "../fnxlog.h"
+#include "../regutils.h"
 
 #define TTRGB_BLACK     0x0000          /* TT palette */
 #define TTRGB_BLUE      0x000f
@@ -87,6 +89,8 @@ const FOENIX_VIDEO_MODE foenix_video_modes[] = {
 
 uint32_t vicky_vbl_freq; /* VBL frequency */
 
+void a2560u_irq_vicky(void);
+
 
 void vicky2_init(void)
 {
@@ -125,6 +129,8 @@ void vicky2_init(void)
     w = (uint16_t*)VRAM_Bank0;
     while (fb_size--)
         *w++ = 0;
+
+    cpu_set_vector(INT_VICKYII, a2560u_irq_vicky);
 }
 
 void vicky2_set_background_color(uint32_t color)
@@ -138,7 +144,9 @@ void vicky2_set_border_color(uint32_t color)
     R32(VICKY_A_BORDER_COLOR) = color;
 }
 
-static uint8_t * const vicky2_get_color_address(uint16_t lut, uint16_t number) {
+
+uint8_t * const vicky2_get_color_address(uint16_t lut, uint16_t number)
+{
     return (uint8_t*)(VICKY_LUTS + lut*VICKY_LUT_SIZEOF + number*VICKY_LUT_ENTRY_SIZEOF);
 }
 
@@ -277,7 +285,6 @@ void vicky2_hide_mouse(void)
     a2560u_debugnl("vicky2_hide_mouse");
     R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;
 }
-
 
 void vicky2_mouse_init(void)
 {

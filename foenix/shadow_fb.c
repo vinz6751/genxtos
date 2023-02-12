@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include "a2560u_debug.h"
 #include "shadow_fb.h"
-#include "vicky2.h"
+#include "drivers/vicky2.h"
 
 /* To speed up the copy from RAM to VRAM we manage a list of dirty cells */
 #define A2560U_DIRTY_CELLS_SIZE 1024

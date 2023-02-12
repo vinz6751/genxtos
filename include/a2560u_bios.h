@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../bios/conout.h"
-#include "../foenix/vicky2.h"
+#include "../foenix/drivers/vicky2.h"
 #include "../foenix/a2560u.h"
 
 /* Indicates if/sets the shadow framebuffer is active.
@@ -54,12 +54,18 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rs
 
 /* Timing stuff */
 #define HZ200_TIMER_NUMBER 2
+void a2560u_init_system_timer(void);
+void a2560u_enable_200hz_timer(void);
 void a2560u_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector);
 
 /* Console support mode */
 void a2560u_bios_kbd_init(void);
 void a2560u_bios_text_init(void);
 CONOUT_DRIVER *a2560u_bios_get_conout(void);
+
+/* Real time clock */
+uint32_t a2560u_getdt(void);
+void a2560u_setdt(uint32_t datetime);
 
 #endif /* MACHINE_A2560U */
 

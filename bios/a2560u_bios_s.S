@@ -25,7 +25,7 @@ a2560u_memconf: // Called from memory.S to detect memory setup
 
 
 _a2560u_run_calibration: // Calibration loop
-    // We should ideally be using a2560u_timer_enable in this function but we don't because we
+    // We should ideally be using gavin_timer_enable in this function but we don't because we
     // don't want any overhead to get the most exact timings.
     move.l  d2,-(sp) // d2 is not a scratch register
     move.w  #~TIMER0_INT,IRQ_MASK_GRP1 // Mask everything except Timer 0

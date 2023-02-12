@@ -14,7 +14,7 @@
 #define VICKY2_H
 
 #include <stdint.h>
-#include "foenix.h"
+#include "../foenix.h"
 
 typedef struct {
     uint16_t id;
@@ -114,6 +114,7 @@ void vicky2_set_background_color(uint32_t color);
 void vicky2_set_border_color(uint32_t color);
 void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color);
 void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result);
+uint8_t * const vicky2_get_color_address(uint16_t lut, uint16_t number);
 
 /* Video mode */
 void vicky2_set_video_mode(uint16_t mode); /* video mode number */

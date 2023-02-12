@@ -13,8 +13,8 @@
 
 #include <stdint.h>
 #include "sn76489.h"
-#include "foenix.h"
-#include "regutils.h"
+#include "../foenix.h"
+#include "../regutils.h"
 
 
 static const uint8_t* psgs_ports[] = {

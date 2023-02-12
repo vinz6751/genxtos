@@ -282,9 +282,10 @@ OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 # the native C compiler, for tools
 NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -W $(BUILD_TOOLS_OPTFLAGS)
 
-foenix_src = a2560u_s.S a2560u.c \
+foenix_src = a2560u_s.S a2560u.c fnxlog.c \
 	ps2_mouse_a2560u.c ps2.c ps2_keyboard.c \
-	uart16550.c sn76489.c ym262.c wm8776.c bq4802ly.c vicky2.c \
+	drivers/uart16550.c drivers/sn76489.c drivers/ym262.c drivers/wm8776.c drivers/bq4802ly.c drivers/vicky2.c \
+	drivers/gavin_irq.c drivers/gavin_timer.c drivers/foenix_cpu.c \
 	shadow_fb.c shadow_fb_s.S
 
 #

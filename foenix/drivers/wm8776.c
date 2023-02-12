@@ -10,7 +10,7 @@
  */
 
 #include <stdint.h>
-#include "foenix.h"
+#include "../foenix.h"
 #include "wm8776.h"
 
 

@@ -2,8 +2,6 @@
  * bq4802LY.c - bq4802LY real time clock handling routines
  *
  *
- * Copyright (C) 2022 The EmuTOS development team
- *
  * Authors:
  *  Vincent Barrilliot
  *  Peter J Weingartner
@@ -14,7 +12,9 @@
 
 #include <stdint.h>
 #include "bq4802ly.h"
-#include "a2560u.h"
+#include "foenix_cpu.h"
+#include "gavin_irq.h"
+
 
 uint32_t bq4802ly_ticks;
 void (*bq4802ly_tick_handler)(void);
@@ -30,7 +30,7 @@ static uint16_t bcd_to_i(uint8_t bcd);
 
 void bq4802ly_init(void)
 {
-    a2560u_irq_disable(INT_RTC);
+    gavin_irq_disable(INT_RTC);
 
     /* Make sure the RTC is on. Yes the way this works is awkward :) */
     bq4802ly->control = BQ4802LY_STOP;
@@ -56,12 +56,12 @@ void bq4802ly_enable_ticks(bool enable)
         /* Acknowledge any previous pending interrupt */
         bq4802ly->flags;
         bq4802ly->enables |= BQ4802LY_PIE;
-        a2560u_irq_enable(INT_RTC);
+        gavin_irq_enable(INT_RTC);
     }
     else
     {
         bq4802ly->enables &= BQ4802LY_PIE;
-        a2560u_irq_disable(INT_RTC);
+        gavin_irq_disable(INT_RTC);
     }
 }
 
