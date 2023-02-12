@@ -55,8 +55,8 @@ vector_t cpu_set_vector(uint16_t num, vector_t vector)
     vector_t *addr = (vector_t *) (4L * num);
     oldvector = *addr;
 
-    if(vector != (vector_t)-1) {
+    if(vector != (vector_t)-1)
         *addr = vector;
-    }
+
     return oldvector;
 }

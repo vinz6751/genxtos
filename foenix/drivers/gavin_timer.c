@@ -144,10 +144,4 @@ void gavin_timer_enable(uint16_t timer, bool enable)
         R32(t->control) |= t->start;
     else
         R32(t->control) &= ~t->start;
-
-// a2560u_debugnl("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control));
-//     if (R32(t->value) != R32(t->value))
-//         a2560u_debugnl("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value));
-//     else
-//         a2560u_debugnl("Timer is not running\n");
 }

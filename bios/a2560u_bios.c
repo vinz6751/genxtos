@@ -57,14 +57,6 @@
 
 bool a2560u_bios_sfb_is_active;
 
-/* Prototypes ****************************************************************/
-
-/* Interrupt */
-void a2560u_irq_bq4802ly(void);
-
-void a2560u_irq_ps2kbd(void);
-void a2560u_irq_ps2mouse(void);
-
 
 /* Implementation ************************************************************/
 

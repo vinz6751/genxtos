@@ -17,7 +17,7 @@
 #include <stdint.h>
 
 /* Select the PSG (depends on the machine. On A2560U: 0:left, 1:right, 2:both) */
-void sn76489_select(int number);
+void sn76489_select(uint16_t number);
 
 void sn76489_mute_all(void);
 void sn76489_freq(uint8_t voice, uint16_t frequency);

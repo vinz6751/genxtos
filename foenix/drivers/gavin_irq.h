@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include "../foenix.h"
+#include "foenix_cpu.h"
+
+extern vector_t gavin_irq_vectors[IRQ_GROUPS][16];
 
 void gavin_irq_init(void);
 

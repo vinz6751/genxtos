@@ -82,11 +82,11 @@ enum ps2_target
 
 struct ps2_device_t
 {
-	enum ps2_target id; /* 0 for device 1, 1 for device 2 */
-	uint8_t type[2];    /* PS/2 device type (as the device reports itself) */
-	uint16_t status;
+	enum ps2_target id;         /* 0 for device 1, 1 for device 2 */
+	uint8_t         type[2];    /* PS/2 device type (as the device reports itself) */
+	uint16_t        status;
 	const struct ps2_driver_t *driver; /* Driver currently attached to the device */
-	struct ps2_driver_api_t api; /* Interface with the driver */
+	struct ps2_driver_api_t api;       /* Interface with the driver */
 };
 
 struct ps2_global_t

@@ -17,6 +17,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "foenix_cpu.h"
 
 
 struct __attribute__((aligned(16))) bq4802ly_t 
@@ -82,15 +83,14 @@ extern struct bq4802ly_t bq4802;
 #define BQ4802LY_2412        0x02
 #define BQ4802LY_DSE         0x01
 
-extern uint32_t rtc_ticks;
-typedef void (*tick_handler_t)(void);
+extern uint32_t bq4802ly_ticks;
 
 void bq4802ly_init(void);
 void bq4802ly_set_tick_rate(uint16_t rate);
 void bq4802ly_enable_ticks(bool enable);
-tick_handler_t bq4802ly_get_tick_handler(void);
+vector_t bq4802ly_get_tick_handler(void);
 /* The handler must save all the register it uses */
-void bq4802ly_set_tick_handler(tick_handler_t handler);
+void bq4802ly_set_tick_handler(vector_t handler);
 uint32_t bq4802ly_get_ticks(void);
 void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t hour, uint8_t minute, uint8_t second);
 void bq4802ly_get_datetime(uint8_t *day, uint8_t *month, uint16_t *year, uint8_t *hour, uint8_t *minute, uint8_t *second);

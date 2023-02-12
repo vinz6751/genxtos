@@ -17,7 +17,7 @@
     .GLOBAL _a2560u_rts
 
 | Imports ---------------------------------------------------------------------
-    .GLOBAL a2560_irq_vectors
+    .GLOBAL gavin_irq_vectors
     .GLOBAL _bq4802ly_ticks
     .GLOBAL _hz_200
     .GLOBAL _ps2_config
@@ -40,7 +40,7 @@ _a2560u_rte:
 _a2560u_irq_vicky: // VICKY autovector interrupt handler
     // Handlers can use d0 and a0 without saving them.
     movem.l d0-d1/a0-a1,-(sp)
-    lea     _a2560_irq_vectors,a0
+    lea     _gavin_irq_vectors,a0
     moveq   #1,d0               // We must clear the MSB of the LSW because that's how we exit the loop after 8 shifts
 vicky_irq_loop:
     move.w  IRQ_PENDING_GRP0,d1 // Is it ok to read in each iteration ? if not we'd have to save d1

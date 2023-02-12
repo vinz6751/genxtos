@@ -1,6 +1,10 @@
-#ifndef __CALYPSI_TARGET_68000__
+#ifdef __CALYPSI_TARGET_68000__
 
 #include <intrinsics68000.h>
+#include "drivers/bq4802ly.h"
+#include "drivers/foenix_cpu.h"
+#include "drivers/gavin_irq.h"
+#include "drivers/uart16550.h"
 
 #define IRQ_HANDLER __attribute__((interrupt))
 
@@ -13,21 +17,21 @@ void a2560u_rts(void) {
 /* Vicky interrupt handler */
 IRQ_HANDLER void a2560u_irq_vicky(void)
 {
-    vector_t* vectors = a2560_irq_vectors[0];
+    vector_t* vector = gavin_irq_vectors[0];
 
     for (int8_t mask=1; mask; mask <<= 1, vector++)
     {
         if (*PENDING0 & mask)
         {
             *PENDING0 = mask; // Acknowledge
-            vector();
+            (*vector)();
         }
     }
 }
 
 
 /* Real time clock interrupt handler, see bq4802ly.c */
-extern tick_handler_t bq4802ly_tick_handler;
+extern vector_t bq4802ly_tick_handler;
 IRQ_HANDLER void a2560u_irq_bq4802ly(void)
 {
     // Acknowledge interrupt on the bq4802LY by reading the flags
@@ -54,7 +58,7 @@ IRQ_HANDLER void a2560u_irq_ps2kbd(void)
     ps2_channel1_irq_handler();
 }
 
-IRQ_HANDLER void a2560u_irq_ps2kbd(void)
+IRQ_HANDLER void a2560u_irq_ps2mouse(void)
 {
     // Acknowledge the GAVIN interrupt
     *(PENDING1) = 0x0004;
@@ -63,7 +67,6 @@ IRQ_HANDLER void a2560u_irq_ps2kbd(void)
 
 
  /* UART16550 COM1 interrupt handler */
-#include "uart16550.h"
 IRQ_HANDLER void a2560u_irq_com1(void)
 {
     // This is not completely working as it should because it seems the interrupts don't get acknowledged correctly

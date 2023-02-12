@@ -9,7 +9,7 @@
 /* Interrupts management *****************************************************/
 
 /* Interrupt handlers for each of the IRQ groups */
-vector_t a2560_irq_vectors[IRQ_GROUPS][16];
+vector_t gavin_irq_vectors[IRQ_GROUPS][16];
 void a2560u_irq_vicky(void);
 void gavin_irq_init(void)
 {
@@ -27,7 +27,7 @@ void gavin_irq_init(void)
         polarity[i] = 0;
 
         for (j=0; j<16; j++)
-            a2560_irq_vectors[i][j] = a2560u_rts;
+            gavin_irq_vectors[i][j] = a2560u_rts;
     }
 
     for (i=0x40; i<0x60; i++)
@@ -66,7 +66,7 @@ static inline uint16_t irq_number(uint16_t irq_id) { return irq_id & 0xf; }
 static inline uint16_t irq_mask(uint16_t irq_id) { return 1 << irq_number(irq_id); }
 static inline uint16_t *irq_mask_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_MASK_GRP0)[irq_group(irq_id)]; }
 static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_PENDING_GRP0)[irq_group(irq_id)]; }
-#define irq_handler(irqid) (a2560_irq_vectors[irq_group(irqid)][irq_number(irqid)])
+#define irq_handler(irqid) (gavin_irq_vectors[irq_group(irqid)][irq_number(irqid)])
 
 
 /* Enable an interruption. First byte is group, second byte is bit */

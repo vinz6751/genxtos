@@ -54,7 +54,7 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 /* Interrupt */
 
 void a2560u_irq_bq4802ly(void);
-
+/* Interrupt */
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
 

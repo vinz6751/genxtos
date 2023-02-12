@@ -90,8 +90,6 @@ void a2560u_setphys(const uint8_t *address);
 void a2560u_clock_init(void);
 
 
-extern vector_t a2560_irq_vectors[IRQ_GROUPS][16];
-
 void a2560u_kbd_init(void);
 
 #endif

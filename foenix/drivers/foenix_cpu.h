@@ -1,6 +1,8 @@
 #ifndef _FOENIX_CPU_H_
 #define _FOENIX_CPU_H_
 
+#include <stdint.h>
+
 extern uint32_t cpu_freq; /* CPU frequency */
 
 typedef void (*vector_t)(void);
