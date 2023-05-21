@@ -75,17 +75,17 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
     }
 
     int j; /* line of the cell */
-    UBYTE bsrc;    
+    UBYTE bsrc;
     UBYTE *d = dst.pxaddr;
     /* precompute so we don't have to do that in the loop */
-    UWORD v_lin_wr_advance = v_lin_wr - 8;
+    const UWORD v_lin_wr_advance = v_lin_wr - 8;
     UWORD bgbg;
 
     /* We take the bet at least one line will be blank */
     ((UBYTE*)&bgbg)[0] = bg;
     ((UBYTE*)&bgbg)[1] = bg;
 
-    for (j = 0; j < v_cel_ht; j++)
+    for (j = v_cel_ht; --j>=0 ; )
     {
         if ((bsrc = *(src.pxaddr))) {
         
