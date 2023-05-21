@@ -129,11 +129,7 @@ void vicky2_show_cursor(void);
 void vicky2_hide_cursor(void);
 void vicky2_set_text_cursor_xy(uint16_t x, uint16_t y);
 
-/* Mouse support */
-void vicky2_mouse_init(void);
-void vicky2_set_mouse_visible(uint16_t visible);
-void vicky2_show_mouse(void);
-void vicky2_hide_mouse(void);
+/* Mouse support: see vicky_mouse.h */
 
 // Utility
 uint32_t convert_atari2vicky_color(uint16_t orgb);

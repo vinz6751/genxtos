@@ -12,36 +12,26 @@
 #include "emutos.h"
 #include "asm.h"
 
+
 #ifdef MACHINE_A2560U
 
 #include "linea.h"
 #include "a2560u_bios.h"
 
-#define USE_MOUSE_MOVE_TO 0 // This is disabled because the caller vbl_draw itself is disabled, see comment there
-
 static void mouse_set_visible(WORD x, WORD y)
 {
     // TODO: fake a PS/2 packet here to set coordinates
     a2560u_debugnl("mouse_set_visible @ %d,%d", x, y);
-    vicky2_show_mouse();
+    vicky_mouse_show();
 }
 
 
 static void mouse_set_invisible(void)
 {
     a2560u_debugnl("mouse_set_invisible");
-    vicky2_hide_mouse();
+    vicky_mouse_hide();
 }
 
-#if USE_MOUSE_MOVE_TO
-static void mouse_move_to(int16_t x, int16_t y)
-{
-    // Writting to X/Y registers is not supported.
-    // These registers are set by the VICKY PS2 state machine
-    // R16(VICKY_MOUSE_X) = x;
-    // R16(VICKY_MOUSE_Y) = y;
-}
-#endif
 
 /* This is here rather than in a2560u.c because MFORM would required to include aesdefs.h there.
  * and I'd like the a2560u.c to not have dependencies on EmuTOS so it can be used elsewhere. */
@@ -69,14 +59,14 @@ static void set_mouse_cursor(const MFORM *src)
                     //a2560u_debug("X");
                     /* Black */
                     *v++= 0x0000;
-                    *v++= 0xff00;                
+                    *v++= 0xff00;
                 }
                 else
                 {
                     //a2560u_debug("O");
                     /* White */
                     *v++ = 0xffff;
-                    *v++ = 0xffff;                       
+                    *v++ = 0xffff;
                 }
             }
             else
@@ -90,18 +80,14 @@ static void set_mouse_cursor(const MFORM *src)
             data <<= 1;
         }
         //a2560u_debugnl("");
-    }    
+    }
 }
 
 
 const LINEA_MOUSE_RENDERER mouse_display_driver = {
     mouse_set_visible,
     mouse_set_invisible,
-#if USE_MOUSE_MOVE_TO    
-    mouse_move_to,
-#else
     just_rts,
-#endif    
     set_mouse_cursor,
     just_rts /* resolution_changed */
 };

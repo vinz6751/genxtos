@@ -1,4 +1,5 @@
 /* ps2_mouse_a2560u - PS/2 mouse driver for A2560U Foenix
+ * This is really a bridge between the PS/2, OS and VICKY mouse handling
  * 
  * Author:
  *	Vincent Barrilliot
@@ -33,23 +34,13 @@ const struct ps2_driver_t ps2_mouse_driver_a2560u =
 
  /* Important states the mouse state machine can be in */
 #define SM_IDLE 0
-#define SM_BYTE0_RECEIVED 1
-#define SM_BYTE1_RECEIVED 2
-#define SM_BYTE2_RECEIVED 3
 #define SM_RECEIVED 3
-
-
- /* Internal state of the driver */
-struct ps2_mouse_local_t
-{
-    uint16_t state;  /* State of the state machine (really counts bytes in the packet) */
-    int8_t   ps2packet[3];
-};
-
 
 /* Convenience */
 #define DRIVER_DATA ((struct ps2_mouse_local_t*)api->driver_data)
 #define VICKY_MOUSE ((volatile struct vicky_mouse_t *const)VICKY_MOUSE_X)
+
+static void on_change(const vicky_mouse_event_t *event);
 
 
 static bool init(struct ps2_driver_api_t *api)
@@ -57,11 +48,7 @@ static bool init(struct ps2_driver_api_t *api)
     a2560u_debugnl("ps2_mouse_a2560u->init()");
     api->driver->process = process;
 
-    api->driver_data = (api->malloc)(sizeof(struct ps2_mouse_local_t));
-    if (api->driver_data == NULL)
-        return ERROR;
-
-    DRIVER_DATA->state = SM_IDLE;
+    vicky_mouse_init(on_change, api);
 
     return SUCCESS;
 }
@@ -79,32 +66,26 @@ static bool can_drive(const uint8_t ps2_device_type[])
 	}
 }
 
+static void on_change(const vicky_mouse_event_t *event)
+{
+    struct ps2_driver_api_t *api = (struct ps2_driver_api_t *)event->user_data;
+    struct ps2_mouse_local_t *driver_data = (struct ps2_mouse_local_t *)api->driver_data;
+
+    // Emulate a IKBD mouse packet
+    int8_t *packet = event->ps2packet;
+    packet[0] = 0xf8 | (packet[0] & 3);
+    api->os_callbacks.on_mouse(packet);
+}
+
 
 void process(const struct ps2_driver_api_t *api, uint8_t byte)
 {
-    if (DRIVER_DATA->state == SM_IDLE && (byte & 0x08) != 0x08)
-        return; /* We're lost. Ignore the packet. This is not even safe because if the packet contains a 08 we're fooled. */
-
 #if MAXIMUM_TOS_COMPATIBILITY
     // This is the slower but more compatible option. We write VICKY PS/2 registers as it's the 
     // only way (currently?) to get the mouse cursor to move. But we simulate an IKBD relative mouse
     // packet and pass it to the "mousevec" vector of the TOS so all TOS hooks etc. can work.
-    int8_t *packet = DRIVER_DATA->ps2packet;
-    packet[DRIVER_DATA->state++] = (int8_t)byte;
-    if (DRIVER_DATA->state >= SM_RECEIVED)
-    {
-        DRIVER_DATA->state = SM_IDLE;
-        volatile uint16_t * const vicky_ps2 = (uint16_t*)VICKY_MOUSE_PACKET;
-        vicky_ps2[0] = (uint16_t)packet[0];
-        vicky_ps2[1] = (uint16_t)packet[1];
-        vicky_ps2[2] = (uint16_t)packet[2];
-        
-        // Emulate a IKBD mouse packet
-        packet[0] = 0xf8 | (packet[0] & 3);
-        api->os_callbacks.on_mouse(packet);
-
-        //a2560u_debugnl("%02x %02x %02x %d,%d", packet[0], packet[1], packet[2], GCURX, GCURY);
-    }
+    
+    vicky_mouse_ps2(byte);
 #else
     // This is maximum speed setup. The IKBD handling stuff (mousevec) is bypassed, we directly update line-A variables
     // and call vectors.

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "a2560u_debug.h"
 #include "vicky2.h"
+#include "vicky_mouse.h"
 #include "foenix.h"
 
 /* IDE support */

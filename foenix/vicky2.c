@@ -86,7 +86,9 @@ const FOENIX_VIDEO_MODE foenix_video_modes[] = {
 
 
 uint32_t vicky_vbl_freq; /* VBL frequency */
-
+static void rts(void)
+{
+}
 
 void vicky2_init(void)
 {
@@ -98,7 +100,7 @@ void vicky2_init(void)
     /* Enable video and bitmap, 640x480 */
     R32(VICKY_CTRL) = 0;
 
-    vicky2_mouse_init();
+    vicky_mouse_init(rts/* No callback by default */, 0L);
 
     vicky2_set_video_mode(VICKY_MODE_640x480_60);
     vicky2_read_video_mode(&mode);
@@ -237,8 +239,8 @@ void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg)
 
     for (i = 0; i < VICKY_TEXT_COLOR_SIZE; i++)
     {
-	fglut[i] = fg[i];
-	bglut[i] = bg[i];
+        fglut[i] = fg[i];
+        bglut[i] = bg[i];
     }
 }
 
@@ -258,25 +260,4 @@ void vicky2_hide_cursor(void)
 void vicky2_set_text_cursor_xy(uint16_t x, uint16_t y)
 {
     R32(VICKY_A_CURSOR_POS) = ((uint32_t)x) << 16 | y;
-}
-
-/********** Mouse support ***************/
-
-void vicky2_show_mouse(void)
-{
-    a2560u_debugnl("vicky2_show_mouse");
-    R16(VICKY_MOUSE_CTRL) |= VICKY_MOUSE_ENABLE;
-}
-
-void vicky2_hide_mouse(void)
-{
-    a2560u_debugnl("vicky2_hide_mouse");
-    R16(VICKY_MOUSE_CTRL) &= ~VICKY_MOUSE_ENABLE;
-}
-
-
-void vicky2_mouse_init(void)
-{
-    /* Reset mouse */
-    R16(VICKY_MOUSE_CTRL) = 0;
 }

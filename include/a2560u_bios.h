@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include "../bios/conout.h"
 #include "../foenix/vicky2.h"
+#include "../foenix/vicky_mouse.h"
 #include "../foenix/a2560u.h"
 
 /* Indicates if/sets the shadow framebuffer is active.
