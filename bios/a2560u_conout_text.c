@@ -106,7 +106,7 @@ static void blank_out(int topx, int topy, int botx, int boty)
     colour = (uint8_t*)(VICKY_TEXT_COLOR + cell);
 
     /* TODO: could do with optimisation */
-    for (row = 0; row < nrows; row++)    
+    for (row = 0; row < nrows; row++)
     {
         for (column = 0; column < ncolumns; column++)
         {

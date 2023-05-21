@@ -3,13 +3,6 @@
 #include "config.h"
 #ifdef MACHINE_A2560U
 
-#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-.EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in a2560u_bios.h.
-                                   // The smaller this is, the higher MAX_CELLS_RENDERED_PER_FRAME needs to be.
-
-.EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
-#endif
-
 #include "../foenix/foenix.i"
 
 | Exports ---------------------------------------------------------------------

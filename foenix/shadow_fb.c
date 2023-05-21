@@ -12,7 +12,7 @@
 #include "vicky2.h"
 
 /* To speed up the copy from RAM to VRAM we manage a list of dirty cells */
-#define A2560U_DIRTY_CELLS_SIZE 1024
+#define A2560U_DIRTY_CELLS_SIZE 256
 volatile struct
 {
     uint16_t writer;

@@ -1,5 +1,5 @@
 
-.EQU A2560U_DIRTY_CELLS_SIZE, 1024 // Needs to be the same as in shadow_fb.c
+.EQU A2560U_DIRTY_CELLS_SIZE, 256 // Needs to be the same as in shadow_fb.c
                                    // The smaller this is, the higher MAX_CELLS_RENDERED_PER_FRAME needs to be.
 .EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
 
@@ -14,6 +14,8 @@
     .GLOBAL _a2560u_sfb_text_cell_height
 
 
+#define DISABLE_VIDEO_ENGINE_DURING_COPY 0// That doesn't seem to bring any visible performance, and may cause flicker
+
 a2560u_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
 
 // Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
@@ -26,8 +28,16 @@ a2560u_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     move.l  #MAX_CELLS_RENDERED_PER_FRAME-1,d6 // max number of characters we render per frame
 #endif
 
+#if DISABLE_VIDEO_ENGINE_DURING_COPY
+    move.l  0xb40000,d0
+    move.l  d0,-(sp)
+    //andi.l  #~0x-30,d0
+    //ori.l   #0x80,d0
+    move.l  d0,0xb40000
+#endif
+
     lea     _a2560u_sfb_dirty_cells,a0
-    tst.w   4(a0)           // Copy whole frame buffer to VRAM ?
+    tst.w   4(a0)           // Test "full_copy" to know if we should copy the whole frame buffer to VRAM ?
     jne     copy_whole_screen  // Yes -> go there
     // Otherwise process the list of dirty cells from the ring buffer  
     move.w  2(a0),d0        // Get reader
@@ -69,8 +79,11 @@ cell_copy_more:
     cmp.w   (a0),d0    // More to read ?
     jne     cell_copy  // If so, nothing more to read
 cell_copy_done:
+#if DISABLE_VIDEO_ENGINE_DURING_COPY
+    move.l  (sp)+,0xb40000 // restore previous state of VICKY control register
+#endif
     move.w  d0,2(a0)   // Update reader
-    rts    
+    rts
 
 copy_whole_screen:
     // TODO Use DMA once available
@@ -92,6 +105,9 @@ fbcpy: // We can only do movem.w not movem.l as the later doesn't work (yet ?)
     lea     12*2(a3),a3             // That ensures we won't copy beyond the end of the FB in VRAM.
     cmpa.l  #0xc4b000,a3            // TODO BUG FIXME don't hardcode end of FB
     bmi.s   fbcpy
+#if DISABLE_VIDEO_ENGINE_DURING_COPY
+     move.l  (sp)+,0xb40000 // restore previous state of VICKY control register
+#endif
     rts
 
 
@@ -101,6 +117,11 @@ _a2560u_sfb_mark_cell_dirty:
     move.w  (a0),d0     // Writer
     addq.w  #4,d0       // Next position
     andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap if needed
+    cmp.w   2(a0),d0    // Writer = Reader means no more space in buffer ?
+    bne.s   addtobfr    // There is space
+    move.w  #-1,4(a0)   // No more space, so refresh full screen
+    rts
+addtobfr:
     move.l  4(sp),6(a0,d0)
     move.w  d0,(a0)     // write writer
     rts
