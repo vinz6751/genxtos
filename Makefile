@@ -282,10 +282,11 @@ OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 # the native C compiler, for tools
 NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -W $(BUILD_TOOLS_OPTFLAGS)
 
-foenix_src = a2560u_s.S a2560u.c \
+foenix_src = a2560u_s.S a2560u.c a2560u_debug.c \
 	ps2_mouse_a2560u.c ps2.c ps2_keyboard.c \
-	uart16550.c sn76489.c ym262.c wm8776.c bq4802ly.c vicky2.c vicky_mouse.c \
-	shadow_fb.c shadow_fb_s.S
+	uart16550.c sn76489.c superio.c ym262.c wm8776.c bq4802ly.c vicky2.c vicky_mouse.c \
+	shadow_fb.c shadow_fb_s.S \
+	vicky2_txt_a_logger.c
 
 #
 # source code in bios/
@@ -857,6 +858,33 @@ a2560u:
 
 $(ROM_MACHINE_A2560U): emutos.img mkrom
 	./mkrom pad 512k $< $(ROM_MACHINE_A2560U)
+
+
+
+#
+# A2560X or GenX Foenix
+#
+
+TOCLEAN += *.rom
+
+ROM_MACHINE_A2560X = emutos-a2560x.rom
+A2560X_DEFS =
+
+.PHONY: a2560x
+NODEP += a2560x
+a2560x: UNIQUE = $(COUNTRY)
+a2560x: OPTFLAGS = $(SMALL_OPTFLAGS)
+a2560x: CPUFLAGS = -m68040
+a2560x: override DEF += -DTARGET_A2560X_ROM -DMACHINE_A2560X $(A2560X_DEFS)
+a2560x:
+	@echo "# Building A2560X Foenix EmuTOS into $(ROM_MACHINE_A2560X)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560X=$(ROM_MACHINE_A2560X) $(ROM_MACHINE_A2560X)
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT))"
+	@printf "$(LOCALCONFINFO)"
+
+$(ROM_MACHINE_A2560X): emutos.img mkrom
+	./mkrom pad 512k $< $(ROM_MACHINE_A2560X)
 
 #
 # Special variants of EmuTOS running in RAM instead of ROM.

@@ -12,6 +12,10 @@
   * above EmuTOS extended OS header (specifying machine type, CPU type etc)
   */
 
+        .GLOBL _channel_A_logger_init
+        .GLOBL _channel_A_cls
+        .GLOBL _channel_A_set_cursor_pos
+
 #include "asmdefs.h"
 #include "../obj/header.h"
 
@@ -74,8 +78,8 @@ amiga_main:
     // fall through os_entry
 #endif
 
-#if defined(MACHINE_A2560U) && !EMUTOS_LIVES_IN_RAM
-#if 0
+#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) && !EMUTOS_LIVES_IN_RAM
+#if 1
     // This is disabled because running EmuTOS from flash bank0 (0xe00000) can lead to problems because the A2560U
     // crashes if we try to run user code from there. This is an issue e.g. for running EmuCON from flash.
     // So the only option is to install the OS in from flash bank1 (0xf00000), but then the boot process must be
@@ -84,7 +88,7 @@ amiga_main:
     // and whatever is in flash bank 0, must take care of calling the EmuTOS startup.
         // 68000 reset vectors. Gavin will copy the first 64k of flash to the system ram then reset the proc.
         // All we need to do is to provide a reset vector that jumps to the flash.
-        .dc.l 0x800       // Stack: rubbish, should not be used anyway as the OS should setup its own stack
+        .dc.l 0x1000       // Stack: rubbish, should not be used anyway as the OS should setup its own stack
         .dc.l _os_header  // jump to the OS
 #endif
 #endif
@@ -152,12 +156,20 @@ _main:
  *    it doesn't matter if the VBR is non-zero because, if it is, the MOVEC
  *    instruction must be legal so the trap won't get taken ...
  */
-
+        .global _a2560_beeper
 _realmain:
         // disable the interrupts
         // this is useless on cold boot,
         // but it matters for software reset
         move    #0x2700,sr
+
+#ifdef MACHINE_A2560X
+        move.l #19,0xfec00000 // buzzer, all leds
+        move.l #0,0xfec80008 // reset border color
+
+        
+        move.l #0xff008800,0xfec80008 // border color for debug 
+#endif
 
 #if CONF_WITH_TT_MMU
         // TT TOS does the following even before reset; it is
@@ -177,12 +189,6 @@ _realmain:
         lea     amiga_startup_ret,a6
         jmp     amiga_startup
 amiga_startup_ret:
-#endif
-
-#ifdef MACHINE_C256FOENIXGENX
-        lea     .ret,a6
-        jmp     c256foenixgenx_startup
-.ret:
 #endif
 
 #if (!EMUTOS_LIVES_IN_RAM) && (CONF_WITH_ST_MMU)
@@ -234,6 +240,8 @@ valid_st_mmu_config: // ST MMU has a valid config
 // Note: LisaEm doesn't properly implement movec/pmove illegal instructions,
 // so we just avoid them on MACHINE_LISA.
 
+
+
 #if !defined(__mcoldfire__) && !defined(MACHINE_LISA)
         // first, reset the VBR
         // it may have been modified before emutos-ram or soft reset
@@ -272,6 +280,8 @@ main_after_reset_instruction:
         jmp     coldfire_startup
 coldfire_startup_ret:
 #endif
+
+
 
 #if CONF_WITH_CARTRIDGE
 /*
@@ -330,6 +340,8 @@ not_68030:
 mmu_done:
 #endif
 
+
+
 /*
  * Check, if we should jump to a reset vector after warmboot
  */
@@ -366,6 +378,9 @@ memdone:
  * From now, the stack is allowed, and C code can be used.
  * The BIOS startup goes on in bios.c
  */
+
+        move.l #0xff008800,0xfec80008 // border color for debug 
+
 
         jmp     _biosmain
 

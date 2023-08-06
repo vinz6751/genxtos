@@ -1,19 +1,20 @@
 This are design notes about the work that has been done to make EmuTOS work on the Foenix.
 
 ## Build
-A new target a2560u has been created in the makefile, so to build you can do something like:
+New targets a2560u and a2560x have been created in the makefile, so to build you can do something like:
 make a2560u
 Other compile options (e.g. UNIQUE=fr for French) should work.
 I recommend you use the -jn (n being your number of CPU cores) to speed up the compilation.
 
-This builds emutos-a2560u.rom which is the OS image.
-The OS image is built to start at a certain location, defined in emutos.ld, the GNU ld linker file. Checkout the "defined(MACHINE_A2560U)" condition there.
+This builds emutos-a2560u.rom or emutos-a2560x.rom which is the OS image.
+The OS image is built to start at a certain location, defined in emutos.ld, the GNU ld linker file.
+
 
 ### Build for development / upload to RAM
 For development purposes, you probably want to build EmuTOS so it runs from RAM. In this case, you can set the ROM_ORIGIN to 0x00100000.
 Then to boot it on the A2560U, e.g. from MCP you have to ensure that the 68000's reset vector points to the os with
 `poke32 4 0x100000`
-Then you can upload the image through the USB port with:
+Then you can upload the image through the USB port with something like :
 `fnxmgr --binary $HOME/GenX/genxtos/emutos-a2560u.rom --address 0x100000`
 
 For the installation of fnxmgr see https://github.com/pweingar/FoenixMgr). You will also need your computer to have the USB port driver setup. For that, install the XR21B1411 driver from https://www.maxlinear.com/support/design-tools/software-drivers.
@@ -40,9 +41,9 @@ The original EmuTOS was refactored so the conout.c (low level text driver) can u
 * a2560u_conout_text : uses VICKY's text mode. It's very fast but if you use it, it's hard to do graphics at the same time. Also, the flashing of the cursor is controller by VICKY so it behaves different (like keeping flashing while you type because there's no way to force it displayed).
 * a2560u_conout_bmp : use the shadow frame buffer.
 
-The selection is done in a2560u_bios_get_conout() based on the availability of the text mode and shadow framebuffer features.
+The selection is done in a2560_bios_get_conout() based on the availability of the text mode and shadow framebuffer features.
 The shadow frame buffer availability is configured by CONF_WITH_A2560U_SHADOW_FRAMEBUFFER.
-The text mode support availability is configured by CONF_WITH_A2560U_TEXT_MODE.
+The text mode support availability is configured by CONF_WITH_A2560_TEXT_MODE.
 If you have the shadow framebuffer enabled and not forcing the 8x8 font with CONF_WITH_FORCE_8x8_FONT, the bmp driver will be used.
 
 
@@ -70,7 +71,7 @@ Obviously a mouse accelerator program will not work as it would probably hook in
 The Atari ST has a special keyboard with its own scancodes which are not PS/2. It has keys that don't exist on PS/2, and vice-versa. Trying to faithfully adapt one to the other is nor a straight forward thing, and some keys are "lost in translation". So to not hinder the ability of users to use their full keyboard, the design decision is to support PS/2. Therefore, the system is adapted to work with PS/2 scan codes rather than Atari keyboard ones. This includes EmuCON.
 The scancodes are defined in ps2_scancodes.h and are exactly those used by Linux.
 
-EmuTOS doesn't have PS/2 support so it was introduced as a separate subsystem which lives in the Foenix folder, and which is "glued" to the OS at startup in a2560u_bios_kbd_init(). 
+EmuTOS doesn't have PS/2 support so it was introduced as a separate subsystem which lives in the Foenix folder, and which is "glued" to the OS at startup in a2560_bios_kbd_init(). 
 
 
 ## What works

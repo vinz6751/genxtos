@@ -21,14 +21,14 @@
 static void mouse_set_visible(WORD x, WORD y)
 {
     // TODO: fake a PS/2 packet here to set coordinates
-    a2560u_debugnl("mouse_set_visible @ %d,%d", x, y);
+    a2560_debugnl("mouse_set_visible @ %d,%d", x, y);
     vicky_mouse_show();
 }
 
 
 static void mouse_set_invisible(void)
 {
-    a2560u_debugnl("mouse_set_invisible");
+    a2560_debugnl("mouse_set_invisible");
     vicky_mouse_hide();
 }
 
@@ -48,7 +48,7 @@ static void set_mouse_cursor(const MFORM *src)
         mask = src->mf_mask[r];
         data = src->mf_data[r];
 
-        //a2560u_debugnl("%04x %04x", mask, data);
+        //a2560_debugnl("%04x %04x", mask, data);
         for (c = 0; c < 16; c++)
         {
             if (mask & 0x8000)
@@ -79,7 +79,7 @@ static void set_mouse_cursor(const MFORM *src)
             mask <<= 1;
             data <<= 1;
         }
-        //a2560u_debugnl("");
+        //a2560_debugnl("");
     }
 }
 

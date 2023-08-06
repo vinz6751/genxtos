@@ -1,7 +1,7 @@
 /*
  * uart16550.c - UART 16550 serial port driver
  *
- * Copyright (C) 2001-2021 The EmuTOS development team
+ * Copyright (C) 2001-2023 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -16,8 +16,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifndef UART16550_CLOCK
-    #define UART16550_CLOCK 20000000 /* 20Mhz */
+#if defined(MACHINE_A2560X) || defined (MACHINE_A2560K)
+    #define UART16550_CLOCK 1843200L
+#elif defined(MACHINE_A2560U)
+    #define UART16550_CLOCK 20000000L /* 20Mhz, system clock */
+#else
+    #error "UART16550 clock not specified"
 #endif
 
 #define UART16550_50BPS     (UART16550_CLOCK/50/16)

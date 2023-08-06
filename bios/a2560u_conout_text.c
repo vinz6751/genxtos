@@ -2,7 +2,7 @@
  * a2560u_conout_text.c - VICKY text mode driver
  *
  *
-  * Copyright (C) 2022 The EmuTOS development team
+  * Copyright (C) 2023 The EmuTOS development team
  *
  * Authors:
  *  VB      Vincent Barrilliot
@@ -16,11 +16,11 @@
  * If we ever add a 16x32 font, the code will need changing!
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 
 #include "asm.h"
 #include "lineavars.h"
@@ -39,7 +39,7 @@ static void init(const Fonthead *font)
     v_cel_mx++;
     v_cel_wr = v_cel_mx;
     v_cur_ad.cellno = 0; /* First cell in text memory */
-    a2560u_bios_text_init();
+    a2560_bios_text_init();
     cursor_moved();
 }
 
@@ -63,15 +63,15 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
     R8(VICKY_TEXT+dst.cellno) = src.cellno;
     
     if (v_stat_0 & M_REVID)  
-        R8(VICKY_TEXT_COLOR + dst.cellno) = v_col_bg << 4 | v_col_fg;
+        vicky->text_memory->color[dst.cellno] = v_col_bg << 4 | v_col_fg;
     else
-        R8(VICKY_TEXT_COLOR + dst.cellno) = v_col_fg << 4 | v_col_bg;
+        vicky->text_memory->color[dst.cellno] = v_col_fg << 4 | v_col_bg;
 }
 
 
 static void neg_cell(CHAR_ADDR cell)
 {
-    rolb(R8(VICKY_TEXT_COLOR+cell.cellno),4);
+    rolb(vicky->text_memory->color[cell.cellno],4);
 }
 
 
@@ -83,7 +83,7 @@ static void next_cell(void)
 
 static void cursor_moved(void)
 {
-    vicky2_set_text_cursor_xy(v_cur_cy, v_cur_cx);
+    vicky2_set_text_cursor_xy(vicky, v_cur_cy, v_cur_cx);
 }
 
 
@@ -102,8 +102,8 @@ static void blank_out(int topx, int topy, int botx, int boty)
     ncolumns = botx - topx + 1;
     cell = cell_addr(topx, topy).cellno;
     cell_colour = v_col_fg << 4 | v_col_bg;
-    line = (uint8_t*)(VICKY_TEXT + cell);
-    colour = (uint8_t*)(VICKY_TEXT_COLOR + cell);
+    line = &(vicky->text_memory->text[cell]);
+    colour = &(vicky->text_memory->color[cell]);
 
     /* TODO: could do with optimisation */
     for (row = 0; row < nrows; row++)
@@ -122,8 +122,8 @@ static void blank_out(int topx, int topy, int botx, int boty)
 static void scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
 {
     /* scroll the text memory */
-    memmove((void*)(dst.cellno + VICKY_TEXT), (void*)(src.cellno + VICKY_TEXT), count);
-    memmove((void*)(dst.cellno + VICKY_TEXT_COLOR), (void*)(src.cellno + VICKY_TEXT_COLOR), count);        
+    memmove((void*)(&vicky->text_memory->text[dst.cellno]), (void*)(&vicky->text_memory->text[src.cellno]), count);
+    memmove((void*)(&(vicky->text_memory->color[dst.cellno])), (void*)(&(vicky->text_memory->color[src.cellno])), count);
 
     /* exit thru blank out, bottom line cell address y to top/left cell */
     blank_out(0, v_cel_my , v_cel_mx, v_cel_my);
@@ -133,8 +133,8 @@ static void scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
 static void scroll_down(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD start_line)
 {
     /* scroll the text memory */
-    memmove((void*)(dst.cellno + VICKY_TEXT), (void*)(src.cellno + VICKY_TEXT), count);
-    memmove((void*)(dst.cellno + VICKY_TEXT_COLOR), (void*)(src.cellno + VICKY_TEXT_COLOR), count);
+    memmove((void*)(&vicky->text_memory->text[dst.cellno]), (void*)(&vicky->text_memory->text[src.cellno]), count);
+    memmove((void*)(&(vicky->text_memory->color[dst.cellno])), (void*)(&(vicky->text_memory->color[src.cellno])), count);
 
     /* exit thru blank out */
     blank_out(0, start_line , v_cel_mx, start_line);
@@ -144,14 +144,14 @@ static void scroll_down(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD st
 static void paint_cursor(void)
 {
     /* VICKY is in charge */
-    vicky2_show_cursor();
+    vicky2_show_cursor(vicky);
 }
 
 
 static void unpaint_cursor(void)
 {
     /* VICKY is in charge */
-    vicky2_hide_cursor();
+    vicky2_hide_cursor(vicky);
 }
 
 
@@ -178,4 +178,4 @@ const CONOUT_DRIVER a2560u_conout_text =
     blink_cursor
 };
 
-#endif /* MACHINE_A2560U */ 
+#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */ 

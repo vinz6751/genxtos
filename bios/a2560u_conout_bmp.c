@@ -40,8 +40,8 @@ static void init(const Fonthead *font)
     v_cur_ad.pxaddr = v_bas_ad;
 
     /* Stop text mode and start bitmap */
-    R32(VICKY_CTRL) &= ~VICKY_A_CTRL_TEXT; 
-    R32(VICKY_CTRL) = VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP;
+    vicky->control &= ~VICKY_CTRL_TEXT; 
+    vicky->control = VICKY_CTRL_GFX|VICKY_CTRL_BITMAP;
     KDEBUG(("conout_bmp->init done\n"));
 }
 

@@ -15,24 +15,46 @@
 
 #include <stdint.h>
 
-
-#define CPU_FREQ        20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
-
 /* General memory map */
-#define GAVIN           0x00B00000
-#define BEATRIX         0x00B20000
-#define VICKY           0x00B40000
-#define VICKY_TEXT      0x00B60000
-#define VICKY_TEXT_SIZE 0x4000
-#define VRAM_Bank0      0x00C00000
-#define VRAM0_SIZE      0x00200000 /* 2MB */
+#ifdef MACHINE_A2560U
+  #define CPU_FREQ        20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
+  #define GAVIN           0x00B00000
+  #define BEATRIX         0x00B20000
+  #define VICKY           0x00B40000
+  #define VICKY_TEXT      0x00B60000  
+  #define VICKY_TEXT_MEM  0x00B60000
+  #define VICKY_FONT      (VICKY_TEXT_MEM+0x8000)      /* Font memory (-> 0xbff) */  
+  #define VICKY_TEXT_SIZE 0x4000
+  #define VRAM_Bank0      0x00C00000
+  #define VRAM0_SIZE      0x00200000 /* 2MB */
+#elif defined(MACHINE_A2560X)
+  #define CPU_FREQ        33333333 /* 33Mhz : TODO get rid of this and use cpu_freq */
+  #define GAVIN           0xFEC00000
+  #define BEATRIX         0xFEC20000
+  #define VICKY_A         0xFEC40000
+  #define VICKY_A_MOUSE   0xFEC40000
+  #define VICKY_FONT_A    0xFEC48000
+  #define VICKY_TEXT_A    0xFEC60000
+  #define VICKY_B         0xFEC80000
+  #define VICKY_FONT_B    0xFEC88000
+  #define VICKY_TEXT_B    0xFECA0000
+  #define VICKY_TEXT_SIZE 0x4000
+  // Convenience, we treat the most feature-full screen as main screen (so to share code with the U which only has 1 screen)
+  #define VICKY VICKY_B
+  #define VICKY_TEXT VICKY_TEXT_B
+  // I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
+  #define VRAM_Bank0      0x00800000
+  #define VRAM0_SIZE      0x00400000 /* 4MB */
+  #define VRAM_Bank1      0x00C00000
+  #define VRAM1_SIZE      0x00400000 /* 4MB */
+#endif
 
 /* Chipset addresses */
 #define BQ4802LY_BASE  (GAVIN+0x80)
 #define PS2_BASE       (GAVIN+0x2800)
 #define SDC_BASE       (GAVIN+0x300)
 #define IDE_BASE       (GAVIN+0x400)
-#define VICKY_TEXT_MEM 0xB60000
+
 
 
 #define GAVIN_CTRL  (GAVIN)
@@ -40,9 +62,14 @@
   #define GAVIN_CTRL_PWRLED  0x0001
   #define GAVIN_CTRL_DISKLED 0x0002
 
+#ifdef MACHINE_A2560U
 /* Serial port speed codes for a2560u_serial_set_bps */
-#define UART0       (UART16550*)(GAVIN+0x28F8)
+#define UART1       (UART16550*)(GAVIN+0x28F8)
 /* For speed codes, checkout uart16550.h */
+#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K)
+#define UART1       (UART16550*)0xFEC023F8  /* Base address for UART 1 (COM1) */
+#define UART2       (UART16550*)0xFEC022F8  /* Base address for UART 2 (COM2), the doc is wrong! */
+#endif
 
 /* PS2 */
 #define PS2_DATA       PS2_BASE
@@ -81,7 +108,12 @@
 #define IRQ_MASK_GRP2 	 (GAVIN+0x11C)
 
 /* 68000 Interrupt vector numbers (not address!)  */
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560X)
+#define INT_VICKYII_A     0x1D
+#define INT_VICKYII_B     0x1D
+#else
 #define INT_VICKYII       0x1E
+#endif
 #define INT_PS2KBD_VECN   0x40
 #define INT_PS2MOUSE_VECN 0x42
 #define INT_COM1_VECN     0x43

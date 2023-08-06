@@ -662,10 +662,9 @@
  * Defaults for the A2560U from Foenix Retro Systems
  */
 #ifdef MACHINE_A2560U
-# ifndef MACHINE_A2560U_DEBUG
-#  define MACHINE_A2560U_DEBUG 0
+# ifndef MACHINE_A2560_DEBUG
+#  define MACHINE_A2560_DEBUG 0
 # endif
-
 # ifndef CONF_ATARI_HARDWARE
 #  define CONF_ATARI_HARDWARE 0
 # endif
@@ -701,10 +700,10 @@
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
-/* At least one of CONF_WITH_A2560U_TEXT_MODE and CONF_WITH_A2560U_SHADOW_FRAMEBUFFER must be enabled */
+/* At least one of CONF_WITH_A2560_TEXT_MODE and CONF_WITH_A2560U_SHADOW_FRAMEBUFFER must be enabled */
 /* Use VICKY's text mode if possible rather than a bitmap screen buffer when using 8 pixel-high font.
  * No graphics possible. */
-#define CONF_WITH_A2560U_TEXT_MODE 1
+#define CONF_WITH_A2560_TEXT_MODE 1
 /* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
 #define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 1
 # ifndef CONF_WITH_FORCE_8x8_FONT
@@ -717,12 +716,86 @@
 #  undef USE_STOP_INSN_TO_FREE_HOST_CPU
 #  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
 # endif
-
-#ifdef MACHINE_A2560U_DEBUG
+#ifdef DEFAULT_BAUDRATE
+#  undef DEFAULT_BAUDRATE
+#  define DEFAULT_BAUDRATE 12 /*38400*/
+#endif
+#ifdef MACHINE_A2560_DEBUG
 # define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
 # define RS232_DEBUG_PRINT 1
 #endif
 #endif
+
+/*
+ * Defaults for the A2560X from Foenix Retro Systems
+ */
+#ifdef MACHINE_A2560X
+# ifndef MACHINE_A2560_DEBUG
+#  define MACHINE_A2560_DEBUG 1
+# endif
+# ifndef FOENIX_CHANNEL_A_DEBUG_PRINT
+#  define FOENIX_CHANNEL_A_DEBUG_PRINT 1
+# endif
+# ifndef CONF_ATARI_HARDWARE
+#  define CONF_ATARI_HARDWARE 0
+# endif
+# ifndef CONF_WITH_IDE
+#  define CONF_WITH_IDE 0
+# endif
+# ifndef CONF_WITH_SDMMC
+#  define CONF_WITH_SDMMC 1
+# endif
+# ifndef CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF
+#  define CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF 0
+# endif
+# ifndef WITH_AES
+# define WITH_AES 0 /* Not supported yet */
+# endif
+# ifndef WITH_CLI
+#  define WITH_CLI 1
+# endif
+# ifndef CONF_WITH_SN76489
+#  define CONF_WITH_SN76489 1
+# endif
+# ifndef CONF_WITH_WM8776
+#  define CONF_WITH_WM8776 1
+# endif
+# ifndef CONF_WITH_BQ4802LY
+#  define CONF_WITH_BQ4802LY 1
+# endif
+#if 0
+# ifndef CONF_VRAM_ADDRESS
+#  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
+# endif
+#endif
+# ifndef CONF_WITH_CHUNKY8
+#  define CONF_WITH_CHUNKY8 1
+# endif
+/* At least one of CONF_WITH_A2560_TEXT_MODE and CONF_WITH_A2560X_SHADOW_FRAMEBUFFER must be enabled */
+/* Use VICKY's text mode if possible rather than a bitmap screen buffer when using 8 pixel-high font.
+ * No graphics possible. */
+#define CONF_WITH_A2560_TEXT_MODE 1
+/* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
+#define CONF_WITH_A2560X_SHADOW_FRAMEBUFFER 0
+# ifndef CONF_WITH_FORCE_8x8_FONT
+#  define CONF_WITH_FORCE_8x8_FONT 1
+# endif
+# ifndef ALWAYS_SHOW_INITINFO
+#  define ALWAYS_SHOW_INITINFO 1 /* So we can get into EmuCON */
+# endif
+# ifdef USE_STOP_INSN_TO_FREE_HOST_CPU /* To confirm: this causes a crash so we don't want it */
+#  undef USE_STOP_INSN_TO_FREE_HOST_CPU
+#  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
+# endif
+#ifdef DEFAULT_BAUDRATE
+#  undef DEFAULT_BAUDRATE
+#  define DEFAULT_BAUDRATE 12 /*38400*/
+#endif
+#ifdef MACHINE_A2560_DEBUG
+# define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
+#endif
+#endif
+
 
 /*
  * By default, EmuTOS is built for Atari ST/TT/Falcon compatible hardware
@@ -871,8 +944,8 @@
 # ifndef CONF_WITH_FORCE_8x8_FONT
 #  define CONF_WITH_FORCE_8x8_FONT 0
 # endif
-# ifndef CONF_WITH_A2560U_TEXT_MODE
-#  define CONF_WITH_A2560U_TEXT_MODE 0
+# ifndef CONF_WITH_A2560_TEXT_MODE
+#  define CONF_WITH_A2560_TEXT_MODE 0
 # endif
 # ifndef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
 #  define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
@@ -2033,7 +2106,7 @@
 #endif
 
 /* Determine if kprintf() is available */
-#if CONF_WITH_UAE || DETECT_NATIVE_FEATURES || STONX_NATIVE_PRINT || CONSOLE_DEBUG_PRINT || RS232_DEBUG_PRINT || SCC_DEBUG_PRINT || COLDFIRE_DEBUG_PRINT || MIDI_DEBUG_PRINT
+#if CONF_WITH_UAE || DETECT_NATIVE_FEATURES || STONX_NATIVE_PRINT || CONSOLE_DEBUG_PRINT || RS232_DEBUG_PRINT || SCC_DEBUG_PRINT || COLDFIRE_DEBUG_PRINT || MIDI_DEBUG_PRINT || FOENIX_CHANNEL_A_DEBUG_PRINT
 #  define HAS_KPRINTF 1
 # else
 #  define HAS_KPRINTF 0
@@ -2103,10 +2176,10 @@
 #endif
 
 /*
- * Set CONF_WITH_A2560U_TEXT_MODE to support the 8x8 text mode supported by VICKY.
+ * Set CONF_WITH_A2560_TEXT_MODE to support the 8x8 text mode supported by VICKY.
  */
-#ifndef CONF_WITH_A2560U_TEXT_MODE
-# define CONF_WITH_A2560U_TEXT_MODE 0
+#ifndef CONF_WITH_A2560_TEXT_MODE
+# define CONF_WITH_A2560_TEXT_MODE 0
 #endif
 
 /*
@@ -2281,8 +2354,8 @@
 # endif
 #endif
 
-#if (CONSOLE_DEBUG_PRINT + RS232_DEBUG_PRINT + SCC_DEBUG_PRINT + COLDFIRE_DEBUG_PRINT + MIDI_DEBUG_PRINT) > 1
-# error Only one of CONSOLE_DEBUG_PRINT, RS232_DEBUG_PRINT, SCC_DEBUG_PRINT, COLDFIRE_DEBUG_PRINT or MIDI_DEBUG_PRINT must be set to 1.
+#if (CONSOLE_DEBUG_PRINT + RS232_DEBUG_PRINT + SCC_DEBUG_PRINT + COLDFIRE_DEBUG_PRINT + MIDI_DEBUG_PRINT + FOENIX_CHANNEL_A_DEBUG_PRINT) > 1
+# error Only one of CONSOLE_DEBUG_PRINT, RS232_DEBUG_PRINT, SCC_DEBUG_PRINT, COLDFIRE_DEBUG_PRINT, MIDI_DEBUG_PRINT or FOENIX_CHANNEL_A_DEBUG_PRINT must be set to 1.
 #endif
 
 

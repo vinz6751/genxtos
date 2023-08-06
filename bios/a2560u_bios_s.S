@@ -1,24 +1,24 @@
 // TOS Assembler routines for the Foenix Retro Systems A2560U
 
 #include "config.h"
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 
 #include "../foenix/foenix.i"
 
 | Exports ---------------------------------------------------------------------
-    .GLOBAL a2560u_memconf
-    .GLOBAL _a2560u_run_calibration
-    .GLOBAL _a2560u_bios_irq_calibration
+    .GLOBAL a2560_memconf
+    .GLOBAL _a2560_run_calibration
+    .GLOBAL _a2560_bios_irq_calibration
 
 
-a2560u_memconf: // Called from memory.S to detect memory setup
-    move.l  #0x200000,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
+a2560_memconf: // Called from memory.S to detect memory setup
+    move.l  #SRAM_TOP,d5   // this is phystop - the end of RAM on A2560U. TODO: detect U+ (4MB)
     moveq   #0,d6          // fake memctrl
     jmp     (a6)           // Return
 
 
-_a2560u_run_calibration: // Calibration loop
-    // We should ideally be using a2560u_timer_enable in this function but we don't because we
+_a2560_run_calibration: // Calibration loop
+    // We should ideally be using a2560_timer_enable in this function but we don't because we
     // don't want any overhead to get the most exact timings.
     move.l  d2,-(sp) // d2 is not a scratch register
     move.w  #~TIMER0_INT,IRQ_MASK_GRP1 // Mask everything except Timer 0
@@ -39,9 +39,9 @@ cal_loop:                           //just like asm.h inline function
     move.l  (sp)+,d2
     rts
 
-_a2560u_bios_irq_calibration: // Timer 0 handler used for calibration loop, equivalent of handle_timer in delayasm.S
+_a2560_bios_irq_calibration: // Timer 0 handler used for calibration loop, equivalent of handle_timer in delayasm.S
     move.w #TIMER0_INT,IRQ_PENDING_GRP1
     addq.l #1,_calibration_interrupt_count
     rte
 
-#endif // MACHINE_A2560U
+#endif // defined(MACHINE_A2560U) || defined(MACHINE_A2560X)

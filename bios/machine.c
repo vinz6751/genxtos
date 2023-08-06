@@ -10,7 +10,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "bios.h" /* boot_status */
@@ -371,6 +371,8 @@ static void setvalue_vdo(void)
         cookie_vdo = VDO_ST;
 #elif defined(MACHINE_A2560U)
     cookie_vdo = MCH_A2560U;
+#elif defined(MACHINE_A2560X)
+    cookie_vdo = MCH_A2560X;
 #else
     cookie_vdo = VDO_NOHARD;
 #endif /* CONF_ATARI_HARDWARE */
@@ -399,6 +401,8 @@ static void setvalue_mch(void)
         cookie_mch = MCH_ST;
 #elif defined(MACHINE_A2560U)
     cookie_mch = MCH_A2560U;
+#elif defined(MACHINE_A2560X)
+    cookie_mch = MCH_A2560X;
 #else
     cookie_mch = MCH_NOHARD;
 #endif /* CONF_ATARI_HARDWARE */
@@ -607,10 +611,10 @@ void machine_detect(void)
  */
 void machine_init(void)
 {
-#ifdef MACHINE_A2560U
-    a2560u_bios_init();
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+    a2560_bios_init();
     /* There is an early setup of the UART so we can use KDEBUG earlier. */
-    boot_status |= RS232_AVAILABLE;
+    //TODOboot_status |= RS232_AVAILABLE;
 #endif
 #if !CONF_WITH_RESET
 /*
@@ -819,10 +823,10 @@ const char * machine_name(void)
     return "Apple Lisa";
 #elif defined(MACHINE_M548X)
     return m548x_machine_name();
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
     struct foenix_system_info_t info;
 
-    a2560u_system_info(&info);
+    a2560_system_info(&info);
  
     return info.model_name;
 #else

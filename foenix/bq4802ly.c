@@ -58,7 +58,7 @@ void bq4802ly_enable_ticks(bool enable)
         /* Acknowledge any previous pending interrupt */
         bq4802ly->flags;
         bq4802ly->enables |= BQ4802LY_PIE;
-        a2560u_irq_enable(INT_RTC);
+        a2560_irq_enable(INT_RTC);
     }
     else
     {

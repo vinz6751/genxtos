@@ -209,11 +209,11 @@ memconf:
         jmp     amiga_memconf
 amiga_memconf_ret:
         // Fall into memconf_done
-#elif defined(MACHINE_A2560U)
-        .extern a2560u_memconf
-        lea     a2560u_memconf_ret(pc),a6
-        jmp     a2560u_memconf
-a2560u_memconf_ret:        
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+        .extern a2560_memconf
+        lea     a2560_memconf_ret(pc),a6
+        jmp     a2560_memconf
+a2560_memconf_ret:        
 #else /* ST/TT/Falcon memconf */
 
 #if CONF_WITH_FALCON_MMU

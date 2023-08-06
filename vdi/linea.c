@@ -71,7 +71,7 @@ void linea_resolution_changed(void)
 #if CONF_WITH_CHUNKY8
     BYTES_LIN = v_lin_wr = V_REZ_HZ; /* 1 byte per pixel makes it easy */
 # if defined(MACHINE_A2560U) && CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_bios_sfb_setup(v_bas_ad, v_cel_ht);
+    a2560_bios_sfb_setup(v_bas_ad, v_cel_ht);
 # endif
 #else
     BYTES_LIN = v_lin_wr = V_REZ_HZ / 8 * v_planes;

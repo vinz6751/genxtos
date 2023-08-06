@@ -1275,7 +1275,7 @@ LONG supexec(PFLONG);       /* defined in vectors.S */
 # define LAST_ENTRY 0x8d
 #elif CONF_WITH_DSP
 # define LAST_ENTRY 0x7f
-#elif CONF_WITH_VIDEL || defined(MACHINE_A2560U)
+#elif CONF_WITH_VIDEL || defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 # define LAST_ENTRY 0x5f
 #elif CONF_WITH_TT_SHIFTER
 # define LAST_ENTRY 0x57
@@ -1419,13 +1419,13 @@ const PFLONG xbios_vecs[] = {
     VEC(xbios_5e, vgetrgb),   /* 5e */
     VEC(xbios_5f, vfixmode),  /* 5f */
 #elif defined(MACHINE_A2560U)
-    (PFLONG)a2560u_bios_vsetmode,   /* 58 */
-    (PFLONG)a2560u_bios_vmontype,   /* 59 */
+    (PFLONG)a2560_bios_vsetmode,   /* 58 */
+    (PFLONG)a2560_bios_vmontype,   /* 59 */
     xbios_unimpl,   /* 5a vsetsync not implemented */
-    (PFLONG)a2560u_bios_vgetsize,   /* 5b */
+    (PFLONG)a2560_bios_vgetsize,   /* 5b */
     xbios_unimpl,   /* 5c */
-    (PFLONG)a2560u_bios_vsetrgb,   /* 5d */
-    (PFLONG)a2560u_bios_vgetrgb,   /* 5e */
+    (PFLONG)a2560_bios_vsetrgb,   /* 5d */
+    (PFLONG)a2560_bios_vgetrgb,   /* 5e */
     xbios_unimpl,   /* vfixmode mode not implemented 5f because the Foenix uses chunky modes, nothing in common with the Atari */
 #elif LAST_ENTRY > 0x5f     /* must insert fillers for videl opcodes */
     xbios_unimpl,   /* 58 */

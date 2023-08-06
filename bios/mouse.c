@@ -34,8 +34,8 @@
 
 void Initmous(WORD type, struct param *param, PFVOID newvec)
 {
-#ifdef MACHINE_A2560U
-    kbdvecs.mousevec = (newvec != NULL) ? newvec : just_rts;    
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+    kbdvecs.mousevec = (newvec != NULL) ? newvec : just_rts;
 #else    
     long retval = -1;           /* ok, if it stays so... */
     struct param *p = param;   /* pointer to parameter block */

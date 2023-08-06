@@ -8,7 +8,12 @@
 
 
 | Exports ---------------------------------------------------------------------
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+    .GLOBAL _a2560u_irq_vicky_a
+    .GLOBAL _a2560u_irq_vicky_b
+#else
     .GLOBAL _a2560u_irq_vicky
+#endif    
     .GLOBAL _a2560u_irq_bq4802ly
     .GLOBAL _a2560u_irq_ps2kbd
     .GLOBAL _a2560u_irq_ps2mouse
@@ -37,14 +42,18 @@ _a2560u_rte:
     rte
 
 
-_a2560u_irq_vicky: // VICKY autovector interrupt handler
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+_a2560u_irq_vicky_a: // VICKY autovector A interrupt handler
+#else
+_a2560u_irq_vicky: // VICKY (only channel's) autovector interrupt handler
+#endif
     // Handlers can use d0 and a0 without saving them.
     movem.l d0-d1/a0-a1,-(sp)
     lea     _a2560_irq_vectors,a0
-    moveq   #1,d0               // We must clear the MSB of the LSW because that's how we exit the loop after 8 shifts
+    moveq   #1,d0               // We must clear the MSB of the LSW because that's how we exit the loop after 7 shifts
 vicky_irq_loop:
     move.w  IRQ_PENDING_GRP0,d1 // Is it ok to read in each iteration ? if not we'd have to save d1
-    and.b   d0,d1               // The .b is deliberate, VICKY uses only the LSB the PENDING register
+    and.b   d0,d1               // The .b is deliberate, VICKY uses only the LSB of the PENDING register
     beq.s   vicky_irq_next
     move.w  d0,IRQ_PENDING_GRP0 // Acknowledge
     movea.l (a0)+,a1            // TODO on 68020+ use double indirection
@@ -58,6 +67,31 @@ vicky_irq_next:
 vicky_irq_done:
     movem.l (sp)+,d0-d1/a0-a1
     rte
+
+
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+_a2560u_irq_vicky_b: // VICKY channel B autovector interrupt handler
+    // Handlers can use d0 and a0 without saving them.
+    movem.l d0-d1/a0-a1,-(sp)
+    lea     _a2560_irq_vectors,a0
+    move.w   #0x0100,d0         // We must clear the MSb of the MSB because that's how we exit the loop after 7 shifts
+vicky_irq_b_loop:
+    move.w  IRQ_PENDING_GRP0,d1 // Is it ok to read in each iteration ? if not we'd have to save d1
+    and.w   d0,d1
+    beq.s   vicky_irq_b_next
+    move.w  d0,IRQ_PENDING_GRP0 // Acknowledge
+    movea.l (a0)+,a1            // TODO on 68020+ use double indirection
+    movem.l d0/a0,-(sp)
+    jsr     (a1)                // Call handler
+    movem.l (sp)+,d0/a0
+vicky_irq_b_next:
+    // Prepare next iteration
+    lsl.w   #1,d0               // .w deliberate here so we stop on the last bit of the interrupt group
+    bne.s   vicky_irq_b_loop
+vicky_irq_b_done:
+    movem.l (sp)+,d0-d1/a0-a1
+    rte
+#endif
 
 
 _a2560u_irq_bq4802ly: // Real time clock interrupt handler

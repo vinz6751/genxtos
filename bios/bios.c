@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG 1
 
 #include "emutos.h"
 #include "biosext.h"
@@ -166,7 +166,7 @@ static void vecs_init(void)
      * an endless loop.
      * New ColdFire programs are supposed to be clean and avoid zero
      * divides. So we keep the default panic() behaviour in such case. */
-#elif !defined(MACHINE_A2560U)
+#elif !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
     /* Original TOS cowardly ignores integer divide by zero. */
     VEC_DIVNULL = just_rte;
 #endif
@@ -280,6 +280,7 @@ static void bios_init(void)
     cookie_init();      /* sets a cookie jar */
     KDEBUG(("fill_cookie_jar()\n"));
     fill_cookie_jar();  /* detect hardware features and fill the cookie jar */
+
     KDEBUG(("font_init()\n"));
     font_init();        /* initialize font ring (requires cookie_akp) */
 
@@ -407,9 +408,10 @@ static void bios_init(void)
     set_sr(0x2300);
 #else
     set_sr(0x2000);
-# ifdef MACHINE_A2560U
-    a2560u_timer_enable(HZ200_TIMER_NUMBER,true);
-    a2560u_irq_enable(INT_SOF_A);
+# if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+    KDEBUG(("bios enabling interrupts()\n"));
+    a2560_timer_enable(HZ200_TIMER_NUMBER,true);
+    a2560_irq_enable(INT_SOF_A);
 # endif
 
 #endif
@@ -848,7 +850,7 @@ void biosmain(void)
         pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
         pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
         
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
         // We don't have GEM/desktop yet.
         pd->p_tbase = (UBYTE *) coma_start;
 #else

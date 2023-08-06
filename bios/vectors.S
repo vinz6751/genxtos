@@ -11,7 +11,7 @@
 
 #include "asmdefs.h"
 
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 #include "../foenix/foenix.i"
 #endif
 
@@ -340,7 +340,7 @@ _int_vbl:
 #ifdef __mcoldfire__
         lea     -56(sp), sp
         movem.l d1-d7/a0-a6, (sp)       // save registers
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
         movem.l d1-d7/a1-a6, -(sp)      // save registers (d0/a0 already saved by VICKY interrupt handler)
 #else
         movem.l d0-d7/a0-a6, -(sp)      // save registers
@@ -352,7 +352,7 @@ _int_vbl:
         jsr     _detect_monitor_change
 #endif
 
-#if !defined(MACHINE_A2560U) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
+#if (!defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
         jsr     _blink                  // blink cursor
 #endif
 
@@ -368,7 +368,7 @@ _int_vbl:
 skip_sfb_copy:
 #endif
 
-#if defined(MACHINE_A2560U) && 0
+#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) && 0
         // Support of Setpalette
         .globl _convert_atari2vicky_color
         .globl _vicky2_set_lut_color
@@ -376,7 +376,7 @@ skip_sfb_copy:
         jeq     scrnpt
         // Load new color palette
         lea     _colorptr.w,a3
-        move.l  d0,VICKY_A_BG_COLOR     // Color 0 in LUT is "transparent" so has no effect
+        move.l  d0,VICKY_B_BG_COLOR     // Color 0 in LUT is "transparent" so has no effect
         moveq   #0,d3
 palcpy: move.w  (a3)+,-(sp)             // First, convert Atari 4 bit to 8 bit Foenix color spec
         jbsr    _convert_atari2vicky_color
@@ -516,7 +516,7 @@ vbl_no_dump:
 #ifdef __mcoldfire__
         movem.l (sp), d1-d7/a0-a6       // restore registers
         lea     56(sp), sp
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
         movem.l (sp)+, d1-d7/a1-a6      // restore registers
 #else
         movem.l (sp)+, d0-d7/a0-a6      // restore registers
@@ -548,8 +548,8 @@ _int_timerc:
         // Save early ColdFire registers
         move.l  d0,-(sp)
         move.l  a0,-(sp)
-#elif defined(MACHINE_A2560U)
-        move.w  #0x0400,0xb00102        // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+        move.w  #0x0400,IRQ_PENDING_GRP1  // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
 #endif
 
 #ifdef __mcoldfire__

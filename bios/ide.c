@@ -121,9 +121,11 @@ struct IDE
 #define IDE_WRITE_HEAD(i,a)       i->head = a
 
 #define IDE_READ_STATUS(i)        i->command
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
     /* There seem to be a problem with IDE_READ_ALT_STATUS which makes really slow. Since we don't use
-    * interrupts, we can use the "real" status register, which works fine. */
+    * interrupts, we can use the "real" status register, which works fine.
+    * This problem is known to exist on the U but hasn't been tried on the X, so we're just conservative here.
+    */
 # define IDE_READ_ALT_STATUS(i)    i->command
 #else
 # define IDE_READ_ALT_STATUS(i)    i->control
@@ -484,7 +486,7 @@ void detect_ide(void)
 
 #ifdef MACHINE_AMIGA
     has_ide = has_gayle ? 0x01 : 0x00;
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
     has_ide = 0x01;
 #elif defined(MACHINE_M548X)
     has_ide = 0x01;
@@ -685,7 +687,7 @@ static void ide_detect_devices(UWORD ifnum)
         IDE_WRITE_HEAD(interface,IDE_DEVICE(i));
         DELAY_400NS;
         
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
     /* We get aa55. Spec says sector number and count should be 01. FPGA bug ? */    
 #else
         if (IDE_READ_SECTOR_NUMBER_SECTOR_COUNT(interface) == 0x0101)
@@ -693,7 +695,7 @@ static void ide_detect_devices(UWORD ifnum)
         {
             status = IDE_READ_STATUS(interface);
             signature = IDE_READ_CYLINDER_HIGH_CYLINDER_LOW(interface);
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
             /* Assume the first device is present
              * (we don't support a second one for now). If it's not, we can't even reach this code. */
             if (i == 0)

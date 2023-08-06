@@ -15,11 +15,18 @@
 #ifndef KPRINT_H
 #define KPRINT_H
 
+#include <stdarg.h>
+#include "portab.h"
+#include "config.h"
+
 /* console output */
 int cprintf(const char *RESTRICT fmt, ...) PRINTF_STYLE;
 
 /* native debugging output */
 int kprintf(const char *RESTRICT fmt, ...) PRINTF_STYLE;
+
+/* same thing, but taking a val_list */
+int vkcprintf(const char *fmt, va_list ap);
 
 /* output done both through kprintf and cprintf */
 int kcprintf(const char *RESTRICT fmt, ...) PRINTF_STYLE;

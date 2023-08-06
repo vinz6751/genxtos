@@ -45,7 +45,7 @@ static void on_change(const vicky_mouse_event_t *event);
 
 static bool init(struct ps2_driver_api_t *api)
 {
-    a2560u_debugnl("ps2_mouse_a2560u->init()");
+    a2560_debugnl("ps2_mouse_a2560u->init()");
     api->driver->process = process;
 
     vicky_mouse_init(on_change, api);

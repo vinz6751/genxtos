@@ -10,10 +10,10 @@
 #include "a2560u_debug.h"
 #include <stdio.h>
  #define a2560u_debug printf
- #define a2560u_debugnl printf
+ #define a2560_debugnl printf
 #else
  #define a2560u_debug(...)
- #define a2560u_debugnl(...)
+ #define a2560_debugnl(...)
 #endif
 
 /* Pairs of the operator making up a channel */
@@ -472,7 +472,7 @@ int main(int argc, char **argv)
 	/* Compute frequencies for the scale */
 	ym262_create_note_to_freq_lut(4400, scale);
 	//for (int i=0; i<128; i++)
-	//	a2560u_debugnl("%d: %ld\n", i, scale[i]);
+	//	a2560_debugnl("%d: %ld\n", i, scale[i]);
 
 	ym262_reset();
 
@@ -487,7 +487,7 @@ int main(int argc, char **argv)
 	ym262_reset();
 	//opl3_test();
 	ym262_channel_off(0);
-	//a2560u_debugnl("Set OPL3 mode");
+	//a2560_debugnl("Set OPL3 mode");
 	//ym262_write_reg(YM262_REG_OPL3_EN, YM262_OPL3_EN_MASK);
 
 	/* Global settings*/
@@ -500,18 +500,18 @@ int main(int argc, char **argv)
 	ym262_set_oscfreqmult(0, 1, 3);
 	ym262_set_env_type(0, 1, YM262_EGT_SUSTAINED);
 	ym262_set_attack_rate(0, 1, 15);
-	//a2560u_debugnl("Set decay rate");
+	//a2560_debugnl("Set decay rate");
 	ym262_set_decay_rate(0, 1, 15);
-	//a2560u_debugnl("Set slope rate");
+	//a2560_debugnl("Set slope rate");
 	ym262_set_slope_rate(0, 1, 0);
-	//a2560u_debugnl("Set release rate");
+	//a2560_debugnl("Set release rate");
 	ym262_set_release_rate(0, 1, 5);
-	//a2560u_debugnl("Set volume");
+	//a2560_debugnl("Set volume");
 	ym262_set_osc_volume(0, 1,20);
 	ym262_set_vibrato(0, 1, false);
 	ym262_set_tremolo(0, 1, false);
 	ym262_set_osc_connection(0, YM262_SYN_FM);
-	//a2560u_debugnl("Set oscfreqmult");
+	//a2560_debugnl("Set oscfreqmult");
 	ym262_set_feedback(0,3);
 
 #if 1
@@ -519,17 +519,17 @@ int main(int argc, char **argv)
 	ym262_set_oscfreqmult(0, 0, 2);
 	ym262_set_env_type(0, 0, YM262_EGT_SUSTAINED);
 	ym262_set_attack_rate(0, 0, 15);
-	//a2560u_debugnl("Set decay rate");
+	//a2560_debugnl("Set decay rate");
 	ym262_set_decay_rate(0, 0, 2);
-	//a2560u_debugnl("Set slope rate");
+	//a2560_debugnl("Set slope rate");
 	ym262_set_slope_rate(0, 0, 4);
-	//a2560u_debugnl("Set release rate");
+	//a2560_debugnl("Set release rate");
 	ym262_set_release_rate(0, 0, 5);
-	//a2560u_debugnl("Set volume");
+	//a2560_debugnl("Set volume");
 	ym262_set_osc_volume(0, 0,63);
 	ym262_set_vibrato(0, 0, false);
 	ym262_set_tremolo(0, 0, false);
-	//a2560u_debugnl("Set oscfreqmult");
+	//a2560_debugnl("Set oscfreqmult");
 #endif
 
 	ym262_set_block_fnum(0, blocks[note_number], fnums[note_number]);

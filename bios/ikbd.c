@@ -70,7 +70,7 @@ static WORD convert_scancode(UBYTE *scancodeptr);
 #ifdef MACHINE_AMIGA
 #define KEY_EMULATE_LEFT_BUTTON     KEY_DELETE
 #define KEY_EMULATE_RIGHT_BUTTON    KEY_HELP
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 #define KEY_EMULATE_LEFT_BUTTON     KEY_INSERT
 #define KEY_EMULATE_RIGHT_BUTTON    KEY_PAGEUP
 #else
@@ -552,7 +552,7 @@ static WORD convert_scancode(UBYTE *scancodeptr)
     case KEY_ESCAPE:
     case KEY_BACKSPACE:
     case KEY_TAB:
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 #else    
     case KEY_UNDO:
 #endif    
@@ -784,7 +784,7 @@ void kbd_int(UBYTE scancode)
             }
             shifty &= ~MODE_CAPS;       /* clear bit */
             break;
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
         case KEY_RCTRL:
             shifty &= ~MODE_CTRL;       /* clear bit */
             break;
@@ -839,7 +839,7 @@ void kbd_int(UBYTE scancode)
         shifty ^= MODE_CAPS;    /* toggle bit */
 #endif
         break;
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
         case KEY_RCTRL:
             shifty |= MODE_CTRL;  /* set bit */
             break;
@@ -1080,8 +1080,8 @@ void kbd_init(void)
     lisa_kbd_init();
 #endif
 
-#ifdef MACHINE_A2560U
-    a2560u_bios_kbd_init();
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+    a2560_bios_kbd_init();
 #endif
 
 #if CONF_WITH_IKBD_ACIA
