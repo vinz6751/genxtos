@@ -51,7 +51,7 @@ void a2560u_bios_calibrate_delay(uint32_t calibration_time);
 uint32_t a2560u_bios_bcostat1(void);
 void a2560u_bios_bconout1(uint8_t byte);
 void a2560u_bios_rs232_init(void);
-uint32_t a2560u_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr);
+uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr);
 
 /* Timing stuff */
 #define HZ200_TIMER_NUMBER 2
