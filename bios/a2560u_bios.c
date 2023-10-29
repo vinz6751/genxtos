@@ -241,7 +241,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rs
         UART16550_600BPS, UART16550_300BPS, UART16550_200BPS, UART16550_150BPS,
         // This is not TOS compliant but we need to be able to use higher speeds than 19200bps...
         // 12               13                  14                   15
-        UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS 
+        UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS
     };
     const uint8_t dsize[] = {
         UART16550_8D, UART16550_7D, UART16550_6D, UART16550_5D
@@ -252,6 +252,12 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rs
 
     if (baud == -1)
     {
+        uint16_t bps_code = uart16550_get_bps_code(UART0);
+        int i;
+        for (i=0; i<sizeof(bauds)/sizeof(uint16_t); i++) {
+            if (bauds[i] == bps_code)
+                return bauds[i];
+        }
         // TODO
         return bauds[13]; /* 57600 */
     }
@@ -283,6 +289,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rs
     KDEBUG(("a2560u_bios_rsconf1 setting flags %d and speed %d\n", flags, bauds[baud]));
 
     // RTS/CTS and XON/XOFF not supported ! A2560U doesn't have RTS/CTS pins connected anyway
+    // TODO for machines having SuperIO
     return 0L; // TODO.
 }
 
