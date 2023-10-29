@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../bios/conout.h"
+#include "../bios/serport.h"
 #include "../foenix/vicky2.h"
 #include "../foenix/vicky_mouse.h"
 #include "../foenix/a2560u.h"
