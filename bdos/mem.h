@@ -14,6 +14,7 @@
 #ifndef MEM_H
 #define MEM_H
 
+#include "portab.h"
 #include "bdosdefs.h"
 
 
@@ -69,6 +70,14 @@ long xsetblk(int n, void *blk, long len);
 /* mxalloc */
 void *xmxalloc(long amount, int mode);
 
+#if CONF_WITH_ALT_RAM
+/* Register an Alt-RAM region */
+long xmaddalt(UBYTE *start, long size);
+
+/* Get the total size of Alt-RAM regions */
+long total_alt_ram(void);
+#endif /* CONF_WITH_ALT_RAM */
+
 #if CONF_WITH_VIDEL
 /* srealloc */
 void *srealloc(long amount);
@@ -78,7 +87,7 @@ void *srealloc(long amount);
 void umem_init(void);
 
 /* set memory ownership */
-void set_owner(void *addr, PD *p);
+void set_owner(void *addr, const PD *p);
 
 
 /*
@@ -86,7 +95,11 @@ void set_owner(void *addr, PD *p);
  */
 
 /* find first fit for requested memory in ospool */
-MEMORY_DESCRIPTOR *ffit(long amount, MEMORY_PARTITION_BLOCK *mp);
+MEMORY_DESCRIPTOR *ffit(ULONG amount, MEMORY_PARTITION_BLOCK *mp);
+#if CONF_WITH_NON_RELOCATABLE_SUPPORT
+/* same thing, but the memory block has to start at the given address */
+MEMORY_DESCRIPTOR *find_first_large_enough_free_block(ULONG amount, MEMORY_PARTITION_BLOCK *mem_partition, UBYTE *start_address);
+#endif
 /* Free up a memory descriptor */
 void freeit(MEMORY_DESCRIPTOR *m, MEMORY_PARTITION_BLOCK *mp);
 /* shrink a memory descriptor */

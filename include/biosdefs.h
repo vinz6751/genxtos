@@ -105,8 +105,9 @@ typedef struct
                         /* the following bits are ONLY set if the Alt key is already */
                         /* down.  however, they remain set until the corresponding   */
                         /* key is released, even if the Alt key is released first.   */
-#define MODE_MOUSEL 0x20        /* Left mouse button       */
-#define MODE_MOUSER 0x40        /* Right mouse button      */
+#define MODE_MOUSEL 0x20        /* Clr/Home is down        */
+#define MODE_MOUSER 0x40        /* Insert is down          */
+#define MODE_SHIFT  (MODE_RSHIFT|MODE_LSHIFT)   /* shifted (convenience */
 #define MODE_ALTGR  0x80        /* AltGr (since TOS 4.06/Milan according to tos.hyp) */
 
 /*

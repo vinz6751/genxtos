@@ -302,7 +302,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
              conout.c conout_atarifb.c \
              country.c \
-             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
+             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c \
              kprint.c kprintasm.S machine.c \
              mfp.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c serport.c sound.c videl.c vt52.c xhdi.c \
@@ -324,7 +324,8 @@ endif
 
 bdos_src = bdosmain.c console.c fsbuf.c fsdir.c fsdrive.c fsfat.c fsglob.c \
            fshand.c fsio.c fsmain.c fsopnclo.c iumem.c kpgmld.c osmem.c \
-           proc.c rwa.S time.c umem.c
+           proc.c rwa.S time.c umem.c initinfo.c bootstrap.c logo.c \
+		   program_loader.c prg_program_loader.c pgz_program_loader.c
 
 #
 # source code in util/
@@ -565,7 +566,7 @@ NODEP += 256
 	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
 	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS206))) bytes more than TOS 2.06)"
 	@printf "$(LOCALCONFINFO)"
-	@cp etos256$(UNIQUE).img mpts256$(UNIQUE).img
+	@cp etos256$(UNIQUE).img $(UNIQUE).img
 
 $(ROM_256): ROMSIZE = 256
 $(ROM_256): emutos.img mkrom
@@ -1120,6 +1121,19 @@ $(MFORMRSCGEN_BASE)%c $(MFORMRSCGEN_BASE)%h: mrd $(MFORMRSC_BASE)%rsc $(MFORMRSC
 	./mrd -pmform $(MFORMRSC_BASE) $(MFORMRSCGEN_BASE)
 
 #
+# Logo support
+#
+
+TOCLEAN += logo_compressor
+NODEP += logo_compressor
+LOGO_BASE = bdos/logo
+GEN_SRC += $(LOGO_BASE).c $(LOGO_BASE).h
+logo_compressor: tools/logo_compressor.c
+	$(NATIVECC) $< -o $@
+$(LOGO_BASE)%c $(LOGO_BASE)%h: logo_compressor
+	./logo_compressor $(LOGO_BASE).c $(LOGO_BASE).h
+
+#
 # Special ROM support
 #
 
@@ -1132,7 +1146,7 @@ mkrom: tools/mkrom.c
 # test target to build all tools that can be built by the Makefile
 .PHONY: tools
 NODEP += tools
-tools: bug draft erd grd ird localise mkflop mkrom mrd boot-delay tos-lang-change
+tools: bug draft erd grd ird localise mkflop mkrom mrd tos-lang-change boot-delay logo_compressor
 
 # user tools, not needed in EmuTOS building
 TOCLEAN += tos-lang-change boot-delay
