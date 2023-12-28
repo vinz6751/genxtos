@@ -100,7 +100,7 @@ void vicky2_init(void)
     /* Enable video and bitmap, 640x480 */
     R32(VICKY_CTRL) = 0;
 
-    vicky_mouse_init(rts/* No callback by default */, 0L);
+    vicky_mouse_init((void(*)(const vicky_mouse_event_t*))rts/* No callback by default */, 0L);
 
     vicky2_set_video_mode(VICKY_MODE_640x480_60);
     vicky2_read_video_mode(&mode);
