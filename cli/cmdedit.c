@@ -48,10 +48,16 @@ WORD pos = 0, len = 0;
 char prompt[MAXPATHLEN];
 
     save_history_num = history_num;     /* so that edit_line() can play with it */
-
+#ifdef MACHINE_A2560U
+	message("\033b\013\033c");conout(0);
+#endif
     get_path(prompt,0);
     message(prompt);
-    message(">");
+    message(">"
+#ifdef MACHINE_A2560U
+			"\033b\017"
+#endif
+			);
     while(1) {
         charcode = conin();
         scancode = ((charcode >> 8) | charcode) & 0xffff;
