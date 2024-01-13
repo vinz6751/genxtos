@@ -66,6 +66,9 @@ PRIVATE LONG run_setdrv(WORD argc,char **argv);
 PRIVATE LONG run_show(WORD argc,char **argv);
 PRIVATE LONG run_version(WORD argc,char **argv);
 PRIVATE LONG run_wrap(WORD argc,char **argv);
+#if 0
+PRIVATE LONG run_opl3(WORD argc,char **argv);
+#endif
 
 /*
  *  help strings
@@ -109,9 +112,10 @@ LOCAL const char * const help_more[] = { "<filespec>",
 LOCAL const char * const help_mv[] = { "<filespec> <dir>",
     N_("Copy files matching <filespec> to <dir>,"),
     N_("then delete input files"), NULL };
+#if 1
 LOCAL const char * const help_path[] = { "[<searchpath>]",
-    N_("Set search path for external programs"),
-    N_("or display current search path"), NULL };
+    N_("Test the YM262 OPL3 soundchip"), NULL };
+#endif
 LOCAL const char * const help_pwd[] = { "",
     N_("Display current drive and directory"), NULL };
 LOCAL const char * const help_ren[] = { "<oldname> <newname>",
@@ -179,6 +183,9 @@ LOCAL const COMMAND cmdtable[] = {
     { "mode", NULL, 1, 4, run_mode, help_mode },
     { "more", NULL, 1, 1, run_more, help_more },
     { "mv", "move", 2, 2, run_mv, help_mv },
+#if 0
+    { "opl3", NULL, 0, 0, run_opl3, help_path },
+#endif
     { "path", NULL, 0, 1, run_path, help_path },
     { "pwd", NULL, 0, 0, run_pwd, help_pwd },
     { "ren", NULL, 2, 2, run_ren, help_ren },
@@ -667,6 +674,21 @@ PRIVATE LONG run_wrap(WORD argc,char **argv)
 
     return 0L;
 }
+
+#if 0
+#include "../foenix/ym262.h"
+void ym262_test(void);
+PRIVATE LONG run_opl3(WORD argc,char **argv)
+{
+    outputnl("Press a  key to finish.");
+    ym262_test();
+    conin();
+    int i;
+    for (i=0; i<7; i++)
+        ym262_channel_off(i);
+    return 0;
+}
+#endif
 
 /*
  *  subordinate functions
