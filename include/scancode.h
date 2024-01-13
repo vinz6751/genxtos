@@ -32,6 +32,7 @@
 # define KEY_RCTRL   0x61
 # define KEY_ALTGR   0x64
 # define KEY_PAGEUP  0x68
+# define KEY_HELP    0x57 /* F11 */
 #else
 # define KEY_HELP    0x62
 # define KEY_UPARROW 0x48
@@ -56,7 +57,9 @@
 #define KEY_ESCAPE    0x01        /* invariant keys, unaffected by modifiers */
 #define KEY_BACKSPACE 0x0e
 #define KEY_TAB       0x0f
-#ifndef MACHINE_A2560U
+#ifdef MACHINE_A2560U
+# define KEY_UNDO     0x58 /* F12 */
+#else
 # define KEY_UNDO     0x61
 #endif
 
@@ -73,12 +76,9 @@
 #define TAB                 IKBD_SCANCODE(KEY_TAB, 0x09)
 #define RETURN              IKBD_SCANCODE(KEY_RETURN, 0x0d)
 #define DELETE              IKBD_SCANCODE(KEY_DELETE, 0x7f)
-# define ENTER              IKBD_SCANCODE(KEY_ENTER, 0x0d)
+#define ENTER               IKBD_SCANCODE(KEY_ENTER, 0x0d)
+#define UNDO                IKBD_SCANCODE(KEY_UNDO, 0x00)
 
-#ifdef MACHINE_A2560U
-#else
-# define UNDO                0x6100
-#endif
 
 /*
  * arrow keys
