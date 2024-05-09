@@ -30,7 +30,7 @@ OUTPUT_FORMAT(binary)
     // Use this for debug purposes (load OS to user ram)
     # define ROM_ORIGIN 0x00100000
     // Use the below instead, if building EmuTOS for going to the flash1 bank
-    //# define ROM_ORIGIN 0x00f00000
+    //# define ROM_ORIGIN 0x00e00000
 #else
 # define ROM_ORIGIN 0x00e00000
 #endif
