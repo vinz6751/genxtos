@@ -15,7 +15,7 @@
 #include "mform.h"
 
 /* Convenience to say whether the palette is 256 entries rather than 16 */
-#define EXTENDED_PALETTE (CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER || defined(MACHINE_A2560U))
+#define EXTENDED_PALETTE (CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER || defined(MACHINE_A2560U) || defined(MACHINE_A2560X))
 
 
 /* Kind of driver definition for managing mouse display */

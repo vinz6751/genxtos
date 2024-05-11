@@ -11,7 +11,7 @@
 
 #include "emutos.h"
 
-#ifndef MACHINE_A2560U
+#if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
 
 #include "linea.h"
 #include "lineavars.h"

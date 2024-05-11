@@ -105,8 +105,7 @@ void a2560u_init(void)
     superio_init();
 
     uart16550_init(UART2); /* So we can debug to serial port early */
-    uart16550_put(UART2, (uint8_t*)"TEST", 4);
-uart16550_put(UART2, (uint8_t*)" PUIS CA", 8);
+    uart16550_put(UART2, (uint8_t*)"TEST\n", 4);
     channel_A_logger_init();
     //uart16550_put(UART2, (uint8_t*)"A",1);
     channel_A_write("TEST CHANNEL A DEBUG\n");
@@ -125,7 +124,6 @@ uart16550_put(UART2, (uint8_t*)" PUIS CA", 8);
     
 
 KDEBUG(("irq_init"));
-for(;;);
 
     a2560_debugnl("timer_init");
     timer_init();

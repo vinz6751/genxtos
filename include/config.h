@@ -740,7 +740,7 @@
 #  define CONF_ATARI_HARDWARE 0
 # endif
 # ifndef CONF_WITH_IDE
-#  define CONF_WITH_IDE 0
+#  define CONF_WITH_IDE 1
 # endif
 # ifndef CONF_WITH_SDMMC
 #  define CONF_WITH_SDMMC 1
