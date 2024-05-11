@@ -103,18 +103,30 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
 
 
 _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
+    // This interrupt has low priority and if its processing is delayed by another interrupt with
+    // higher priority, we could be loosing data due to overruns. So when this handler is caller,
+    // we don't want it to be interrupted.
+    move.w  sr,-(sp)
+    move.w  #0x2700,sr
     move.w  #PS2KEYB_INT,IRQ_PENDING_GRP1
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel1_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
+    move.w  (sp)+,sr
     rte
 
 
 _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
+    // This interrupt has low priority and if its processing is delayed by another interrupt with
+    // higher priority, we could be loosing data due to overruns. So when this handler is caller,
+    // we don't want it to be interrupted.
+    move.w  sr,-(sp)
+    move.w  #0x2700,sr
     move.w  #PS2MOUSE_INT,IRQ_PENDING_GRP1
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel2_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
+    move.w  (sp)+,sr
     rte
 
 

@@ -4,13 +4,21 @@
  */
 #include "ym262.h"
 
+// Experimental: try to use "session", if a scope of command that we send where we only try to
+// send at most one command per register. I
+#define YM262_SESSIONS 0
 
-#define YM262_DEBUG 0 /* For testing the library without the real thing */
+#if !defined(YM262_DEBUG)
+# define YM262_DEBUG 0 /* For testing the library without the real thing */
+#endif
+
 #if YM262_DEBUG
-#include "a2560u_debug.h"
-#include <stdio.h>
- #define a2560u_debug printf
- #define a2560_debugnl printf
+ #include "a2560u_debug.h"
+ #include <stdio.h>
+ #define a2560u_debug(...)
+ #define a2560u_debugnl(...)
+ //#define a2560u_debug printf
+ //#define a2560u_debugnl printf
 #else
  #define a2560u_debug(...)
  #define a2560_debugnl(...)
@@ -168,11 +176,99 @@ static uint16_t osc_number(uint16_t channel, uint16_t oscillator)
 	return ym262_2op_pairs[channel][oscillator];
 }
 
+
+#ifdef YM262_SESSIONS
+
+#define REG_NOT_USED -1
+#define REG_USED 0
+static uint16_t sidx;    // Session index
+static int16_t *sdata; // Session data
+void ym262_session_start(int16_t *data);
+void ym262_session_write(uint32_t adr, uint8_t value);
+void ym262_session_flush(void);
+static int16_t reg_index[512]; // Index: YM262 register
+
+void ym262_session_start(int16_t *data)
+{
+	sidx = 0;
+	sdata = data;
+
+	int i;
+	for (i=0; i<sizeof(reg_index)/sizeof(int16_t); i++) {
+		reg_index[i] = REG_NOT_USED; // Speedup with memset ? -1 means (not used)
+	}
+}
+
+
+void ym262_session_write(uint32_t adr, uint8_t value)
+{
+	int reg = (uint16_t)(adr-YM262_L);
+	//	printf("reg: %03x, %d\n",reg,reg_index[reg]);
+	if (reg_index[reg] == REG_NOT_USED) {
+		sdata[sidx++] = reg;
+		reg_index[reg] = sidx;
+		sdata[sidx++] = value;
+#if YM262_DEBUG
+		printf("*");
+#endif
+	}
+	else {
+#if YM262_DEBUG
+		printf("-");
+#endif
+		sdata[reg_index[reg]] = value;
+	}
+}
+
+
+void ym262_session_flush(void)
+{
+	int16_t *d;
+	
+	if (sidx == 0)
+		return;
+
+	sidx /= 2;
+	d = sdata;
+#if YM262_DEBUG
+	printf("sidx: %d\n",sidx);
+#endif
+	
+	while (sidx--) {
+		int16_t reg = *d++;
+		int16_t val = *d++;
+		reg_index[reg] = REG_NOT_USED;
+				
+#if !YM262_DEBUG
+		((uint8_t*)YM262_L)[reg] = val;
+		int z;
+		for(z=1;z<2000;z++);
+#endif
+		
+#if YM262_DEBUG
+		printf("0x%04x, 0x%02x,\n", reg, val);
+#endif
+	}
+#if YM262_DEBUG
+	printf("\n");
+#endif
+
+}
+#endif // SESSIONS
+
+
+
 void ym262_write_reg(unsigned long adr, uint8_t value)
 {
-	a2560u_debug("Write 0x%02x to %p\n", value, (void*)adr);
-#if !YM262_DEBUG
+#if YM262_SESSIONS
+	ym262_session_write(adr, value);
+#else
+	
+ #if YM262_DEBUG == 0
 	*((uint8_t*)adr) = value;
+ #else
+	printf("0x%04x, 0x%02x, ", (uint16_t)(adr-YM262_L), value);
+ #endif
 #endif
 }
 
@@ -213,9 +309,10 @@ void ym262_reset(void)
 {
 	int i;
 	a2560u_debug("ym262_reset");
-	for (i=0 ; i<18; i++)
+#if 0
+	for (i=0 ; i<N_CHAN; i++)
 	 	ym262_channel_off(i);
-
+#endif
 	for (i = 0; i<N_CHAN; i++)
 	{
 		ym262_write_reg(YM262_L+0xa0+i, 0);
@@ -462,19 +559,40 @@ void ym262_set_output(uint16_t channel, uint16_t output_sel)
 	set_channel(&chan_output_sel, channel, output_sel);
 }
 
+
+/* Make a sound test */
+int ym262_test(int argc, char **argv);
+
 #if YM262_DEBUG
-int main(int argc, char **argv)
+int main(int argc, char **argv) {
+	return ym262_test(argc, argv);
+}
+#endif
+
+int ym262_test(int argc, char **argv)
 {
 	uint16_t i;
 	uint32_t scale[128];
 	int note_number = 47;
+	int channel;
+	int16_t session[2048];
 
+#if 0
+    for (i=0; i<7; i++)
+        ym262_channel_off(i);
+	return 0;
+#endif
+	
+#if YM262_SESSIONS
+	ym262_session_start(session);
+#endif
+	
 	/* Compute frequencies for the scale */
 	ym262_create_note_to_freq_lut(4400, scale);
 	//for (int i=0; i<128; i++)
 	//	a2560_debugnl("%d: %ld\n", i, scale[i]);
 
-	ym262_reset();
+	//	ym262_reset();
 
 	/* Store block/fnum for each note */
 	uint16_t blocks[128];
@@ -484,63 +602,72 @@ int main(int argc, char **argv)
 		ym262_get_block_fnum_by_freq(scale[i], &blocks[i], &fnums[i]);
 	}
 
-	ym262_reset();
-	//opl3_test();
-	ym262_channel_off(0);
-	//a2560_debugnl("Set OPL3 mode");
-	//ym262_write_reg(YM262_REG_OPL3_EN, YM262_OPL3_EN_MASK);
-
 	/* Global settings*/
 	ym262_set_vibrato_depth(1);
 	ym262_set_tremolo_depth(1);
 
-	/* Program a basic sound */
-	// Modulator
-	ym262_set_key_scale_level(0, 1, 0);
-	ym262_set_oscfreqmult(0, 1, 3);
-	ym262_set_env_type(0, 1, YM262_EGT_SUSTAINED);
-	ym262_set_attack_rate(0, 1, 15);
-	//a2560_debugnl("Set decay rate");
-	ym262_set_decay_rate(0, 1, 15);
-	//a2560_debugnl("Set slope rate");
-	ym262_set_slope_rate(0, 1, 0);
-	//a2560_debugnl("Set release rate");
-	ym262_set_release_rate(0, 1, 5);
-	//a2560_debugnl("Set volume");
-	ym262_set_osc_volume(0, 1,20);
-	ym262_set_vibrato(0, 1, false);
-	ym262_set_tremolo(0, 1, false);
-	ym262_set_osc_connection(0, YM262_SYN_FM);
-	//a2560_debugnl("Set oscfreqmult");
-	ym262_set_feedback(0,3);
+	const int n_channels = 7;
+	
+	for (channel=0;channel<n_channels;channel++) {
+		//opl3_test();
+		//a2560u_debugnl("Set OPL3 mode");
+		//ym262_write_reg(YM262_REG_OPL3_EN, YM262_OPL3_EN_MASK);
+		/* Program a basic sound */
+		// Modulator
+		ym262_set_key_scale_level(channel, 1, 0);
+		ym262_set_oscfreqmult(channel, 1, 3);
+		ym262_set_env_type(channel, 1, YM262_EGT_SUSTAINED);
+		ym262_set_attack_rate(channel, 1, 15);
+		//a2560u_debugnl("Set decay rate");
+		ym262_set_decay_rate(channel, 1, 15);
+		//a2560u_debugnl("Set slope rate");
+		ym262_set_slope_rate(channel, 1, 0);
+		//a2560u_debugnl("Set release rate");
+		ym262_set_release_rate(channel, 1, 5);
+		//a2560u_debugnl("Set volume");
+		ym262_set_osc_volume(channel, 1,20);
+		ym262_set_vibrato(channel, 1, false);
+		ym262_set_tremolo(channel, 1, false);
+		ym262_set_osc_connection(0, YM262_SYN_FM);
+		//a2560u_debugnl("Set oscfreqmult");
+		ym262_set_feedback(channel,3);
 
-#if 1
-	ym262_set_key_scale_level(0, 0, 0);
-	ym262_set_oscfreqmult(0, 0, 2);
-	ym262_set_env_type(0, 0, YM262_EGT_SUSTAINED);
-	ym262_set_attack_rate(0, 0, 15);
-	//a2560_debugnl("Set decay rate");
-	ym262_set_decay_rate(0, 0, 2);
-	//a2560_debugnl("Set slope rate");
-	ym262_set_slope_rate(0, 0, 4);
-	//a2560_debugnl("Set release rate");
-	ym262_set_release_rate(0, 0, 5);
-	//a2560_debugnl("Set volume");
-	ym262_set_osc_volume(0, 0,63);
-	ym262_set_vibrato(0, 0, false);
-	ym262_set_tremolo(0, 0, false);
-	//a2560_debugnl("Set oscfreqmult");
+		ym262_set_key_scale_level(channel, 0, 0);
+		ym262_set_oscfreqmult(channel, 0, 2);
+		ym262_set_env_type(channel, 0, YM262_EGT_SUSTAINED);
+		ym262_set_attack_rate(channel, 0, 15);
+		//a2560u_debugnl("Set decay rate");
+		ym262_set_decay_rate(channel, 0, 2);
+		//a2560u_debugnl("Set slope rate");
+		ym262_set_slope_rate(channel, 0, 4);
+		//a2560u_debugnl("Set release rate");
+		ym262_set_release_rate(channel, 0, 5);
+		//a2560u_debugnl("Set volume");
+		ym262_set_osc_volume(channel, 0,63);
+		ym262_set_vibrato(channel, 0, false);
+		ym262_set_tremolo(channel, 0, false);
+		//a2560u_debugnl("Set oscfreqmult");
+
+		ym262_set_block_fnum(0, blocks[note_number], fnums[note_number]);
+		ym262_set_block_fnum(1, blocks[note_number+4], fnums[note_number+4]);
+		ym262_set_block_fnum(2, blocks[note_number+7], fnums[note_number+7]);
+		ym262_set_block_fnum(3, blocks[note_number+12], fnums[note_number+12]);
+		ym262_set_block_fnum(4, blocks[note_number-12], fnums[note_number-12]);
+		ym262_set_block_fnum(5, blocks[note_number-24], fnums[note_number-24]);
+
+		a2560u_debug("ym262_set_output(0, YM262_OUTSEL_LR)");
+		ym262_set_output(channel,YM262_OUTSEL_LR);
+		a2560u_debug("ym262_set_osc_connection(0, FM)");
+		ym262_set_osc_connection(channel, YM262_SYN_ADD);
+
+		a2560u_debug("channel_on(0)");
+		ym262_channel_on(channel);
+	}
+
+#if YM262_SESSIONS
+	ym262_session_flush();
 #endif
-
-	ym262_set_block_fnum(0, blocks[note_number], fnums[note_number]);
-	//ym262_set_block_fnum(0, 4, 512+65);
-	a2560u_debug("ym262_set_output(0, YM262_OUTSEL_LR)");
-	ym262_set_output(0,YM262_OUTSEL_LR);
-	a2560u_debug("ym262_set_osc_connection(0, FM)");
-	ym262_set_osc_connection(0, YM262_SYN_ADD);
-
-	a2560u_debug("channel_on(0)");
-	ym262_channel_on(0);
+	
 	return 0;
 }
-#endif
+

@@ -72,9 +72,13 @@ static void on_change(const vicky_mouse_event_t *event)
     struct ps2_mouse_local_t *driver_data = (struct ps2_mouse_local_t *)api->driver_data;
 
     // Emulate a IKBD mouse packet
-    int8_t *packet = event->ps2packet;
-    packet[0] = 0xf8 | (packet[0] & 3);
-    api->os_callbacks.on_mouse(packet);
+    int8_t ikbd_packet[3];
+
+    int8_t *packet = (int8_t*)event->ps2packet;
+    ikbd_packet[0] = 0xf8 | (*packet++ & 3);
+    ikbd_packet[1] = *packet++;
+    ikbd_packet[2] = *packet++;
+    api->os_callbacks.on_mouse(ikbd_packet);
 }
 
 

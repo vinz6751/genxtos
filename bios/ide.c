@@ -1262,6 +1262,16 @@ LONG ide_ioctl(WORD dev,UWORD ctrl,void *arg)
             for (i = 38; i >= 0 && identify.model_number[i] == ' '; i--)
                 identify.model_number[i] = 0;
 
+#ifdef MACHINE_A2560U
+            /* characters are in little endian words */
+            for (i = 0; i <= 38; i += 2) {
+                char c;
+                c = identify.model_number[i];
+                identify.model_number[i] = identify.model_number[i+1];
+                identify.model_number[i+1] = c;
+            }
+#endif
+
             strcpy(arg,identify.model_number);
             ret = E_OK;
         }

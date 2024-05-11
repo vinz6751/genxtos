@@ -237,7 +237,7 @@ void a2560_bios_rs232_init(void) {
 }
 
 /* This does not perfectly emulate the MFP but may enough */
-uint32_t a2560_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
+uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
 {
     const int16_t bauds[] = {
         UART16550_19200BPS, UART16550_9600BPS, UART16550_4800BPS, UART16550_3600BPS,
@@ -245,7 +245,7 @@ uint32_t a2560_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rsr
         UART16550_600BPS, UART16550_300BPS, UART16550_200BPS, UART16550_150BPS,
         // This is not TOS compliant but we need to be able to use higher speeds than 19200bps...
         // 12               13                  14                   15
-        UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS 
+        UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS
     };
     const uint8_t dsize[] = {
         UART16550_8D, UART16550_7D, UART16550_6D, UART16550_5D
@@ -254,20 +254,28 @@ uint32_t a2560_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rsr
     uint8_t data_size;
     uint8_t data_format;
 
-    if (baud == -1)
+    if (baud == -2)
     {
-        // TODO
-        return bauds[13]; /* 57600 */
+        return iorec->baudrate;
+    }
+    else if (baud >= 0) {
+        if (baud > (sizeof(bauds)/sizeof(uint16_t))) {
+            KDEBUG(("a2560u_bios_rsconf1 setting invalid baud specification %d\n", baud));
+        }
+        else {
+            // Speed
+            KDEBUG(("a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", bauds[baud], baud));
+            uart16550_set_bps(UART0, bauds[baud]);
+            iorec->baudrate = baud;
+        }
     }
 
     flags = 0;
     data_size = dsize[(ucr & 0x60) >> 5];
     data_format = (ucr & 0x18) >> 3;
 
-    if (ucr >= 0) 
+    if (ucr != -1)
     {
-        // Speed
-        uart16550_set_bps(UART1, bauds[baud]);
         // Parity
         if (ucr & 2)
             flags |= ucr & 1 ? UART16550_ODD : UART16550_EVEN;
@@ -282,11 +290,13 @@ uint32_t a2560_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rsr
         else if (data_format == 2/* 1 start 1.5 stop */)
                 flags |= UART16550_1_5S;
 
-        uart16550_set_line(UART1, flags);
+        uart16550_set_line(UART0, flags);
+        KDEBUG(("a2560u_bios_rsconf1 setting flags %x\n", flags));
     }
-    KDEBUG(("a2560_bios_rsconf1 setting flags %d and speed %d\n", flags, bauds[baud]));
+    
 
     // RTS/CTS and XON/XOFF not supported ! A2560U doesn't have RTS/CTS pins connected anyway
+    // TODO for machines having SuperIO
     return 0L; // TODO.
 }
 

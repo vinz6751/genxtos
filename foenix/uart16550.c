@@ -65,6 +65,48 @@ void uart16550_init(UART16550 *uart)
 #endif
 }
 
+/* Return the ("ideal") currently configured speed*/
+uint32_t uart16550_bps_code_to_actual(uint16_t bps_code) {
+    switch (bps_code) {
+        case UART16550_50BPS: return 50;
+        case UART16550_75BPS: return 75;
+        case UART16550_110BPS: return 110;
+        case UART16550_134BPS: return 134;
+        case UART16550_150BPS: return 150;
+        case UART16550_200BPS: return 200;
+        case UART16550_300BPS: return 300;
+        case UART16550_600BPS: return 600;
+        case UART16550_1200BPS: return 1200;
+        case UART16550_1800BPS: return 1800;
+        case UART16550_2000BPS: return 2000;
+        case UART16550_2400BPS: return 2400;
+        case UART16550_3600BPS: return 3600;
+        case UART16550_4800BPS: return 4800;
+        case UART16550_9600BPS: return 9600;
+        case UART16550_19200BPS: return 19200;
+        case UART16550_38400BPS: return 38400;
+        case UART16550_57600BPS: return 57600;
+        case UART16550_115200BPS: return 115200;
+        case UART16550_230400BPS: return 230400;
+        default: return (UART16550_CLOCK/bps_code/16);
+    }
+}
+
+/* Return the code for the speed currently set */
+uint16_t uart16550_get_bps_code(const UART16550 *uart) {
+    uint16_t bps_code;
+ 
+    /* Set DLAB */
+    R8(uart)[LCR] |= DLAB;
+
+    ((uint8_t*)&bps_code)[0] = R8(uart)[DLM] = ((uint8_t*)&bps_code)[0];
+    ((uint8_t*)&bps_code)[1] = R8(uart)[DLL] = ((uint8_t*)&bps_code)[1];
+
+    /* Unset DLAB */
+    R8(uart)[LCR] &= ~DLAB;
+    
+    return bps_code;
+}
 
 void uart16550_set_bps(UART16550 *uart, uint16_t bps_code)
 {

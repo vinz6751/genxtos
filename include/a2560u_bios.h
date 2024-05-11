@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../bios/conout.h"
+#include "../bios/serport.h"
 #include "../foenix/vicky2.h"
 #include "../foenix/vicky_mouse.h"
 #include "../foenix/a2560u.h"
@@ -45,9 +46,9 @@ void a2560_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height);
 
 /* Serial port */
 uint32_t a2560_bios_bcostat1(void);
-void     a2560_bios_bconout1(uint8_t byte);
-void     a2560_bios_rs232_init(void);
-uint32_t a2560_bios_rsconf1(int16_t baud, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr);
+void a2560_bios_bconout1(uint8_t byte);
+void a2560_bios_rs232_init(void);
+uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr);
 
 /* Timing stuff */
 #define HZ200_TIMER_NUMBER 2
