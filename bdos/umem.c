@@ -37,6 +37,8 @@ MEMORY_PARTITION_BLOCK pmd;
 MEMORY_PARTITION_BLOCK pmdalt;
 int has_alt_ram;
 #endif
+
+/* value 2^n-1 to add to an address to round it */
 ULONG malloc_align_stram;
 
 /* internal variables */
@@ -379,10 +381,10 @@ void *srealloc(long amount)
 
     /*
      * if free memory is contiguous with existing video ram, we can mess
-     * (carefully) with the last free space MD.  in the very unlikely
-     * event that we used up all the free space defined by the MD, we'd
-     * have to free up the MD itself which would be messy.  the following
-     * calculation of 'available' ensures that the MD will always have at
+     * (carefully) with the last free space MEMORY_DESCRIPTOR.  in the very unlikely
+     * event that we used up all the free space defined by the MEMORY_DESCRIPTOR, we'd
+     * have to free up the MEMORY_DESCRIPTOR itself which would be messy.  the following
+     * calculation of 'available' ensures that the MEMORY_DESCRIPTOR will always have at
      * least FREESPACE_KLUDGE bytes of memory left.
      */
     if (last->m_start + last->m_length == video_ram_addr) {
@@ -411,7 +413,7 @@ void *srealloc(long amount)
     if (amount > available)
         return NULL;
 
-    /* update length in MD, plus saved video ram info */
+    /* update length in MEMORY_DESCRIPTOR, plus saved video ram info */
     last->m_length = last->m_length + video_ram_size - amount;
     video_ram_size = amount;
     video_ram_addr = last->m_start + last->m_length;
@@ -584,7 +586,7 @@ void umem_init(void)
 /*
  * change the memory owner based on the block address
  */
-void set_owner(void *addr, PD *p)
+void set_owner(void *addr, const PD *p)
 {
     MEMORY_DESCRIPTOR *m;
     MEMORY_PARTITION_BLOCK *mpb;
@@ -596,7 +598,7 @@ void set_owner(void *addr, PD *p)
 
     for (m = mpb->mp_mal; m; m = m->m_link) {
         if (m->m_start == (UBYTE *)addr) {
-            m->m_own = p;
+            m->m_own = (PD*)p;
             return;
         }
     }

@@ -21,24 +21,26 @@
 
 #include "emutos.h"
 #include "nls.h"
-#include "ikbd.h"
+//#include "ikbd.h"
 #include "asm.h"
 #include "string.h"
-#include "blkdev.h"     /* for BLKDEVNUM */
-#include "font.h"
+#include "sysconf.h"     /* for BLKDEVNUM */
+#include "fs.h"         /* for is_drive_available() */
+#include "cookie.h"
+#include "mem.h"        /* for total_alt_ram() */
 #include "tosvars.h"
-#include "machine.h"
-#include "processor.h"
+#include "console.h"
+#include "biosbind.h"   /* for Kbshift() */
 #include "xbiosbind.h"
 #include "biosext.h"
 #include "version.h"
-#include "bios.h"
 #include "a2560u_bios.h"
 
 #include "initinfo.h"
-#include "conout.h"
 #include "../bdos/bdosstub.h"
 #include "lineavars.h"
+
+#include "logo.h" /* produced by tools/logo_compressor */
 
 /* Screen width, in characters, as signed value */
 #define SCREEN_WIDTH ((WORD)v_cel_mx + 1)
@@ -49,14 +51,22 @@
 #define DEL_ASCII   0x7f
 
 #define INFO_LENGTH 40      /* width of info lines (must fit in low-rez) */
-#define LOGO_LENGTH 34      /* must equal length of strings in EmuTOS logo */
 
-static const char logo[][LOGO_LENGTH+1] =
-    { "11111111111 7777777777  777   7777",
-      "1                  7   7   7 7    ",
-      "1111   1 1  1   1  7   7   7  777 ",
-      "1     1 1 1 1   1  7   7   7     7",
-      "11111 1   1  111   7    777  7777 " };
+
+static void crlf(void) 
+{
+    cprintf("\r\n");
+}
+
+static void reverse_video_on(void)
+{
+    cprintf("\033p");
+}
+
+static void reverse_video_off(void)
+{
+    cprintf("\033q");
+}
 
 /* Print n spaces */
 static void print_spaces(WORD n)
@@ -75,31 +85,41 @@ static WORD left_margin;
 
 static void set_margin(void)
 {
-    cprintf("\r");              /* goto left side */
+    cprintf("\r");              /* goto left side and reset background*/
     print_spaces(left_margin);
 }
 
-/* print a line in which each char stands for the background color */
-static void print_art(const char *s)
+/* Paint the logo using as little ROM space as possible. */
+static const char block[] = "\033c%c "; /* Block of color 'c' (leave bg colour dirty) */ 
+#define COLOR_OFFSET ('0'+1)
+static void print_art(void)
 {
-    int old = -1;
-    int color;
+    char c;
+    char *r = (char*)logo;
 
     set_margin();
-    while(*s) {
-        color = (*s++) & 15;
-        if(color != old) {
-            cprintf("\033c%c", color + 32);
-            old = color;
+    while ((c = *r++))
+    {
+        if (c < 0)
+        {   
+            while (c++)
+                cprintf(block, *r - COLOR_OFFSET);
         }
-        cprintf(" ");
+        else 
+        {
+            if (c == ('\n'+1))
+            {
+                cprintf(block, 0);
+                crlf();
+                set_margin();
+            }
+            else
+                cprintf(block, c - COLOR_OFFSET);
+        }
     }
-    if(old != 0) {
-        cprintf("\033c ");
-    }
-    cprintf("\r\n");
+    cprintf(block, 0);
+    crlf();
 }
-
 
 /*
  * display a separator line
@@ -114,7 +134,7 @@ static void set_line(void)
     for (celx = 0; celx < INFO_LENGTH; celx++)
         cprintf("_");
 
-    cprintf("\r\n\r\n");    /* followed by blank line */
+    crlf();crlf();  /* followed by blank line */
 }
 
 
@@ -140,11 +160,11 @@ static void display_inverse(const char *s,BOOL crlf)
 
     set_margin();
 
-    cprintf("\033p");
+    reverse_video_on();
     print_spaces(left);
     cprintf(s);
     print_spaces(right);
-    cprintf("\033q");
+    reverse_video_off();
 
     if (crlf)
         cprintf("\r\n");
@@ -192,7 +212,7 @@ static void cprint_asctime(void)
      * when comparing the clock to the default date/time, we would not
      * detect a bad clock.  therefore we ignore the seconds.
      */
-    if (system_time <= (DEFAULT_DATETIME>>5))
+    if (system_time <= (kbd_default_datetime()>>5))
         bad_clock = TRUE;
 
     minutes = system_time & 0x3F;
@@ -209,10 +229,10 @@ static void cprint_asctime(void)
      * if the date/time is invalid, show it in inverse video
      */
     if (bad_clock)
-        cprintf("\033p");
+        reverse_video_on();
     cprintf("%04d/%02d/%02d %02d:%02d:%02d", years, months, days, hours, minutes, seconds);
     if (bad_clock)
-        cprintf("\033q");
+        reverse_video_off();
 }
 
 /*
@@ -230,10 +250,10 @@ static void cprint_devices(WORD dev)
     for (i = 0, mask = 1L; i < BLKDEVNUM; i++, mask <<= 1) {
         if (drvbits & mask) {
             if (i == dev)
-                cprintf("\033p");
+                reverse_video_on();
             cprintf("%c",'A'+i);
             if (i == dev)
-                cprintf("\033q");
+                reverse_video_off();
         }
     }
 
@@ -279,7 +299,7 @@ WORD initinfo(ULONG *pshiftbits)
 #if CONF_WITH_ALT_RAM
     long altramsize = total_alt_ram();
 #endif
-    LONG hdd_available = blkdev_avail(HARDDISK_BOOTDEV);
+    LONG hdd_available = is_drive_available(HARDDISK_BOOTDEV);
     ULONG shiftbits;
 
     /* clear startup message */
@@ -310,8 +330,7 @@ WORD initinfo(ULONG *pshiftbits)
     left_margin = (SCREEN_WIDTH-LOGO_LENGTH) / 2;
 
     /* Now print the EmuTOS Logo */
-    for (i = 0; i < ARRAY_SIZE(logo); i++)
-        print_art(logo[i]);
+    print_art();
 
     /* adjust margins for remaining messages to allow more space for translations */
     left_margin = (SCREEN_WIDTH-INFO_LENGTH) / 2;
@@ -334,7 +353,11 @@ WORD initinfo(ULONG *pshiftbits)
         cprintf("Apollo 68080");
     else
 # endif
+    {
+        ULONG mcpu;
+        cookie_get(COOKIE_CPU, &mcpu);
         cprintf("M680%02ld", mcpu);
+    }
 #endif
     pair_end();
 
@@ -402,10 +425,10 @@ WORD initinfo(ULONG *pshiftbits)
         olddev = dev;
         do
         {
-            shiftbits = kbshift(-1);
+            shiftbits = Kbshift(-1);
 
             /* If Shift, Control, Alt or normal key is pressed, stop waiting */
-            if ((shiftbits & MODE_SCA) || bconstat2())
+            if ((shiftbits & MODE_SCA) || xconstat())
                 break;
 
 #if USE_STOP_INSN_TO_FREE_HOST_CPU
@@ -415,17 +438,17 @@ WORD initinfo(ULONG *pshiftbits)
         while (hz_200 < end);
 
         /* Wait while Shift is pressed, and normal key is not pressed */
-        while ((shiftbits & MODE_SHIFT) && !bconstat2())
+        while ((shiftbits & MODE_SHIFT) && !xconstat())
         {
 #if USE_STOP_INSN_TO_FREE_HOST_CPU
             stop_until_interrupt();
 #endif
-            shiftbits = kbshift(-1);
+            shiftbits = Kbshift(-1);
         }
 
         /* if a non-modifier key was pressed, examine it */
-        if (bconstat2()) {
-            int c = LOBYTE(bconin2());
+        if (xconstat()) {
+            int c = LOBYTE(xnecin());
 
             c = toupper(c);
             if (c == DEL_ASCII) {
@@ -440,7 +463,7 @@ WORD initinfo(ULONG *pshiftbits)
             {
                 c -= 'A';
                 if ((c >= 0) && (c < BLKDEVNUM))
-                    if (blkdev_avail(c))
+                    if (is_drive_available(c))
                         dev = c;
             }
         }
@@ -475,15 +498,10 @@ WORD initinfo(ULONG *pshiftbits)
 {
     /* we already displayed a startup message */
 
-    *pshiftbits = kbshift(-1);
+    *pshiftbits = Kbshift(-1);
     return bootdev;
 }
 
 
 #endif   /* FULL_INITINFO */
 
-
-void display_startup_msg(void)
-{
-    cprintf("EmuTOS Version %s\r\n", version);
-}
