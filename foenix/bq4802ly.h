@@ -18,7 +18,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 struct __attribute__((aligned(16))) bq4802ly_t 
 {
     volatile uint8_t seconds;
