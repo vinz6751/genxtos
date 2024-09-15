@@ -26,7 +26,8 @@
     #define VICKY_CTRL_TILE       0x00000010
     #define VICKY_CTRL_SPRITE     0x00000020
     #define VICKY_CTRL_DISABLE    0x00000080
-    #define VICKY_CTRL_CLK40      0x80000000  /**< Indicate if PLL is 25MHz (0) or 40MHz (1) */    
+    #define VICKY_CTRL_HIGH_RES   0x40000000  /* See MCP txt_a2560k_b.c */
+    #define VICKY_CTRL_CLK40      0x80000000  /**< Indicate if PLL is 25MHz (0) or 40MHz (1) */
     #define VICKY_BORDER_HEIGHT   0x003f0000L
 
 /* Channel A (first screen), VICKY II has only one anyway */
@@ -175,16 +176,16 @@ extern struct vicky2_bitmap_t * const vicky_bitmap;
 extern const FOENIX_VIDEO_MODE vicky2_video_modes[];
 
 struct vicky2_channel_t {
-    struct vicky2_t *ctrl;
-    struct vicky2_bitmap_t *bitmap;
-    struct vicky2_tile_t *tile;
-    struct vicky2_collition_t *collision;
-    uint16_t *mouse_pointer;
-    uint16_t *mouse_control;
-    FOENIX_VIDEO_MODE *video_modes;
+    struct vicky2_t * const ctrl;
+    struct vicky2_bitmap_t * const bitmap;
+    struct vicky2_tile_t * const tile;
+    struct vicky2_collision_t * const collision;
+    uint16_t * const mouse_pointer;
+    uint16_t * const mouse_control;
+    FOENIX_VIDEO_MODE * const video_modes;
 };
 
-struct vicky2_channel_t * const vicky = VICKY;
+const struct vicky2_channel_t * const vicky = VICKY;
 
 #elif defined(MACHINE_A2560X) || defined (MACHINE_A2560K)
 struct vicky2_mouse_control_t {
@@ -265,37 +266,37 @@ struct vicky2_channel_t {
 
 
 // Convenience pointers for the default (or only) screen
-extern struct vicky2_channel_t vicky2_channel_a;
-extern struct vicky2_channel_t vicky2_channel_b;
+extern const struct vicky2_channel_t vicky2_channel_a;
+extern const struct vicky2_channel_t vicky2_channel_b;
 
-extern struct vicky2_channel_t * const vicky; // Convenience
+extern const struct vicky2_channel_t * const vicky; // Convenience
 
 #endif
 
 extern uint32_t vicky_vbl_freq; /* VBL frequency */
 
 void vicky2_init(void);
-void vicky2_init_channel(struct vicky2_channel_t *vicky);
+void vicky2_init_channel(const struct vicky2_channel_t * const vicky);
 
 /* Color management */
-void vicky2_set_background_color(struct vicky2_channel_t *vicky, uint32_t color);
-void vicky2_set_border_color(struct vicky2_channel_t *vicky, uint32_t color);
-void vicky2_set_lut_color(struct vicky2_channel_t *vicky, uint16_t lut, uint16_t number, uint32_t color);
-void vicky2_get_lut_color(const struct vicky2_channel_t *vicky, uint16_t lut, uint16_t number, COLOR32 *result);
+void vicky2_set_background_color(const struct vicky2_channel_t * const vicky, uint32_t color);
+void vicky2_set_border_color(const struct vicky2_channel_t * const vicky, uint32_t color);
+void vicky2_set_lut_color(const struct vicky2_channel_t * const vicky, uint16_t lut, uint16_t number, uint32_t color);
+void vicky2_get_lut_color(const struct vicky2_channel_t * const vicky, uint16_t lut, uint16_t number, COLOR32 *result);
 
 /* Video mode */
-void vicky2_set_video_mode(struct vicky2_channel_t *vicky, uint16_t mode); /* video mode number */
-void vicky2_read_video_mode(const struct vicky2_channel_t *vicky, FOENIX_VIDEO_MODE *result);
-void vicky2_set_bitmap_address(struct vicky2_channel_t *vicky, uint16_t layer, const uint8_t *address); /* address is relative to VRAM */
-uint8_t *vicky2_get_bitmap_address(const struct vicky2_channel_t *vicky, uint16_t layer); /* address is relative to VRAM */
+void vicky2_set_video_mode(const struct vicky2_channel_t * const vicky, uint16_t mode); /* video mode number */
+void vicky2_read_video_mode(const struct vicky2_channel_t * const vicky, FOENIX_VIDEO_MODE *result);
+void vicky2_set_bitmap_address(const struct vicky2_channel_t * const vicky, uint16_t layer, const uint8_t *address); /* address is relative to VRAM */
+uint8_t *vicky2_get_bitmap_address(const struct vicky2_channel_t * const vicky, uint16_t layer); /* address is relative to VRAM */
 
 /* Text output support */
-void vicky2_set_text_lut(struct vicky2_channel_t *vicky, const uint16_t *fg, const uint16_t *bg);
+void vicky2_set_text_lut(const struct vicky2_channel_t * const vicky, const uint16_t *fg, const uint16_t *bg);
 
 /* Text cursor support */
-void vicky2_show_cursor(struct vicky2_channel_t *vicky);
-void vicky2_hide_cursor(struct vicky2_channel_t *vicky);
-void vicky2_set_text_cursor_xy(struct vicky2_channel_t *vicky, uint16_t x, uint16_t y);
+void vicky2_show_cursor(const struct vicky2_channel_t * const vicky);
+void vicky2_hide_cursor(const struct vicky2_channel_t * const vicky);
+void vicky2_set_text_cursor_xy(const struct vicky2_channel_t * const vicky, uint16_t x, uint16_t y);
 
 /* Mouse support: see vicky_mouse.h */
 
