@@ -4,13 +4,21 @@
  * See official documentation on the LPC47M107S for details on what
  * these registers all do:
  * https://ww1.microchip.com/downloads/en/DeviceDoc/47m10x.pdf
+ * Credits to FoeniMCP source code
  */
-
 
 #ifndef __SUPERIO_H
 #define __SUPERIO_H
 
 #include <stdint.h>
+
+#define SUPERIO_BASE (0xFEC02000)
+
+void superio_init(void);
+
+
+#define CONFIG_0x2E_REG ((volatile uint8_t *)0xFEC0202E)
+#define CONFIG_0x2F_REG ((volatile uint8_t *)0xFEC0202F)
 
 #define PME_STS_REG 	((volatile uint8_t *)0xFEC02100)
 #define PME_EN_REG 		((volatile uint8_t *)0xFEC02102)
@@ -109,7 +117,5 @@
 #define LED1_REG			((volatile uint8_t *)0xFEC0215D)
 #define LED2_REG			((volatile uint8_t *)0xFEC0215E)
 #define KEYBOARD_SCAN_CODE	((volatile uint8_t *)0xFEC0215F)
-
- void superio_init(void);
 
 #endif
