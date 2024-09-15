@@ -16,14 +16,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(MACHINE_A2560X) || defined (MACHINE_A2560K)
-    #define UART16550_CLOCK 1843200L
-    #define UART0 ((UART16550*const)0xFEC023F8)
-    #define UART1 ((UART16550*const)0xFEC02278)
-#elif defined(MACHINE_A2560U)
-    #define UART16550_CLOCK 20000000L /* 20Mhz, system clock */
-    #define UART0 ((UART16550*const)(0xB028F8))
-#else
+#include "foenix.h"
+
+#ifndef UART16550_CLOCK
     #error "UART16550 clock not specified"
 #endif
 
@@ -79,4 +74,5 @@ void uart16550_rx_irq_enable(UART16550 *uart, bool);
 
 /* Called by when a byte is received from the UART */
 extern void (*uart16550_rx_handler)(uint8_t byte);
+
 #endif

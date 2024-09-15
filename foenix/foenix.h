@@ -51,7 +51,11 @@
 
 /* Chipset addresses */
 #define BQ4802LY_BASE  (GAVIN+0x80)
+#ifdef MACHINE_A2560U
 #define PS2_BASE       (GAVIN+0x2800)
+#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#define PS2_BASE       0xFEC02060 // TODO: improve this with base address of SUPERIO
+#endif
 #define SDC_BASE       (GAVIN+0x300)
 #define IDE_BASE       (GAVIN+0x400)
 
@@ -63,10 +67,12 @@
   #define GAVIN_CTRL_DISKLED 0x0002
 
 #ifdef MACHINE_A2560U
+#define UART16550_CLOCK 20000000L /* 20Mhz, system clock */
 /* Serial port speed codes for a2560u_serial_set_bps */
 #define UART1       (UART16550*)(GAVIN+0x28F8)
 /* For speed codes, checkout uart16550.h */
 #elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K)
+#define UART16550_CLOCK 1843200L
 #define UART1       (UART16550*)0xFEC023F8  /* Base address for UART 1 (COM1) */
 #define UART2       (UART16550*)0xFEC022F8  /* Base address for UART 2 (COM2), the doc is wrong! */
 #endif
@@ -86,6 +92,17 @@
     #define INT_VICKY_A_4       0x05
     #define INT_RESERVED_1      0x06
     #define INT_VICKY_A_DAC     0x07
+#if defined(MACHINE_A2560X)
+    #define INT_SOF_B           0x08    /* Vicky Channel B Start of Frame */
+    #define INT_SOL_B           0x09    /* Vicky Channel B Start of Line */
+    #define INT_VICKY_B_1       0x0A
+    #define INT_VICKY_B_2       0x0B
+    #define INT_VICKY_B_3       0x0C
+    #define INT_VICKY_B_4       0x0D
+    #define INT_RESERVED_2      0x0E
+    #define INT_VICKY_B_DAC     0x0F
+#endif
+    #define INT_
 #define IRQ_PENDING_GRP1 (GAVIN+0x102)
     #define INT_KBD_PS2         0x10    /* PS/2 Keyboard */
     #define INT_MOUSE           0x12    /* PS/2 Mouse */
@@ -110,7 +127,7 @@
 /* 68000 Interrupt vector numbers (not address!)  */
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560X)
 #define INT_VICKYII_A     0x1D
-#define INT_VICKYII_B     0x1D
+#define INT_VICKYII_B     0x1E
 #else
 #define INT_VICKYII       0x1E
 #endif
