@@ -69,7 +69,7 @@ static bool can_drive(const uint8_t ps2_device_type[])
 static void on_change(const vicky_mouse_event_t *event)
 {
     struct ps2_driver_api_t *api = (struct ps2_driver_api_t *)event->user_data;
-    struct ps2_mouse_local_t *driver_data = (struct ps2_mouse_local_t *)api->driver_data;
+    //struct ps2_mouse_local_t *driver_data = (struct ps2_mouse_local_t *)api->driver_data;
 
     // Emulate a IKBD mouse packet
     int8_t ikbd_packet[3];
