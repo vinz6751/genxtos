@@ -11,6 +11,7 @@
  */
 
 #define MACHINE_A2560_DEBUG 1
+// #define ENABLE_KDEBUG
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -123,7 +124,7 @@ void a2560u_init(void)
     a2560_debugnl("uart16550_init");
     
 
-KDEBUG(("irq_init"));
+    a2560_debugnl(("irq_init"));
 
     a2560_debugnl("timer_init");
     timer_init();
@@ -381,17 +382,19 @@ static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)I
 /* Enable an interruption. First byte is group, second byte is bit */
 void a2560_irq_enable(uint16_t irq_id)
 {
+    a2560_debugnl("a2560_irq_enable(0x%04x)", irq_id);
     a2560u_irq_acknowledge(irq_id);
     R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
-    a2560_debugnl("a2560_irq_enable(%02x) -> Mask %p=%04x", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
+    a2560_debugnl("a2560_irq_enable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
 }
 
 
 /* Disable an interruption. First byte is group, second byte is bit */
 void a2560u_irq_disable(uint16_t irq_id)
 {
+    a2560_debugnl("a2560_irq_disable(0x%04x)", irq_id);
     R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
-    a2560_debugnl("a2560u_irq_disable(%02x) -> Mask %p=%04x", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
+    a2560_debugnl("a2560_irq_disable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
 }
 
 
@@ -458,6 +461,22 @@ static const struct ps2_driver_t * const drivers[] = {
     &ps2_mouse_driver_a2560u
 };
 
+static void irq_msg40(void);
+static void irq_msg41(void);
+static void irq_msg42(void);
+static void irq_msg43(void);
+static void irq_msg44(void);
+static void irq_msg45(void);
+static void irq_msg46(void);
+static void irq_msg47(void);
+static void irq_msg40(void) { a2560_debugnl("0x40"); }
+static void irq_msg41(void) { a2560_debugnl("0x41"); }
+static void irq_msg42(void) { a2560_debugnl("0x42"); }
+static void irq_msg43(void) { a2560_debugnl("0x43"); }
+static void irq_msg44(void) { a2560_debugnl("0x44"); }
+static void irq_msg45(void) { a2560_debugnl("0x45"); }
+static void irq_msg46(void) { a2560_debugnl("0x46"); }
+static void irq_msg47(void) { a2560_debugnl("0x47"); }
 
 /* The following must be set by the calling OS prior to calling a2560u_kbd_init
  * ps2_config.counter      = ;
@@ -480,17 +499,27 @@ void a2560u_kbd_init(void)
     ps2_config.n_drivers    = sizeof(drivers)/sizeof(struct ps2_driver_t*);
     ps2_config.drivers      = drivers;
 
-    //ps2_init();
+    ps2_init();
 
     /* Register GAVIN interrupt handlers */
     set_vector(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);
     set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560u_irq_ps2mouse);
-
+/*
+set_vector(INT_PS2KBD_VECN, (uint32_t)irq_msg40);
+set_vector(INT_PS2KBD_VECN+1, (uint32_t)irq_msg41);
+set_vector(INT_PS2KBD_VECN+2, (uint32_t)irq_msg42);
+set_vector(INT_PS2KBD_VECN+3, (uint32_t)irq_msg43);
+set_vector(INT_PS2KBD_VECN+4, (uint32_t)irq_msg44);
+set_vector(INT_PS2KBD_VECN+5, (uint32_t)irq_msg45);
+set_vector(INT_PS2KBD_VECN+6, (uint32_t)irq_msg46);
+set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
+*/
     /* Acknowledge any pending interrupt */
     a2560u_irq_acknowledge(INT_KBD_PS2);
     a2560u_irq_acknowledge(INT_MOUSE);
 
     /* Go ! */
+    a2560_debugnl("Enabling GAVIN PS2/mouse irqs");
     a2560_irq_enable(INT_KBD_PS2);
     a2560_irq_enable(INT_MOUSE);
 }
@@ -510,7 +539,8 @@ static const uint32_t foenix_cpu_speed_hz[] =
     80000000
 };
 
-static const char* foenix_model_name[] =
+#define FOENIX_MODEL_NAME_SIZE 12
+static const char* foenix_model_name[12] =
 {
     "C256 FMX",
     "C256 U",
@@ -526,7 +556,8 @@ static const char* foenix_model_name[] =
     "A2560K"
 };
 
-static const char * foenix_cpu_name[] =
+#define FOENIX_CPU_NAME_SIZE 11
+static const char * foenix_cpu_name[FOENIX_CPU_NAME_SIZE] =
 {
     "MC68SEC000",
     "MC68020"
@@ -535,6 +566,10 @@ static const char * foenix_cpu_name[] =
     "MC68EC30",
     "MC68040",
     "MC68040V",
+    "MC68EC40",
+    "486DX2-50",
+    "486DX2-66",
+    "486DX4"
 };
 
 
@@ -567,15 +602,22 @@ void a2560_system_info(struct foenix_system_info_t *result)
     result->pcb_revision_name[3] = '\0';
 
     // From GAVIN
-    result->cpu_name = (char*)foenix_cpu_name[GAVIN_R(GAVIN+0x0C) >> 12];
-    //result->model_name = foenix_model_name[poke]
-
     uint16_t machine_id = GAVIN_R(GAVIN+0x0C);
-    result->cpu_id = (machine_id & 0xf000) >> 12;
-    result->cpu_name = (char*)foenix_cpu_name[result->cpu_id];
-    result->cpu_speed_hz = foenix_cpu_speed_hz[(machine_id & 0xf00) >> 8];
+    
+    a2560_debugnl("Machine id: %x", machine_id);
+    result->cpu_id = (machine_id >> 12) & 7;
+    if (result->cpu_id >= FOENIX_CPU_NAME_SIZE)
+        result->cpu_name = "Unknown";
+    else
+        result->cpu_name = (char*)foenix_cpu_name[result->cpu_id];
+
+    result->cpu_speed_hz = foenix_cpu_speed_hz[(machine_id >> 5) & 7];
+    
     int model_id = machine_id & 0x0f;
-    result->model_name = (char*)foenix_model_name[model_id];
+    if (model_id >= FOENIX_MODEL_NAME_SIZE)
+        result->model_name = "Unknown";
+    else
+        result->model_name = (char*)foenix_model_name[model_id];
 
     if (model_id == 9) /* A2560U */
     {
@@ -616,7 +658,7 @@ static uint32_t set_vector(uint16_t num, uint32_t vector)
     uint32_t *addr = (uint32_t *) (4L * num);
     oldvector = *addr;
 
-    if(vector != -1) {
+    if (vector != -1) {
         *addr = vector;
     }
     return oldvector;
