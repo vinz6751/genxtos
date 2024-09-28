@@ -11,7 +11,7 @@
  */
 
 #define MACHINE_A2560_DEBUG 1
-// #define ENABLE_KDEBUG
+#define ENABLE_KDEBUG
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -108,23 +108,15 @@ void a2560u_init(void)
     uart16550_init(UART2); /* So we can debug to serial port early */
     uart16550_put(UART2, (uint8_t*)"TEST\n", 4);
     channel_A_logger_init();
-    //uart16550_put(UART2, (uint8_t*)"A",1);
-    channel_A_write("TEST CHANNEL A DEBUG\n");
-    //uart16550_put(UART2, (uint8_t*)"B",1);
-    channel_A_write("Initializing UART\n");
-
-    channel_A_write("UART INITIALIZED, testing a2560_debug output\n");
 #endif
-    
-    a2560_debugnl("irq_init()");
-    //uart16550_put(UART2, (uint8_t*)"C",1);
-    channel_A_write("SOMETHING SHOULD BE ON THE UART NOW\n");
-    irq_init();
-    //uart16550_put(UART2, (uint8_t*)"D",1);
-    a2560_debugnl("uart16550_init");
-    
 
-    a2560_debugnl(("irq_init"));
+#if defined(MACHINE_A2560U)
+    uart16550_init(UART1); /* So we can debug to serial port early */
+    //uart16550_put(UART1, (uint8_t*)"DEBUG TEST\n", 4);
+#endif
+
+    a2560_debugnl("irq_init()");
+    irq_init();
 
     a2560_debugnl("timer_init");
     timer_init();
