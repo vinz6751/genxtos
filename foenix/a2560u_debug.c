@@ -8,14 +8,11 @@
 
 void outchar(int c);
 void outchar(int c) {
+    char ch = (char)c;
 #ifdef MACHINE_A2560U
-    char ch = (char)c;
-    uart16550_put(UART1,&c,1);
-#elif defined(MACHINE_A2560X)
-    // Serial
-    char ch = (char)c;
+    uart16550_put(UART1,(uint8_t*)&ch,1);
+#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
     uart16550_put(UART2,(uint8_t*)&ch, 1);
-    
  #if FOENIX_CHANNEL_A_DEBUG_PRINT
     // Channel A
     char buf[2];
@@ -56,7 +53,7 @@ void a2560_debug(const char* __restrict__ fmt, ...)
 
 void a2560u_here(void) {
 #if MACHINE_A2560_DEBUG
-   channel_A_write("HERE");
+   a2560_debugnl("HERE");
 #endif
 }
 
