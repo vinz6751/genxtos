@@ -1,7 +1,7 @@
 /*
  * foenix.h - Foenix Retro System computer specific defines
  *
- * Copyright (C) 2022 The EmuTOS development team
+ * Copyright (C) 2024 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -16,15 +16,18 @@
 #include <stdint.h>
 
 /* General memory map */
+#define VICKY_TEXT_SIZE 0x4000 /* Size of the text memory */
+#define VICKY_FONT_SIZE 0x1000 /* Size of the font memory */
+
 #ifdef MACHINE_A2560U
   #define CPU_FREQ        20000000 /* 20Mhz : TODO get rid of this and use cpu_freq */
   #define GAVIN           0x00B00000
   #define BEATRIX         0x00B20000
   #define VICKY           0x00B40000
-  #define VICKY_TEXT      0x00B60000  
+  #define VICKY_TEXT      0x00B60000
   #define VICKY_TEXT_MEM  0x00B60000
   #define VICKY_FONT      (VICKY_TEXT_MEM+0x8000)      /* Font memory (-> 0xbff) */  
-  #define VICKY_TEXT_SIZE 0x4000
+
   #define VRAM_Bank0      0x00C00000
   #define VRAM0_SIZE      0x00200000 /* 2MB */
 #elif defined(MACHINE_A2560X)
@@ -38,7 +41,6 @@
   #define VICKY_B         0xFEC80000
   #define VICKY_FONT_B    0xFEC88000
   #define VICKY_TEXT_B    0xFECA0000
-  #define VICKY_TEXT_SIZE 0x4000
   // Convenience, we treat the most feature-full screen as main screen (so to share code with the U which only has 1 screen)
   #define VICKY VICKY_B
   #define VICKY_TEXT VICKY_TEXT_B
