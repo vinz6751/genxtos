@@ -36,12 +36,14 @@
 static void init(const Fonthead *font)
 {
     KDEBUG(("conout_bmp->init\n"));
+    v_cel_mx = (V_REZ_HZ / font->max_cell_width) - 1;
+    v_cel_my = (V_REZ_VT / font->form_height) - 1;
     v_cel_wr = v_lin_wr * v_cel_ht;
     v_cur_ad.pxaddr = v_bas_ad;
 
     /* Stop text mode and start bitmap */
-    vicky->control &= ~VICKY_CTRL_TEXT; 
-    vicky->control = VICKY_CTRL_GFX|VICKY_CTRL_BITMAP;
+    vicky->ctrl->control &= ~VICKY_CTRL_TEXT;
+    vicky->ctrl->control = VICKY_CTRL_GFX|VICKY_CTRL_BITMAP;
     KDEBUG(("conout_bmp->init done\n"));
 }
 

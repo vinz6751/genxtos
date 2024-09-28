@@ -18,7 +18,7 @@
  * If we ever add a 16x32 font, the code will need changing!
  */
 
-#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "asm.h"
@@ -38,11 +38,10 @@ extern const CONOUT_DRIVER conout_atarifb;
 
 
 void conout_init(const Fonthead *font)
-{    
-    v_cel_mx = (V_REZ_HZ / font->max_cell_width) - 1;
-    v_cel_my = (V_REZ_VT / font->form_height) - 1;
+{
+    KDEBUG(("conout_init: v_cel_mx: %d v_cel_my:%d\n", v_cel_mx, v_cel_my));
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
     conout = a2560_bios_get_conout();
 #else
     conout = &conout_atarifb;
@@ -351,7 +350,6 @@ void conout_scroll_up(UWORD top_line)
     count = (ULONG)v_cel_wr * (v_cel_my - top_line);
     conout->scroll_up(src, dst, count);   
 }
-
 
 
 /*
