@@ -134,6 +134,15 @@ union vicky2_color_t {
 #endif
 typedef union vicky2_color_t COLOR32;
 
+struct vicky2_text_memory_t {
+    uint8_t text[VICKY_TEXT_SIZE];
+    uint8_t reserved_4000[0x4000];
+    uint8_t color[VICKY_TEXT_SIZE];
+    uint8_t reserved_c000[0x400];
+    union vicky2_color_t palette_fg[16];
+    union vicky2_color_t palette_bg[16];
+};
+
 struct vicky2_layer_t {
     uint32_t control;
     uint8_t  *address; // Relative to VRAM start
@@ -149,6 +158,10 @@ struct vicky2_palette_t {
 
 struct vicky2_bmp_palette_t {
     struct vicky2_palette_t lut[VICKY_NLUTS];
+};
+
+struct vicky2_font_memory_t {
+    uint8_t mem[VICKY_FONT_SIZE];
 };
 
 #ifdef MACHINE_A2560U
@@ -171,21 +184,22 @@ struct vicky2_t {
     uint16_t fpga_part_number_high;
 };
 
-extern struct vicky2_bitmap_t * const vicky_bitmap;
-
-extern const FOENIX_VIDEO_MODE vicky2_video_modes[];
-
 struct vicky2_channel_t {
-    struct vicky2_t * const ctrl;
-    struct vicky2_bitmap_t * const bitmap;
-    struct vicky2_tile_t * const tile;
-    struct vicky2_collision_t * const collision;
-    uint16_t * const mouse_pointer;
-    uint16_t * const mouse_control;
-    FOENIX_VIDEO_MODE * const video_modes;
+    struct vicky2_t *ctrl;
+    struct vicky2_bitmap_t *bitmap;
+    struct vicky2_tile_t *tile;
+    struct vicky2_collision_t *collision;
+    struct vicky2_mouse_gfx_t *mouse_gfx;
+    struct vicky2_mouse_control_t *mouse_control;
+    struct vicky2_sprites_control_t **sprite;
+    struct vicky2_bmp_palette_t *lut;
+    struct vicky2_gamma_lut_memory_t *gamma;
+    struct vicky2_font_memory_t *font_memory;
+    struct vicky2_text_memory_t *text_memory;
+    const FOENIX_VIDEO_MODE *video_modes; // Array of video modes
 };
 
-const struct vicky2_channel_t * const vicky = VICKY;
+extern const struct vicky2_channel_t * const vicky;
 
 #elif defined(MACHINE_A2560X) || defined (MACHINE_A2560K)
 struct vicky2_mouse_control_t {
@@ -193,7 +207,6 @@ struct vicky2_mouse_control_t {
     uint16_t reserved02;
     uint16_t yx; // Read only
     uint16_t reserved06;
-
 };
 
 struct vicky2_t {
@@ -216,15 +229,6 @@ struct vicky2_t {
     uint32_t ps2_byte[3]; // Must write as 32 bits. See doc.
 };
 
-struct vicky2_text_memory_t {
-    uint8_t text[VICKY_TEXT_SIZE];
-    uint8_t reserved_4000[0x4000];
-    uint8_t color[VICKY_TEXT_SIZE];
-    uint8_t reserved_c000[0x400];
-    union vicky2_color_t palette_fg[16];
-    union vicky2_color_t palette_bg[16];
-};
-
 struct vicky2_mouse_gfx_t {
     uint32_t mouse_gfx[8];
 };
@@ -244,10 +248,6 @@ struct __attribute__((__packed__)) vicky2_gamma_lut_memory_t {
     uint8_t red[256];
 };
 
-struct vicky2_font_memory_t {
-    uint8_t mem[0x1000];
-};
-
 struct vicky2_channel_t {
     struct vicky2_t *ctrl;
     struct vicky2_bitmap_t *bitmap;
@@ -263,13 +263,11 @@ struct vicky2_channel_t {
     const FOENIX_VIDEO_MODE *video_modes; // Array of video modes
 };
 
-
-
 // Convenience pointers for the default (or only) screen
 extern const struct vicky2_channel_t vicky2_channel_a;
 extern const struct vicky2_channel_t vicky2_channel_b;
-
-extern const struct vicky2_channel_t * const vicky; // Convenience
+// Convenience, will point to either vicky2_channel_a or vicky2_channel_b depending on the machine.
+extern const struct vicky2_channel_t * const vicky;
 
 #endif
 
