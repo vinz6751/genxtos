@@ -19,7 +19,7 @@
  * - Manage text cursor visibility / blinking.
  */
 
-#define ENABLE_KDEBUG
+// #define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "lineavars.h"
@@ -894,7 +894,7 @@ void blink(void)
  */
 WORD cursconf(WORD function, WORD operand)
 {
-    KDEBUG(("cursconf"));
+    KDEBUG(("cursconf\n"));
     switch (function) {
     case 0:
         cursor_off();                   /* set cursor non-visible */
@@ -914,7 +914,7 @@ WORD cursconf(WORD function, WORD operand)
     case 5:
         return(v_period);               /* set cursor flash interval */
     }
-    KDEBUG(("cursconf exiting"));
+    KDEBUG(("cursconf exiting\n"));
     return 0;
 }
 
@@ -924,7 +924,7 @@ WORD cursconf(WORD function, WORD operand)
  */
 void vt52_init(void)
 {
-    KDEBUG(("vt52_init"));
+    KDEBUG(("vt52_init\n"));
     /* set font-related lineA variables */
     conout_init(font_set_default());
 
@@ -954,5 +954,5 @@ void vt52_init(void)
     con_state = normal_ascii;           /* Init conout state machine */
 
     clear_and_home();
-    KDEBUG(("vt52_init exiting"));
+    KDEBUG(("vt52_init exiting\n"));
 }
