@@ -33,11 +33,37 @@
 
 static void cursor_moved(void);
 
+static struct {
+    uint16_t max_width;
+    uint16_t max_height;
+    uint16_t text_width;
+    uint16_t text_height;
+    uint16_t left_border_width;
+} L;
 
 static void init(const Fonthead *font)
 {
-    v_cel_mx++;
-    v_cel_wr = v_cel_mx;
+    int border_width_chars, border_height_chars;
+
+    L.max_width = V_REZ_HZ / font->max_cell_width;
+    L.max_height = V_REZ_VT / font->form_height;
+
+    if (vicky->ctrl->border_control & VICKY_BORDER_ENABLE) {
+        border_width_chars = ((vicky->ctrl->border_control & VICKY_BORDER_WIDTH) >> 8) / font->max_cell_width;
+        border_height_chars = ((vicky->ctrl->border_control & VICKY_BORDER_HEIGHT) >> 16) / font->form_height;
+    }
+    else {
+        border_width_chars = border_height_chars = 0;
+    }
+
+    L.text_width = (V_REZ_HZ / font->max_cell_width) - 2 * border_width_chars;
+    L.text_height = (V_REZ_VT / font->form_height) - 2 * border_height_chars;
+
+    a2560_debugnl("v_cel_mx=%d v_cel_my=%d v_cel_wr=%d", v_cel_mx, v_cel_my, v_cel_wr);
+    v_cel_mx = L.text_width - 1;
+    v_cel_my = L.text_height - 1;
+    v_cel_wr = L.max_width;
+
     v_cur_ad.cellno = 0; /* First cell in text memory */
     a2560_bios_text_init();
     cursor_moved();
@@ -46,7 +72,7 @@ static void init(const Fonthead *font)
 
 static CHAR_ADDR cell_addr(UWORD x, UWORD y)
 {
-    return (CHAR_ADDR)(UWORD)(v_cel_mx * y + x + v_cur_of);
+    return (CHAR_ADDR)(UWORD)((v_cel_mx + 1) * y + x + v_cur_of);
 }
 
 
@@ -96,8 +122,10 @@ static void blank_out(int topx, int topy, int botx, int boty)
     uint8_t *colour;
     uint16_t cell;
     uint8_t cell_colour;
-    
-    next_line = v_cel_mx;
+
+    a2560_debugnl("blank_out(%d,%d,%d,%d)",topx,topy,botx,boty);
+
+    next_line = v_cel_wr;
     nrows = boty - topy + 1;
     ncolumns = botx - topx + 1;
     cell = cell_addr(topx, topy).cellno;
@@ -121,9 +149,44 @@ static void blank_out(int topx, int topy, int botx, int boty)
 
 static void scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
 {
-    /* scroll the text memory */
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined (MACHINE_GENX)
+    uint8_t *s,*d,*sc,*dc;
+
+    d = &vicky->text_memory->text[dst.cellno];
+    s = &vicky->text_memory->text[src.cellno];
+    dc = &(vicky->text_memory->color[dst.cellno]);
+    sc = &(vicky->text_memory->color[src.cellno]);
+
+    // Unfortuntely, the X can only copy byte by byte :(
+    // Unroll loop for performance as mitigation
+    uint16_t cnt = count/8;
+    cnt--;
+    do {
+        // Scroll the text memory
+        *d++ = *s++;
+        *d++ = *s++;
+        *d++ = *s++;
+        *d++ = *s++;
+        *d++ = *s++;
+        *d++ = *s++;
+        *d++ = *s++;
+        *d++ = *s++;
+        // Scroll the color memory
+        *dc++ = *sc++;
+        *dc++ = *sc++;
+        *dc++ = *sc++;
+        *dc++ = *sc++;
+        *dc++ = *sc++;
+        *dc++ = *sc++;
+        *dc++ = *sc++;
+        *dc++ = *sc++;
+    } while (--cnt != 0xffff); // This is supposed to produce a 'dbra'
+#else
+    // Scroll the text memory
     memmove((void*)(&vicky->text_memory->text[dst.cellno]), (void*)(&vicky->text_memory->text[src.cellno]), count);
+    // Scroll the color memory
     memmove((void*)(&(vicky->text_memory->color[dst.cellno])), (void*)(&(vicky->text_memory->color[src.cellno])), count);
+#endif
 
     /* exit thru blank out, bottom line cell address y to top/left cell */
     blank_out(0, v_cel_my , v_cel_mx, v_cel_my);
@@ -153,7 +216,6 @@ static void unpaint_cursor(void)
     /* VICKY is in charge */
     vicky2_hide_cursor(vicky);
 }
-
 
 
 static void blink_cursor(void)
