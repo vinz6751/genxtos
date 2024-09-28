@@ -229,6 +229,7 @@ void a2560_bios_bconout1(uint8_t byte)
 void a2560u_irq_com1(void); // Event handler in a2560u_s.S
 
 void a2560_bios_rs232_init(void) {
+    a2560_debugnl("a2560_bios_rs232_init");
     // The UART's base settings are setup earlier
     uart16550_rx_handler = push_serial_iorec;
     setexc(INT_COM1_VECN, (uint32_t)a2560u_irq_com1);
@@ -239,7 +240,7 @@ void a2560_bios_rs232_init(void) {
 /* This does not perfectly emulate the MFP but may enough */
 uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
 {
-    const int16_t bauds[] = {
+    static const int16_t bauds[] = {
         UART16550_19200BPS, UART16550_9600BPS, UART16550_4800BPS, UART16550_3600BPS,
         UART16550_2400BPS, UART16550_2000BPS, UART16550_1800BPS, UART16550_1200BPS,
         UART16550_600BPS, UART16550_300BPS, UART16550_200BPS, UART16550_150BPS,
@@ -247,7 +248,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
         // 12               13                  14                   15
         UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS
     };
-    const uint8_t dsize[] = {
+    static const uint8_t dsize[] = {
         UART16550_8D, UART16550_7D, UART16550_6D, UART16550_5D
     };
     uint8_t flags;
@@ -263,10 +264,9 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
             KDEBUG(("a2560u_bios_rsconf1 setting invalid baud specification %d\n", baud));
         }
         else {
-            // Speed
-            KDEBUG(("a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", bauds[baud], baud));
-            uart16550_set_bps(UART0, bauds[baud]);
-            iorec->baudrate = baud;
+            KDEBUG(("[DISABLED] a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", bauds[baud], baud));
+            //uart16550_set_bps(UART1, bauds[baud]);
+            //iorec->baudrate = baud;
         }
     }
 
@@ -290,7 +290,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
         else if (data_format == 2/* 1 start 1.5 stop */)
                 flags |= UART16550_1_5S;
 
-        uart16550_set_line(UART0, flags);
+        uart16550_set_line(UART1, flags);
         KDEBUG(("a2560u_bios_rsconf1 setting flags %x\n", flags));
     }
     
@@ -447,6 +447,8 @@ uint8_t spi_recv_byte(void)
 #include "lineavars.h"
 #include "biosext.h"
 
+static void a2560u_bios_load_font(void);
+
 static const uint16_t text_palette[32] =
 {
 /*  0xHHLL, 0xHHLL
@@ -522,48 +524,19 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
     return driver;
 }
 
-static void a2560u_bios_load_font(void)
-{
-    int ascii;
-    int i;
-
-    uint8_t *dst = vicky->font_memory->mem;
-
-    for (ascii = 0; ascii < 256; ascii++)
-    {
-        uint8_t *src = char_addr(ascii);
-
-        /* Character 0 is the cursor (filled block) */
-        if (ascii && src != 0L)
-        {
-            for (i = 0; i < v_cel_ht; i++)
-            {
-                *dst++ = *src;
-                src += v_fnt_wr;
-            }
-        }
-        else
-        { 
-            for (i = 0; i < v_cel_ht ; i++)
-                *dst++ = 0xff;
-        }
-    }
-}
-
-
 void a2560_bios_text_init(void)
 {
-    a2560_debugnl("a2560_bios_text_init: loading font");
+    a2560_debugnl("a2560_bios_text_init(%p)", vicky);
     a2560u_bios_load_font();
     a2560_debugnl("a2560_bios_text_init: vicky2_set_text_lut");
     vicky2_set_text_lut(vicky, text_palette, text_palette);
 
-    a2560_debugnl("Loading font into font memory");
-
     int i;
-    volatile uint8_t *c = vicky->font_memory->mem;
+    volatile uint8_t *c = vicky->text_memory->color;
     volatile uint8_t *t = vicky->text_memory->text;
     uint8_t color = (uint8_t)(v_col_fg << 4 | v_col_fg);
+
+    a2560_debugnl("color_mem:%p text_mem:%p",c,t);
 
     for (i = 0 ; i < VICKY_TEXT_SIZE ; i++)
     {
@@ -586,6 +559,36 @@ void a2560_bios_text_init(void)
     vicky2_hide_cursor(vicky);
 
     a2560_debugnl("a2560_bios_text_init exiting");
+}
+
+
+static void a2560u_bios_load_font(void)
+{
+    int ascii;
+    int i;
+
+    uint8_t *dst = vicky->font_memory->mem;
+    a2560_debugnl("a2560u_bios_load_font loading found to %p", dst);
+    
+    for (ascii = 0; ascii < 256; ascii++)
+    {
+        uint8_t *src = char_addr(ascii);
+
+        /* Character 0 is the cursor (filled block) */
+        if (ascii && src != 0L)
+        {
+            for (i = 0; i < v_cel_ht; i++)
+            {
+                *dst++ = *src;
+                src += v_fnt_wr;
+            }
+        }
+        else
+        { 
+            for (i = 0; i < v_cel_ht ; i++)
+                *dst++ = 0xff;
+        }
+    }
 }
 
 #endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */
