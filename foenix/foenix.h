@@ -26,7 +26,7 @@
   #define VICKY           0x00B40000
   #define VICKY_TEXT      0x00B60000
   #define VICKY_TEXT_MEM  0x00B60000
-  #define VICKY_FONT      (VICKY_TEXT_MEM+0x8000)      /* Font memory (-> 0xbff) */  
+  #define VICKY_FONT      (VICKY+0x8000)      /* Font memory (-> 0xbff) */  
 
   #define VRAM_Bank0      0x00C00000
   #define VRAM0_SIZE      0x00200000 /* 2MB */
