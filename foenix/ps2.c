@@ -17,9 +17,11 @@
 #include <stdbool.h>
 #include "ps2.h"
 
-/* #define ENABLE_KDEBUG */
+/* WARNING enabling this causes crashes ! so leave it disabled
+ * unless you want to trouble shoot PS/2 initialisation */
+/*#define ENABLE_KDEBUG*/
 #ifdef ENABLE_KDEBUG
-	 void a2560_debugnl(const char *s,...);
+	void a2560_debugnl(const char *s,...);
 #else
 	#define a2560_debugnl(a,...)
 #endif
