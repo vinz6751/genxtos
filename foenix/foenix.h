@@ -104,7 +104,7 @@
     #define INT_RESERVED_2      0x0E
     #define INT_VICKY_B_DAC     0x0F
 #endif
-    #define INT_
+
 #define IRQ_PENDING_GRP1 (GAVIN+0x102)
     #define INT_KBD_PS2         0x10    /* PS/2 Keyboard */
     #define INT_MOUSE           0x12    /* PS/2 Mouse */
