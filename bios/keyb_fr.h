@@ -30,7 +30,7 @@ static const UBYTE keytbl_fr_norm[] = {
      '8',  '9',  '4',  '5',  '6',  '1',  '2',  '3',
      '0',  '.', 0x0d,    0,    0,    0,    0,    0,
        0,    0,    0,    0,    0,    0,    0,    0,
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
        0, 0x1b,  '&', 0x82, '\"', '\'',  '(', '-', /* 0x00... */
     0x8a,  '_', 0x87, 0x85,  ')',  '=',    8, 0x09,
      'a',  'z',  'e',  'r',  't',  'y',  'u',  'i', /* 0x10... */
@@ -85,7 +85,7 @@ static const UBYTE keytbl_fr_shft[] = {
      '8',  '9',  '4',  '5',  '6',  '1',  '2',  '3',
      '0',  '.', 0x0d,    0,    0,    0,    0,    0,
        0,    0,    0,    0,    0,    0,    0,    0,
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
        0, 0x1b,  '1',  '2',  '3',  '4',  '5',  '6', /* 0x00... */
      '7',  '8',  '9',  '0', 0xf8,  '+',    8, 0x09,
      'A',  'Z',  'E',  'R',  'T',  'Y',  'U',  'I', /* 0x10... */
@@ -140,7 +140,7 @@ static const UBYTE keytbl_fr_caps[] = {
      '8',  '9',  '4',  '5',  '6',  '1',  '2',  '3',
      '0',  '.', 0x0d,    0,    0,    0,    0,    0,
        0,    0,    0,    0,    0,    0,    0,    0,
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
        0, 0x1b,  '&', 0x90, '\"', '\'',  '(', '-', /* 0x00... */
     0x8a,  '_', 0x80, 0xb6,  ')',  '=',    8, 0x09,
      'A',  'Z',  'E',  'R',  'T',  'Y',  'U',  'I', /* 0x10... */
@@ -201,7 +201,7 @@ static const UBYTE keytbl_fr_altnorm[] = {
     0x26, 0x9c, /* pound sterling sign */
     0x2c, 0xf1, /* plus-or-minus sign */
     0x2e, 0x87, /* small c cedilla */
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
     0x03, 0x7e /* ~ */,
     0x04, '#',
     0x05, '{',

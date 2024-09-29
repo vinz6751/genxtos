@@ -1,7 +1,7 @@
 /*
  * VICKY2 - Functions for VICKY II, the graphics controller of the Foenix A2560U
  *
- * Copyright (C) 2013-2022 The EmuTOS development team
+ * Copyright (C) 2013-2023 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -11,11 +11,13 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+#include <stddef.h>
 #include <stdint.h>
-#include "vicky2.h"
 #include "a2560u.h"
 #include "foenix.h"
 #include "regutils.h"
+#include "vicky2.h"
+#include "vicky2_txt_a_logger.h"
 
 #define TTRGB_BLACK     0x0000          /* TT palette */
 #define TTRGB_BLUE      0x000f
@@ -36,7 +38,7 @@
 
 #define A2560_BLUE 0x55b
 
-static const uint16_t tt_dflt_palette[] = {
+const uint16_t vicky2_default_palette[] = {
     TTRGB_WHITE, TTRGB_RED, TTRGB_GREEN, TTRGB_YELLOW,
     TTRGB_BLUE, TTRGB_MAGENTA, TTRGB_CYAN, TTRGB_LTGRAY,
     TTRGB_GRAY, TTRGB_LTRED, TTRGB_LTGREEN, TTRGB_LTYELLOW,
@@ -73,7 +75,8 @@ static const uint16_t tt_dflt_palette[] = {
     0x0240, 0x0340, 0x0440, 0x0430, 0x0420, 0x0410, TTRGB_WHITE, A2560_BLUE
 };
 
-const FOENIX_VIDEO_MODE foenix_video_modes[] = {
+#ifdef MACHINE_A2560U
+const FOENIX_VIDEO_MODE vicky2_video_modes[] = {
     { VICKY_MODE_640x480_60, 640, 480, 256, 60 }, /* VICKY_MODE_640x480_60 */
     { VICKY_MODE_800x600_60, 800, 600, 256, 60 }, /* VICKY_MODE_800x600_60 */
     { 0,   0,   0,   0 },  /* Reserved */
@@ -84,6 +87,76 @@ const FOENIX_VIDEO_MODE foenix_video_modes[] = {
     { VICKY_MODE_320x200_70, 320, 200, 256, 70 } /* VICKY_MODE_320x200_70 */
 };
 
+const struct vicky2_channel_t vicky2_channel = {
+    (struct vicky2_t * const )VICKY,
+    (struct vicky2_bitmap_t * const )(VICKY+0x100),
+    (struct vicky2_tile_t * const)(VICKY+0x200),
+    (struct vicky2_collision_t * const )(VICKY + 0x300),
+    (struct vicky2_mouse_gfx_t * const)(VICKY + 0x0400), // Mouse graphics
+    (struct vicky2_mouse_control_t * const)(VICKY + 0x0C00), // Mouse control
+    (struct vicky2_sprites_control_t ** const)(VICKY + 0x1000),
+    (struct vicky2_bmp_palette_t * const)(VICKY + 0x2000),
+    (struct vicky2_gamma_lut_memory_t * const)(VICKY + 0x4000),
+    (struct vicky2_font_memory_t * const)VICKY_FONT,
+    (struct vicky2_text_memory_t * const)VICKY_TEXT,
+    vicky2_video_modes
+};
+
+// Default screen
+const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * const)&vicky2_channel;
+
+#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+const FOENIX_VIDEO_MODE vicky2_a_video_modes[] = {
+    { VICKY_A_MODE_800x600_60, 800, 600, 256, 60 }, /* VICKY_MODE_800x600_60 */
+    { VICKY_A_MODE_1024x768_60, 800, 600, 256, 60 }, /* VICKY_MODE_1024x768_60 */
+};
+
+const FOENIX_VIDEO_MODE vicky2_b_video_modes[] = {
+    { VICKY_B_MODE_640x480_60, 640, 480, 256, 60 }, /* VICKY_MODE_640x480_60 */
+    { VICKY_B_MODE_800x600_60, 800, 600, 256, 60 }, /* VICKY_MODE_800x600_60 */
+    { 0,   0,   0,   0 },  /* Reserved */
+    { VICKY_B_MODE_640x400_70, 640, 400, 256, 70 }, /* VICKY_MODE_640x400_70 */
+    { VICKY_B_MODE_320x240_60, 320, 240, 256, 60 }, /* VICKY_MODE_320x240_60 */
+    { VICKY_B_MODE_400x300_60, 400, 300, 256, 60 }, /* VICKY_MODE_400x300_60 */
+    { 0,   0,   0,   0 },  /* Reserved */
+    { VICKY_B_MODE_320x200_70, 320, 200, 256, 70 } /* VICKY_MODE_320x200_70 */
+};
+
+const struct vicky2_channel_t vicky2_channel_a = {
+    (struct vicky2_t * const)VICKY_A,
+    (struct vicky2_bitmap_t * const)0L,
+    (struct vicky2_tile_t * const)0L,
+    (struct vicky2_collision_t * const)0L,
+    (struct vicky2_mouse_gfx_t * const)(VICKY_A + 0x0400), // Mouse graphics
+    (struct vicky2_mouse_control_t * const)(VICKY_A + 0x0C00), // Mouse control
+    (struct vicky2_sprites_control_t ** const)0L,
+    (struct vicky2_bmp_palette_t * const)0L,
+    (struct vicky2_gamma_lut_memory_t * const)0L,
+    (struct vicky2_font_memory_t * const)VICKY_FONT_A,
+    (struct vicky2_text_memory_t * const)VICKY_TEXT_A,
+    vicky2_a_video_modes
+};
+
+const struct vicky2_channel_t vicky2_channel_b = {
+    (struct vicky2_t * const )VICKY_B,
+    (struct vicky2_bitmap_t * const )(VICKY_B+0x100),
+    (struct vicky2_tile_t * const)(VICKY_B+0x200),
+    (struct vicky2_collision_t * const )(VICKY_B + 0x300),
+    (struct vicky2_mouse_gfx_t * const)(VICKY_B + 0x0400), // Mouse graphics
+    (struct vicky2_mouse_control_t * const)(VICKY_B + 0x0C00), // Mouse control
+    (struct vicky2_sprites_control_t ** const)(VICKY_B + 0x1000),
+    (struct vicky2_bmp_palette_t * const)(VICKY_B + 0x2000),
+    (struct vicky2_gamma_lut_memory_t * const)(VICKY_B + 0x4000),
+    (struct vicky2_font_memory_t * const)VICKY_FONT_B,
+    (struct vicky2_text_memory_t * const)VICKY_TEXT_B,
+    vicky2_b_video_modes
+};
+
+// Default screen
+const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * const)&vicky2_channel_b;
+
+#endif
+
 
 uint32_t vicky_vbl_freq; /* VBL frequency */
 static void rts(void)
@@ -92,88 +165,147 @@ static void rts(void)
 
 void vicky2_init(void)
 {
+#ifdef MACHINE_A2560U
+    vicky2_init_channel(&vicky2_channel);
+#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+    vicky2_init_channel(&vicky2_channel_a);
+    vicky2_init_channel(&vicky2_channel_b);
+#endif
+}
+
+
+void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
+{
     int i;
     uint32_t fb_size;
     FOENIX_VIDEO_MODE mode;
     uint16_t *w;
+    static const COLOR32 bg_color = {  /* Blue-ish background */
+        .alpha = 0xff,
+        .red = 0x0e,
+        .green = 0x2b,
+        .blue = 0x4f
+    };
+    a2560_debugnl("vicky2_init(%p)", vicky->ctrl);
 
+#ifdef MACHINE_A2560X
+    // Initialise text screen for logging
+    vicky->ctrl->control = VICKY_CTRL_TEXT; // Default is 800x600
+    vicky->ctrl->background_color = 0xff8888ff;
+    // EmuTOS code is not ready to support borders
+    //vicky->ctrl->border_control = 0x00080800|VICKY_BORDER_ENABLE;
+    vicky->ctrl->border_control = 0;
+    vicky->ctrl->border_color = 0xffffffff;
+    vicky->ctrl->background_color = 0x00222222;//convert_atari2vicky_color(vicky2_default_palette[15]);
+    vicky->ctrl->cursor_control = 0xf0ff0001;
+    vicky->ctrl->cursor_position = 0x00000000;
+    channel_A_set_fg_color(0);
+    channel_A_set_bg_color(15);
+    channel_A_cls();
+    for (i=0; i<16; i++) {
+        vicky->text_memory->palette_bg[i].code = vicky->text_memory->palette_fg[i].code = convert_atari2vicky_color(vicky2_default_palette[i]);
+    }
+#endif
+
+    // Kick the PLL
+    // If VICKY is generating a 40MHz signal, we need to switch the bit to go to 40MHz before
+    // clearing it to go back to 25MHz. Thanks MCP for the trick !
+    if (vicky->ctrl->control & VICKY_CTRL_CLK40) {
+        a2560_debugnl("kicking PLL");
+        uint32_t ctrl = vicky->ctrl->control;
+        vicky->ctrl->control |= 0x400;
+        vicky->ctrl->control &= ~0x400;
+        vicky->ctrl->control = ctrl;
+    }
+    a2560_debugnl("ctrl before setting modes: %p", vicky->ctrl->control);
     /* Enable video and bitmap, 640x480 */
-    R32(VICKY_CTRL) = 0;
+    vicky->ctrl->control = 0;
+    a2560_debugnl("ctrl after setting to 0: %p", vicky->ctrl->control);
 
+a2560_debugnl("vicky2_init:vicky_mouse_init");
     vicky_mouse_init((void(*)(const vicky_mouse_event_t*))rts/* No callback by default */, 0L);
 
-    vicky2_set_video_mode(VICKY_MODE_640x480_60);
-    vicky2_read_video_mode(&mode);
-
+a2560_debugnl("vicky2_init:vicky2_set_video_mode");
+    vicky2_set_video_mode(vicky, 0/*Default mode, actual rez depends on the channel A or B*/);
+a2560_debugnl("vicky2_init:vicky2_read_video_mode");
+    vicky2_read_video_mode(vicky, &mode);
+a2560_debugnl("vicky2_init:done enabling video mode");
     /* No border. If we used borders we would have to offset/resize all our graphics stuff */
     /* Use instead this to enable border to you can set its color as debugging trace:
      * R32(VICKY_A_BORDER_CTRL) = 0x00030301;
      */
-    R32(VICKY_A_BORDER_CTRL) = 0;
+    vicky->ctrl->border_control = 0;
 
-    /* Setup framebuffer to point to beginning of video RAM */
-    R32(VICKY_A_BMP0_FG_CTRL) = 1;       /* Enable bitmap layer 0, LUT 0 */
-    R32(VICKY_A_BMP0_FB) = 0L;           /* Set framebuffer address (relative to VRAM) */
-    //R32(VICKY_A_BG_COLOR) = 0xffffffff; /* White background */
-    R32(VICKY_A_BG_COLOR) = 0xff0e2b4f; /* Blue-ish background */
+    if (vicky->bitmap) {
+        a2560_debugnl("Setting up vicky bitmap");
+        /* Setup framebuffer to point to beginning of video RAM */
+        vicky->bitmap->layer[0].control = 1;        /* Enable bitmap layer 0, LUT 0 */
+        vicky->bitmap->layer[0].address = 0L;       /* Set framebuffer address (relative to VRAM) */
+        a2560_debugnl("vicky framebuffer: %p", vicky);
+        vicky->ctrl->background_color = bg_color.code;
 
-    /* Initialise the LUT0 which we use for the screen */
-    for (i = 0; i < 256; i++)
-        vicky2_set_lut_color(0, i, convert_atari2vicky_color(tt_dflt_palette[i]));
+        /* Initialise the LUT0 which we use for the screen */
+        for (i = 0; i < 256; i++)
+            vicky2_set_lut_color(vicky, 0, i, convert_atari2vicky_color(vicky2_default_palette[i]));
+    a2560_debugnl("vicky2_init: lut initialized");
+        
+        /* Clear the screen */
+        fb_size = (uint32_t)mode.w * mode.h / sizeof(uint16_t);
+        fb_size -= 1;
+        w = (uint16_t*)VRAM_Bank0;
+    a2560_debugnl("vicky2_screen @ %p cleared", VRAM_Bank0);
+        while (fb_size--)
+            *w++ = 0;
+    }
 
-    /* Clear the screen */
-    fb_size = (uint32_t)mode.w * mode.h / sizeof(uint16_t);
-    fb_size -= 1;
-    w = (uint16_t*)VRAM_Bank0;
-    while (fb_size--)
-        *w++ = 0;
+a2560_debugnl("vicky2_init:done");
 }
 
-void vicky2_set_background_color(uint32_t color)
+void vicky2_set_background_color(const struct vicky2_channel_t * const vicky, uint32_t color)
 {
-    R32(VICKY_A_BG_COLOR) = color;
+    vicky->ctrl->background_color = color;
 }
 
-void vicky2_set_border_color(uint32_t color)
+void vicky2_set_border_color(const struct vicky2_channel_t * const vicky, uint32_t color)
 {
     /* It's important to address these as bytes */
-    R32(VICKY_A_BORDER_COLOR) = color;
+    vicky->ctrl->border_color = color;
 }
 
-void vicky2_set_lut_color(uint16_t lut, uint16_t number, uint32_t color)
+void vicky2_set_lut_color(const struct vicky2_channel_t * const vicky, uint16_t lut, uint16_t number, uint32_t color)
 {
-    volatile uint8_t * c = (uint8_t*)(0xB42000 + lut*0x400 + number*4);
+#ifdef MACHINE_A2560U
+    volatile uint8_t * c = (uint8_t *)&vicky->lut->lut[lut].color[number].code;
     COLOR32 *clr = (COLOR32*)&color;
+
     c[0] = clr->blue; // B
     c[1] = clr->green; // G
     c[2] = clr->red; // R
     c[3] = 0xff; // A
+#elif defined(MACHINE_A2560X)
+    vicky->lut->lut[lut].color[number] = *((COLOR32*)&color);
+#endif
 }
 
-void vicky2_get_lut_color(uint16_t lut, uint16_t number, COLOR32 *result)
+void vicky2_get_lut_color(const struct vicky2_channel_t * const vicky, uint16_t lut, uint16_t number, COLOR32 *result)
 {
-    COLOR32* lut_entry = ((COLOR32*)(VICKY_LUTS+number*0x400));
-
-    result->alpha = lut_entry->alpha;
-    result->red = lut_entry->red;
-    result->green = lut_entry->green;
-    result->blue = lut_entry->blue;
+    *result = vicky->lut->lut[lut].color[number];
 }
 
-void vicky2_read_video_mode(FOENIX_VIDEO_MODE *result)
+void vicky2_read_video_mode(const struct vicky2_channel_t * const vicky, FOENIX_VIDEO_MODE *result)
 {
     uint32_t video;
     uint32_t border;
 
-    video = R32(VICKY_CTRL);
-    *result = foenix_video_modes[(video & 0x300) >> 8];
+    video = vicky->ctrl->control;
+    *result = vicky->video_modes[(video & 0x300) >> 8];
 
     /* Take into account the size of the border */
-    border = R32(VICKY_A_BORDER_CTRL) ;
-    if (border & VICKY_A_BORDER_ENABLE)
+    border = vicky->ctrl->border_control;
+    if (border & VICKY_BORDER_ENABLE)
     {
-        result->w -= (border & VICKY_A_BORDER_WIDTH) >> 7;
-        result->h -= (border & VICKY_A_BORDER_HEIGHT) >> 15;
+        result->w -= (border & VICKY_BORDER_WIDTH) >> 7;
+        result->h -= (border & VICKY_BORDER_HEIGHT) >> 15;
     }
 
     /* If pixel doubling, divide resolution by 2 */
@@ -184,32 +316,31 @@ void vicky2_read_video_mode(FOENIX_VIDEO_MODE *result)
     }
 }
 
-void vicky2_set_video_mode(uint16_t mode)
+void vicky2_set_video_mode(const struct vicky2_channel_t * const vicky, uint16_t mode)
 {
     /* In theory we should disable interrupts so nobody changes the
      * VICKY control register while we're messing with it... */
-    R32(VICKY_CTRL) = (R32(VICKY_CTRL) & ~VICKY_MODE_MASK) | ((mode & 0x07) << 8);
-    vicky_vbl_freq = foenix_video_modes[mode & 0x03].fps;
+    a2560_debugnl("Setting for vicky %p, old ctrl = %p", vicky->ctrl, vicky->ctrl->control);
+    vicky->ctrl->control = (vicky->ctrl->control & ~VICKY_MODE_MASK) | ((mode & 0x07) << 8);
+    vicky_vbl_freq = vicky->video_modes[mode & 0x03].fps;
 
-    a2560u_debugnl("Video mode %d set, new VICKY ctrl: %p", mode, (void*)R32(VICKY_CTRL));
+    a2560_debugnl("Setting video mode %d (%d,%d), new VICKY ctrl: %p", mode, vicky->video_modes[mode].w, vicky->video_modes[mode].h, (void*)vicky->ctrl->control);
 }
 
 
-static const uint32_t *bmp_layer_control[] = {
-    (uint32_t * const)VICKY_A_BMP0_FB,
-    (uint32_t * const)VICKY_A_BMP1_FB 
-};
-
-
-void vicky2_set_bitmap_address(uint16_t layer,const uint8_t *address)
+void vicky2_set_bitmap_address(const struct vicky2_channel_t * const vicky, uint16_t layer,const uint8_t *address)
 {
-    R32(bmp_layer_control[layer]) = (uint32_t)address; /* Set framebuffer address (relative to VRAM) */
+    if (layer <= 2)
+        vicky->bitmap->layer[layer].address = (uint8_t*)address;
 }
 
 
-uint8_t *vicky2_get_bitmap_address(uint16_t layer) /* address is relative to VRAM */
+uint8_t *vicky2_get_bitmap_address(const struct vicky2_channel_t * const vicky, uint16_t layer) /* address is relative to VRAM */
 {
-    return (uint8_t*)R32(bmp_layer_control[layer]);
+    if (layer <= 2)
+        return vicky->bitmap->layer[layer].address;
+    else
+        return (uint8_t*)-1;
 }
 
 /* Convert an Atari 0x0RGB (4 bytes each) colour to FOENIX format */
@@ -218,7 +349,7 @@ uint32_t convert_atari2vicky_color(uint16_t orgb)
     COLOR32 dst;
 
     /* For quick 4bit to 8bit scaling */
-    const uint8_t c4to8bits[] = {
+    static const uint8_t c4to8bits[] = {
         0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
         0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
@@ -229,35 +360,71 @@ uint32_t convert_atari2vicky_color(uint16_t orgb)
     return *((uint32_t*)&dst);
 }
 
+void printat(const struct vicky2_channel_t * const vicky, int x, int y, char c);
+void printat(const struct vicky2_channel_t * const vicky, int x, int y, char c) {
+    vicky->text_memory->text[y*77+x] = c;
+    vicky->text_memory->color[y*77+x] = 0x01;
+}
 
-void vicky2_set_text_lut(const uint16_t *fg, const uint16_t *bg)
+void vicky2_set_text_lut(const struct vicky2_channel_t * const vicky, const uint16_t *fg, const uint16_t *bg)
 {
-    /* Colors are represented as GGBB AARR, 2 words for each palette entry. */
     int i;
-    volatile uint16_t * const fglut = (uint16_t*)VICKY_TEXT_COLOR_FG;
-    volatile uint16_t * const bglut = (uint16_t*)VICKY_TEXT_COLOR_BG;
-
+#ifdef MACHINE_A2560U
+    /* Colors are represented as GGBB AARR, 2 words for each palette entry. */
+    #define TLUTREGSIZE uint16_t
+    #define VICKY_TEXT_COLOR_SIZE 32  /* 16 colors of 2 words each */
+    volatile TLUTREGSIZE * const fglut = (TLUTREGSIZE*)VICKY_TEXT_COLOR_FG;
+    volatile TLUTREGSIZE * const bglut = (TLUTREGSIZE*)VICKY_TEXT_COLOR_BG;
     for (i = 0; i < VICKY_TEXT_COLOR_SIZE; i++)
     {
         fglut[i] = fg[i];
         bglut[i] = bg[i];
+    }    
+#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+    #define TLUTREGSIZE uint32_t
+    #define VICKY_TEXT_COLOR_SIZE 16  /* 16 colors of 1 (32bit) words each */
+    volatile uint32_t * const fglut = (uint16_t*)vicky->text_memory->palette_fg;
+    volatile uint32_t * const bglut = (uint16_t*)vicky->text_memory->palette_bg;
+    uint32_t * fg32 = (uint32_t *)fg;
+    uint32_t * bg32 = (uint32_t *)bg;
+    for (i = 0; i < VICKY_TEXT_COLOR_SIZE; i++)
+    {
+        fglut[i] = (fg32[i] << 16) | (fg32[i] >> 16 & 0xffff);
+        bglut[i] = (bg32[i] << 16) | (bg32[i] >> 16 & 0xffff);
     }
+
+    //test...
+    for (i=0;i<1000;i++) {
+        vicky->text_memory->color[i] = (i%0xf);// | (i % 0xf0) << 4;
+        vicky->text_memory->text[i] = '0' + i%10;
+    }
+
+    static const char message[] = "ceci est un message";
+    char *a = message;
+    i = 0;
+    while (a[i]) {
+        printat(vicky, 20+i, 30, a[i]);
+        i++;
+    }
+
+    a2560_debugnl("TEXT color lut set fg:%p bg:%p", fglut, bglut);
+#endif
 }
 
 
-void vicky2_show_cursor(void)
+void vicky2_show_cursor(const struct vicky2_channel_t *const vicky)
 {
-    R32(VICKY_A_CURSOR_CTRL) |= VICKY_CURSOR_ENABLE;
+    vicky->ctrl->cursor_control |= VICKY_CURSOR_ENABLE;
 }
 
 
-void vicky2_hide_cursor(void)
+void vicky2_hide_cursor(const struct vicky2_channel_t * const vicky)
 {
-    R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_ENABLE;
+    vicky->ctrl->cursor_control  &= ~VICKY_CURSOR_ENABLE;
 }
 
 
-void vicky2_set_text_cursor_xy(uint16_t x, uint16_t y)
+void vicky2_set_text_cursor_xy(const struct vicky2_channel_t * const vicky, uint16_t x, uint16_t y)
 {
-    R32(VICKY_A_CURSOR_POS) = ((uint32_t)x) << 16 | y;
+    vicky->ctrl->cursor_position  = ((uint32_t)x) << 16 | y;
 }

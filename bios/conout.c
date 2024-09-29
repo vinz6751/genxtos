@@ -32,22 +32,22 @@
 /* Driver in use for outputing text */
 static CONOUT_DRIVER *conout;
 
-#if !defined(MACHINE_A2560U)
+#if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
 extern const CONOUT_DRIVER conout_atarifb;
 #endif
 
 
 void conout_init(const Fonthead *font)
-{    
-    v_cel_mx = (V_REZ_HZ / font->max_cell_width) - 1;
-    v_cel_my = (V_REZ_VT / font->form_height) - 1;
+{
+    KDEBUG(("conout_init: v_cel_mx: %d v_cel_my:%d\n", v_cel_mx, v_cel_my));
 
-#ifdef MACHINE_A2560U
-    conout = a2560u_bios_get_conout();
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+    conout = a2560_bios_get_conout();
 #else
     conout = &conout_atarifb;
 #endif
     KDEBUG(("conout_init calling init of driver\n"));
+
     conout->init(font);
 
     KDEBUG(("conout_init exiting\n"));
@@ -350,7 +350,6 @@ void conout_scroll_up(UWORD top_line)
     count = (ULONG)v_cel_wr * (v_cel_my - top_line);
     conout->scroll_up(src, dst, count);   
 }
-
 
 
 /*

@@ -165,7 +165,7 @@ _init_acia_vecs:
         move.l  a0,vkbderr-_kbdvecs(a1)
         move.l  a0,vmiderr-_kbdvecs(a1)
         move.l  a0,statvec-_kbdvecs(a1)
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
         // The mousevec vector is already installed when initializing the screen/line-A
 #else
         move.l  a0,mousevec-_kbdvecs(a1)

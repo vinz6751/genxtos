@@ -1,7 +1,7 @@
 /*
  * uart16550.c - UART 16550 serial port driver
  *
- * Copyright (C) 2001-2021 The EmuTOS development team
+ * Copyright (C) 2001-2023 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -16,8 +16,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "foenix.h"
+
 #ifndef UART16550_CLOCK
-    #define UART16550_CLOCK 20000000 /* 20Mhz */
+    #error "UART16550 clock not specified"
 #endif
 
 #define UART16550_50BPS     (UART16550_CLOCK/50/16)
@@ -72,4 +74,5 @@ void uart16550_rx_irq_enable(UART16550 *uart, bool);
 
 /* Called by when a byte is received from the UART */
 extern void (*uart16550_rx_handler)(uint8_t byte);
+
 #endif

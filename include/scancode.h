@@ -20,7 +20,7 @@
 #include "config.h"
 
 /* Raw scancodes */
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 # define KEY_UPARROW 0x67
 # define KEY_LTARROW 0x69
 # define KEY_RTARROW 0x6a

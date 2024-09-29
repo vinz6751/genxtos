@@ -1,30 +1,47 @@
 // Assembler include file for Foenix hardware definitions
 
+#ifdef MACHINE_A2560U
+.EQU SRAM_TOP,          0x400000
+.EQU GAVIN,             0xB00000
+.EQU BEATRIX,           0xB20000
+.EQU VICKYII,           0xB40000 | VICKYII base address
+.EQU VRAM_Bank0,        0xC00000 | 2MB (until 0xDFFFFF)
+#elif defined (MACHINE_A2560X)
+.EQU SRAM_TOP,          0x00400000
+// I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
+.EQU VRAM_Bank1,        0x00800000 | 4MB (until 0xBFFFFF)
+.EQU VRAM_Bank0,        0x00C00000 | 4MB (until 0xDFFFFF)
+.EQU SDRAM,             0x02000000 | 64MB (until 0x04FFFFFF)
+.EQU GAVIN,             0xFEC00000
+.EQU BEATRIX,           0xFEC20000
+.EQU VICKY_A,           0xFEC40000
+.EQU VICKY_B,           0xFEC80000
+.EQU FLASH0,            0xFFC00000
+#endif
+
 | VICKY -----------------------------------------------------------------------
-.EQU VICKYII,               0xB40000 | VICKYII base address
-.EQU VICKY,                 VICKYII
+.EQU VICKY,                 VICKY_B
 .EQU VICKY_CTRL,            VICKY
     .EQU VICKY_CTRL_DISABLE_RENDER, 0x80
 
 | Channel A (first screen)
-.EQU VICKY_A_BORDER_CTRL_L, VICKY+0x0004 | Border control
-.EQU VICKY_A_BORDER_COLOR,  VICKY+0x0008
-.EQU VICKY_A_BG_COLOR,      VICKY+0x000C | Background control
-.EQU VICKY_A_BMP0_FG_CTRL,   VICKY+0x0100 | Bitmap layer 0 control
-.EQU VICKY_A_BMP0_FB,        VICKY+0x0104 | Framebuffer address relative to VRAM
+.EQU VICKY_BORDER_CTRL_L,   VICKY+0x0004 | Border control
+.EQU VICKY_B_BORDER_COLOR,  VICKY_B+0x0008
+.EQU VICKY_B_BG_COLOR,      VICKY_B+0x000C | Background control
+.EQU VICKY_A_BMP0_FG_CTRL,  VICKY_B+0x0100 | Bitmap layer 0 control
+.EQU VICKY_A_BMP0_FB,       VICKY_B+0x0104 | Framebuffer address relative to VRAM
 
-.EQU VICKY_LUT,             VICKY+0x2000 | Color lookup tables, 0x400 bytes each
+.EQU VICKY_LUT,             VICKY_B+0x2000 | Color lookup tables, 0x400 bytes each
 
 | Mouse
-.EQU MOUSE_POINTER_MEMORY,  VICKY+0x0400
-.EQU MOUSE_POINTER_CTRL,    VICKY+0x0C00
+.EQU MOUSE_POINTER_MEMORY,  VICKY_B+0x0400
+.EQU MOUSE_POINTER_CTRL,    VICKY_B+0x0C00
 
 | Video memory sections
-.EQU VRAM_Bank0,             0x00C00000 | 2MB (until 0xDFFFFF)
+
 
 
 | GAVIN -----------------------------------------------------------------------
-.EQU GAVIN,             0xB00000
     .EQU RTC,               (GAVIN+0x80)
         .EQU RTC_FLAGS,     (RTC+0x26)
 | Interrupts
@@ -54,7 +71,6 @@
 .EQU UART16750_LSR,     5 | Line status register
 
 | BEATRIX ---------------------------------------------------------------------
-.EQU BEATRIX,           0xB20000
 .EQU PSG_PORT,          BEATRIX+0x130  | Control register for the SN76489
 .EQU OPL3_PORT,         BEATRIX+0x200  | Access port for the OPL3
 .EQU OPM_INT_BASE,      BEATRIX+0xC00  | Internal OPM base address

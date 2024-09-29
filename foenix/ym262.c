@@ -21,7 +21,7 @@
  //#define a2560u_debugnl printf
 #else
  #define a2560u_debug(...)
- #define a2560u_debugnl(...)
+ #define a2560_debugnl(...)
 #endif
 
 /* Pairs of the operator making up a channel */
@@ -590,7 +590,7 @@ int ym262_test(int argc, char **argv)
 	/* Compute frequencies for the scale */
 	ym262_create_note_to_freq_lut(4400, scale);
 	//for (int i=0; i<128; i++)
-	//	a2560u_debugnl("%d: %ld\n", i, scale[i]);
+	//	a2560_debugnl("%d: %ld\n", i, scale[i]);
 
 	//	ym262_reset();
 

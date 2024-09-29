@@ -23,7 +23,7 @@
 
 #include "emutos.h"
 
-#ifndef MACHINE_A2560U
+#if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
 
 #include "asm.h"
 #include "lineavars.h"
@@ -39,6 +39,8 @@
 
 static void init(const Fonthead *font)
 {
+    v_cel_mx = (V_REZ_HZ / font->max_cell_width) - 1;
+    v_cel_my = (V_REZ_VT / font->form_height) - 1;
     v_cel_wr = v_lin_wr * v_cel_ht;
     v_cur_ad.pxaddr = v_bas_ad;                /* set cursor to start of screen */
 }

@@ -23,7 +23,7 @@ void (*bq4802ly_tick_handler)(void);
 
 
 /* Private stuff */ 
-static struct bq4802ly_t* const bq4802ly = (struct bq4802ly_t *)BQ4802LY_BASE;
+static struct bq4802ly_t* const bq4802ly = (struct bq4802ly_t * const)BQ4802LY_BASE;
 static void stop(uint8_t *control);
 static void start(uint8_t control);
 static uint8_t i_to_bcd(uint16_t n);
@@ -58,7 +58,7 @@ void bq4802ly_enable_ticks(bool enable)
         /* Acknowledge any previous pending interrupt */
         bq4802ly->flags;
         bq4802ly->enables |= BQ4802LY_PIE;
-        a2560u_irq_enable(INT_RTC);
+        a2560_irq_enable(INT_RTC);
     }
     else
     {
@@ -148,7 +148,8 @@ void bq4802ly_get_datetime(uint8_t *day, uint8_t *month, uint16_t *year, uint8_t
     *day = bcd_to_i(day_bcd);
     *hour = bcd_to_i(hour_bcd & 0x7f);
     *minute = bcd_to_i(minute_bcd);
-    *second = bcd_to_i(second_bcd);    
+    *second = bcd_to_i(second_bcd);
+    a2560_debugnl("RTC: %d/%d/%d %d:%d:%d", *day, *month, *year, *hour, *minute, *second);
 }
 
 

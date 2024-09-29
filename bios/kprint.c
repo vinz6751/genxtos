@@ -33,6 +33,7 @@
 #include "ikbd.h"
 #include "midi.h"
 #include "amiga.h"
+#include "../foenix/vicky2_txt_a_logger.h"
 
 #define DISPLAY_INSTRUCTION_AT_PC   0   /* set to 1 for extra info from dopanic() */
 #define DISPLAY_STACK               0   /* set to 1 for extra info from dopanic() */
@@ -127,6 +128,16 @@ static void kprintf_outc_stonx(int c)
     buf[0] = c;
     buf[1] = 0;
     printout_stonx(buf);
+}
+#endif
+
+#ifdef FOENIX_CHANNEL_A_DEBUG_PRINT
+static void kprintf_outc_foenix_channel_a(int c)
+{
+    char buf[2];
+    buf[0] = c;
+    buf[1] = 0;
+    channel_A_write(buf);
 }
 #endif
 
@@ -226,6 +237,10 @@ static int vkprintf(const char *fmt, va_list ap)
     }
 #endif
 
+#if FOENIX_CHANNEL_A_DEBUG_PRINT
+    return doprintf(kprintf_outc_foenix_channel_a, fmt, ap);
+#endif
+
     /* let us hope nobody is doing 'pretty-print' with kprintf by
      * printing stuff till the amount of characters equals something,
      * for it will generate an endless loop if return value is zero!
@@ -246,7 +261,7 @@ int kprintf(const char *RESTRICT fmt, ...)
 
 /*==== kcprintf - do both cprintf and kprintf ======*/
 
-static int vkcprintf(const char *fmt, va_list ap)
+int vkcprintf(const char *fmt, va_list ap)
 {
   vkprintf(fmt, ap);
   return vcprintf(fmt, ap);

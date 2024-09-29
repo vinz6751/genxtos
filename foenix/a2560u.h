@@ -78,18 +78,18 @@ struct foenix_system_info_t
 
 void a2560u_init(void);
 
-void a2560u_beeper(bool on);
-void a2560u_disk_led(bool on);
-void a2560u_system_info(struct foenix_system_info_t *result);
+void a2560_beeper(bool on);
+void a2560_disk_led(bool on);
+void a2560_system_info(struct foenix_system_info_t *result);
 
 /* Video */
 void a2560u_setphys(const uint8_t *address);
 
-void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
-void a2560u_timer_enable(uint16_t timer, bool enable);
-void a2560u_clock_init(void);
-uint32_t a2560u_getdt(void);
-void a2560u_setdt(uint32_t datetime);
+void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler);
+void a2560_timer_enable(uint16_t timer, bool enable);
+void a2560_clock_init(void);
+uint32_t a2560_getdt(void);
+void a2560_setdt(uint32_t datetime);
 
 
 void a2560u_rte(void); /* Actually, just the RTE instruction. Not a function */
@@ -99,7 +99,7 @@ void a2560u_rts(void); /* Actually, just the RTS instruction. */
 void a2560u_irq_mask_all(uint16_t *save);
 /* Restore interrupts backed up with a2560u_irq_mask_all */
 void a2560u_irq_restore(const uint16_t *save);
-void a2560u_irq_enable(uint16_t irq_id);
+void a2560_irq_enable(uint16_t irq_id);
 void a2560u_irq_disable(uint16_t irq_id);
 void a2560u_irq_acknowledge(uint8_t irq_id);
 void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);

@@ -10,7 +10,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -18,7 +18,7 @@
 
 #include "emutos.h"
 
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
 
 #include "portab.h"
 #include "vectors.h"
@@ -62,14 +62,13 @@ void a2560u_init_lut0(void);
 void irq_mask_all(uint16_t *save);
 void irq_add_handler(int id, void *handler);
 void a2560u_irq_bq4802ly(void);
-void a2560u_irq_vicky(void);
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
 
 
 /* Implementation ************************************************************/
 
-void a2560u_bios_init(void)
+void a2560_bios_init(void)
 {
 	a2560u_init();
 }
@@ -90,9 +89,10 @@ static int foenix_to_videl_mode(uint16_t foenixmode)
 }
 
 
-void a2560u_bios_screen_init(void)
+void a2560_bios_screen_init(void)
 {
-    KDEBUG(("a2560u_bios_screen_init\n"));
+    KDEBUG(("a2560_bios_screen_init\n"));
+
     vicky2_init();
 
     /* Setup VICKY interrupts handler (VBL, HBL etc.) */
@@ -103,105 +103,109 @@ void a2560u_bios_screen_init(void)
 #endif
 
     a2560u_irq_set_handler(INT_SOF_A, int_vbl);
-    KDEBUG(("a2560u_bios_screen_init exiting\n"));
+    KDEBUG(("a2560_bios_screen_init exiting\n"));
 }
 
 
-void a2560u_bios_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez)
+void a2560_bios_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez)
 {
     FOENIX_VIDEO_MODE mode;
 
-    vicky2_read_video_mode(&mode);
+    vicky2_read_video_mode(vicky, &mode);
     *planes = 8; /* We have 8bits per pixel */
     *hz_rez = mode.w;
     *vt_rez = mode.h;
 }
 
 
-uint8_t *a2560u_bios_physbase(void)
+uint8_t *a2560_bios_physbase(void)
 {
-    KDEBUG(("a2560u_bios_physbase: %p\n", vicky2_get_bitmap_address(0) + VRAM_Bank0));
-    return vicky2_get_bitmap_address(0) + VRAM_Bank0;
+    KDEBUG(("a2560_bios_physbase: %p\n", vicky2_get_bitmap_address(vicky, 0) + VRAM_Bank0));
+    return vicky2_get_bitmap_address(vicky, 0) + VRAM_Bank0;
 }
 
 
-int16_t a2560u_bios_vmontype(void)
+int16_t a2560_bios_vmontype(void)
 {
-    KDEBUG(("a2560u_bios_vmontype\n"));
+    KDEBUG(("a2560_bios_vmontype\n"));
     return MON_VGA; /* VGA. 5 (DVI) would be more correct but is only known for CT60/Radeon so probably not known about by a lot of software */
 }
 
 
-int32_t a2560u_bios_vgetsize(int16_t videlmode)
+int32_t a2560_bios_vgetsize(int16_t videlmode)
 {
     int foenix_mode_nr;
     FOENIX_VIDEO_MODE *foenix_mode;
 
     foenix_mode_nr = videl_to_foenix_mode(videlmode);
-    foenix_mode = (FOENIX_VIDEO_MODE*)&foenix_video_modes[foenix_mode_nr];
-    KDEBUG(("a2560u_bios_vgetsize returns %ld\n", (uint32_t)foenix_mode->w * (uint32_t)foenix_video_modes->h));
-    return  (uint32_t)foenix_mode->w * (uint32_t)foenix_video_modes->h; /* 1 byte = 1 pixel on the Foenix, easy */
+    foenix_mode = (FOENIX_VIDEO_MODE*)&vicky->video_modes[foenix_mode_nr];
+    KDEBUG(("a2560_bios_vgetsize returns %ld\n", (uint32_t)foenix_mode->w * (uint32_t)foenix_mode->h));
+    return  (uint32_t)foenix_mode->w * (uint32_t)foenix_mode->h; /* 1 byte = 1 pixel on the Foenix, easy */
 }
 
 
-uint32_t a2560u_bios_calc_vram_size(void)
+uint32_t a2560_bios_calc_vram_size(void)
 {
     FOENIX_VIDEO_MODE mode;
-    vicky2_read_video_mode(&mode);
-    KDEBUG(("a2560u_bios_calc_vram_size returns mode:%d, size=%ld\n", mode.id, mode.w * mode. h + EXTRA_VRAM_SIZE));
+    vicky2_read_video_mode(vicky, &mode);
+    KDEBUG(("a2560_bios_calc_vram_size returns mode:%d, size=%ld\n", mode.id, mode.w * mode. h + EXTRA_VRAM_SIZE));
     return (uint32_t)mode.w * (uint32_t)mode. h + EXTRA_VRAM_SIZE;
 }
 
 
 /* Also acts as Vsetscreen */
-void a2560u_bios_setrez(int16_t rez, int16_t mode)
+void a2560_bios_setrez(int16_t rez, int16_t mode)
 {
     if (rez != FALCON_REZ)
         return;
 
-    KDEBUG(("a2560u_bios_setrez(%d, %d)\n", rez, mode));
-    vicky2_set_video_mode(videl_to_foenix_mode(mode));
+    KDEBUG(("a2560_bios_setrez(%d, %d)\n", rez, mode));
+    vicky2_set_video_mode(vicky, videl_to_foenix_mode(mode));
 }
 
 
-uint16_t a2560u_bios_vsetmode(int16_t mode)
+uint16_t a2560_bios_vsetmode(int16_t mode)
 {
     FOENIX_VIDEO_MODE fm;
-    KDEBUG(("a2560u_bios_vsetmode(%d)\n",mode));
+    KDEBUG(("a2560_bios_vsetmode(%d)\n",mode));
     
     if (mode != -1 && (mode & VICKY_VIDEO_MODE_FLAG))
-        vicky2_set_video_mode(mode);
+        vicky2_set_video_mode(vicky, mode);
 
-    vicky2_read_video_mode(&fm);
-    KDEBUG(("a2560u_bios_vsetmode returns %d\n", foenix_to_videl_mode(fm.id)));
+    vicky2_read_video_mode(vicky, &fm);
+    KDEBUG(("a2560_bios_vsetmode returns %d\n", foenix_to_videl_mode(fm.id)));
     return foenix_to_videl_mode(fm.id);
 }
 
 
-void a2560u_bios_vsetrgb(int16_t index,int16_t count,const uint32_t *rgb)
+void a2560_bios_vsetrgb(int16_t index,int16_t count,const uint32_t *rgb)
 {
     int i;
-    COLOR32 fc; /* Foenix colour */
-    uint8_t *argb;
 
     for (i = index; i <= count; i++) {
+#ifdef MACHINE_A2560U
+        COLOR32 fc; /* Foenix colour */
+        uint8_t *argb;
         argb = (uint8_t*)&rgb[i];
         fc.red = argb[1];
         fc.green = argb[2];
         fc.blue = argb[3];
         fc.alpha = 0xff;
-        vicky2_set_lut_color(0, i, *((uint32_t*)&fc));
+        vicky2_set_lut_color(vicky, 0, i, *((uint32_t*)&fc));
+#elif defined(MACHINE_A2560U)
+    vicky2_set_lut_color(vicky, 0, i, rgb)[i];
+#endif
     }
 }
 
 
-void a2560u_bios_vgetrgb(int16_t index,int16_t count,uint32_t *rgb) {
+void a2560_bios_vgetrgb(int16_t index,int16_t count,uint32_t *rgb) {
     int i;
     COLOR32 fc; /* Foenix colour */
     uint8_t *argb;
 
     for (i = index; i <= count; i++) {
-        vicky2_get_lut_color(0, i, &fc);
+        vicky2_get_lut_color(vicky, 0, i, &fc);
         argb = (uint8_t*)&rgb[i];
         argb[1] = fc.red;
         argb[2] = fc.green;
@@ -212,30 +216,31 @@ void a2560u_bios_vgetrgb(int16_t index,int16_t count,uint32_t *rgb) {
 
 /* Serial port ***************************************************************/
 
-uint32_t a2560u_bios_bcostat1(void)
+uint32_t a2560_bios_bcostat1(void)
 {
-    return uart16550_can_put(UART0);
+    return uart16550_can_put(UART1);
 }
 
-void a2560u_bios_bconout1(uint8_t byte)
+void a2560_bios_bconout1(uint8_t byte)
 {
-    uart16550_put(UART0,&byte, 1);
+    uart16550_put(UART1,&byte, 1);
 }
 
 void a2560u_irq_com1(void); // Event handler in a2560u_s.S
 
-void a2560u_bios_rs232_init(void) {
+void a2560_bios_rs232_init(void) {
+    a2560_debugnl("a2560_bios_rs232_init");
     // The UART's base settings are setup earlier
     uart16550_rx_handler = push_serial_iorec;
     setexc(INT_COM1_VECN, (uint32_t)a2560u_irq_com1);
-    a2560u_irq_enable(INT_COM1);
-    uart16550_rx_irq_enable(UART0, true);
+    a2560_irq_enable(INT_COM1);
+    uart16550_rx_irq_enable(UART1, true);
 }
 
 /* This does not perfectly emulate the MFP but may enough */
 uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
 {
-    const int16_t bauds[] = {
+    static const int16_t bauds[] = {
         UART16550_19200BPS, UART16550_9600BPS, UART16550_4800BPS, UART16550_3600BPS,
         UART16550_2400BPS, UART16550_2000BPS, UART16550_1800BPS, UART16550_1200BPS,
         UART16550_600BPS, UART16550_300BPS, UART16550_200BPS, UART16550_150BPS,
@@ -243,7 +248,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
         // 12               13                  14                   15
         UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS
     };
-    const uint8_t dsize[] = {
+    static const uint8_t dsize[] = {
         UART16550_8D, UART16550_7D, UART16550_6D, UART16550_5D
     };
     uint8_t flags;
@@ -259,10 +264,9 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
             KDEBUG(("a2560u_bios_rsconf1 setting invalid baud specification %d\n", baud));
         }
         else {
-            // Speed
-            KDEBUG(("a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", bauds[baud], baud));
-            uart16550_set_bps(UART0, bauds[baud]);
-            iorec->baudrate = baud;
+            KDEBUG(("[DISABLED] a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", bauds[baud], baud));
+            //uart16550_set_bps(UART1, bauds[baud]);
+            //iorec->baudrate = baud;
         }
     }
 
@@ -286,7 +290,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
         else if (data_format == 2/* 1 start 1.5 stop */)
                 flags |= UART16550_1_5S;
 
-        uart16550_set_line(UART0, flags);
+        uart16550_set_line(UART1, flags);
         KDEBUG(("a2560u_bios_rsconf1 setting flags %x\n", flags));
     }
     
@@ -303,7 +307,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
 static const uint16_t mfp_timer_prediv[] = { 0,4,10,16,50,64,100,200 };
 #define MFP68901_FREQ 2457600 /* The ST's 68901 MFP is clocked at 2.4576MHZ */
 
-void a2560u_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector)
+void a2560_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector)
 {
     uint32_t frequency;
     uint32_t timer_clock;
@@ -329,7 +333,7 @@ void a2560u_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *
     timer_clock = timer == 3 ? vicky_vbl_freq : 20000000/*TODO use cpu_freq*/;
     frequency = (frequency * timer_clock) / MFP68901_FREQ;
 
-    a2560u_set_timer(timer, frequency, false, vector);
+    a2560_set_timer(timer, frequency, false, vector);
 }
 
 
@@ -337,10 +341,10 @@ void a2560u_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *
 
 uint32_t calibration_interrupt_count;
 uint32_t calibration_loop_count;
-void a2560u_bios_irq_calibration(void);
-void a2560u_run_calibration(void);
+void a2560_bios_irq_calibration(void);
+void a2560_run_calibration(void);
 
-void a2560u_bios_calibrate_delay(uint32_t calibration_time)
+void a2560_bios_calibrate_delay(uint32_t calibration_time)
 {
     uint16_t masks[IRQ_GROUPS];
     uint32_t old_timer_vector;
@@ -348,18 +352,18 @@ void a2560u_bios_calibrate_delay(uint32_t calibration_time)
     calibration_interrupt_count = 0;
     calibration_loop_count = calibration_time;
 
-    a2560u_debugnl("a2560u_bios_calibrate_delay(0x%ld)", calibration_time);
+    a2560_debugnl("a2560_bios_calibrate_delay(0x%ld)", calibration_time);
     /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
 
-    /* Backup all interrupts masks because a2560u_run_calibration will mask everything. We'll need to restore */
+    /* Backup all interrupts masks because a2560_run_calibration will mask everything. We'll need to restore */
     a2560u_irq_mask_all(masks);
 
     /* Setup timer for 960Hz, same as what EmuTOS for ST does with using MFP Timer D (UART clock baud rate generator) for 9600 bauds */
     old_timer_vector = setexc(INT_TIMER0_VECN, -1L);
-    a2560u_set_timer(0, 960, true, a2560u_bios_irq_calibration);
+    a2560_set_timer(0, 960, true, a2560_bios_irq_calibration);
 
     /* This counts the number of wait loops we can do in about 100ms */
-    a2560u_run_calibration();
+    a2560_run_calibration();
 
     /* Restore previous timer vector */
     setexc(INT_TIMER0_VECN, old_timer_vector);
@@ -367,12 +371,12 @@ void a2560u_bios_calibrate_delay(uint32_t calibration_time)
     /* Restore interrupt masks */
     a2560u_irq_restore(masks);
 
-    a2560u_debugnl("loopcount_1_msec (old)= 0x%08lx, calibration_interrupt_count = %ld", loopcount_1_msec, calibration_interrupt_count);
+    a2560_debugnl("loopcount_1_msec (old)= 0x%08lx, calibration_interrupt_count = %ld", loopcount_1_msec, calibration_interrupt_count);
     /* See delay.c for explaination */
     if (calibration_interrupt_count)
         loopcount_1_msec = (calibration_time * 24) / (calibration_interrupt_count * 25);
 
-    a2560u_debugnl("loopcount_1_msec (new)= 0x%08lx", loopcount_1_msec);
+    a2560_debugnl("loopcount_1_msec (new)= 0x%08lx", loopcount_1_msec);
 }
 
 
@@ -384,7 +388,7 @@ static void *balloc_proxy(size_t howmuch)
     return balloc_stram(howmuch, false);
 }
 
-void a2560u_bios_kbd_init(void)
+void a2560_bios_kbd_init(void)
 {
     ps2_config.counter      = (uint32_t*)&frclock; /* FIXME we're using the VBL counter */
     ps2_config.counter_freq = 60;
@@ -443,6 +447,8 @@ uint8_t spi_recv_byte(void)
 #include "lineavars.h"
 #include "biosext.h"
 
+static void a2560u_bios_load_font(void);
+
 static const uint16_t text_palette[32] =
 {
 /*  0xHHLL, 0xHHLL
@@ -479,9 +485,9 @@ static const uint16_t text_palette[32] =
 #endif
 };
 
-void a2560u_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height)
+void a2560_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height)
 {
-    a2560u_debugnl("a2560u_bios_sfb_setup(%p,%d)", addr, text_cell_height);
+    a2560_debugnl("a2560_bios_sfb_setup(%p,%d)", addr, text_cell_height);
     a2560u_sfb_setup(addr, text_cell_height);
     a2560u_bios_sfb_is_active = true;
 }
@@ -489,16 +495,16 @@ void a2560u_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height)
 extern const CONOUT_DRIVER a2560u_conout_text;
 extern const CONOUT_DRIVER a2560u_conout_bmp;
 
-CONOUT_DRIVER *a2560u_bios_get_conout(void)
+CONOUT_DRIVER *a2560_bios_get_conout(void)
 {
     CONOUT_DRIVER *driver;
     driver = NULL;
 
-    a2560u_debugnl("a2560u_bios_get_conout");
+    a2560_debugnl("a2560_bios_get_conout");
 
-    if (v_cel_ht == 8 && CONF_WITH_A2560U_TEXT_MODE)
+    if (v_cel_ht == 8 && CONF_WITH_A2560_TEXT_MODE)
     {
-        a2560u_debugnl("a2560u_bios_get_conout selected the text driver");
+        a2560_debugnl("a2560_bios_get_conout selected the text driver");
         /* VICKY helps us with the 8x8 font and cursor blinking */
         a2560u_bios_sfb_is_active = false;
         driver =  (CONOUT_DRIVER*)&a2560u_conout_text;
@@ -506,7 +512,7 @@ CONOUT_DRIVER *a2560u_bios_get_conout(void)
 # if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
     else
     {
-        a2560u_debugnl("a2560u_bios_get_conout selected the bitmap driver %p", v_bas_ad);
+        a2560_debugnl("a2560_bios_get_conout selected the bitmap driver %p", v_bas_ad);
         /* Use the shadow framebuffer */
         driver = (CONOUT_DRIVER*)&a2560u_conout_bmp;
         a2560u_sfb_setup(v_bas_ad, v_cel_ht);
@@ -518,13 +524,52 @@ CONOUT_DRIVER *a2560u_bios_get_conout(void)
     return driver;
 }
 
+void a2560_bios_text_init(void)
+{
+    a2560_debugnl("a2560_bios_text_init(%p)", vicky);
+    a2560u_bios_load_font();
+    a2560_debugnl("a2560_bios_text_init: vicky2_set_text_lut");
+    vicky2_set_text_lut(vicky, text_palette, text_palette);
+
+    int i;
+    volatile uint8_t *c = vicky->text_memory->color;
+    volatile uint8_t *t = vicky->text_memory->text;
+    uint8_t color = (uint8_t)(v_col_fg << 4 | v_col_fg);
+
+    a2560_debugnl("color_mem:%p text_mem:%p",c,t);
+
+    for (i = 0 ; i < VICKY_TEXT_SIZE ; i++)
+    {
+         *c++ = color;
+         *t++ = ' ';
+    }
+
+    /* Set cursor */
+    vicky->ctrl->cursor_control = 0;
+    //vicky->cursor_control  &= ~VICKY_CURSOR_CHAR;
+    vicky->ctrl->cursor_control  |=
+        (((uint32_t)0x00L) << 16) /* 0 is a filled cell */
+        | 6; /* Flash quickly */
+
+    /* Enable text mode. Can't have text mode and gfx without overlay otherwise it crashes.
+     * If we have overlay, then the inverse video doesn't work as the background is transparent. */
+    if (vicky->bitmap)
+        vicky->ctrl->control &= ~(VICKY_CTRL_GFX|VICKY_CTRL_BITMAP);
+    vicky->ctrl->control |= VICKY_CTRL_TEXT;
+    vicky2_hide_cursor(vicky);
+
+    a2560_debugnl("a2560_bios_text_init exiting");
+}
+
+
 static void a2560u_bios_load_font(void)
 {
     int ascii;
     int i;
 
-    uint8_t *dst = (uint8_t*)VICKY_FONT;
-
+    uint8_t *dst = vicky->font_memory->mem;
+    a2560_debugnl("a2560u_bios_load_font loading found to %p", dst);
+    
     for (ascii = 0; ascii < 256; ascii++)
     {
         uint8_t *src = char_addr(ascii);
@@ -546,35 +591,4 @@ static void a2560u_bios_load_font(void)
     }
 }
 
-
-void a2560u_bios_text_init(void)
-{
-    a2560u_bios_load_font();
-    vicky2_set_text_lut(text_palette, text_palette);
-
-    int i;
-    volatile uint8_t *c = (volatile uint8_t*)VICKY_TEXT_COLOR;
-    volatile uint8_t *t = (uint8_t*)VICKY_TEXT;
-    uint8_t color = (uint8_t)(v_col_fg << 4 | v_col_fg);
-
-    for (i = 0 ; i < VICKY_TEXT_SIZE ; i++)
-    {
-         *c++ = color;
-         *t++ = ' ';
-    }
-
-    /* Set cursor */
-    R32(VICKY_A_CURSOR_CTRL) = 0;
-    //R32(VICKY_A_CURSOR_CTRL) &= ~VICKY_CURSOR_CHAR;
-    R32(VICKY_A_CURSOR_CTRL) |=
-        (((uint32_t)0x00L) << 16) /* 0 is a filled cell */
-        | 6; /* Flash quickly */
-
-    /* Enable text mode. Can't have text mode and gfx without overlay otherwise it crashes.
-     * If we have overlay, then the inverse video doesn't work as the background is transparent. */
-    R32(VICKY_CTRL) &= ~(VICKY_A_CTRL_GFX|VICKY_A_CTRL_BITMAP);
-    R32(VICKY_CTRL) |= VICKY_A_CTRL_TEXT;
-    vicky2_hide_cursor();
-}
-
-#endif /* MACHINE_A2560U */
+#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */

@@ -11,7 +11,7 @@ LDFLAGS=-L$(LIBCMINI)/build -lcmini -lgcc
 
 LIB=liba2560u.a
 
-SRC_C=a2560u.c bq4802ly.c \
+SRC_C=a2560u.c a2560u_debug.c bq4802ly.c \
 	ps2_keyboard.c ps2_mouse_a2560u.c ps2.c \
 	sn76489.c ym2612.c uart16550.c vicky2.c vicky_mouse.c wm8776.c \
 	shadow_fb.c

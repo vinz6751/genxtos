@@ -1,7 +1,7 @@
 /*
  * a2560u - Foenix Retro Systems A2560U specific functions
  *
- * Copyright (C) 2013-2021 The EmuTOS development team
+ * Copyright (C) 2013-2023 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -10,12 +10,19 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#define MACHINE_A2560U_DEBUG 0
+#define MACHINE_A2560_DEBUG 1
+#define ENABLE_KDEBUG
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include "a2560u_debug.h"
+#include "foenix.h"
 #include "regutils.h"
+#include "vicky2_txt_a_logger.h"
+
+// FIXME: this is an EmuTOS dependency
+#include "doprintf.h"
 
 int sprintf(char *__restrict__ str, const char *__restrict__ fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
@@ -43,6 +50,7 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #include "ps2.h"
 #include "ps2_keyboard.h"
 #include "ps2_mouse_a2560u.h"
+#include "superio.h"
 #include "vicky2.h"    /* VICKY II graphics controller */
 #include "a2560u_debug.h"
 #include "a2560u.h"
@@ -74,30 +82,57 @@ static void irq_init(void);
 void irq_mask_all(uint16_t *save);
 void irq_add_handler(int id, void *handler);
 void a2560u_irq_bq4802ly(void);
-void a2560u_irq_vicky(void);
+
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+void a2560u_irq_vicky_a(void); // VICKY autovector A interrupt handler
+void a2560u_irq_vicky_b(void); // VICKY autovector B interrupt handler
+#else
+void a2560u_irq_vicky(void); // Only channel, or channel B on the A2560K/X/GenX
+#endif
+
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
 
 /* Implementation ************************************************************/
 
-
 void a2560u_init(void)
 {
-    a2560u_beeper(true);
-    *((unsigned long * volatile)0xB40008) = 0x0000000; /* Black border */
+    a2560_beeper(true);
+    //*((unsigned long * volatile)0xB40008) = 0x00ff000; /* Black border */
 
     cpu_freq = CPU_FREQ; /* TODO read that from GAVIN's Machine ID */
 
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+    superio_init();
+
+    uart16550_init(UART2); /* So we can debug to serial port early */
+    uart16550_put(UART2, (uint8_t*)"TEST\n", 4);
+    channel_A_logger_init();
+#endif
+
+#if defined(MACHINE_A2560U)
+    uart16550_init(UART1); /* So we can debug to serial port early */
+    //uart16550_put(UART1, (uint8_t*)"DEBUG TEST\n", 4);
+#endif
+
+    a2560_debugnl("irq_init()");
     irq_init();
-    uart16550_init(UART0); /* So we can debug to serial port early */
+
+    a2560_debugnl("timer_init");
     timer_init();
+
+    a2560_debugnl("wm8776_init");
     wm8776_init();
+    
+    a2560_debugnl("ym262_reset");
     ym262_reset();
+    
+    a2560_debugnl("sn76489_mute_all");
     sn76489_mute_all();
 
     /* Clear screen and home */
-    a2560u_debugnl("\033Ea2560u_init()");
-    a2560u_beeper(false);
+    a2560_debugnl("a2560u_init() done");
+    a2560_beeper(false);
 }
 
 
@@ -109,7 +144,7 @@ uint8_t *a2560u_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's
 void a2560u_setphys(const uint8_t *address)
 {
     a2560u_bios_vram_fb = (uint8_t*)address;
-    vicky2_set_bitmap_address(0, (uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
+    vicky2_set_bitmap_address(vicky, 0, (uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
 }
 
 
@@ -164,7 +199,7 @@ static void timer_init(void)
 
     /* Disable all timers */
     for (i = 0; i < sizeof(a2560u_timers)/sizeof(struct a2560u_timer_t); i++)
-        a2560u_timer_enable(i, false);
+        a2560_timer_enable(i, false);
 }
 
 /*
@@ -174,7 +209,7 @@ static void timer_init(void)
  * repeat: whether the timer should reload after firing interrupt
  * handler: routine to execute when timer fires
  */
-void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler)
+void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler)
 {
     struct a2560u_timer_t *t;
     uint16_t sr;
@@ -182,7 +217,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     if (timer > 3)
         return;
 
-    //a2560u_debugnl("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler);
+    //a2560_debugnl("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler);
 
     /* Identify timer control register to use */
     t = (struct a2560u_timer_t *)&a2560u_timers[timer];
@@ -191,7 +226,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
     sr = set_sr(0x2700);
 
     /* Stop the timer while we configure */
-    a2560u_timer_enable(timer, false);
+    a2560_timer_enable(timer, false);
 
     /* Stop and reprogram the timer, but don't start. */
     /* TODO: In case of control register 0, we write the config of 3 timers at once because
@@ -233,13 +268,13 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
 
     set_sr(sr);
 #if 0
-    a2560u_debugnl("AFTER SETTING TIMER %d\n", timer);
-    a2560u_debugnl("CPU          sr=%04x\n", get_sr());
-    a2560u_debugnl("vector       0x%02x=%p\n",t->vector,(void*)set_vector(t->vector, -1L));
-    a2560u_debugnl("value        %p=%08lx\n",(void*)t->value,R32(t->value));
-    a2560u_debugnl("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1));
-    a2560u_debugnl("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1));
-    a2560u_debugnl("control      %p=%08lx\n",(void*)t->control,R32(t->control));
+    a2560_debugnl("AFTER SETTING TIMER %d\n", timer);
+    a2560_debugnl("CPU          sr=%04x\n", get_sr());
+    a2560_debugnl("vector       0x%02x=%p\n",t->vector,(void*)set_vector(t->vector, -1L));
+    a2560_debugnl("value        %p=%08lx\n",(void*)t->value,R32(t->value));
+    a2560_debugnl("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1));
+    a2560_debugnl("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1));
+    a2560_debugnl("control      %p=%08lx\n",(void*)t->control,R32(t->control));
 #endif
 }
 
@@ -248,7 +283,7 @@ void a2560u_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *han
  * timer: timer number
  * enable: 0 to disable, anything to enable
  */
-void a2560u_timer_enable(uint16_t timer, bool enable)
+void a2560_timer_enable(uint16_t timer, bool enable)
 {
     struct a2560u_timer_t *t = (struct a2560u_timer_t *)&a2560u_timers[timer];
 
@@ -257,58 +292,14 @@ void a2560u_timer_enable(uint16_t timer, bool enable)
     else
         R32(t->control) &= ~t->start;
 
-// a2560u_debugnl("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control));
+// a2560_debugnl("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control));
 //     if (R32(t->value) != R32(t->value))
-//         a2560u_debugnl("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value));
+//         a2560_debugnl("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value));
 //     else
-//         a2560u_debugnl("Timer is not running\n");
+//         a2560_debugnl("Timer is not running\n");
 }
 
 
-/*
- * Output the string on the serial port.
- */
-void a2560u_debugnl(const char* __restrict__ s, ...)
-{
-#if MACHINE_A2560U_DEBUG
-    char msg[80];
-    int length;
-    char *c;
-    va_list ap;
-    va_start(ap, s);
-    sprintf(msg,s,ap);
-    va_end(ap);
-
-    c = (char*)msg;
-    while (*c++)
-        ;
-    length = c - msg -1;
-
-    uart16550_put(UART0, (uint8_t*const)msg, length);
-    uart16550_put(UART0, (uint8_t*)"\r\n", 2);
-#endif
-}
-
-void a2560u_debug(const char* __restrict__ s, ...)
-{
-#if MACHINE_A2560U_DEBUG
-    char msg[80];
-    int length;
-    char *c;
-    va_list ap;
-    va_start(ap, s);
-    sprintf(msg,s,ap);
-    va_end(ap);
-
-    c = (char*)msg;
-    while (*c++)
-        ;
-    length = c - msg -1;
-
-    uart16550_put(UART0, (uint8_t*const)msg, length);
-    uart16550_put(UART0, (uint8_t*)"\r\n", 2);
-#endif
-}
 
 
 /* Interrupts management *****************************************************/
@@ -338,7 +329,13 @@ static void irq_init(void)
     for (i=0x40; i<0x60; i++)
         set_vector(i,(uint32_t)a2560u_rte); /* That's not even correct because it doesn't acknowledge interrupts */
 
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+    // Channel A VBL
+    set_vector(INT_VICKYII_A, (uint32_t)a2560u_irq_vicky_a);
+    set_vector(INT_VICKYII_B, (uint32_t)a2560u_irq_vicky_b);
+#else
     set_vector(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
+#endif    
 }
 
 
@@ -375,19 +372,21 @@ static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)I
 
 
 /* Enable an interruption. First byte is group, second byte is bit */
-void a2560u_irq_enable(uint16_t irq_id)
+void a2560_irq_enable(uint16_t irq_id)
 {
+    a2560_debugnl("a2560_irq_enable(0x%04x)", irq_id);
     a2560u_irq_acknowledge(irq_id);
     R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
-    a2560u_debugnl("a2560u_irq_enable(%02x) -> Mask %p=%04x", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
+    a2560_debugnl("a2560_irq_enable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
 }
 
 
 /* Disable an interruption. First byte is group, second byte is bit */
 void a2560u_irq_disable(uint16_t irq_id)
 {
+    a2560_debugnl("a2560_irq_disable(0x%04x)", irq_id);
     R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
-    a2560u_debugnl("a2560u_irq_disable(%02x) -> Mask %p=%04x", irq_id, irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
+    a2560_debugnl("a2560_irq_disable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
 }
 
 
@@ -403,27 +402,27 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
     void *old_handler = irq_handler(irq_id);
     irq_handler(irq_id) = (void*)handler;
 
-    a2560u_debugnl("a2560u_irq_set_handler(%04x,%p)", irq_id, handler);
+    a2560_debugnl("a2560u_irq_set_handler(%04x,%p)", irq_id, handler);
     return old_handler;
 }
 
 
 /* Real Time Clock  **********************************************************/
 
-void a2560u_clock_init(void)
+void a2560_clock_init(void)
 {
     set_vector(INT_BQ4802LY_VECN, (uint32_t)a2560u_irq_bq4802ly);
     bq4802ly_init();
 }
 
 
-uint32_t a2560u_getdt(void)
+uint32_t a2560_getdt(void)
 {
     uint8_t day, month, hour, minute, second;
     uint16_t year;
 
     bq4802ly_get_datetime(&day, &month, &year, &hour, &minute, &second);
-    a2560u_debugnl("RTC time= %02d/%02d/%04d %02d:%02d:%02d", day, month, year, hour, minute, second);
+    a2560_debugnl("RTC time= %02d/%02d/%04d %02d:%02d:%02d", day, month, year, hour, minute, second);
 
     return MAKE_ULONG(
         ((year-1980) << 9) | (month << 5) | day,
@@ -431,7 +430,7 @@ uint32_t a2560u_getdt(void)
 }
 
 
-void a2560u_setdt(uint32_t datetime)
+void a2560_setdt(uint32_t datetime)
 {
     const uint16_t date = HIWORD(datetime);
     const uint16_t time = LOWORD(datetime);
@@ -454,6 +453,22 @@ static const struct ps2_driver_t * const drivers[] = {
     &ps2_mouse_driver_a2560u
 };
 
+static void irq_msg40(void);
+static void irq_msg41(void);
+static void irq_msg42(void);
+static void irq_msg43(void);
+static void irq_msg44(void);
+static void irq_msg45(void);
+static void irq_msg46(void);
+static void irq_msg47(void);
+static void irq_msg40(void) { a2560_debugnl("0x40"); }
+static void irq_msg41(void) { a2560_debugnl("0x41"); }
+static void irq_msg42(void) { a2560_debugnl("0x42"); }
+static void irq_msg43(void) { a2560_debugnl("0x43"); }
+static void irq_msg44(void) { a2560_debugnl("0x44"); }
+static void irq_msg45(void) { a2560_debugnl("0x45"); }
+static void irq_msg46(void) { a2560_debugnl("0x46"); }
+static void irq_msg47(void) { a2560_debugnl("0x47"); }
 
 /* The following must be set by the calling OS prior to calling a2560u_kbd_init
  * ps2_config.counter      = ;
@@ -481,14 +496,24 @@ void a2560u_kbd_init(void)
     /* Register GAVIN interrupt handlers */
     set_vector(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);
     set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560u_irq_ps2mouse);
-
+/*
+set_vector(INT_PS2KBD_VECN, (uint32_t)irq_msg40);
+set_vector(INT_PS2KBD_VECN+1, (uint32_t)irq_msg41);
+set_vector(INT_PS2KBD_VECN+2, (uint32_t)irq_msg42);
+set_vector(INT_PS2KBD_VECN+3, (uint32_t)irq_msg43);
+set_vector(INT_PS2KBD_VECN+4, (uint32_t)irq_msg44);
+set_vector(INT_PS2KBD_VECN+5, (uint32_t)irq_msg45);
+set_vector(INT_PS2KBD_VECN+6, (uint32_t)irq_msg46);
+set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
+*/
     /* Acknowledge any pending interrupt */
     a2560u_irq_acknowledge(INT_KBD_PS2);
     a2560u_irq_acknowledge(INT_MOUSE);
 
     /* Go ! */
-    a2560u_irq_enable(INT_KBD_PS2);
-    a2560u_irq_enable(INT_MOUSE);
+    a2560_debugnl("Enabling GAVIN PS2/mouse irqs");
+    a2560_irq_enable(INT_KBD_PS2);
+    a2560_irq_enable(INT_MOUSE);
 }
 
 
@@ -506,7 +531,8 @@ static const uint32_t foenix_cpu_speed_hz[] =
     80000000
 };
 
-static const char* foenix_model_name[] =
+#define FOENIX_MODEL_NAME_SIZE 12
+static const char* foenix_model_name[12] =
 {
     "C256 FMX",
     "C256 U",
@@ -522,7 +548,8 @@ static const char* foenix_model_name[] =
     "A2560K"
 };
 
-static const char * foenix_cpu_name[] =
+#define FOENIX_CPU_NAME_SIZE 11
+static const char * foenix_cpu_name[FOENIX_CPU_NAME_SIZE] =
 {
     "MC68SEC000",
     "MC68020"
@@ -531,11 +558,17 @@ static const char * foenix_cpu_name[] =
     "MC68EC30",
     "MC68040",
     "MC68040V",
+    "MC68EC40",
+    "486DX2-50",
+    "486DX2-66",
+    "486DX4"
 };
 
 
-void a2560u_system_info(struct foenix_system_info_t *result)
+void a2560_system_info(struct foenix_system_info_t *result)
 {
+    // From VICKY
+#ifdef MACHINE_A2560U
     result->fpga_date = MAKE_ULONG(R16(VICKY+0x30),R16(VICKY+0x32));
     result->fpga_major = R16(VICKY+0x3A);
     result->fpga_minor = R16(VICKY+0x38);
@@ -546,17 +579,37 @@ void a2560u_system_info(struct foenix_system_info_t *result)
     result->pcb_revision_name[1] = LOBYTE(revision);
     revision = R16(VICKY+0x36);
     result->pcb_revision_name[2] = HIBYTE(revision);
+
+#elif defined (MACHINE_A2560X)
+    result->fpga_date = R32(VICKY+0x14);
+    result->fpga_major = (uint16_t)(R32(VICKY+0x10) >> 16);
+    result->fpga_major = (uint16_t)(R32(VICKY+0x10) & 0xffff);
+    uint32_t revision = R32(VICKY+0x18);
+    result->pcb_revision_name[0] = (revision >> 24);
+    result->pcb_revision_name[1] = (revision >> 16);
+    result->pcb_revision_name[2] = (revision >> 8);
+#else
+    #error "Foenix model not recognized"
+#endif
     result->pcb_revision_name[3] = '\0';
 
-    result->cpu_name = (char*)foenix_cpu_name[R16(GAVIN+0x0C) >> 12];
-    //result->model_name = foenix_model_name[poke]
+    // From GAVIN
+    uint16_t machine_id = GAVIN_R(GAVIN+0x0C);
+    
+    a2560_debugnl("Machine id: %x", machine_id);
+    result->cpu_id = (machine_id >> 12) & 7;
+    if (result->cpu_id >= FOENIX_CPU_NAME_SIZE)
+        result->cpu_name = "Unknown";
+    else
+        result->cpu_name = (char*)foenix_cpu_name[result->cpu_id];
 
-    uint16_t machine_id = R16(GAVIN+0x0C);
-    result->cpu_id = (machine_id & 0xf000) >> 12;
-    result->cpu_name = (char*)foenix_cpu_name[result->cpu_id];
-    result->cpu_speed_hz = foenix_cpu_speed_hz[(machine_id & 0xf00) >> 8];
+    result->cpu_speed_hz = foenix_cpu_speed_hz[(machine_id >> 5) & 7];
+    
     int model_id = machine_id & 0x0f;
-    result->model_name = (char*)foenix_model_name[model_id];
+    if (model_id >= FOENIX_MODEL_NAME_SIZE)
+        result->model_name = "Unknown";
+    else
+        result->model_name = (char*)foenix_model_name[model_id];
 
     if (model_id == 9) /* A2560U */
     {
@@ -571,21 +624,21 @@ void a2560u_system_info(struct foenix_system_info_t *result)
 }
 
 
-void a2560u_beeper(bool on)
+void a2560_beeper(bool on)
 {
     if (on)
-        R16(GAVIN_CTRL) |= GAVIN_CTRL_BEEPER;
+        GAVIN_R(GAVIN_CTRL) |= GAVIN_CTRL_BEEPER;
     else
-        R16(GAVIN_CTRL) &= ~GAVIN_CTRL_BEEPER;
+        GAVIN_R(GAVIN_CTRL) &= ~GAVIN_CTRL_BEEPER;
 }
 
 
-void a2560u_disk_led(bool on)
+void a2560_disk_led(bool on)
 {
     if (on)
-        R16(GAVIN_CTRL) |= GAVIN_CTRL_DISKLED;
+        GAVIN_R(GAVIN_CTRL) |= GAVIN_CTRL_DISKLED;
     else
-        R16(GAVIN_CTRL) &= ~GAVIN_CTRL_DISKLED;
+        GAVIN_R(GAVIN_CTRL) &= ~GAVIN_CTRL_DISKLED;
 }
 
 
@@ -597,7 +650,7 @@ static uint32_t set_vector(uint16_t num, uint32_t vector)
     uint32_t *addr = (uint32_t *) (4L * num);
     oldvector = *addr;
 
-    if(vector != -1) {
+    if (vector != -1) {
         *addr = vector;
     }
     return oldvector;

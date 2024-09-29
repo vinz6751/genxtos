@@ -1,7 +1,7 @@
 /*
  * uart16550.c - UART 16550 serial port driver
  *
- * Copyright (C) 2001-2021 The EmuTOS development team
+ * Copyright (C) 2001-2023 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -49,12 +49,12 @@ void (*uart16550_rx_handler)(uint8_t byte);
 
 void uart16550_init(UART16550 *uart)
 {
-    uart16550_set_bps(uart, UART16550_57600BPS);
+    uart16550_set_bps(uart, UART16550_9600BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
     uart16550_rx_handler = (void(*)(uint8_t))a2560u_rts;
     //uart[FCR] = 0b00100111; //0b00000110; // No FIFO, reset FIFOs. See 16C750B doc
     uart[FCR] = 0xC1; /* 16550: Clear FIFOs, one byte buffer */
-    
+
     // Don't enable interrupts by default
     R8(uart)[IER] = 0;
     R8(uart)[MCR] = MCR_DTR | MCR_RTS;
@@ -131,7 +131,7 @@ void uart16550_put(UART16550 *uart, const uint8_t *bytes, uint32_t count)
     uint8_t *c = (uint8_t*)bytes;
 
     while (count--)
-    {        
+    {
         while (!uart16550_can_put(uart))
             ;
         R8(uart)[THR] = *c++;
@@ -140,13 +140,13 @@ void uart16550_put(UART16550 *uart, const uint8_t *bytes, uint32_t count)
 
 
 bool uart16550_can_get(const UART16550 *uart)
-{    
+{
     return R8(uart)[LSR] & 0x01;
 }
 
 
 bool uart16550_can_put(const UART16550 *uart)
-{    
+{
     return R8(uart)[LSR] & 0x20; /* bit 5: THR is empty */
 }
 
@@ -158,7 +158,7 @@ uint8_t uart16550_get_nowait(const UART16550 *uart)
 
 
 void uart16550_rx_irq_enable(UART16550 *uart, bool enable) {
-    if (enable) 
+    if (enable)
     {
         uart[MCR] |= MCR_OUT2;
         uart[IER] |= IER_RX;
