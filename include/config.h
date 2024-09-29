@@ -662,8 +662,9 @@
  * Defaults for the A2560U from Foenix Retro Systems
  */
 #ifdef MACHINE_A2560U
+# define FOENIX_CHANNEL_A_DEBUG_PRINT 0
 # ifndef MACHINE_A2560_DEBUG
-#  define MACHINE_A2560_DEBUG 0
+#  define MACHINE_A2560_DEBUG 1
 # endif
 # ifndef CONF_ATARI_HARDWARE
 #  define CONF_ATARI_HARDWARE 0
@@ -734,7 +735,7 @@
 #  define MACHINE_A2560_DEBUG 1
 # endif
 # ifndef FOENIX_CHANNEL_A_DEBUG_PRINT
-#  define FOENIX_CHANNEL_A_DEBUG_PRINT 1
+#  define FOENIX_CHANNEL_A_DEBUG_PRINT 0
 # endif
 # ifndef CONF_ATARI_HARDWARE
 #  define CONF_ATARI_HARDWARE 0
@@ -793,6 +794,7 @@
 #endif
 #ifdef MACHINE_A2560_DEBUG
 # define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
+# define RS232_DEBUG_PRINT 0
 #endif
 #endif
 
