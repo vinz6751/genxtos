@@ -32,6 +32,7 @@
     .GLOBAL _calibration_interrupt_count
     .GLOBAL _uart16550_rx_handler
     .GLOBAL _bq4802ly_tick_handler
+    .GLOBAL _mpu401_irq_handler
 
 
 _a2560u_rts:
@@ -150,4 +151,18 @@ com1_do:
     bra.s   com1_do
 com1_done:
     movem.l (sp)+,d0-d1/a0-a2
+    rte
+
+    .GLOBAL _kbdvecs ; TODO EmuTOS dependency shouldn't be here !
+_mpu401_irq_handler:
+    | Handle MIDI interrupts. Note that there is no overrun or frame error
+    | detection supported by the SuperIO's MPU-401 implementation (contrary to the
+    | Atari ST's 6850 ACIA)
+    move.w  #0x2700,sr
+    move.w  #MIDI_INT,IRQ_PENDING_GRP1
+    movem.l d0-d2/a0-a2,-(sp)   // Save GCC scratch registers
+    move.b  SUPERIO_BASE+0x330,d0
+    move.l  _kbdvecs,a0 // midivec
+    jbsr    (a0)
+    movem.l (sp)+,d0-d2/a0-a2
     rte

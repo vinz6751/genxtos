@@ -60,6 +60,11 @@ void a2560_bios_kbd_init(void);
 void a2560_bios_text_init(void);
 CONOUT_DRIVER *a2560_bios_get_conout(void);
 
+/* MIDI */
+void a2560_bios_midi_init(void);
+uint32_t a2560_bios_bcostat3(void);
+void a2560_bios_bconout3(uint8_t byte);
+
 #endif /* MACHINE_A2560 */
 
 #endif

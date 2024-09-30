@@ -47,6 +47,7 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #include "ym262.h"     /* YM262 OPL3 FM synthesizer */
 #include "wm8776.h"    /* Audio codec */
 #include "bq4802ly.h"  /* Real time clock */
+#include "mpu401.h"    /* MIDI interface */
 #include "ps2.h"
 #include "ps2_keyboard.h"
 #include "ps2_mouse_a2560u.h"
@@ -516,6 +517,20 @@ set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
     a2560_irq_enable(INT_MOUSE);
 }
 
+
+/* MIDI **********************************************************************/
+
+extern void mpu401_irq_handler(void);
+
+void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
+    a2560_debugnl("a2560u_midi_init");
+    a2560u_irq_disable(INT_MIDI);
+    mpu401_set_timeout(timer, timeout);
+    a2560_debugnl("mpu401_init returns %d",mpu401_init());
+    set_vector(INT_MIDI_VECN, (uint32_t)mpu401_irq_handler);
+    a2560u_irq_acknowledge(INT_MIDI);
+    a2560_irq_enable(INT_MIDI);
+}
 
 /* System information ********************************************************/
 

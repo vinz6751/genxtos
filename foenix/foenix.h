@@ -107,8 +107,17 @@
 
 #define IRQ_PENDING_GRP1 (GAVIN+0x102)
     #define INT_KBD_PS2         0x10    /* PS/2 Keyboard */
+#if defined (MACHINE_A2560X) || defined(MACHINE_A2560K)
+    #define INT_MAURICE_PS2     0x11    /* Maurice (A2560K keyboard controller) */
+#endif
     #define INT_MOUSE           0x12    /* PS/2 Mouse */
     #define INT_COM1            0x13    /* COM1 */
+#if defined (MACHINE_A2560X) || defined(MACHINE_A2560K)
+    #define INT_COM2            0x14    /* COM2 */
+    #define INT_LPT             0x15    /* Parallel port */
+    #define INT_FDC             0x16    /* Floppy controller */
+    #define INT_MIDI            0x17    /* MPU-401 / MIDI */
+#endif
     #define INT_TIMER0          0x18    /* Timer 0, Clocked with the CPU Clock */
     #define INT_TIMER1          0x19    /* Timer 1, Clocked with the CPU Clock */
     #define INT_TIMER2          0x1A    /* Timer 2, Clocked with the CPU Clock */
@@ -134,8 +143,13 @@
 #define INT_VICKYII       0x1E
 #endif
 #define INT_PS2KBD_VECN   0x40
+#define INT_MAURICE_VECN  0x41
 #define INT_PS2MOUSE_VECN 0x42
 #define INT_COM1_VECN     0x43
+#define INT_COM2_VECN     0x44
+#define INT_LPT_VECN      0x45
+#define INT_FDC_VECN      0x46
+#define INT_MIDI_VECN     0x47
 #define INT_TIMERS_VECN   0x48
 #define INT_TIMER0_VECN   (INT_TIMERS_VECN+0) /* Timer 0, Clocked with the CPU Clock */
 #define INT_TIMER1_VECN   (INT_TIMERS_VECN+1) /* Timer 1, Clocked with the CPU Clock */
