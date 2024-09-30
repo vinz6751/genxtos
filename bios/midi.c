@@ -17,6 +17,11 @@
 #include "asm.h"
 #include "midi.h"
 
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+ #define FOENIX_WITH_MIDI
+ #include "a2560u_bios.h"
+#endif
+
 
 /*==== MIDI bios functions =========================================*/
 
@@ -37,7 +42,7 @@ LONG bconin3(void)
     while(!bconstat3())
         ;
 
-#if CONF_WITH_MIDI_ACIA
+#if CONF_WITH_MIDI_ACIA || defined(FOENIX_WITH_MIDI)
     {
         WORD old_sr;
         LONG value;
@@ -75,6 +80,8 @@ LONG bcostat3(void)
         /* Data register not empty */
         return 0;   /* not OK */
     }
+#elif defined(FOENIX_WITH_MIDI)
+    return a2560_bios_bcostat3();
 #else
     return 0;       /* not OK */
 #endif
@@ -88,6 +95,9 @@ LONG bconout3(WORD dev, WORD c)
 
 #if CONF_WITH_MIDI_ACIA
     midi_acia.data = c;
+    return 1L;
+#elif defined(FOENIX_WITH_MIDI)
+    a2560_bios_bconout3(c);
     return 1L;
 #else
     return 0L;
@@ -124,5 +134,7 @@ void midi_init(void)
                      ACIA_RLTID|    /* RTS low, TxINT disabled */
                      ACIA_DIV16|    /* clock/16 */
                      ACIA_D8N1S;    /* 8 bit, 1 stop, no parity */
+#elif defined(FOENIX_WITH_MIDI)
+    a2560_bios_midi_init();
 #endif
 }

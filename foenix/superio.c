@@ -71,169 +71,124 @@ void superio_init(void) {
     *FAN_CTRL_REG = 0x01;
 }
 
+/* Logical Device Numbers */
+#define SUPERIO_LDN_FLOPPY   0
+#define SUPERIO_LDN_LPT      3
+#define SUPERIO_LDN_COM1     4
+#define SUPERIO_LDN_COM2     5
+#define SUPERIO_LDN_KEYBOARD 7
+#define SUPERIO_LDN_GAMEPORT 9
+#define SUPERIO_LDN_PWRMGMT  10
+#define SUPERIO_LDN_MIDI     11
+
+static void select_logical_device(uint8_t n) {
+    *CONFIG_0x2E_REG = 0x07;
+    *CONFIG_0x2F_REG = n;
+}
+
+static void set_base_address(uint16_t adr) {
+    *CONFIG_0x2E_REG = 0x60; /* High */
+    *CONFIG_0x2F_REG = ((uint8_t*)&adr)[0];
+    *CONFIG_0x2E_REG = 0x61; /* Low*/
+    *CONFIG_0x2F_REG = ((uint8_t*)&adr)[1];
+}
+
+static void activate(void) {
+    *CONFIG_0x2E_REG = 0x30;
+    *CONFIG_0x2F_REG = 0x01;
+}
+
 static void configure_zones(void) {
-    // First step is to get into the Configuration Mode
-    *CONFIG_0x2E_REG = 0x55;    // We need to Get into the Config Mode with 0x55
+    // Get into the Configuration Mode
+    *CONFIG_0x2E_REG = 0x55;
 
     // Setting Up Device 0 - Floppy 
     // {8'h06,16'h03F0,8'h00};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x00;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x03;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
-    *CONFIG_0x2F_REG = 0xF0;
+    select_logical_device(SUPERIO_LDN_FLOPPY);
+    set_base_address(0x3f0);
     // INT 
     *CONFIG_0x2E_REG = 0x70;
     *CONFIG_0x2F_REG = 0x06;
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;   
+    activate();
 
     // Setting Up Device 3 - Parallel Port 
     // {8'h07,16'h0378,8'h03};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x03;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x03;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
-    *CONFIG_0x2F_REG = 0x78;
+    select_logical_device(SUPERIO_LDN_LPT);
+    set_base_address(0x378);
     // INT0 
     *CONFIG_0x2E_REG = 0x70;
     *CONFIG_0x2F_REG = 0x07;
     // Parallel Mode 
     *CONFIG_0x2E_REG = 0xF0;
     *CONFIG_0x2F_REG = 0x3A;
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;    
+    activate();
 
-    // Setting Up Device 4 - Serial Port 1 
+    // Setting Up Device 4 - Serial Port 1
     // {8'h04,16'h03F8,8'h04};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x04;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x03;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
-    *CONFIG_0x2F_REG = 0xF8;
+    select_logical_device(SUPERIO_LDN_COM1);
+    set_base_address(0x3f8);
     // INT0 
     *CONFIG_0x2E_REG = 0x70;
     *CONFIG_0x2F_REG = 0x04;
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;
+    activate();
 
     // Setting Up Device 5 - Serial Port 2 
     // {8'h03,16'h02F8,8'h05};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x05;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x02;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
-    *CONFIG_0x2F_REG = 0xF8;
+    select_logical_device(SUPERIO_LDN_COM2);
+    set_base_address(0x2f8);
     // INT0 
     *CONFIG_0x2E_REG = 0x70;
     *CONFIG_0x2F_REG = 0x03;
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;  
+    activate();
 
     // Setting Up Device 7 - Keyboard 
     // {8'h01, 16'h0060,8'h07};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x07;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x00;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
-    *CONFIG_0x2F_REG = 0x60;
+    select_logical_device(SUPERIO_LDN_KEYBOARD);
+    set_base_address(0x060);
     // INT0 (Keyboard)
     *CONFIG_0x2E_REG = 0x70;
     *CONFIG_0x2F_REG = 0x01;
     // INT1 (mouse)
     *CONFIG_0x2E_REG = 0x72;
-    *CONFIG_0x2F_REG = 0x02;    
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;
+    *CONFIG_0x2F_REG = 0x02;
+    activate();
 
     // Setting Up Device 9 - Game Port
     // {8'h00, 16'h0200,8'h09};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x09;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x02;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
-    *CONFIG_0x2F_REG = 0x00;
+    select_logical_device(SUPERIO_LDN_GAMEPORT);
+    set_base_address(0x200);
     // INT0
     *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x00; 
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;
-
+    *CONFIG_0x2F_REG = 0x00;
+    activate();
+    
     // Setting Up Device 10 - PME (Power Management)
     // {8'h00, 16'h0100,8'h0A};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x0A;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x01;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
+    select_logical_device(SUPERIO_LDN_PWRMGMT);
+    set_base_address(0x100);
+    // INT0
+    *CONFIG_0x2E_REG = 0x70;
     *CONFIG_0x2F_REG = 0x00;
-    // INT0
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x00; 
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;
-
-    // Setting Up Device 11 - PME (Power Management)
+    activate();
+    
+    // Setting Up Device 11 - MPU-401 (MIDI)
     // {8'h05,16'h0330,8'h0B};
-    // LD
-    *CONFIG_0x2E_REG = 0x07;
-    *CONFIG_0x2F_REG = 0x0B;
-    // BA_H (Base address)
-    *CONFIG_0x2E_REG = 0x60;
-    *CONFIG_0x2F_REG = 0x03;
-    // BA_L
-    *CONFIG_0x2E_REG = 0x61;
-    *CONFIG_0x2F_REG = 0x30;
+    select_logical_device(SUPERIO_LDN_MIDI);
+    set_base_address(0x330);
     // INT0
     *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x05; 
-    // Enable the Zone
-    *CONFIG_0x2E_REG = 0x30;
-    *CONFIG_0x2F_REG = 0x01;
+    *CONFIG_0x2F_REG = 0x05;
+    activate();
 
     // Supplemental Settings
     // Power On Device 
     *CONFIG_0x2E_REG = 0x22;
-    *CONFIG_0x2F_REG = 0xFF;   
+    *CONFIG_0x2F_REG = 0xFF;
     // We are done with config. 
     *CONFIG_0x2E_REG = 0xAA;    // We need to Get into the Config Mode with 0x55     
 
-    *GP60_REG = 0x84;           // THis is to replicate the FPGA behavior when it did the config.
-    *LED1_REG = 0x01;           // THis is to replace the FPGA behavior when it did the config in hardware.
+    *GP60_REG = 0x84;           // This is to replicate the FPGA behavior when it did the config.
+    *LED1_REG = 0x01;           // This is to replace the FPGA behavior when it did the config in hardware.
 }
 
 #endif

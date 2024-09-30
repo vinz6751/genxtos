@@ -18,7 +18,7 @@
 
 #include "emutos.h"
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
 
 #include "portab.h"
 #include "vectors.h"
@@ -48,6 +48,7 @@
 #include "../foenix/foenix.h"
 #include "../foenix/uart16550.h" /* Serial port */
 #include "../foenix/a2560u.h"
+#include "../foenix/mpu401.h"
 #include "../foenix/shadow_fb.h"
 #include "a2560u_bios.h"
 #include "../foenix/regutils.h"
@@ -590,5 +591,27 @@ static void a2560u_bios_load_font(void)
         }
     }
 }
+
+
+/* MIDI support */
+
+static ULONG get_timeout_timer(void) {
+    return hz_200;
+}
+
+void a2560_bios_midi_init(void) {
+    a2560u_midi_init(get_timeout_timer, 200/*1 second*/);
+}
+
+uint32_t a2560_bios_bcostat3(void)
+{
+    return mpu401_can_write();
+}
+
+void a2560_bios_bconout3(uint8_t byte)
+{
+    mpu401_write(byte);
+}
+
 
 #endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */
