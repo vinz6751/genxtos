@@ -93,6 +93,11 @@ static void set_base_address(uint16_t adr) {
     *CONFIG_0x2F_REG = ((uint8_t*)&adr)[1];
 }
 
+static void set_irq(uint8_t n) {
+    *CONFIG_0x2E_REG = 0x70;
+    *CONFIG_0x2F_REG = n;
+}
+
 static void activate(void) {
     *CONFIG_0x2E_REG = 0x30;
     *CONFIG_0x2F_REG = 0x01;
@@ -106,18 +111,14 @@ static void configure_zones(void) {
     // {8'h06,16'h03F0,8'h00};
     select_logical_device(SUPERIO_LDN_FLOPPY);
     set_base_address(0x3f0);
-    // INT 
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x06;
+    set_irq(6);
     activate();
 
     // Setting Up Device 3 - Parallel Port 
     // {8'h07,16'h0378,8'h03};
     select_logical_device(SUPERIO_LDN_LPT);
     set_base_address(0x378);
-    // INT0 
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x07;
+    set_irq(7);
     // Parallel Mode 
     *CONFIG_0x2E_REG = 0xF0;
     *CONFIG_0x2F_REG = 0x3A;
@@ -127,27 +128,21 @@ static void configure_zones(void) {
     // {8'h04,16'h03F8,8'h04};
     select_logical_device(SUPERIO_LDN_COM1);
     set_base_address(0x3f8);
-    // INT0 
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x04;
+    set_irq(4);
     activate();
 
     // Setting Up Device 5 - Serial Port 2 
     // {8'h03,16'h02F8,8'h05};
     select_logical_device(SUPERIO_LDN_COM2);
     set_base_address(0x2f8);
-    // INT0 
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x03;
+    set_irq(3);
     activate();
 
     // Setting Up Device 7 - Keyboard 
     // {8'h01, 16'h0060,8'h07};
     select_logical_device(SUPERIO_LDN_KEYBOARD);
     set_base_address(0x060);
-    // INT0 (Keyboard)
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x01;
+    set_irq(1);
     // INT1 (mouse)
     *CONFIG_0x2E_REG = 0x72;
     *CONFIG_0x2F_REG = 0x02;
@@ -157,27 +152,21 @@ static void configure_zones(void) {
     // {8'h00, 16'h0200,8'h09};
     select_logical_device(SUPERIO_LDN_GAMEPORT);
     set_base_address(0x200);
-    // INT0
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x00;
+    set_irq(0);
     activate();
     
     // Setting Up Device 10 - PME (Power Management)
     // {8'h00, 16'h0100,8'h0A};
     select_logical_device(SUPERIO_LDN_PWRMGMT);
     set_base_address(0x100);
-    // INT0
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x00;
+    set_irq(0);
     activate();
     
     // Setting Up Device 11 - MPU-401 (MIDI)
     // {8'h05,16'h0330,8'h0B};
     select_logical_device(SUPERIO_LDN_MIDI);
     set_base_address(0x330);
-    // INT0
-    *CONFIG_0x2E_REG = 0x70;
-    *CONFIG_0x2F_REG = 0x05;
+    set_irq(5);
     activate();
 
     // Supplemental Settings
