@@ -601,6 +601,7 @@ static ULONG get_timeout_timer(void) {
 
 void a2560_bios_midi_init(void) {
     a2560u_midi_init(get_timeout_timer, 200/*1 second*/);
+    mpu401_rx_handler = kbdvecs.midivec;
 }
 
 uint32_t a2560_bios_bcostat3(void)

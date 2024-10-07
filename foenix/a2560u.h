@@ -107,5 +107,5 @@ void *a2560u_irq_set_handler(uint16_t irq_id, void *handler);
 void a2560u_kbd_init(void);
 
 void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout);
-
+extern void (*mpu401_rx_handler)(uint8_t byte);
 #endif

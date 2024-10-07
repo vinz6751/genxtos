@@ -520,14 +520,17 @@ set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
 
 /* MIDI **********************************************************************/
 
-extern void mpu401_irq_handler(void);
+extern void a2560u_irq_mpu401(void);
+
+void (*mpu401_rx_handler)(uint8_t byte);
 
 void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
     a2560_debugnl("a2560u_midi_init");
     a2560u_irq_disable(INT_MIDI);
     mpu401_set_timeout(timer, timeout);
+    mpu401_rx_handler = (void(*)(uint8_t))a2560u_rts;
     a2560_debugnl("mpu401_init returns %d",mpu401_init());
-    set_vector(INT_MIDI_VECN, (uint32_t)mpu401_irq_handler);
+    set_vector(INT_MIDI_VECN, (uint32_t)a2560u_irq_mpu401);
     a2560u_irq_acknowledge(INT_MIDI);
     a2560_irq_enable(INT_MIDI);
 }
