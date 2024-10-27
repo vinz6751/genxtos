@@ -17,7 +17,7 @@
 	#define a2560_debugnl(a,...)
 #endif
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
 
 #include "a2560u_debug.h"
 #include "superio.h"

@@ -594,6 +594,7 @@ static void a2560u_bios_load_font(void)
 
 
 /* MIDI support */
+#if CONF_WITH_MPU401
 
 static ULONG get_timeout_timer(void) {
     return hz_200;
@@ -614,5 +615,6 @@ void a2560_bios_bconout3(uint8_t byte)
     mpu401_write(byte);
 }
 
+#endif // CONF_WITH_MPU401
 
 #endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */

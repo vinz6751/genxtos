@@ -1,12 +1,14 @@
 // Assembler include file for Foenix hardware definitions
 
 #ifdef MACHINE_A2560U
+#define CONF_WITH_MPU401 0
 .EQU SRAM_TOP,          0x400000
 .EQU GAVIN,             0xB00000
 .EQU BEATRIX,           0xB20000
 .EQU VICKYII,           0xB40000 | VICKYII base address
 .EQU VRAM_Bank0,        0xC00000 | 2MB (until 0xDFFFFF)
 #elif defined (MACHINE_A2560X)
+#define CONF_WITH_MPU401 1
 .EQU SRAM_TOP,          0x00400000
 // I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
 .EQU VRAM_Bank1,        0x00800000 | 4MB (until 0xBFFFFF)

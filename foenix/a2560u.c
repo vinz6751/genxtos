@@ -10,8 +10,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#define MACHINE_A2560_DEBUG 1
-#define ENABLE_KDEBUG
+#define MACHINE_A2560_DEBUG 0
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -107,7 +106,7 @@ void a2560u_init(void)
     superio_init();
 
     uart16550_init(UART2); /* So we can debug to serial port early */
-    uart16550_put(UART2, (uint8_t*)"TEST\n", 4);
+    //uart16550_put(UART2, (uint8_t*)"TEST\n", 4);
     channel_A_logger_init();
 #endif
 
@@ -519,7 +518,7 @@ set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
 
 
 /* MIDI **********************************************************************/
-
+#if CONF_WITH_MPU401
 extern void a2560u_irq_mpu401(void);
 
 void (*mpu401_rx_handler)(uint8_t byte);
@@ -534,6 +533,8 @@ void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
     a2560u_irq_acknowledge(INT_MIDI);
     a2560_irq_enable(INT_MIDI);
 }
+
+#endif // CONF_WITH_MPU401
 
 /* System information ********************************************************/
 

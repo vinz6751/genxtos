@@ -664,7 +664,7 @@
 #ifdef MACHINE_A2560U
 # define FOENIX_CHANNEL_A_DEBUG_PRINT 0
 # ifndef MACHINE_A2560_DEBUG
-#  define MACHINE_A2560_DEBUG 1
+#  define MACHINE_A2560_DEBUG 0
 # endif
 # ifndef CONF_ATARI_HARDWARE
 #  define CONF_ATARI_HARDWARE 0
@@ -692,6 +692,9 @@
 # endif
 # ifndef CONF_WITH_BQ4802LY
 #  define CONF_WITH_BQ4802LY 1
+# endif
+# ifndef CONF_WITH_MPU401
+#  define CONF_WITH_MPU401 0
 # endif
 #if 0
 # ifndef CONF_VRAM_ADDRESS
@@ -763,6 +766,9 @@
 # endif
 # ifndef CONF_WITH_BQ4802LY
 #  define CONF_WITH_BQ4802LY 1
+# endif
+# ifndef CONF_WITH_MPU401
+#  define CONF_WITH_MPU401 1
 # endif
 #if 0
 # ifndef CONF_VRAM_ADDRESS

@@ -162,14 +162,13 @@ _realmain:
         // this is useless on cold boot,
         // but it matters for software reset
         move    #0x2700,sr
+        
+#if defined(MACHINE_A2560X) && 0
         move.l #16,0xfec00000
-#ifdef MACHINE_A2560X
         move.l #19,0xfec00000 // buzzer, all leds
         move.l #0,0xfec80008 // reset border color
         move.l #0xffffffff,0xfec40008
         move.l #0xffffffff,0xfec80008
-
-        
         move.l #0xff008800,0xfec80008 // border color for debug 
 #endif
 

@@ -18,7 +18,9 @@
     .GLOBAL _a2560u_irq_ps2kbd
     .GLOBAL _a2560u_irq_ps2mouse
     .GLOBAL _a2560u_irq_com1
+#if CONF_WITH_MPU401
     .GLOBAL _a2560u_irq_mpu401
+#endif
     .GLOBAL _a2560u_rte
     .GLOBAL _a2560u_rts
 
@@ -33,8 +35,9 @@
     .GLOBAL _calibration_interrupt_count
     .GLOBAL _uart16550_rx_handler
     .GLOBAL _bq4802ly_tick_handler
+#if CONF_WITH_MPU401
     .GLOBAL _mpu401_rx_handler
-
+#endif
 
 _a2560u_rts:
     rts
@@ -154,6 +157,7 @@ com1_done:
     movem.l (sp)+,d0-d1/a0-a2
     rte
 
+#if CONF_WITH_MPU401
 _a2560u_irq_mpu401:
     | Handle MIDI interrupts. Note that there is no overrun or frame error
     | detection supported by the SuperIO's MPU-401 implementation (contrary to the
@@ -169,3 +173,4 @@ _a2560u_irq_mpu401:
     // Should test if other byte received before returning ?
     movem.l (sp)+,d0-d2/a0-a2
     rte
+#endif
