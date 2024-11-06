@@ -238,7 +238,7 @@ static ULONG rsconf_mfp(MFP *mfp, EXT_IOREC *iorec, WORD baud, WORD ctrl, WORD u
     if ((baud >= MIN_BAUDRATE_CODE ) && (baud <= MAX_BAUDRATE_CODE)) {
         iorec->baudrate = baud;
         init = &mfp_rs232_init[baud];
-        setup_timer(mfp,3,init->control,init->data);
+        mfp_setup_timer(mfp,3,init->control,init->data);
     }
 
     if ((ctrl >= MIN_FLOW_CTRL) && (ctrl <= MAX_FLOW_CTRL))

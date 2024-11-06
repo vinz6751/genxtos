@@ -404,13 +404,13 @@ static int send_command(UBYTE *inputcdb,WORD cdblen,WORD rw,WORD dev,WORD cnt,UW
 
         for (j = 0, p = cdbptr; j < cdblen-1; j++) {
             dma_send_byte(*p++,control);
-            if (timeout_gpip(SMALL_TIMEOUT))
+            if (mfp_wait_fdc_hdc_irq_with_timeout(SMALL_TIMEOUT))
                 return -1;
         }
 
         /* send the last byte & wait for completion of DMA */
         dma_send_byte(*p,control&0xff00);
-        status = timeout_gpip(LARGE_TIMEOUT);
+        status = mfp_wait_fdc_hdc_irq_with_timeout(LARGE_TIMEOUT);
         next_acsi_time = hz_200 + INTER_IO_TIME;    /* next safe time */
         if (status)
             return -1;

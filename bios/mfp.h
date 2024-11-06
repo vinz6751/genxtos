@@ -77,7 +77,7 @@ typedef struct
 
 #define TT_MFP_BASE     ((MFP *)(0xfffffa80L))
 
-void tt_mfp_init(void);
+void mfptt_init(void);
 void tt_mfpint(WORD num, LONG vector);
 
 #endif
@@ -97,10 +97,10 @@ void jenabint(WORD num);
 /*==== internal functions =================================================*/
 
 void mfp_init(void);
-void setup_timer(MFP *mfp,WORD timer, WORD control, WORD data);
+void mfp_setup_timer(MFP *mfp,WORD timer, WORD control, WORD data);
 
 /* function which returns 1 if the timeout elapsed before the gpip changed */
-int timeout_gpip(LONG delay);   /* delay in ticks */
+int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay);   /* delay in ticks */
 
 /*==== Xbios functions ====================================================*/
 

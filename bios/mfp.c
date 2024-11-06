@@ -23,7 +23,7 @@
 
 #if CONF_WITH_MFP || CONF_WITH_TT_MFP
 
-static void reset_mfp_regs(MFP *mfp)
+static void mfp_reset_regs(MFP *mfp)
 {
     volatile UBYTE *p;
     /*
@@ -37,7 +37,7 @@ static void reset_mfp_regs(MFP *mfp)
         *p = 0;
 }
 
-static void disable_mfp_interrupt(MFP *mfp, WORD num)
+static void mfp_disable_interrupt(MFP *mfp, WORD num)
 {
     UBYTE mask;
 
@@ -48,7 +48,8 @@ static void disable_mfp_interrupt(MFP *mfp, WORD num)
         mfp->iera &= mask;
         mfp->ipra = mask;   /* note: IPRA/ISRA ignore '1' bits */
         mfp->isra = mask;
-    } else {
+    }
+    else {
         mask = ~(1<<num);
         mfp->imrb &= mask;
         mfp->ierb &= mask;
@@ -57,7 +58,7 @@ static void disable_mfp_interrupt(MFP *mfp, WORD num)
     }
 }
 
-static void enable_mfp_interrupt(MFP *mfp, WORD num)
+static void mfp_enable_interrupt(MFP *mfp, WORD num)
 {
     UBYTE mask;
 
@@ -78,20 +79,20 @@ static void enable_mfp_interrupt(MFP *mfp, WORD num)
 
 #if CONF_WITH_TT_MFP
 
-void tt_mfp_init(void)
+void mfptt_init(void)
 {
     MFP *mfp = TT_MFP_BASE; /* set base address of MFP */
 
-    reset_mfp_regs(mfp);    /* reset the MFP registers */
+    mfp_reset_regs(mfp);    /* reset the MFP registers */
     mfp->vr = 0x58;         /* vectors 0x50 to 0x5F, software end of interrupt */
 }
 
 void tt_mfpint(WORD num, LONG vector)
 {
     num &= 0x0F;
-    disable_mfp_interrupt(TT_MFP_BASE, num);
+    mfp_disable_interrupt(TT_MFP_BASE, num);
     *(LONG *)((0x50L + num)*4) = vector;
-    enable_mfp_interrupt(TT_MFP_BASE, num);
+    mfp_enable_interrupt(TT_MFP_BASE, num);
 }
 
 #endif
@@ -105,7 +106,7 @@ void mfp_init(void)
 {
     MFP *mfp = MFP_BASE;    /* set base address of MFP */
 
-    reset_mfp_regs(mfp);    /* reset the MFP registers */
+    mfp_reset_regs(mfp);    /* reset the MFP registers */
     mfp->vr = 0x48;         /* vectors 0x40 to 0x4F, software end of interrupt */
 }
 
@@ -122,16 +123,16 @@ void mfpint(WORD num, LONG vector)
 
 void jdisint(WORD num)
 {
-    disable_mfp_interrupt(MFP_BASE, num);
+    mfp_disable_interrupt(MFP_BASE, num);
 }
 
 void jenabint(WORD num)
 {
-    enable_mfp_interrupt(MFP_BASE, num);
+    mfp_enable_interrupt(MFP_BASE, num);
 }
 
 /* setup the timer, but do not activate the interrupt */
-void setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
+void mfp_setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
 {
     switch(timer) {
     case 0:  /* timer A */
@@ -165,12 +166,12 @@ void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
 {
     if(timer < 0 || timer > 3)
         return;
-    setup_timer(MFP_BASE,timer, control, data);
+    mfp_setup_timer(MFP_BASE,timer, control, data);
     mfpint(timer_num[timer], vector);
 }
 
 /* returns 1 if the timeout (in clock ticks) elapsed before gpip went low */
-int timeout_gpip(LONG delay)
+int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay)
 {
     MFP *mfp = MFP_BASE;
     LONG next = hz_200 + delay;

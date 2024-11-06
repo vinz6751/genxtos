@@ -309,8 +309,8 @@ static void bios_init(void)
 #if CONF_WITH_TT_MFP
     if (has_tt_mfp)
     {
-        KDEBUG(("tt_mfp_init()\n"));
-        tt_mfp_init();
+        KDEBUG(("mfptt_init()\n"));
+        mfptt_init();
     }
 #endif
 
