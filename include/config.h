@@ -2198,8 +2198,19 @@
 # define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
 #endif
 
+/*
+ * Use the second screen of the Foenix for debug output
+ */
+# ifndef FOENIX_CHANNEL_A_DEBUG_PRINT
+#  define FOENIX_CHANNEL_A_DEBUG_PRINT 0
+# endif
 
-
+/*
+ * Whether the system has a MPU-401 MIDI controller (applies to the Foenix)
+ */
+# ifndef CONF_WITH_MPU401
+#  define CONF_WITH_MPU401 0
+# endif
 
 /*
  * Useful macros for both assembler and C
