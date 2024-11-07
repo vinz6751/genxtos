@@ -23,7 +23,9 @@
 #include "biosext.h"
 #include "lineavars.h"
 #include "a2560u_bios.h"
-#include "../foenix/vicky2.h"
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+# include "../foenix/vicky2.h"
+#endif
 #if WITH_AES
 #include "../aes/aesstub.h"
 #endif
