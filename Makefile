@@ -65,7 +65,8 @@ help:
 	@echo "m548x-bas  $(SREC_M548X_BAS), EmuTOS for BaS_gcc on ColdFire Evaluation Boards"
 	@echo "m548x-prg  emutos.prg, a RAM tos for ColdFire Evaluation Boards with BaS_gcc"
 	@echo "c256genx   $(ROM_C256GENX), EmuTOS flash image for the C256 GenX with 68000 CPU Module"
-	@echo "a2560u    $(ROM_A2560U), EmuTOS flash image for the A2560U Foenix"	
+	@echo "a2560u    $(ROM_A2560U), EmuTOS flash image for the A2560U Foenix"
+	@echo "a2560x    $(ROM_A2560X), EmuTOS flash image for the A2560X Foenix"
 	@echo "prg     emutos.prg, a RAM tos"
 	@echo "prg256  $(EMU256_PRG), a RAM tos for ST/STe systems"
 	@echo "flop    $(EMUTOS_ST), a bootable floppy with RAM tos"
@@ -449,7 +450,7 @@ MEMBOT_TOS404 = 0x0000f99c
 #
 
 # Core directories are essential for basic OS operation
-core_dirs = bios bdos util foenix
+core_dirs = bios bdos util
 
 # Optional directories may be disabled for reduced features
 optional_dirs = vdi
