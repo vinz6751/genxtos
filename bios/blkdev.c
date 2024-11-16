@@ -181,24 +181,24 @@ static void blkdev_hdv_init(void)
     drvbits = 0;
 
     /* Detect and initialize floppy drives */
-    KDEBUG(("blkdev_hdv_init:flop_hdv_init"));
+    KDEBUG(("blkdev_hdv_init:flop_hdv_init\n"));
     flop_hdv_init();
 
     /*
      * do bus initialisation, such as setting delay values
      */
-    KDEBUG(("blkdev_hdv_init:bus_init"));
+    KDEBUG(("blkdev_hdv_init:bus_init\n"));
     bus_init();
 
-    KDEBUG(("blkdev_hdv_init:disk_init_all"));
+    KDEBUG(("blkdev_hdv_init:disk_init_all\n"));
     disk_init_all();    /* Detect hard disk partitions */
 
 #if CONF_WITH_XHDI
-    KDEBUG(("blkdev_hdv_init:init_XHDI_drvmap"));
+    KDEBUG(("blkdev_hdv_init:init_XHDI_drvmap\n"));
     init_XHDI_drvmap(); /* remember drives that we control */
 #endif
 
-    KDEBUG(("blkdev_hdv_init:pun_info_setup"));
+    KDEBUG(("blkdev_hdv_init:pun_info_setup\n"));
     pun_info_setup();
 }
 
