@@ -516,7 +516,7 @@ int send_command(WORD dev,ACSICMD *cmd)
         for (j = 0, p = cdb; j < cdblen-1; j++) {
             dma_send_byte(*p++,control);
 
-            if (mfp_wait_fdc_hdc_irq_with_timeout(SMALL_TIMEOUT))
+            if (mfp_wait_disk_irq_with_timeout(SMALL_TIMEOUT))
             {
                 acsi_end();
                 return -1;
@@ -525,7 +525,7 @@ int send_command(WORD dev,ACSICMD *cmd)
 
         /* send the last byte & wait for completion of DMA */
         dma_send_byte(*p,control&0xff00);
-        status = mfp_wait_fdc_hdc_irq_with_timeout(cmd->timeout);
+        status = mfp_wait_disk_irq_with_timeout(cmd->timeout);
         next_acsi_time = hz_200 + INTER_IO_TIME;    /* next safe time */
         if (status)
         {

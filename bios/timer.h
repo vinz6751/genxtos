@@ -30,5 +30,6 @@ extern WORD timer_c_sieve;
 
 void init_system_timer(void);
 void int_timerc(void);
+BOOL timer_test_with_timeout(BOOL (*predicate)(void), LONG delay);
 
 #endif

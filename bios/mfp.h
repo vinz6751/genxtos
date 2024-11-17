@@ -15,6 +15,8 @@
 #ifndef MFP_H
 #define MFP_H
 
+#include "config.h"
+
 #include "mfp68901.h"
 
 #if CONF_WITH_TT_MFP
@@ -43,12 +45,18 @@ void jenabint(WORD num);
 void mfp_init(void);
 void mfp_setup_timer(MFP *mfp,WORD timer, WORD control, WORD data);
 
-/* function which returns 1 if the timeout elapsed before the gpip changed */
-int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay);   /* delay in ticks */
 
 /*==== Xbios functions ====================================================*/
 
 void xbtimer(WORD timer, WORD control, WORD data, LONG vector);
+
+
+# if CONF_WITH_FDC || CONF_WITH_ACSI
+
+/* Returns TRUE if the timeout elapsed before the gpip changed. The delay is in 200Hz ticks */
+BOOL mfp_wait_disk_irq_with_timeout(LONG delay);
+
+# endif
 
 #endif /* CONF_WITH_MFP */
 

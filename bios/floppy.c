@@ -1560,7 +1560,7 @@ static WORD flopcmd(WORD cmd)
     }
     set_fdc_reg(reg, cmd);
 
-    if (mfp_wait_fdc_hdc_irq_with_timeout(timeout)) {
+    if (mfp_wait_disk_irq_with_timeout(timeout)) {
         set_fdc_reg(FDC_CS,FDC_IRUPT);  /* Force Interrupt */
         fdc_delay();                    /* allow it to complete */
         return -1;

@@ -100,3 +100,16 @@ void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
     a2560_bios_xbtimer(timer, control, data, vector);
 #endif
 }
+
+// Returns FALSE is the predicate didn't return true before the timeout (in 200Hz ticks) */
+BOOL timer_test_with_timeout(BOOL (*predicate)(void), LONG delay) {
+    LONG next = hz_200 + delay;
+
+    while (hz_200 < next) {
+        if (predicate()) {
+            return TRUE;
+        }
+    }
+
+    return FALSE; // Timeout
+}

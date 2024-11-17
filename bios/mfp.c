@@ -13,10 +13,13 @@
  */
 
 #include "emutos.h"
+#include "bios.h"
 #include "string.h"
 #include "mfp.h"
+#include "timer.h"
 #include "tosvars.h"
 #include "vectors.h"
+
 #include "coldfire.h"
 #include "lisa.h"
 #include "a2560u_bios.h"
@@ -111,23 +114,20 @@ void mfp_setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
 }
 
 
-/* returns 1 if the timeout (in clock ticks) elapsed before gpip went low */
-int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay)
-{
-    MFP *mfp = MFP_BASE;
-    LONG next = hz_200 + delay;
+#if CONF_WITH_FDC || CONF_WITH_ACSI
 
-    while(hz_200 < next) {
-        if((mfp->gpip & 0x20) == 0) {
-            return 0;
-        }
-    }
-    return 1;
+/* TRUE is the Floppy Disk Controller of the DMA (hard drive) are requesting an interrupt */
+static BOOL mfp_gpip_disk_interrupt(void) {
+    return (MFP_BASE->gpip & 0x20) == 0;
 }
 
 
+/* Returns TRUE if the timeout (in clock ticks) elapsed before gpip bit went low */
+BOOL mfp_wait_disk_irq_with_timeout(LONG delay)
+{
+    return !timer_test_with_timeout(mfp_gpip_disk_interrupt, delay); /* GPIP bit 5 is FDC and DMA */
+}
+
+#endif /* CONF_WITH_FDC || CONF_WITH_ACSI */
 
 #endif /* CONF_WITH_MFP */
-
-
-
