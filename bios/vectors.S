@@ -53,7 +53,6 @@
         .extern _vblqueue
         .extern _swv_vec
         .extern _hz_200
-        .extern etv_timer
         .extern etv_critic
         .extern _v_bas_ad
 
@@ -87,7 +86,6 @@
         .extern _nvbls
         .extern _timer_c_sieve
         .extern _kb_timerc_int
-        .extern _etv_timer
         .extern _etv_critic
         .extern _mcpu
         .extern _bios_ent
