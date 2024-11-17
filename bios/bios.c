@@ -113,10 +113,10 @@ UBYTE bootflags;
 /*
  * setup all vectors
  */
-
-static void vecs_init(void)
+void vecs_init(void);
+void vecs_init(void)
 {
-    int i;
+    WORD i;
 #if !CONF_ATARI_HARDWARE
     /* On Atari hardware, the first 2 longs of the address space are physically
      * routed to the start of the ROM (instead of the start of the ST-RAM).
@@ -140,11 +140,20 @@ static void vecs_init(void)
     /* Initialize the exception vectors.
      * By default, any unexpected exception calls dopanic().
      */
-    init_exc_vec();
+    proc_lives = 0;
+    {
+        UWORD *src = deflt_vec_table;
+        PFVOID *m68k_exception_vectors = (PFVOID *)0x8; // First and second are hardcoded by hardware
+        i = 64-2-1;
+        do {
+            *m68k_exception_vectors++ = (PFVOID)src++;
+        } while (--i >= 0);
+
+    }
 
     /* Initialize the 192 user exception vectors */
     {
-        PFVOID *m68k_user_vectors = 0x100;
+        PFVOID *m68k_user_vectors = (PFVOID *)0x100;
         i = 192-1;
         do {
             *m68k_user_vectors++ = user_vec;

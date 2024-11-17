@@ -18,6 +18,7 @@
 // ==== Definitions ==========================================================
 
         .globl  _init_exc_vec
+        .globl  _deflt_vec_table
 
         .globl  _biostrap       // call BIOS from C
         .globl  _xbiostrap      // call XBIOS from C
@@ -96,25 +97,6 @@
 
         .text
 
-/* basically initialize the 62 exception vectors. */
-_init_exc_vec:
-        clr.l   _proc_lives.w
-        lea     deflt_vec_table, a0
-        lea     8, a1
-        move.l  #61, d0
-set_vec:
-        move.l  a0, (a1)+
-        add.l   #2, a0
-#ifdef __mcoldfire__
-        subq.l  #1, d0
-        jpl     set_vec
-#else
-        dbra    d0, set_vec
-#endif
-// The RTS below is shared for other purposes.
-buggy_jit_save_registers_before_bus_error:
-        rts
-
 
 /* this table holds the default exception vectors for vectors 2 to 63.
  * thanks to the return address pushed by the bsr, any_vec is able
@@ -125,7 +107,7 @@ buggy_jit_save_registers_before_bus_error:
  * the former method will allow any_vec to display the correct vector
  * number and report a meaningful panic message.
  */
-deflt_vec_table:
+_deflt_vec_table:
 buserr_vec:
         bsr.s   any_vec         // vector 2
         bsr.s   any_vec
@@ -194,7 +176,7 @@ unimp_vec:
         bsr.s   any_vec
 
 _user_vec:
-        pea     deflt_vec_table(pc)
+        pea     _deflt_vec_table(pc)
 
 // at this point, stack contains:
 // 0:exception vector address 4:sr 6:pc
@@ -216,7 +198,7 @@ any_vec:
         move.l  (sp)+,d0
         // dump the correct value for sp
         move.l  sp,(_proc_aregs+28).w
-        lea     deflt_vec_table(pc), a0
+        lea     _deflt_vec_table(pc), a0
         sub.l   a0, d0
         lsr.l   #1, d0
         add.l   #1, d0
@@ -1358,6 +1340,7 @@ berr:   move.l  a1,(8).w
 
         move.l  (sp)+,d0        // restore return value
 #endif
+buggy_jit_save_registers_before_bus_error:
         rts
 
 #if DBG_CHECK_READ_BYTE

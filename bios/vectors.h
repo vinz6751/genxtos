@@ -13,12 +13,9 @@
 #ifndef VECTORS_H
 #define VECTORS_H
 
-/* initialize default exception vectors */
-
+/* Data to initialise default CPU vectors */
 void user_vec(void);
-
-void init_exc_vec(void);
-void init_user_vec(void);
+extern UWORD deflt_vec_table[];
 
 /* initialise acia vectors */
 
