@@ -146,7 +146,7 @@ static void disk_init_one(UWORD unit,LONG *devices_available)
 
 /* we're doing this here to avoid rescanning the ACSI bus to look for an RTC */
 #if CONF_WITH_ULTRASATAN_CLOCK
-    /* check if we've already gotten a clock and if not, whether the device looks like a US */
+    /* check if we've already gotten a clock and if not, whether the device looks like a UltraSatan */
     if(!has_ultrasatan_clock && memcmp(productname, "JOOKIE", 6) == 0) {
         LONG ret;
         ultrasatan_id = unit - NUMFLOPPIES;
