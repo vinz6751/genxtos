@@ -18,7 +18,6 @@
 // ==== Definitions ==========================================================
 
         .globl  _init_exc_vec
-        .globl  _init_user_vec
 
         .globl  _biostrap       // call BIOS from C
         .globl  _xbiostrap      // call XBIOS from C
@@ -43,6 +42,8 @@
 
         .globl  _call_etv_critic
         .globl  _default_etv_critic
+
+        .globl _user_vec
 
 // ==== References ===========================================================
 
@@ -114,20 +115,6 @@ set_vec:
 buggy_jit_save_registers_before_bus_error:
         rts
 
-/* initialize the 192 user vectors. */
-_init_user_vec:
-        lea     user_vec, a0
-        lea     256, a1
-        move.l  #191, d0
-set_uvec:
-        move.l  a0, (a1)+
-#ifdef __mcoldfire__
-        subq.l  #1, d0
-        jpl     set_uvec
-#else
-        dbra    d0, set_uvec
-#endif
-        rts
 
 /* this table holds the default exception vectors for vectors 2 to 63.
  * thanks to the return address pushed by the bsr, any_vec is able
@@ -206,7 +193,7 @@ unimp_vec:
         bsr.s   any_vec
         bsr.s   any_vec
 
-user_vec:
+_user_vec:
         pea     deflt_vec_table(pc)
 
 // at this point, stack contains:

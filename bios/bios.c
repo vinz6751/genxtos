@@ -116,6 +116,7 @@ UBYTE bootflags;
 
 static void vecs_init(void)
 {
+    int i;
 #if !CONF_ATARI_HARDWARE
     /* On Atari hardware, the first 2 longs of the address space are physically
      * routed to the start of the ROM (instead of the start of the ST-RAM).
@@ -140,7 +141,15 @@ static void vecs_init(void)
      * By default, any unexpected exception calls dopanic().
      */
     init_exc_vec();
-    init_user_vec();
+
+    /* Initialize the 192 user exception vectors */
+    {
+        PFVOID *m68k_user_vectors = 0x100;
+        i = 192-1;
+        do {
+            *m68k_user_vectors++ = user_vec;
+        } while (--i >= 0);
+    }
 
     /* Some user drivers may install interrupt handlers and call the previous
      * ones. For example, ARAnyM's network driver for MiNT (nfeth.xif) and fVDI

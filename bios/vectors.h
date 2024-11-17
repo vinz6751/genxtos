@@ -15,6 +15,8 @@
 
 /* initialize default exception vectors */
 
+void user_vec(void);
+
 void init_exc_vec(void);
 void init_user_vec(void);
 
