@@ -92,11 +92,6 @@ extern WORD trap_save_area[];
 #define VEC_BIOS    VEC_TRAP13                /* BIOS trap exception vector */
 #define VEC_XBIOS   VEC_TRAP14                /* XBIOS trap exception vector */
 
-/* Non-Atari hardware vectors */
-#if !CONF_WITH_MFP
-extern void (*vector_5ms)(void);              /* 200 Hz system timer */
-#endif
-
 /* interrupt handlers in vectors.S */
 #if CONF_WITH_MFP_RS232
 void mfp_rs232_rx_interrupt(void);

@@ -25,11 +25,21 @@
 //extern LONG hz_200;
 #include "tosvars.h"
 
-/* "sieve" to get only the fourth interrupt, 0x1111 initially */
-extern WORD timer_c_sieve;
+/* Non-Atari hardware vectors */
+#if !CONF_WITH_MFP
+extern void (*vector_5ms)(void);              /* 200 Hz system timer */
+#endif
 
 void init_system_timer(void);
 void int_timerc(void);
+
+/* Return FALSE if the predicate didn't return true within the given delay (in 200Hz ticks) */
 BOOL timer_test_with_timeout(BOOL (*predicate)(void), LONG delay);
+
+/* Start processing the routines to be executed every 5ms */
+void timer_start_20ms_routine(void);
+
+/* XBIOS function */
+void xbtimer(WORD timer, WORD control, WORD data, LONG vector);
 
 #endif

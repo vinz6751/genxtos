@@ -106,10 +106,6 @@ WORD boot_status;               /* see kprint.h for bit flags */
 /* Boot flags */
 UBYTE bootflags;
 
-/* Non-Atari hardware vectors */
-#if !CONF_WITH_MFP
-void (*vector_5ms)(void);       /* 200 Hz system timer */
-#endif
 
 /*==== BOOT ===============================================================*/
 
@@ -402,7 +398,7 @@ static void bios_init(void)
      *  . VBL processing will not be enabled until later, when the vblsem
      *    semaphore is set
      *  . 50 Hz processing (sound playback & keyboard repeat) will not be
-     *    enabled until later, when timer_c_sieve is set
+     *    enabled until later, when timer_start_20ms_routine() is called
      */
 #if CONF_WITH_ATARI_VIDEO
     /* Keep the HBL disabled */
@@ -449,7 +445,7 @@ static void bios_init(void)
     linea_mouse_init();
 
     /* Enable 50 Hz processing */
-    timer_c_sieve = 0x1111;
+    timer_start_20ms_routine();
 
     KDEBUG(("calibrate_delay()\n"));
     calibrate_delay();  /* determine values for delay() function */

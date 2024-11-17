@@ -25,6 +25,10 @@
 #include "sound.h"
 #include "timer.h"
 
+/* Non-Atari hardware vectors */
+#if !CONF_WITH_MFP
+void (*vector_5ms)(void);       /* 200 Hz system timer */
+#endif
 
 /*
  * "sieve", to get only the fourth interrupt.  because this is
@@ -81,6 +85,10 @@ void init_system_timer(void)
      * (ie when MFP interrupts can be picked bu the processor). */
 }
 
+void timer_start_20ms_routine(void)
+{
+    timer_c_sieve = 0b0001000100010001;
+}
 
 #if CONF_WITH_MFP
 // Use for the Xbtimer on Atari hardware
@@ -90,14 +98,14 @@ static const WORD timer_num[] = { MFP_TIMERA, MFP_TIMERB, MFP_200HZ, MFP_TIMERD 
 // XBIOS function
 void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
 {
-    if(timer < 0 || timer > 3)
+    if (timer < 0 || timer > 3)
         return;
 
 #if CONF_WITH_MFP
     mfp_setup_timer(MFP_BASE,timer, control, data);
     mfpint(timer_num[timer], vector);
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
-    a2560_bios_xbtimer(timer, control, data, vector);
+    a2560_bios_xbtimer(timer, control, data, (void*)vector);
 #endif
 }
 

@@ -42,6 +42,7 @@
 #include "dma.h"
 #include "nova.h"
 #include "biosext.h"
+#include "timer.h"
 #include "amiga.h"
 #include "a2560u_bios.h"
 

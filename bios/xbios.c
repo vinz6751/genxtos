@@ -36,6 +36,7 @@
 #include "nvram.h"
 #include "mouse.h"
 #include "asm.h"
+#include "timer.h"
 #include "vectors.h"
 #include "xbios.h"
 #include "a2560u_bios.h"

@@ -82,7 +82,6 @@
         .extern _has_ste_shifter
         .extern _flopvbl
         .extern _nvbls
-        .extern _timer_c_sieve
         .extern _kb_timerc_int
         .extern _etv_critic
         .extern _mcpu
