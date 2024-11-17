@@ -869,7 +869,7 @@ static void ascii_lf(void)
  *
  * This routine may trash registers, when called from assembler!
  */
-void blink(void)
+void vt52_blink(void)
 {
     conout_blink_cursor();
 }

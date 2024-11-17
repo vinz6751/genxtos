@@ -29,7 +29,7 @@ void vbl_handler(void) {
 
 #if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
     // blink cursor
-    blink();
+    vt52_blink();
 #endif
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
