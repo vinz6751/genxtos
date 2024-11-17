@@ -49,14 +49,12 @@ void tt_mfpint(WORD num, LONG vector)
 
 #if CONF_WITH_MFP
 
-/*==== mfp_init - initialize the MFP ========================================*/
-
+/* Initialise the MCP */
 void mfp_init(void)
 {
-    MFP *mfp = MFP_BASE;    /* set base address of MFP */
-
-    mfp68901_reset_regs(mfp);    /* reset the MFP registers */
-    mfp->vr = 0x48;         /* vectors 0x40 to 0x4F, software end of interrupt */
+    MFP *mfp = MFP_BASE;      /* set base address of MFP */
+    mfp68901_reset_regs(mfp); /* reset the MFP registers */
+    mfp->vr = 0x48;           /* vectors 0x40 to 0x4F, software end of interrupt */
 }
 
 
@@ -126,6 +124,8 @@ int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay)
     }
     return 1;
 }
+
+
 
 #endif /* CONF_WITH_MFP */
 
