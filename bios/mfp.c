@@ -66,7 +66,7 @@ void mfpint(WORD num, LONG vector)
 {
     num &= 0x0F;
     jdisint(num);
-    *(LONG *)((0x40L + num)*4) = vector;
+    setexc(0x40L + num, vector); /* 0x100/4=0x40 is the base address of MFP interrupt vectors */
     jenabint(num);
 }
 
