@@ -52,7 +52,6 @@
         .extern _frclock
         .extern _vblqueue
         .extern _swv_vec
-        .extern _hz_200
         .extern etv_critic
         .extern _v_bas_ad
 
