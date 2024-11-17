@@ -48,9 +48,10 @@ extern UBYTE sshiftmod;
 
 extern UBYTE *phystop;
 
+// 200Hz Timer stuff
 extern WORD timer_ms;
-
 extern volatile ULONG hz_200;
+
 extern UBYTE *dskbufp;
 extern volatile WORD flock;
 extern WORD nflops;

@@ -14,6 +14,8 @@
 #ifndef BIOSDEFS_H
 #define BIOSDEFS_H
 
+#include "portab.h"
+
 /* Number of hz_200 ticks per second */
 #define CLOCKS_PER_SEC 200UL
 

@@ -59,6 +59,7 @@
 #include "biosbind.h"
 #include "memory.h"
 #include "nova.h"
+#include "timer.h"
 #include "tosvars.h"
 #include "amiga.h"
 #include "lisa.h"

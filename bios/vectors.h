@@ -29,7 +29,6 @@ void int_hbl(void);
 #endif
 void int_vbl(void);
 void int_linea(void);
-void int_timerc(void);
 
 void biostrap(void);
 void xbiostrap(void);

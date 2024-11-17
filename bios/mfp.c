@@ -112,15 +112,6 @@ void mfp_setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
     }
 }
 
-static const WORD timer_num[] = { MFP_TIMERA, MFP_TIMERB, MFP_200HZ, MFP_TIMERD };
-
-void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
-{
-    if(timer < 0 || timer > 3)
-        return;
-    mfp_setup_timer(MFP_BASE,timer, control, data);
-    mfpint(timer_num[timer], vector);
-}
 
 /* returns 1 if the timeout (in clock ticks) elapsed before gpip went low */
 int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay)
@@ -139,31 +130,4 @@ int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay)
 #endif /* CONF_WITH_MFP */
 
 
-/*
- * "sieve", to get only the fourth interrupt.  because this is
- * a global variable, it is automatically initialised to zero.
- */
-WORD timer_c_sieve;
 
-void init_system_timer(void)
-{
-    /* The system timer is initially disabled since the sieve is zero (see note above) */
-    timer_ms = 20;
-
-#if !CONF_WITH_MFP
-    vector_5ms = int_timerc;
-#endif
-
-#if CONF_COLDFIRE_TIMER_C
-    coldfire_init_system_timer();
-#elif defined(MACHINE_LISA)
-    lisa_init_system_timer();
-#elif CONF_WITH_MFP
-    /* Timer C: ctrl = divide 64, data = 192 */
-    xbtimer(2, 0x50, 192, (LONG)int_timerc);
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
-    a2560_set_timer(HZ200_TIMER_NUMBER, 200, true, int_timerc);
-#endif
-
-    /* The timer will really be enabled when sr is set to 0x2500 or lower. */
-}

@@ -52,11 +52,4 @@ void xbtimer(WORD timer, WORD control, WORD data, LONG vector);
 
 #endif /* CONF_WITH_MFP */
 
-/*==== internal functions =================================================*/
-
-void init_system_timer(void);
-
-/* "sieve" to get only the fourth interrupt, 0x1111 initially */
-extern WORD timer_c_sieve;
-
 #endif /* MFP_H */
