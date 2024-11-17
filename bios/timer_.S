@@ -15,7 +15,12 @@
 
 #include "asmdefs.h"
 
+        // Export
         .globl  _int_timerc
+
+        // Import
+        .globl _timer_20ms_routine
+
 
 #define REAL_TIMER_C_HANDLER (CONF_WITH_MFP && !CONF_COLDFIRE_TIMER_C)
 
@@ -23,15 +28,15 @@
 // ==== Timer C interrupt handler ============================================
 _int_timerc:
         addq.l  #1, _hz_200.w           // increment 200 Hz counter
-#ifdef __mcoldfire__
-        // Save early ColdFire registers
-        move.l  d0,-(sp)
-        move.l  a0,-(sp)
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
         move.w  #0x0400,IRQ_PENDING_GRP1  // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
 #endif
 
 #ifdef __mcoldfire__
+        // Save early ColdFire registers
+        move.l  d0,-(sp)
+        move.l  a0,-(sp)
         lea     _timer_c_sieve,a0
         move.w  (a0),d0
         swap    d0
@@ -39,12 +44,14 @@ _int_timerc:
         lsl.l   #1,d0                   // check for 4th call
         swap    d0
         move.w  d0,(a0)
-        jpl     timerc_end
 #else
         rol.w   _timer_c_sieve          // check for 4th call
-        jpl     timerc_end
 #endif
+        jpl     timerc_end
 
+        // Code from here on is executed only 4th interrupt (50Hz)
+
+        // Save registers that may be used by the 20ms routine
 #ifdef __mcoldfire__
         // On ColdFire, d0 and a0 were saved earlier
         lea     -52(sp),sp
@@ -53,21 +60,11 @@ _int_timerc:
         movem.l d0-d7/a0-a6,-(sp)       // save registers
 #endif
 
-        // repeat keys
-        jsr     _kb_timerc_int
+        jsr _timer_20ms_routine // That's C code for clarity
 
-#if CONF_WITH_YM2149
-        // dosound support
-        jsr     _sndirq
-#endif
-
-        move.w  _timer_ms.w, -(sp)
-        move.l  _etv_timer.w, a0
-        jsr     (a0)                    // jump to etv_timer routine
-        addq.l  #2, sp                  // correct stack
-
+        // Restore registers
 #ifdef __mcoldfire__
-        // On ColdFire, d0 and a0 will be restored later
+        // On ColdFire, d0 and a0 will be restored later because we still need them
         movem.l (sp),d1-d7/a1-a6
         lea     52(sp),sp
 #else
@@ -76,12 +73,13 @@ _int_timerc:
 
 timerc_end:
 #if REAL_TIMER_C_HANDLER
-#ifdef __mcoldfire__
+ // Clear interrupt in service bit
+# ifdef __mcoldfire__
         lea     0xfffffa11.w, a0
-        move.b  #0xdf,(a0)              // clear interrupt service bit
-#else
-        move.b  #0xdf,0xfffffa11.w      // clear interrupt service bit
-#endif
+        move.b  #0xdf,(a0)
+# else
+        move.b  #0xdf,0xfffffa11.w
+# endif
 #endif /* REAL_TIMER_C_HANDLER */
 
 #ifdef __mcoldfire__

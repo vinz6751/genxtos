@@ -21,6 +21,8 @@
 # include "a2560u_bios.h"
 #endif
 
+#include "ikbd.h"
+#include "sound.h"
 #include "timer.h"
 
 
@@ -29,6 +31,27 @@
  * a global variable, it is automatically initialised to zero.
  */
 WORD timer_c_sieve;
+
+
+// Called from timer_S.s 200Hz timer irq handler
+void timer_20ms_routine(void);
+
+
+// TODO: have a list like the VBL list so users can hook into without having to
+// hook the full timer C vector
+void timer_20ms_routine(void) {
+    // Repeat keys
+    kb_timerc_int();
+
+#if CONF_WITH_YM2149
+    // Play Dosound() if appropriate
+    sndirq();
+#endif
+
+    // GEM
+    (*etv_timer)(timer_ms); // We may as well hardcode 20...
+}
+
 
 /* The system has a 200Hz timer (every 5ms)
  * At 200Hz, we only increment a counter
