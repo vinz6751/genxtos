@@ -89,6 +89,9 @@ WORD esetsmear(WORD mode);
 
 #endif /* CONF_WITH_ATARI_VIDEO */
 
+/* Called when we detect that a different monitor is plugged */
+void detect_monitor_change(void);
+
 /* set screen address, mode, ... */
 void screen_init_address(void);
 void screen_init_mode(void);

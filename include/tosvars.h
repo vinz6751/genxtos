@@ -60,6 +60,7 @@ extern WORD bootdev;
 extern WORD fverify;
 extern WORD seekrate;
 extern WORD dumpflg;
+extern LONG vbclock; /* Number of times the VBL routine was executed */
 extern WORD nvbls; /* Number of slots in the array pointed by vblqueue */
 extern volatile WORD vblsem;
 extern PFVOID *vblqueue; /* Pointer to the VBL queue array */

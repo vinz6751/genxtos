@@ -13,6 +13,8 @@
 #ifndef FLOPPY_H
 #define FLOPPY_H
 
+#include "portab.h"
+
 /* bios functions */
 
 /* Functions hdv_init, rwabs, getbpb and mediach are

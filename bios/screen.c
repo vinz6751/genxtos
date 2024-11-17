@@ -40,7 +40,7 @@
 #include "nova.h"
 #include "a2560u_bios.h"
 
-void detect_monitor_change(void);
+
 static void setphys(const UBYTE *addr);
 
 #if CONF_WITH_VIDEL
