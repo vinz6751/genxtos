@@ -1357,7 +1357,7 @@ Start... early ages
 2003-02-20
 - bios/screen.[ch] - VIDEL color registers supported, EmuTOS can boot
   in 2, 4 or 16 colors now! (PES)
-- bios/screen.[ch] - setphys() safeguard check (PES)
+- bios/screen.[ch] - screen_setphys() safeguard check (PES)
 - bios/nvram.c - fixed wrong offset, added static buffer for nvram data (PES)
 - bios/machine.c - early initialization of nvram (PES)
 - bios/screen.c - make use of NVRAM boot resolution setting. Tested on
@@ -3854,7 +3854,7 @@ Start... early ages
   and WinUAE 2.4.0 or higher. (VRI)
 
 2012-07-22
-- bios/amiga.c bios/amiga.h bios/amiga2.S bios/screen.c: Added setphys() and
+- bios/amiga.c bios/amiga.h bios/amiga2.S bios/screen.c: Added screen_setphys() and
  Getphys() support for Amiga(). (VRI)
 
 2012-07-23

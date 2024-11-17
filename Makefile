@@ -321,7 +321,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              amiga.c amiga2.S spi_vamp.c \
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c timer.c timer_.S memory2.c bootparams.c scsi.c nova.c \
-             dsp.c dsp2.S scsidriv.c \
+             dsp.c dsp2.S scsidriv.c vbl.c \
              a2560u_bios.c a2560u_bios_s.S a2560u_conout_text.c a2560u_conout_bmp.c
 
 

@@ -273,7 +273,7 @@ is_ipl:
 #endif /* CONF_WITH_ATARI_VIDEO */
 
 /*
- * _int_vbl - Int 0x70 - VBL interrupt
+ * _int_vbl - Int 0x70 - VBL Vertical Blank interrupt
  *
  * The sequence of events within the VBL interrupt handler
  * -------------------------------------------------------
@@ -298,6 +298,8 @@ _int_vbl:
 #endif
         jmi     vbl_end                 // if VBL routine disabled -> end
 
+        addq.l  #1, _vbclock.w          // count number of processed VBL interrupts
+
 #ifdef __mcoldfire__
         lea     -56(sp), sp
         movem.l d1-d7/a0-a6, (sp)       // save registers
@@ -306,173 +308,9 @@ _int_vbl:
 #else
         movem.l d0-d7/a0-a6, -(sp)      // save registers
 #endif
-        addq.l  #1, _vbclock.w          // count number of processed VBL interrupts
 
-#if CONF_WITH_ATARI_VIDEO
-// check for monitor switching and jump to _swv_vec if necessary...
-        jsr     _detect_monitor_change
-#endif
-
-#if (!defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
-        jsr     _blink                  // blink cursor
-#endif
-
-#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-        .GLOBAL a2560u_sfb_copy_fb_to_vram
-        .GLOBAL _a2560u_bios_sfb_is_active
-        .GLOBAL _a2560u_sfb_addr
-
-        tst.w   _a2560u_bios_sfb_is_active
-        beq.s   skip_sfb_copy
-        move.l  _v_bas_ad.w, _a2560u_sfb_addr
-        jbsr    a2560u_sfb_copy_fb_to_vram
-skip_sfb_copy:
-#endif
-
-#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) && 0
-        // Support of Setpalette
-        .globl _convert_atari2vicky_color
-        .globl _vicky2_set_lut_color
-        move.l  _colorptr.w,d0
-        jeq     scrnpt
-        // Load new color palette
-        lea     _colorptr.w,a3
-        move.l  d0,VICKY_B_BG_COLOR     // Color 0 in LUT is "transparent" so has no effect
-        moveq   #0,d3
-palcpy: move.w  (a3)+,-(sp)             // First, convert Atari 4 bit to 8 bit Foenix color spec
-        jbsr    _convert_atari2vicky_color
-        move.l  d0,-(sp)                // VICKY color
-        move.w  d3,-(sp)                // Color number
-        move.w  #0,-(sp)                // LUT number, avoid RMW
-        jbsr    _vicky2_set_lut_color
-        addq.w  #8,sp
-        addq.w  #1,d3
-        cmpi.w  #16,d3                  // We only copy the first 16 color entries. TT/Falcon-specific progs are rare enough.
-        bne.s   palcpy;
-
-        // Support of set new video address at VBL (_screenpt variable)
-scrnpt: move.l  _screenpt.w,d0
-        jeq     vbl_no_screenpt
-        move.l  d0,_v_bas_ad.w        
-#endif
-
-#if CONF_WITH_ATARI_VIDEO
-// the contents of colorptr indicate the palette processing required; since
-// the source address must be on a word boundary, we use bit 0 as a flag:
-//  contents                 meaning
-//  --------                 -------
-//     0                     do nothing
-//  address                  load ST(e) palette registers from address
-//  address with flag set    load 16 Falcon palette registers from address
-//     0 with flag set       load 256 Falcon palette registers from
-//                             _falcon_shadow_palette
-        move.l  _colorptr.w,d0
-        jeq     vbl_no_palette
-        // load new color palette
-        clr.l   _colorptr.w
-        lea     0xffff8240.w,a1             // ST(e) hardware palette registers
-        moveq   #7,d1                       // count/2 - 1 (we move longwords)
-        bclr    #0,d0                       // test & clear Falcon indicator
-#if CONF_WITH_VIDEL
-        jeq     docopy                      // wasn't set, so update STe regs
-        // load Falcon color palette
-        lea     0xffff9800.w,a1             // Falcon palette registers
-        move.l  _falcon_shadow_count,d1     // get count
-        subq.l  #1,d1                       // for dbra
-docopy:
-#endif
-        move.l  d0,a0                       // a0 -> source
-vbl_palette_loop:
-        move.l  (a0)+,(a1)+
-#ifdef __mcoldfire__
-        subq.l  #1,d1
-        jpl     vbl_palette_loop
-#else
-        dbra    d1,vbl_palette_loop
-#endif
-vbl_no_palette:
-
-        // set new video address
-        move.l  _screenpt.w,d0
-        jeq     vbl_no_screenpt
-        move.l  d0,_v_bas_ad.w
-        // middle & high bytes of address are valid for all shifters
-#ifdef __mcoldfire__
-        lsr.l   #8,d0
-        move.b  d0,0xffff8203.w
-        lsr.l   #8,d0
-#else
-        lsr.w   #8,d0
-        move.b  d0,0xffff8203.w
-        swap    d0
-#endif
-        move.b  d0,0xffff8201.w
-#if CONF_WITH_VIDEL
-        tst.w   _has_videl
-        jne     set_video_low
-#endif
-#if CONF_WITH_TT_SHIFTER
-        tst.w   _has_tt_shifter
-        jne     set_video_low
-#endif
-#if CONF_WITH_STE_SHIFTER
-        tst.w   _has_ste_shifter
-        jne     set_video_low
-#endif
-#if CONF_WITH_VIDEL || CONF_WITH_TT_SHIFTER || CONF_WITH_STE_SHIFTER
-        jra     st_shifter
-set_video_low:
-        // this must be set *after* setting mid/hi bytes
-        move.l  _screenpt.w,d0              // recover low address byte
-        move.b  d0,0xffff820d.w
-st_shifter:
-#endif
-vbl_no_screenpt:
-#endif /* CONF_WITH_ATARI_VIDEO */
-
-#if CONF_WITH_FDC
-        // flopvbl
-        jsr     _flopvbl
-#endif
-
-        // vblqueue
-#ifdef __mcoldfire__
-        moveq   #0,d0
-#endif
-        move.w  _nvbls.w,d0
-        jeq     vbl_no_queue
-#ifdef __mcoldfire__
-        sub.l   #1,d0
-#else
-        sub.w   #1,d0
-#endif
-        move.l  _vblqueue.w,a0
-vbl_queue_loop:
-        move.l  (a0)+,a1
-        cmp.l   #0,a1
-        jeq     vbl_queue_next
-        move.l  a0,-(sp)
-        move.l  d0,-(sp)
-        jsr     (a1)
-        move.l  (sp)+,d0
-        move.l  (sp)+,a0
-vbl_queue_next:
-#ifdef __mcoldfire__
-        subq.l  #1,d0
-        jpl     vbl_queue_loop
-#else
-        dbra    d0,vbl_queue_loop
-#endif
-vbl_no_queue:
-
-        // screen hardcopy
-        tst.w   _dumpflg.w
-        jne     vbl_no_dump
-        move.l  _dump_vec.w,a0
-        jsr     (a0)
-        moveq  #-1,d0
-        move.w  d0,_dumpflg.w
-vbl_no_dump:
+        .global _vbl_handler
+        jbsr    _vbl_handler
 
 #ifdef __mcoldfire__
         movem.l (sp), d1-d7/a0-a6       // restore registers
@@ -482,6 +320,7 @@ vbl_no_dump:
 #else
         movem.l (sp)+, d0-d7/a0-a6      // restore registers
 #endif
+
 vbl_end:
 #ifdef __mcoldfire__
         moveq   #0,d0
@@ -498,6 +337,7 @@ vbl_end:
 #else
         rts
 #endif
+
 
 #if CONF_WITH_MFP_RS232
 

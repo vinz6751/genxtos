@@ -41,8 +41,6 @@
 #include "a2560u_bios.h"
 
 
-static void setphys(const UBYTE *addr);
-
 #if CONF_WITH_VIDEL
 LONG video_ram_size;        /* these are used by Srealloc() */
 void *video_ram_addr;
@@ -517,9 +515,9 @@ void screen_init_mode(void)
         /* reset VIDEL on boot-up */
         /* first set the physbase to a safe memory */
 #if CONF_VRAM_ADDRESS
-        setphys((const UBYTE *)CONF_VRAM_ADDRESS);
+        screen_setphys((const UBYTE *)CONF_VRAM_ADDRESS);
 #else
-        setphys((const UBYTE *)0x10000L);
+        screen_setphys((const UBYTE *)0x10000L);
 #endif
 
 #if CONF_WITH_NVRAM && !defined(MACHINE_FIREBEE)
@@ -664,10 +662,10 @@ void screen_init_address(void)
 
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
     /* We use a shadow framebuffer, and have code in place to copy it to the VRAM */
-    setphys((const UBYTE *)VRAM_Bank0);
+    screen_setphys((const UBYTE *)VRAM_Bank0);
 #else
     /* correct physical address */
-    setphys(screen_start);
+    screen_setphys(screen_start);
 #endif
 }
 
@@ -1067,9 +1065,9 @@ const UBYTE *physbase(void)
 
 /* Set physical screen address */
 
-static void setphys(const UBYTE *addr)
+void screen_setphys(const UBYTE *addr)
 {
-    KDEBUG(("setphys(%p)\n", addr));
+    KDEBUG(("screen_setphys(%p)\n", addr));
 
 #ifdef MACHINE_AMIGA
     amiga_setphys(addr);
@@ -1122,7 +1120,7 @@ WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
         KDEBUG(("v_bas_ad = %p\n", v_bas_ad));
     }
     if ((LONG)physLoc > 0) {
-        setphys(physLoc);
+        screen_setphys(physLoc);
     }
 
     /* forbid res changes if Line A variables were 'hacked' or 'rez' is -1 */
@@ -1151,7 +1149,7 @@ WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
                         return -1;
                     KDEBUG(("screen realloc'd to %p\n", addr));
                     v_bas_ad = addr;
-                    setphys(addr);
+                    screen_setphys(addr);
                 }
             }
             oldmode = vsetmode(-1);

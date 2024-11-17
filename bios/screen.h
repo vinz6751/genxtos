@@ -96,6 +96,7 @@ void detect_monitor_change(void);
 void screen_init_address(void);
 void screen_init_mode(void);
 void screen_init_services(void);
+void screen_setphys(const UBYTE *addr);
 void screen_set_rez_hacked(void);
 void screen_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez);
 
