@@ -38,7 +38,8 @@ void timer_20ms_routine(void);
 
 
 // TODO: have a list like the VBL list so users can hook into without having to
-// hook the full timer C vector
+// hook the full timer C vector, so here wouldn't have to depend on the GEM etv_timer as
+// this is a layering breakage.
 void timer_20ms_routine(void) {
     // Repeat keys
     kb_timerc_int();
@@ -82,9 +83,11 @@ void init_system_timer(void)
 
 
 #if CONF_WITH_MFP
+// Use for the Xbtimer on Atari hardware
 static const WORD timer_num[] = { MFP_TIMERA, MFP_TIMERB, MFP_200HZ, MFP_TIMERD };
 #endif
 
+// XBIOS function
 void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
 {
     if(timer < 0 || timer > 3)
