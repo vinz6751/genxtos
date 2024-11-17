@@ -22,58 +22,7 @@
 #include "a2560u_bios.h"
 
 #if CONF_WITH_MFP || CONF_WITH_TT_MFP
-
-static void mfp_reset_regs(MFP *mfp)
-{
-    volatile UBYTE *p;
-    /*
-     * The following writes zeroes to everything except the UDR (anything
-     * written to the UDR would be sent as soon as the baud rate clock
-     * (Timer D) was enabled).  We avoid writing to the even addresses,
-     * because some buggy emulators (I'm looking at you, STonXDOS)
-     * generate bus errors there.
-     */
-    for (p = &mfp->gpip; p <= &mfp->tsr; p += 2)
-        *p = 0;
-}
-
-static void mfp_disable_interrupt(MFP *mfp, WORD num)
-{
-    UBYTE mask;
-
-    num &= 0x0F;
-    if (num >= 8) {
-        mask = ~(1<<(num-8));
-        mfp->imra &= mask;
-        mfp->iera &= mask;
-        mfp->ipra = mask;   /* note: IPRA/ISRA ignore '1' bits */
-        mfp->isra = mask;
-    }
-    else {
-        mask = ~(1<<num);
-        mfp->imrb &= mask;
-        mfp->ierb &= mask;
-        mfp->iprb = mask;   /* note: IPRB/ISRB ignore '1' bits */
-        mfp->isrb = mask;
-    }
-}
-
-static void mfp_enable_interrupt(MFP *mfp, WORD num)
-{
-    UBYTE mask;
-
-    num &= 0x0F;
-    if (num >= 8) {
-        mask = 1 << (num - 8);
-        mfp->iera |= mask;
-        mfp->imra |= mask;
-    } else {
-        mask = 1 << num;
-        mfp->ierb |= mask;
-        mfp->imrb |= mask;
-    }
-}
-
+# include "mfp68901.h"
 #endif
 
 
@@ -83,16 +32,16 @@ void mfptt_init(void)
 {
     MFP *mfp = TT_MFP_BASE; /* set base address of MFP */
 
-    mfp_reset_regs(mfp);    /* reset the MFP registers */
+    mfp68901_reset_regs(mfp);    /* reset the MFP registers */
     mfp->vr = 0x58;         /* vectors 0x50 to 0x5F, software end of interrupt */
 }
 
 void tt_mfpint(WORD num, LONG vector)
 {
     num &= 0x0F;
-    mfp_disable_interrupt(TT_MFP_BASE, num);
+    mfp68901_disable_interrupt(TT_MFP_BASE, num);
     *(LONG *)((0x50L + num)*4) = vector;
-    mfp_enable_interrupt(TT_MFP_BASE, num);
+    mfp68901_enable_interrupt(TT_MFP_BASE, num);
 }
 
 #endif
@@ -106,7 +55,7 @@ void mfp_init(void)
 {
     MFP *mfp = MFP_BASE;    /* set base address of MFP */
 
-    mfp_reset_regs(mfp);    /* reset the MFP registers */
+    mfp68901_reset_regs(mfp);    /* reset the MFP registers */
     mfp->vr = 0x48;         /* vectors 0x40 to 0x4F, software end of interrupt */
 }
 
@@ -121,15 +70,18 @@ void mfpint(WORD num, LONG vector)
     jenabint(num);
 }
 
+
 void jdisint(WORD num)
 {
-    mfp_disable_interrupt(MFP_BASE, num);
+    mfp68901_disable_interrupt(MFP_BASE, num);
 }
+
 
 void jenabint(WORD num)
 {
-    mfp_enable_interrupt(MFP_BASE, num);
+    mfp68901_enable_interrupt(MFP_BASE, num);
 }
+
 
 /* setup the timer, but do not activate the interrupt */
 void mfp_setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
@@ -185,6 +137,7 @@ int mfp_wait_fdc_hdc_irq_with_timeout(LONG delay)
 }
 
 #endif /* CONF_WITH_MFP */
+
 
 /*
  * "sieve", to get only the fourth interrupt.  because this is
