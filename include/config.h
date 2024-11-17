@@ -6,7 +6,7 @@
  * Defines that should *not* be overridden should appear in sysconf.h
  * (or deskconf.h if they apply to EmuDesk).
  *
- * Copyright (C) 2001-2022 The EmuTOS development team
+ * Copyright (C) 2001-2024 The EmuTOS development team
  *
  * Authors:
  *  MAD     Martin Doering
@@ -59,6 +59,9 @@
  * Defaults for the ARAnyM target
  */
 #ifdef MACHINE_ARANYM
+# ifndef CONF_WITH_VDI_16BIT
+#  define CONF_WITH_VDI_16BIT 1
+# endif
 # ifndef CONF_WITH_APOLLO_68080
 #  define CONF_WITH_APOLLO_68080 0
 # endif
@@ -253,6 +256,9 @@
 # ifndef CONF_WITH_IDE
 #  define CONF_WITH_IDE 0
 # endif
+# ifndef CONF_WITH_SCSI_DRIVER
+#  define CONF_WITH_SCSI_DRIVER 0
+# endif
 # ifndef CONF_WITH_STE_SHIFTER
 #  define CONF_WITH_STE_SHIFTER 0
 # endif
@@ -349,6 +355,9 @@
 # ifndef CONF_WITH_EXTENDED_MOUSE
 #  define CONF_WITH_EXTENDED_MOUSE 0
 # endif
+# ifndef CONF_WITH_VDI_16BIT
+#  define CONF_WITH_VDI_16BIT 0
+# endif
 # ifndef CONF_WITH_VDI_VERTLINE
 #  define CONF_WITH_VDI_VERTLINE 0
 # endif
@@ -430,6 +439,9 @@
 # ifndef CONF_WITH_MENU_EXTENSION
 #  define CONF_WITH_MENU_EXTENSION 0
 # endif
+# ifndef CONF_WITH_VDI_16BIT
+#  define CONF_WITH_VDI_16BIT 0
+# endif
 # ifndef MAX_VERTICES
 #  define MAX_VERTICES 512
 # endif
@@ -476,6 +488,9 @@
 # ifndef CONF_WITH_SCSI
 #  define CONF_WITH_SCSI 0
 # endif
+# ifndef CONF_WITH_SCSI_DRIVER
+#  define CONF_WITH_SCSI_DRIVER 0
+# endif
 # ifndef CONF_WITH_TT_MFP
 #  define CONF_WITH_TT_MFP 0
 # endif
@@ -487,6 +502,9 @@
 # endif
 # ifndef CONF_WITH_EXTENDED_MOUSE
 #  define CONF_WITH_EXTENDED_MOUSE 0
+# endif
+# ifndef CONF_WITH_VDI_16BIT
+#  define CONF_WITH_VDI_16BIT 0
 # endif
 # ifndef CONF_WITH_VDI_TEXT_SPEEDUP
 #  define CONF_WITH_VDI_TEXT_SPEEDUP 0
@@ -596,6 +614,9 @@
 # ifndef CONF_WITH_CACHE_CONTROL
 #  define CONF_WITH_CACHE_CONTROL 0
 # endif
+# ifndef CONF_WITH_EJECT
+#  define CONF_WITH_EJECT 1
+# endif
 # ifndef USE_STOP_INSN_TO_FREE_HOST_CPU
    /* This makes LisaEm timings completely inaccurate, so disable it */
 #  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
@@ -620,6 +641,9 @@
 # endif
 # ifndef CONF_WITH_IDE
 #  define CONF_WITH_IDE 1
+# endif
+# ifndef CONF_WITH_SDMMC
+#  define CONF_WITH_SDMMC 1
 # endif
 # ifndef CONF_WITH_FLEXCAN
 #  define CONF_WITH_FLEXCAN 1
@@ -880,6 +904,9 @@
 # ifndef CONF_WITH_IDE
 #  define CONF_WITH_IDE 0
 # endif
+# ifndef CONF_WITH_SCSI_DRIVER
+#  define CONF_WITH_SCSI_DRIVER 0
+# endif
 # ifndef CONF_WITH_ATARI_VIDEO
 #  define CONF_WITH_ATARI_VIDEO 0
 # endif
@@ -946,6 +973,9 @@
 # ifndef CONF_WITH_SN767489
 #  define CONF_WITH_SN767489 0
 # endif
+# ifndef CONF_WITH_MPU401
+#  define CONF_WITH_MPU401 0
+# endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 0
 # endif
@@ -957,6 +987,9 @@
 # endif
 # ifndef CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
 #  define CONF_WITH_A2560U_SHADOW_FRAMEBUFFER 0
+# endif
+# ifndef CONF_WITH_VDI_16BIT
+#  define CONF_WITH_VDI_16BIT 0 /* Like ST, not Falcon */
 # endif
 #endif
 
@@ -1280,7 +1313,6 @@
 #ifndef CONF_WITH_ULTRASATAN_CLOCK
 # define CONF_WITH_ULTRASATAN_CLOCK CONF_WITH_ACSI
 #endif
-
 
 /*
  * Set CONF_WITH_DMASOUND to 1 to enable support for STe/TT/Falcon DMA sound
@@ -1678,13 +1710,6 @@
 #endif
 
 /*
- * Set CONF_WITH_XHDI to 1 to enable XHDI support (i.e. the XHDI cookie etc.)
- */
-#ifndef CONF_WITH_XHDI
-# define CONF_WITH_XHDI 1
-#endif
-
-/*
  * Set the default baud rate for serial ports.
  */
 #ifndef DEFAULT_BAUDRATE
@@ -1721,6 +1746,7 @@
 #ifndef CONF_WITH_1FAT_SUPPORT
 # define CONF_WITH_1FAT_SUPPORT 0
 #endif
+
 
 
 /********************************************************
@@ -1777,6 +1803,14 @@
 #endif
 
 /*
+ * Set CONF_WITH_VDI_16BIT to 1 to include VDI support for the Falcon's
+ * 16-bit graphics modes.
+ */
+#ifndef CONF_WITH_VDI_16BIT
+# define CONF_WITH_VDI_16BIT 1
+#endif
+
+/*
  * Set CONF_WITH_VDI_TEXT_SPEEDUP to 1 to improve some VDI text output
  * performance
  */
@@ -1806,6 +1840,28 @@
  */
 #ifndef NUM_VDI_HANDLES
 # define NUM_VDI_HANDLES 128    /* maximum number of open workstations */
+#endif
+
+
+
+/************************************************************************
+ *  S O F T W A R E   S E C T I O N   -   3 R D   P A R T Y   A P I     *
+ ************************************************************************/
+
+/*
+ * set CONF_WITH_SCSI_DRIVER to 1 to activate support for the SCSI driver
+ * API, which allows user programs to issue SCSI-style commands directly
+ * to devices.  see the documentation by Steffen Engel for more details.
+ */
+#ifndef CONF_WITH_SCSI_DRIVER
+# define CONF_WITH_SCSI_DRIVER 1
+#endif
+
+/*
+ * Set CONF_WITH_XHDI to 1 to enable XHDI support (i.e. the XHDI cookie etc.)
+ */
+#ifndef CONF_WITH_XHDI
+# define CONF_WITH_XHDI 1
 #endif
 
 
@@ -2133,6 +2189,14 @@
 #endif
 
 /*
+ * Set CONF_WITH_EJECT to 1 to enable automatic floppy eject.
+ * This isn't available on Atari hardware.
+ */
+#ifndef CONF_WITH_EJECT
+# define CONF_WITH_EJECT 0
+#endif
+
+/*
  * Set CONF_WITH_BUS_ERROR if the hardware triggers a Bus Error exception
  * when trying to read/write data at an invalid address.
  * This is true on Atari machines.
@@ -2354,6 +2418,12 @@
 #if !CONF_WITH_EXTENDED_OBJECTS
 # if CONF_WITH_ALT_DESKTOP_GRAPHICS
 #  error CONF_WITH_ALT_DESKTOP_GRAPHICS requires CONF_WITH_EXTENDED_OBJECTS.
+# endif
+#endif
+
+#if !CONF_WITH_VIDEL
+# if CONF_WITH_VDI_16BIT
+#  error CONF_WITH_VDI_16BIT requires CONF_WITH_VIDEL
 # endif
 #endif
 

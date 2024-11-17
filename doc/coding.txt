@@ -91,7 +91,7 @@ Exceptions to the 'leading underscore' rule are:
 ---------------------------
 Assembler code must be capable of running on all 680x0 processors.
 
-Certain parts of the code may require 680x0 intructions that are not
+Certain parts of the code may require 680x0 instructions that are not
 present on the 68000: for example, processor detection needs this.  These
 must be generated via dc.w/dc.l.  In order to reduce the possibility of
 mistakes, there are now macros that will generate dc.w/dc.l statements

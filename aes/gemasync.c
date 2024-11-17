@@ -3,7 +3,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2022 The EmuTOS development team
+*                 2002-2024 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -71,7 +71,7 @@ void azombie(EVB *e, UWORD ret)
     if (zlr)
         zlr->e_pred = e;
 
-    e->e_pred = (EVB *)(((char *) &zlr) - offsetof(EVB, e_link));
+    e->e_pred = FAKE_EVB(&zlr);
     zlr = e;
     e->e_flag = COMPLETE;
     signal(e);
@@ -83,7 +83,7 @@ void evinsert(EVB *e, EVB **root)
     EVB *p, *q;
 
     /* insert event block on list */
-    q = (EVB *)((char *) root - offsetof(EVB, e_link));
+    q = FAKE_EVB(root);
     p = *root;
     e->e_pred = q;
     q->e_link = e;

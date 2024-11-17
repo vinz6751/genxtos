@@ -6,7 +6,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2022 The EmuTOS development team
+*                 2002-2024 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -697,6 +697,8 @@ static void new_resolution(WORD rez, WORD videlmode)
 }
 #endif
 
+
+
 /*
  * Returns true if resolution was changed indeed.
  */
@@ -711,13 +713,13 @@ static BOOL handle_resolution_change(void)
     if ((res_was_changed = (gl_changerez != NO_RES_CHANGE))) {
         switch(gl_changerez) {
 #if CONF_WITH_ATARI_VIDEO
-        case TO_ST_RES:         /* ST(e) or TT display */
+        case 1:                     /* ST(e) or TT display */
             new_resolution(gl_nextrez-2, 0);
             break;
 #endif
 #if CONF_WITH_VIDEL || defined(MACHINE_AMIGA)
-        case TO_FALCON_RES:          /* Falcon display */
-            new_resolution(FALCON_REZ, gl_nextrez);            
+        case 2:                     /* Falcon display */
+            new_resolution(FALCON_REZ, gl_nextrez);
             break;
 #endif
         default:

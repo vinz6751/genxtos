@@ -30,7 +30,7 @@
 #include "a2560u_bios.h"
 
 /* Driver in use for outputing text */
-static CONOUT_DRIVER *conout;
+static CONOUT_DRIVER * conout;
 
 #if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
 extern const CONOUT_DRIVER conout_atarifb;
@@ -44,7 +44,7 @@ void conout_init(const Fonthead *font)
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
     conout = a2560_bios_get_conout();
 #else
-    conout = &conout_atarifb;
+    conout = (CONOUT_DRIVER *)&conout_atarifb;
 #endif
     KDEBUG(("conout_init calling init of driver\n"));
 
@@ -56,7 +56,6 @@ void conout_init(const Fonthead *font)
 
 /*
  * cell_addr - convert cell X,Y to a screen address.
- *
  *
  * convert cell X,Y to a screen address. also clip cartesian coordinates
  * to the limits of the current screen.
@@ -79,15 +78,14 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
  * neg_cell - negates
  *
  * This routine negates the contents of an arbitrarily-tall byte-wide cell
- * composed of an arbitrary number of (Atari-style) bit-planes.
+ * composed of 1 to 8 Atari-style bit-planes, or of Falcon-style 16-bit
+ * graphics.
  * Cursor display can be accomplished via this procedure.  Since a second
  * negation restores the original cell condition, there is no need to save
  * the contents beneath the cursor block.
  *
- * in:
- * a1.l      points to destination (1st plane, top of block)
- *
- * out:
+ * input:
+ *  cell    points to destination (1st plane, top of block)
  */
 
 static void neg_cell(CHAR_ADDR cell)
@@ -318,7 +316,6 @@ void conout_blank_out(int topx, int topy, int botx, int boty)
 {
     conout->blank_out(topx, topy, botx, boty);
 }
-
 
 
 /*

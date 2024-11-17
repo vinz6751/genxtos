@@ -1,4 +1,3 @@
-#include "config.h"
 #include "doprintf.h" // EmuTOS
 
 #include "a2560u_debug.h"

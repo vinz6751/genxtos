@@ -1,7 +1,7 @@
 /*
  * startup.S - EmuTOS startup module
  *
- * Copyright (C) 2001-2021 The EmuTOS development team
+ * Copyright (C) 2001-2024 The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -379,9 +379,6 @@ memdone:
  * From now, the stack is allowed, and C code can be used.
  * The BIOS startup goes on in bios.c
  */
-
-        move.l #0xff008800,0xfec80008 // border color for debug 
-
 
         jmp     _biosmain
 

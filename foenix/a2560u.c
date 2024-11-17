@@ -21,7 +21,7 @@
 #include "vicky2_txt_a_logger.h"
 
 // FIXME: this is an EmuTOS dependency
-#include "doprintf.h"
+#include "../include/doprintf.h"
 
 int sprintf(char *__restrict__ str, const char *__restrict__ fmt, ...) __attribute__ ((format (printf, 2, 3)));
 

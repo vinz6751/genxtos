@@ -1,7 +1,7 @@
 /*
  * disk.c - disk routines
  *
- * Copyright (C) 2001-2022 The EmuTOS development team
+ * Copyright (C) 2001-2024 The EmuTOS development team
  *
  * Authors:
  *  PES   Petr Stehlik
@@ -21,6 +21,7 @@
 #include "processor.h"
 #include "natfeat.h"
 #include "tosvars.h"
+#include "machine.h"
 #include "ide.h"
 #include "acsi.h"
 #include "scsi.h"

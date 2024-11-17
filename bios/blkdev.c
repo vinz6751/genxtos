@@ -1,7 +1,7 @@
 /*
  * blkdev.c - BIOS block device functions
  *
- * Copyright (C) 2002-2022 The EmuTOS development team
+ * Copyright (C) 2002-2024 The EmuTOS development team
  *
  * Authors:
  *  MAD     Martin Doering
@@ -20,6 +20,7 @@
 #include "tosvars.h"
 #include "ahdi.h"
 #include "floppy.h"
+#include "machine.h"
 #include "disk.h"
 #include "ikbd.h"
 #include "blkdev.h"
@@ -28,6 +29,7 @@
 #include "scsi.h"
 #include "ide.h"
 #include "sd.h"
+#include "scsidriv.h"
 #include "biosext.h"
 #include "biosmem.h"
 #include "xhdi.h"
@@ -190,7 +192,10 @@ static void blkdev_hdv_init(void)
     KDEBUG(("blkdev_hdv_init:bus_init"));
     bus_init();
 
-    KDEBUG(("blkdev_hdv_init:disk_init_all"));
+#if CONF_WITH_SCSI_DRIVER
+    scsidriv_init();    /* detect all devices */
+#endif
+
     disk_init_all();    /* Detect hard disk partitions */
 
 #if CONF_WITH_XHDI
@@ -385,7 +390,7 @@ int add_partition(UWORD unit, LONG *devices_available, char id[], ULONG start, U
     b->unit  = unit;
 
     /* flag partitions that support GetBPB() */
-    if (getbpb_allowed(id))
+    if (getbpb_allowed(b->id))
         b->flags |= GETBPB_ALLOWED;
 
     /* make just GEM/BGM partitions visible to applications */
@@ -526,7 +531,7 @@ static LONG blkdev_rwabs(WORD rw, UBYTE *buf, WORD cnt, WORD recnr, WORD dev, LO
         } while(retval == CRITIC_RETRY_REQUEST);
         if (retval < 0)     /* error, retries exhausted */
             break;
-        buf += scount << psshift;
+        buf += (ULONG)scount << psshift;
         lrecnr += scount;
         lcount -= scount;
     } while(lcount > 0);
@@ -737,8 +742,9 @@ LONG blkdev_getbpb(WORD dev)
         tmp = 0UL;
     else
         tmp = (tmp - bdev->bpb.datrec) / b->spc;
-    if (tmp > MAX_FAT16_CLUSTERS)           /* FAT32 - unsupported */
+    if ((tmp > MAX_FAT16_CLUSTERS) || (bdev->bpb.fsiz == 0))
     {
+        /* FAT32 - unsupported */
         KINFO(("Disk %c: is inaccessible (FAT32)\n",dev+'A'));
         bdev->bpb.recsiz = 0;               /* mark it for XHDI */
         return 0L;

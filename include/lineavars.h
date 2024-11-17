@@ -35,8 +35,8 @@ typedef struct {
         WORD    len;            /* height of saved form */
         UWORD   *addr;          /* screen address of saved form */
         UBYTE    stat;          /* save status */
-        char    reserved;
-        ULONG   area[8*16];     /* handle up to 8 video planes */
+        UBYTE   width;          /* width of saved form (16-bit support only) */
+        ULONG   area[8*16];     /* handle up to 8 video planes (also 16-bit) */
 } MCS;
 
 /* Mouse / sprite structure (16x16) */
@@ -99,7 +99,14 @@ extern UWORD v_cur_cy;          /* current cursor row */
 extern UWORD V_REZ_HZ;          /* screen horizontal resolution */
 extern UWORD V_REZ_VT;          /* screen vertical resolution */
 extern UWORD BYTES_LIN;         /* width of line in bytes */
+
 extern WORD  DEV_TAB[];         /* intout array for open workstation */
+/* aliases for different table positions */
+#define xres        DEV_TAB[0]
+#define yres        DEV_TAB[1]
+#define xsize       DEV_TAB[3]
+#define ysize       DEV_TAB[4]
+#define numcolors   DEV_TAB[13]
 
 extern UWORD linea_max_x;       /* max X coordinate (= V_REZ_HZ - 1) */
 extern UWORD linea_max_y;       /* max Y coordinate (= V_REZ_VT -1) */

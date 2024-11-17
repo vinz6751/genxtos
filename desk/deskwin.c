@@ -4,7 +4,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2022 The EmuTOS development team
+*                 2002-2024 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -576,6 +576,8 @@ static void win_blt(WNODE *pw, BOOL horizontal, WORD newcv)
 
     /* see if any part is off the screen */
     wind_get_grect(pw->w_id, WF_FIRSTXYWH, &t);
+    rc_intersect(&gl_rfull, &t);
+
     if (rc_equal(&c, &t))
     {
         /* blt as much as we can, adjust clip & draw the rest */

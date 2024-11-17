@@ -11,6 +11,7 @@
 
 #include "emutos.h"
 #include "asm.h"
+#include "intmath.h"
 #include "biosbind.h"
 #include "xbiosbind.h"
 #include "linea.h"
@@ -30,6 +31,17 @@
 #include "../aes/aesstub.h"
 #endif
 
+
+/* Mouse / sprite structure */
+typedef struct Mcdb_ Mcdb;
+struct Mcdb_ {
+        WORD    xhot;
+        WORD    yhot;
+        WORD    planes;
+        WORD    bg_col;
+        WORD    fg_col;
+        UWORD   maskdata[32];   /* mask & data are interleaved */
+};
 
 /* prototypes */
 static void mform_color_validator(const MFORM *src, MCDB *dst);
@@ -170,8 +182,6 @@ void vdimouse_exit(void)
     }
 #endif
 }
-
-
 
 static void mform_color_validator(const MFORM *src, MCDB *dst)
 {

@@ -1,9 +1,9 @@
 /*
- * text.c - uses text_blt to move data from a font table to screen
+ * vdi_text.c - uses text_blt to move data from a font table to screen
  *
  * Copyright 1982 by Digital Research Inc.  All rights reserved.
  * Copyright 1999 by Caldera, Inc. and Authors:
- * Copyright 2002-2022 The EmuTOS development team
+ * Copyright 2002-2024 The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -235,8 +235,16 @@ static BOOL ok_for_direct_blit(Vwk *vwk, WORD width, JUSTINFO *justified)
     if (justified)
         return FALSE;
 
-    if (DESTX & 0x0007)
-        return FALSE;
+#if CONF_WITH_VDI_16BIT
+    if (TRUECOLOR_MODE)     /* always byte-aligned */
+    {
+    }
+    else
+#endif
+    {
+        if (DESTX & 0x0007)
+            return FALSE;
+    }
 
     fnt_ptr = vwk->cur_font;
 
@@ -981,7 +989,7 @@ void vdi_vst_color(Vwk * vwk)
 {
     WORD r;
 
-    r = validate_color_index(INTIN[0]);
+    r = linea_validate_color_index(INTIN[0]);
 
     INTOUT[0] = r;
     vwk->text_color = MAP_COL[r];
@@ -1168,7 +1176,7 @@ void vdi_vqt_fontinfo(Vwk * vwk)
 
 void gdp_justified(Vwk * vwk)
 {
-    WORD spaces;
+    WORD spaces = 0;
     WORD expand;
     WORD interword, interchar;
     WORD cnt, width, max_x;
@@ -1187,7 +1195,7 @@ void gdp_justified(Vwk * vwk)
      * if interword adjustment required, count spaces
      */
     if (interword) {
-        for (i = 0, spaces = 0; i < cnt; i++)
+        for (i = 0; i < cnt; i++)
             if (*(pointer++) == ' ')
                 spaces++;
     }

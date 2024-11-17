@@ -4,7 +4,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2022 The EmuTOS development team
+*                 2002-2024 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -480,7 +480,10 @@ void w_bldactive(WORD w_handle)
 {
     BOOL    istop, havevbar, havehbar;
     WORD    kind;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
     WORD    corner_x, corner_y;
+#pragma GCC diagnostic pop
     GRECT   t;
     WORD    tempw;
     WINDOW  *pw;
@@ -1672,20 +1675,32 @@ BOOL wm_set(WORD w_handle, WORD w_field, WORD *pinwds)
         gl_newroot = pinwds[2];
         break;
     case WF_HSLSIZ:
-        pwin->w_hslsiz = pinwds[0];
-        gadget = W_HSLIDE;
+        if (pwin->w_hslsiz != pinwds[0])    /* size changed? */
+        {
+            pwin->w_hslsiz = pinwds[0];     /* yes, save new size */
+            gadget = W_HSLIDE;              /* & redraw slider    */
+        }
         break;
     case WF_VSLSIZ:
-        pwin->w_vslsiz = pinwds[0];
-        gadget = W_VSLIDE;
+        if (pwin->w_vslsiz != pinwds[0])    /* size changed? */
+        {
+            pwin->w_vslsiz = pinwds[0];     /* yes, save new size */
+            gadget = W_VSLIDE;              /* & redraw slider    */
+        }
         break;
     case WF_HSLIDE:
-        pwin->w_hslide = pinwds[0];
-        gadget = W_HSLIDE;
+        if (pwin->w_hslide != pinwds[0])    /* position changed? */
+        {
+            pwin->w_hslide = pinwds[0];     /* yes, save new posn */
+            gadget = W_HSLIDE;              /* & redraw slider    */
+        }
         break;
     case WF_VSLIDE:
-        pwin->w_vslide = pinwds[0];
-        gadget = W_VSLIDE;
+        if (pwin->w_vslide != pinwds[0])    /* position changed? */
+        {
+            pwin->w_vslide = pinwds[0];     /* yes, save new posn */
+            gadget = W_VSLIDE;              /* & redraw slider    */
+        }
         break;
 #if CONF_WITH_WINDOW_COLOURS
     case WF_COLOR:

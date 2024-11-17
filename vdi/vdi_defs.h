@@ -18,6 +18,9 @@
 
 #define HAVE_BEZIER 0           /* switch on bezier capability - entirely untested */
 
+#define TRUECOLOR_MODE  (v_planes > 8)
+
+
 #if CONF_WITH_VIDEL
 # define UDPAT_PLANES   32      /* actually 16, but each plane occupies 2 WORDs */
 #elif CONF_WITH_TT_SHIFTER
@@ -86,13 +89,6 @@
 #define ARROWED     1
 #define ROUND       2
 
-/* aliases for different table positions */
-#define xres        DEV_TAB[0]
-#define yres        DEV_TAB[1]
-#define xsize       DEV_TAB[3]
-#define ysize       DEV_TAB[4]
-#define numcolors   DEV_TAB[13]
-
 #define DEF_LWID    SIZ_TAB[4]
 #define DEF_CHHT    SIZ_TAB[1]
 #define DEF_CHWT    SIZ_TAB[0]
@@ -145,6 +141,14 @@ typedef struct {
 
 #define VDI_CLIP(wvk) ((VwkClip*)(&(wvk->xmn_clip)))
 
+
+#if CONF_WITH_VDI_16BIT
+/* virtual workstation extension, used for VDI Trucolor (16-bit) support */
+typedef struct {
+    UWORD palette[256];         /* pseudo-palette with pixel value RRRRRGGGGG0BBBBB */
+    WORD req_col[256][3];       /* requested colour */
+} VwkExt;
+#endif
 
 /* Structure to hold data for a virtual workstation */
 
@@ -199,6 +203,9 @@ struct Vwk_ {
     WORD xmx_clip;              /* High x point of clipping rectangle   */
     WORD ymn_clip;              /* Low y point of clipping rectangle    */
     WORD ymx_clip;              /* High y point of clipping rectangle   */
+#if CONF_WITH_VDI_16BIT
+    VwkExt *ext;                /* 16 bit colour management */
+#endif
     /* newly added */
 #if HAVE_BEZIER
     WORD bez_qual;              /* actual quality for bezier curves */
@@ -263,6 +270,8 @@ void set_LN_MASK(Vwk *vwk);
 void st_fl_ptr(Vwk *);
 void gdp_justified(Vwk *);
 WORD validate_color_index(WORD colnum);
+void set_color16(Vwk *vwk, WORD colnum, WORD *rgb);
+
 
 /* drawing primitives */
 void draw_pline(Vwk *vwk);

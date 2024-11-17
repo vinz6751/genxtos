@@ -1,7 +1,7 @@
 #ifndef A2560U_DEBUG_H
 #define A2560U_DEBUG_H
 
-#include "config.h"
+#include "../include/config.h"
 #ifndef FOENIX_CHANNEL_A_DEBUG_PRINT
 #define FOENIX_CHANNEL_A_DEBUG_PRINT 1
 #endif
