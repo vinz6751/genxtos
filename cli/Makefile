@@ -1,7 +1,7 @@
 #
 # Makefile for EmuCON2
 #
-# Copyright (C) 2013-2019 The EmuTOS development team.
+# Copyright (C) 2013-2024 The EmuTOS development team.
 #
 # This file is distributed under the GPL, version 2 or at your
 # option any later version.  See doc/license.txt for details.
@@ -12,8 +12,9 @@ include ../version.mk
 TARGET = emucon2.tos
 LIBS = -nostartfiles -nostdlib -lgcc
 CC = m68k-atari-mint-gcc
+MULTILIBFLAGS = -m68000 -mshort
 CPPFLAGS = -I../include -DUSE_STATIC_INLINES=0 -DSTANDALONE_CONSOLE
-CFLAGS = $(CPPFLAGS) -mshort -Os -Wall -Wundef -Wold-style-definition -fomit-frame-pointer -DMACHINE_A2560U
+CFLAGS = $(MULTILIBFLAGS) $(CPPFLAGS) -Os -Wall -Wundef -Wold-style-definition -fomit-frame-pointer -DMACHINE_A2560U
 
 .PHONY: default all clean
 

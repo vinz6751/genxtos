@@ -1,7 +1,7 @@
 /*
  * ctrycodes.h - a mere list of country codes
  *
- * Copyright (C) 2003-2020 The EmuTOS development team
+ * Copyright (C) 2003-2024 The EmuTOS development team
  *
  * Authors:
  *  LVL     Laurent Vogel
@@ -48,6 +48,7 @@
  */
 #define COUNTRY_PL 17   /* Poland */
 #define COUNTRY_RU 19   /* Russia */
+#define COUNTRY_RO 24   /* Romania */
 #define COUNTRY_GR 31   /* Greece */
 
 /*

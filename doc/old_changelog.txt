@@ -2078,7 +2078,7 @@ Start... early ages
 2008-06-13
 - bios/chardev.c bios/kprint.c bios/mfp.c: Added experimental support for the
   MFP UART input and output. (THH)
-- bios/floppy.c bios/acsi.c: The timeout_gpip() function was declared twice,
+- bios/floppy.c bios/acsi.c: The mfp_wait_disk_irq_with_timeout() function was declared twice,
   in acsi.c and floppy.c. Merged them now into one function only. Thanks to
   Jens Caroll for the hint! (THH)
 
@@ -4991,7 +4991,7 @@ Start... early ages
   Contributed by Eero Tamminen. (VRI)
 - bios/dma.c bios/dma.h bios/mfp.c bios/mfp.h: Minor code tidy up. (RFB)
 - bios/acsi.c bios/floppy.c bios/mfp.c bios/mfp.h: Eliminate divide in
-  timeout_gpip() by passing timeout in ticks. (RFB)
+  mfp_wait_disk_irq_with_timeout() by passing timeout in ticks. (RFB)
 - bios/xhdi.c: Code cleanup: use KDEBUG() for debugging statements. (RFB)
 - bios/acsi.c bios/acsi.h bios/xhdi.c: XHInqTarget()/XHInqTarget2() now
   report error if selected ACSI drive is not present. (RFB)

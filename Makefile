@@ -1,7 +1,7 @@
 #
 # Makefile - the EmuTOS overbloated Makefile
 #
-# Copyright (C) 2001-2022 The EmuTOS development team.
+# Copyright (C) 2001-2024 The EmuTOS development team.
 #
 # This file is distributed under the GPL, version 2 or at your
 # option any later version.  See doc/license.txt for details.
@@ -47,10 +47,10 @@ help:
 	@echo "------  -------"
 	@echo "help    this help message"
 	@echo "version display the EmuTOS version"
-	@echo "192     $(ROM_192), EmuTOS ROM padded to size 192 KB"
-	@echo "256     $(ROM_256), EmuTOS ROM padded to size 256 KB"
-	@echo "512     $(ROM_512), EmuTOS ROM padded to size 512 KB"
-	@echo "1024    $(ROM_1024), EmuTOS ROM padded to size 1024 KB"
+	@echo "192     etos192$(UNIQUE).img, EmuTOS ROM padded to size 192 KB"
+	@echo "256     etos256$(UNIQUE).img, EmuTOS ROM padded to size 256 KB"
+	@echo "512     etos512$(UNIQUE).img, EmuTOS ROM padded to size 512 KB"
+	@echo "1024    etos1024$(UNIQUE).img, EmuTOS ROM padded to size 1024 KB"
 	@echo "aranym  $(ROM_ARANYM), optimized for ARAnyM"
 	@echo "firebee $(SREC_FIREBEE), to be flashed on the FireBee"
 	@echo "firebee-prg emutos.prg, a RAM tos for the FireBee"
@@ -65,7 +65,8 @@ help:
 	@echo "m548x-bas  $(SREC_M548X_BAS), EmuTOS for BaS_gcc on ColdFire Evaluation Boards"
 	@echo "m548x-prg  emutos.prg, a RAM tos for ColdFire Evaluation Boards with BaS_gcc"
 	@echo "c256genx   $(ROM_C256GENX), EmuTOS flash image for the C256 GenX with 68000 CPU Module"
-	@echo "a2560u    $(ROM_A2560U), EmuTOS flash image for the A2560U Foenix"	
+	@echo "a2560u    $(ROM_A2560U), EmuTOS flash image for the A2560U Foenix"
+	@echo "a2560x    $(ROM_A2560X), EmuTOS flash image for the A2560X Foenix"
 	@echo "prg     emutos.prg, a RAM tos"
 	@echo "prg256  $(EMU256_PRG), a RAM tos for ST/STe systems"
 	@echo "flop    $(EMUTOS_ST), a bootable floppy with RAM tos"
@@ -269,9 +270,18 @@ endif
 endif
 
 DEFINES = $(LOCALCONF) -DWITH_AES=$(WITH_AES) -DWITH_CLI=$(WITH_CLI) $(DEF)
-CFLAGS = $(MULTILIBFLAGS) $(TOOLCHAIN_CFLAGS) $(OPTFLAGS) $(OTHERFLAGS) $(WARNFLAGS) $(INC) $(DEFINES)
+CFLAGS_COMPILE = $(TOOLCHAIN_CFLAGS) $(OPTFLAGS) $(OTHERFLAGS) $(WARNFLAGS)
+CFLAGS = $(MULTILIBFLAGS) $(CFLAGS_COMPILE) $(INC) $(DEFINES)
 
 CPPFLAGS = $(CFLAGS)
+
+ifeq (1,$(LTO))
+# Link Time Optimization
+LTOFLAGS = -flto=auto
+CFLAGS += $(LTOFLAGS)
+LDFLAGS += $(LTOFLAGS) $(CFLAGS_COMPILE)
+AR = $(TOOLCHAIN_PREFIX)gcc-ar
+endif
 
 # The objdump utility (disassembler)
 OBJDUMP = $(TOOLCHAIN_PREFIX)objdump
@@ -280,7 +290,7 @@ OBJDUMP = $(TOOLCHAIN_PREFIX)objdump
 OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 
 # the native C compiler, for tools
-NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -W $(BUILD_TOOLS_OPTFLAGS)
+NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -Wextra $(BUILD_TOOLS_OPTFLAGS)
 
 foenix_src = a2560u_s.S a2560u.c a2560u_debug.c \
 	ps2_mouse_a2560u.c ps2.c ps2_keyboard.c \
@@ -305,13 +315,13 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              country.c \
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
              kprint.c kprintasm.S machine.c \
-             mfp.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
+             mfp.c mfp68901.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c serport.c sound.c videl.c vt52.c xhdi.c \
              pmmu030.c 68040_pmmu.S \
              amiga.c amiga2.S spi_vamp.c \
              lisa.c lisa2.S \
-             delay.c delayasm.S sd.c memory2.c bootparams.c scsi.c nova.c \
-             dsp.c dsp2.S \
+             delay.c delayasm.S sd.c timer.c timer_.S memory2.c bootparams.c scsi.c nova.c \
+             dsp.c dsp2.S scsidriv.c \
              a2560u_bios.c a2560u_bios_s.S a2560u_conout_text.c a2560u_conout_bmp.c
 
 
@@ -444,12 +454,15 @@ MEMBOT_TOS206 = 0x0000ccb2
 MEMBOT_TOS306 = 0x0000e6fc
 MEMBOT_TOS404 = 0x0000f99c
 
+# If set, compare performance to one of the TOS versions above.
+REF_OS=
+
 #
 # Directory selection depending on the features
 #
 
 # Core directories are essential for basic OS operation
-core_dirs = bios bdos util foenix
+core_dirs = bios bdos util
 
 # Optional directories may be disabled for reduced features
 optional_dirs = vdi
@@ -505,7 +518,7 @@ obj/emutospp.ld: emutos.ld include/config.h tosvars.ld
 
 TOCLEAN += *.img *.map
 
-emutos.img: $(OBJECTS) obj/emutospp.ld Makefile
+emutos.img: $(OBJECTS) obj/emutospp.ld
 	$(LD) $(CORE_OBJ) $(LIBS) $(OPTIONAL_OBJ) $(LIBS) $(END_OBJ) $(LDFLAGS) -Wl,-Map=emutos.map -o emutos.img
 	@if [ $$(($$(awk '/^\.data /{print $$3}' emutos.map))) -gt 0 ]; then \
 	  echo "### Warning: The DATA segment is not empty."; \
@@ -516,22 +529,26 @@ emutos.img: $(OBJECTS) obj/emutospp.ld Makefile
 " LOWSTRAM=$(call SHELL_SYMADDR,__low_stram_start,emutos.map)"\
 " BSS=$(call SHELL_SYMADDR,__bss,emutos.map)"\
 " MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map)"
+ifneq (,$(REF_OS))
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_$(REF_OS)))) bytes more than $(REF_OS))"
+else
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT)) bytes"
+endif
 
 #
-# 128kB Image
+# Padded Image
 #
 
-ROM_128 = etos128k.img
+ROM_PADDED = $(if $(UNIQUE),etos$(ROMSIZE)$(UNIQUE).img,etos$(ROMSIZE)k.img)
 
-$(ROM_128): ROMSIZE = 128
-$(ROM_128): emutos.img mkrom
-	./mkrom pad $(ROMSIZE)k $< $(ROM_128)
+$(ROM_PADDED): emutos.img mkrom
+	./mkrom pad $(ROMSIZE)k $< $@
 
 #
 # 192kB Image
 #
-
-ROM_192 = etos192$(UNIQUE).img
 
 .PHONY: 192
 NODEP += 192
@@ -539,58 +556,38 @@ NODEP += 192
 192: OPTFLAGS = $(SMALL_OPTFLAGS)
 192: override DEF += -DTARGET_192
 192: WITH_CLI = 0
+192: ROMSIZE = 192
 192:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' WITH_CLI=$(WITH_CLI) UNIQUE=$(UNIQUE) ROM_192=$(ROM_192) $(ROM_192)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS104))) bytes more than TOS 1.04)"
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' WITH_CLI=$(WITH_CLI) UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS104
 	@printf "$(LOCALCONFINFO)"
-
-$(ROM_192): ROMSIZE = 192
-$(ROM_192): emutos.img mkrom
-	./mkrom pad $(ROMSIZE)k $< $(ROM_192)
-	@cp etos192$(UNIQUE).img mpts192$(UNIQUE).img
 
 #
 # 256kB Image
 #
-
-ROM_256 = etos256$(UNIQUE).img
 
 .PHONY: 256
 NODEP += 256
 256: UNIQUE = $(COUNTRY)
 256: OPTFLAGS = $(SMALL_OPTFLAGS)
 256: override DEF += -DTARGET_256
+256: ROMSIZE = 256
 256:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_256=$(ROM_256) $(ROM_256)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS206))) bytes more than TOS 2.06)"
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS206
 	@printf "$(LOCALCONFINFO)"
 	@cp etos256$(UNIQUE).img mpts256$(UNIQUE).img
-
-$(ROM_256): ROMSIZE = 256
-$(ROM_256): emutos.img mkrom
-	./mkrom pad $(ROMSIZE)k $< $(ROM_256)
 
 #
 # 512kB Image (for TT or Falcon; also usable for ST/STe under Hatari)
 #
 
-ROM_512 = etos512$(UNIQUE).img
-
 .PHONY: 512
 NODEP += 512
 512: UNIQUE = $(COUNTRY)
 512: override DEF += -DTARGET_512
+512: ROMSIZE = 512
 512:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) MULTIKEYBD='-k' ROM_512=$(ROM_512) $(ROM_512)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS404))) bytes more than TOS 4.04)"
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) MULTIKEYBD='-k' ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS404
 	@printf "$(LOCALCONFINFO)"
-
-$(ROM_512): ROMSIZE = 512
-$(ROM_512): emutos.img mkrom
-	./mkrom pad $(ROMSIZE)k $< $(ROM_512)
 
 #
 # 512kB PAK/3 Image (based on 256kB Image)
@@ -604,9 +601,7 @@ pak3: UNIQUE = $(COUNTRY)
 pak3: OPTFLAGS = $(SMALL_OPTFLAGS)
 pak3: override DEF += -DTARGET_256
 pak3:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_PAK3=$(ROM_PAK3) $(ROM_PAK3)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS206))) bytes more than TOS 2.06)"
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_PAK3=$(ROM_PAK3) $(ROM_PAK3) REF_OS=TOS206
 	@printf "$(LOCALCONFINFO)"
 
 $(ROM_PAK3): ROMSIZE = 256
@@ -617,19 +612,14 @@ $(ROM_PAK3): emutos.img mkrom
 # 1024kB Image (for Hatari (and potentially other emulators))
 #
 
-ROM_1024 = etos1024k.img
-SYMFILE = $(addsuffix .sym,$(basename $(ROM_1024)))
-
 .PHONY: 1024
+NODEP += 1024
 1024: override DEF += -DTARGET_1024
-1024: $(ROM_1024) $(SYMFILE)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS404))) bytes more than TOS 4.04)"
+1024: ROMSIZE = 1024
+1024: SYMFILE = $(addsuffix .sym,$(basename $(ROM_PADDED)))
+1024:
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) MULTIKEYBD='-k' ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS404 SYMFILE=$(SYMFILE) $(SYMFILE)
 	@printf "$(LOCALCONFINFO)"
-
-$(ROM_1024): ROMSIZE = 1024
-$(ROM_1024): emutos.img mkrom
-	./mkrom pad $(ROMSIZE)k $< $(ROM_1024)
 
 #
 # ARAnyM Image
@@ -640,13 +630,12 @@ ROM_ARANYM = emutos-aranym.img
 .PHONY: aranym
 NODEP += aranym
 aranym: override DEF += -DMACHINE_ARANYM
-aranym: OPTFLAGS = $(SMALL_OPTFLAGS)
 aranym: CPUFLAGS = -m68040
+aranym: ROMSIZE = 1024
+aranym: ROM_PADDED = $(ROM_ARANYM)
 aranym:
-	@echo "# Building ARAnyM EmuTOS into $(ROM_ARANYM)"
-	$(MAKE) CPUFLAGS='$(CPUFLAGS)' OPTFLAGS='$(OPTFLAGS)' DEF='$(DEF)' ROM_512=$(ROM_ARANYM) $(ROM_ARANYM)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS404))) bytes more than TOS 4.04)"
+	@echo "# Building ARAnyM EmuTOS into $(ROM_PADDED)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' OPTFLAGS='$(OPTFLAGS)' DEF='$(DEF)' ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS404
 	@printf "$(LOCALCONFINFO)"
 
 #
@@ -661,12 +650,12 @@ NODEP += cart
 cart: OPTFLAGS = $(SMALL_OPTFLAGS)
 cart: override DEF += -DTARGET_CART
 cart: WITH_AES = 0
+cart: ROMSIZE = 128
+cart: ROM_PADDED = $(ROM_CARTRIDGE)
 cart:
-	@echo "# Building Diagnostic Cartridge EmuTOS into $(ROM_CARTRIDGE)"
-	$(MAKE) OPTFLAGS='$(OPTFLAGS)' DEF='$(DEF)' UNIQUE=$(COUNTRY) WITH_AES=$(WITH_AES) ROM_128=$(ROM_CARTRIDGE) $(ROM_CARTRIDGE)
+	@echo "# Building Diagnostic Cartridge EmuTOS into $(ROM_PADDED)"
+	$(MAKE) OPTFLAGS='$(OPTFLAGS)' DEF='$(DEF)' UNIQUE=$(COUNTRY) WITH_AES=$(WITH_AES) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS104
 	./mkrom stc emutos.img emutos.stc
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS104))) bytes more than TOS 1.04)"
 	@printf "$(LOCALCONFINFO)"
 
 #
@@ -685,9 +674,7 @@ amiga: OPTFLAGS = $(SMALL_OPTFLAGS)
 amiga: override DEF += -DTARGET_AMIGA_ROM $(AMIGA_DEFS)
 amiga:
 	@echo "# Building Amiga EmuTOS into $(ROM_AMIGA)"
-	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_AMIGA=$(ROM_AMIGA) $(ROM_AMIGA)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS206))) bytes more than TOS 2.06)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_AMIGA=$(ROM_AMIGA) $(ROM_AMIGA) REF_OS=TOS206
 	@printf "$(LOCALCONFINFO)"
 
 $(ROM_AMIGA): emutos.img mkrom
@@ -758,9 +745,7 @@ firebee: override DEF += -DMACHINE_FIREBEE
 firebee: CPUFLAGS = $(CPUFLAGS_FIREBEE)
 firebee:
 	@echo "# Building FireBee EmuTOS into $(SREC_FIREBEE)"
-	$(MAKE) COLDFIRE=1 CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) LMA=0xe0600000 SRECFILE=$(SREC_FIREBEE) $(SREC_FIREBEE)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS404))) bytes more than TOS 4.04)"
+	$(MAKE) COLDFIRE=1 CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) LMA=0xe0600000 SRECFILE=$(SREC_FIREBEE) $(SREC_FIREBEE) REF_OS=TOS404
 	@printf "$(LOCALCONFINFO)"
 
 .PHONY: firebee-prg
@@ -791,9 +776,7 @@ m548x-dbug: override DEF += -DMACHINE_M548X
 m548x-dbug: CPUFLAGS = $(CPUFLAGS_M548X)
 m548x-dbug:
 	@echo "# Building M548x dBUG EmuTOS in $(SREC_M548X_DBUG)"
-	$(MAKE) COLDFIRE=1 CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' UNIQUE=$(UNIQUE) SRECFILE=$(SREC_M548X_DBUG) $(SREC_M548X_DBUG)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS404))) bytes more than TOS 4.04)"
+	$(MAKE) COLDFIRE=1 CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' UNIQUE=$(UNIQUE) SRECFILE=$(SREC_M548X_DBUG) $(SREC_M548X_DBUG) REF_OS=TOS404
 	@printf "$(LOCALCONFINFO)"
 
 SREC_M548X_BAS = emutos-m548x-bas.s19
@@ -804,9 +787,7 @@ m548x-bas: override DEF += -DMACHINE_M548X -DCONF_WITH_BAS_MEMORY_MAP=1
 m548x-bas: CPUFLAGS = $(CPUFLAGS_M548X)
 m548x-bas:
 	@echo "# Building M548x BaS_gcc EmuTOS in $(SREC_M548X_BAS)"
-	$(MAKE) COLDFIRE=1 CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' UNIQUE=$(UNIQUE) LMA=0xe0100000 SRECFILE=$(SREC_M548X_BAS) $(SREC_M548X_BAS)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes ($$(($$MEMBOT - $(MEMBOT_TOS404))) bytes more than TOS 4.04)"
+	$(MAKE) COLDFIRE=1 CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' UNIQUE=$(UNIQUE) LMA=0xe0100000 SRECFILE=$(SREC_M548X_BAS) $(SREC_M548X_BAS) REF_OS=TOS404
 	@printf "$(LOCALCONFINFO)"
 
 #
@@ -908,8 +889,6 @@ TOCLEAN += emutos*.prg
 
 .PHONY: prg
 prg: $(EMUTOS_PRG)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes"
 	@printf "$(LOCALCONFINFO)"
 
 obj/boot.o: obj/ramtos.h
@@ -953,8 +932,6 @@ NODEP += flop
 flop: UNIQUE = $(COUNTRY)
 flop:
 	$(MAKE) UNIQUE=$(UNIQUE) $(EMUTOS_ST)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes"
 	@printf "$(LOCALCONFINFO)"
 
 $(EMUTOS_ST): override DEF += -DTARGET_FLOPPY
@@ -984,8 +961,6 @@ amigaflop: OPTFLAGS = $(SMALL_OPTFLAGS)
 amigaflop: override DEF += -DTARGET_AMIGA_FLOPPY $(AMIGA_DEFS)
 amigaflop:
 	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) EMUTOS_ADF=$(EMUTOS_ADF) $(EMUTOS_ADF)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes"
 	@printf "$(LOCALCONFINFO)"
 
 EMUTOS_VAMPIRE_ADF = emutos-vampire.adf
@@ -1028,8 +1003,6 @@ lisaflop: OPTFLAGS = $(SMALL_OPTFLAGS)
 lisaflop: override DEF += -DTARGET_LISA_FLOPPY $(LISA_DEFS)
 lisaflop:
 	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) EMUTOS_DC42=$(EMUTOS_DC42) $(EMUTOS_DC42)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT)) bytes"
 	@printf "$(LOCALCONFINFO)"
 
 $(EMUTOS_DC42): lisaboot.img emutos.img mkrom
@@ -1341,6 +1314,16 @@ TOCLEAN += obj/*.o
 CFILE_FLAGS = $(strip $(CFLAGS))
 SFILE_FLAGS = $(strip $(CFLAGS))
 
+ifeq (1,$(LTO))
+# Files in the NOLTO list below will not be compiled using LTO.
+# This is necessary to allow the linker script to put the resulting .o files
+# into specific sections, as LTO changes the object file name.
+NOLTO = bios/lowstram.c
+CFILE_FLAGS = $(if $(filter $(NOLTO),$<),$(filter-out $(LTOFLAGS),$(CFLAGS)),$(CFLAGS))
+# Compiling assembler sources with LTO is useless.
+SFILE_FLAGS = $(filter-out $(LTOFLAGS),$(CFLAGS))
+endif
+
 obj/%.o : %.tr.c
 	$(CC) $(CFILE_FLAGS) -c $< -o $@
 
@@ -1403,6 +1386,8 @@ dsm: check_target_exists
 # Hatari symbols file
 #
 
+# By default, no symbols file is generated.
+SYMFILE =
 TOCLEAN += *.sym
 
 %.sym: emutos.img tools/map2sym.sh

@@ -2,7 +2,7 @@
  *  bios.c - C portion of BIOS initialization and front end
  *
  * Copyright (C) 2001 Lineo, Inc.
- * Copyright (C) 2001-2022 The EmuTOS development team
+ * Copyright (C) 2001-2024 The EmuTOS development team
  *
  * Authors:
  *  SCC     Steve C. Cavender
@@ -59,6 +59,7 @@
 #include "biosbind.h"
 #include "memory.h"
 #include "nova.h"
+#include "timer.h"
 #include "tosvars.h"
 #include "amiga.h"
 #include "lisa.h"
@@ -309,8 +310,8 @@ static void bios_init(void)
 #if CONF_WITH_TT_MFP
     if (has_tt_mfp)
     {
-        KDEBUG(("tt_mfp_init()\n"));
-        tt_mfp_init();
+        KDEBUG(("mfptt_init()\n"));
+        mfptt_init();
     }
 #endif
 
@@ -1291,7 +1292,7 @@ const UWORD bios_ent = ARRAY_SIZE(bios_vecs);
 BOOL is_text_pointer(const void *p)
 {
     UBYTE *pb = (UBYTE *)p;
-    return pb >= (UBYTE *)&os_header && pb < _etext;
+    return (pb >= (UBYTE *)&os_header) && (pb < _etext);
 }
 
 #endif /* CONF_WITH_EXTENDED_MOUSE */

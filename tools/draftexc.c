@@ -1,7 +1,7 @@
 /*
  *  draftexc: exclude_items[] array for the draft program
  *
- *  Copyright 2019-2020 Roger Burrows
+ *  Copyright 2019-2024 Roger Burrows
  *
  *  This program is licensed under the GNU General Public License.
  *  Please see LICENSE.TXT for details.
@@ -39,6 +39,9 @@ char *exclude_items[] =
     "ADFORMAT",
     "STFMTERR",
     "STFMTINF",
+#endif
+#if !CONF_WITH_EJECT
+    "EJCTITEM",
 #endif
 #if !WITH_CLI && !CONF_WITH_SHUTDOWN
     "SEP_FL2",

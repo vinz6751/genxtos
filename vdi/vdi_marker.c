@@ -1,15 +1,16 @@
 /*
- * vdi_marker.c - Marker
+ * vdi_marker.c - routines to handle Marker functions
  *
  * Copyright 1982 by Digital Research Inc.  All rights reserved.
  * Copyright 1999 by Caldera, Inc. and Authors:
- * Copyright 2002-2021 by The EmuTOS development team
+ * Copyright 2002-2024 by The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
  */
 
 #include "emutos.h"
+#include "linea.h"
 #include "vdi_defs.h"
 
 
@@ -73,7 +74,7 @@ void vdi_vsm_color(Vwk * vwk)
 {
     WORD i;
 
-    i = validate_color_index(INTIN[0]);
+    i = linea_validate_color_index(INTIN[0]);
     INTOUT[0] = i;
     vwk->mark_color = MAP_COL[i];
 }

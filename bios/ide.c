@@ -1,7 +1,7 @@
 /*
  * ide.c - IDE functions
  *
- * Copyright (C) 2011-2022 The EmuTOS development team
+ * Copyright (C) 2011-2024 The EmuTOS development team
  *
  * Authors:
  *  VRI   Vincent Rivière
@@ -12,9 +12,7 @@
  */
 
 /*
- * Warning: This is beta IDE support.
- *
- * Note: this driver does not support CHS addressing.
+ * Note: CHS addressing is now supported in addition to LBA.
  */
 
 /* #define ENABLE_KDEBUG */
@@ -25,6 +23,8 @@
 #include "delay.h"
 #include "disk.h"
 #include "ide.h"
+#include "scsicmds.h"
+#include "scsidriv.h"
 #include "gemerror.h"
 #include "string.h"
 #include "tosvars.h"
@@ -36,6 +36,7 @@
 #include "biosmem.h"
 #include "amiga.h"
 #include "a2560u_bios.h"
+#include "intmath.h"
 
 #if CONF_WITH_IDE
 
@@ -174,26 +175,26 @@ struct IDE
 
 struct IDE
 {
-    XFERWIDTH data;
+    XFERWIDTH data;         /* ATA & ATAPI: data transfer */
 #if !IDE_32BIT_XFER
     UBYTE filler02[2];
 #endif
     UBYTE filler04;
-    UBYTE features; /* Read: error */
+    UBYTE features;         /* ATA & ATAPI: Read: error / Write: features */
     UBYTE filler06[3];
-    UBYTE sector_count;
+    UBYTE sector_count;     /* ATAPI: Read: ATAPI Interrupt Reason Register / Write: unused */
     UBYTE filler0a[3];
-    UBYTE sector_number;
+    UBYTE sector_number;    /* ATAPI: reserved */
     UBYTE filler0e[3];
-    UBYTE cylinder_low;
+    UBYTE cylinder_low;     /* ATAPI: Byte Count Register (bits 0-7) */
     UBYTE filler12[3];
-    UBYTE cylinder_high;
+    UBYTE cylinder_high;    /* ATAPI: Byte Count Register (bits 8-15) */
     UBYTE filler16[3];
-    UBYTE head;
+    UBYTE head;             /* ATAPI: Drive select */
     UBYTE filler1a[3];
-    UBYTE command;  /* Read: status */
+    UBYTE command;          /* ATA & ATAPI: Read: status / Write: ATA command */
     UBYTE filler1e[27];
-    UBYTE control;  /* Read: Alternate status */
+    UBYTE control;          /* ATA & ATAPI: Read: alternate status / Write: device control */
     UBYTE filler3a[6];
 };
 
@@ -209,12 +210,22 @@ struct IDE
 /* IDE defines */
 
 #define IDE_CMD_IDENTIFY_DEVICE 0xec
+#define IDE_CMD_INIT_DEV_PARAMS 0x91    /* used for CHS drives only */
 #define IDE_CMD_NOP             0x00
 #define IDE_CMD_READ_SECTOR     0x20
 #define IDE_CMD_WRITE_SECTOR    0x30
+#define IDE_CMD_READ_SECTOR_EX  0x24
+#define IDE_CMD_WRITE_SECTOR_EX 0x34
 #define IDE_CMD_READ_MULTIPLE       0xc4
 #define IDE_CMD_WRITE_MULTIPLE      0xc5
+#define IDE_CMD_READ_MULTIPLE_EX    0x29
+#define IDE_CMD_WRITE_MULTIPLE_EX   0x39
 #define IDE_CMD_SET_MULTIPLE_MODE   0xc6
+
+#define IDE_CMD_ATAPI_PACKET    0xa0    /* ATAPI-only commands */
+#define IDE_CMD_ATAPI_IDENTIFY  0xa1
+
+#define IDE_CAPABILITY_LBA48    0x0400
 
 #define IDE_MODE_CHS    (0 << 6)
 #define IDE_MODE_LBA    (1 << 6)
@@ -222,6 +233,7 @@ struct IDE
 
 #define IDE_CONTROL_nIEN (1 << 1)
 #define IDE_CONTROL_SRST (1 << 2)
+#define IDE_CONTROL_HOB  (1 << 7)       /* LBA48 */
 
 #define IDE_STATUS_ERR  (1 << 0)
 #define IDE_STATUS_DRQ  (1 << 3)
@@ -243,10 +255,16 @@ struct IDE
 /* interface/device info */
 
 struct IFINFO {
-    struct {
+    struct IFINFO_DEV {
         UBYTE type;
         UBYTE options;
         UBYTE spi;          /* # sectors transferred between interrupts */
+        UBYTE sectors;      /* sectors per track (CHS mode only) */
+        UBYTE heads;        /* heads per cylinder (CHS mode only) */
+#if CONF_WITH_SCSI_DRIVER
+        UBYTE sense;        /* ATA: current sense condition on device */
+        UBYTE packet_size;  /* ATAPI: packet size */
+#endif
     } dev[2];
     volatile struct IDE *base_address;
     BOOL twisted_cable;
@@ -258,6 +276,42 @@ struct IFINFO {
 #define DEVTYPE_ATAPI   3
 
 #define MULTIPLE_MODE_ACTIVE    0x01    /* for 'options' */
+#define LBA48_ACTIVE            0x02
+#define CHS_MODE                0x04
+
+#define INVALID_OPCODE  1               /* for 'sense' */
+#define INVALID_SECTOR  2
+#define INVALID_CDB     3
+#define INVALID_LUN     4
+
+#define ATAPI_MAX_BYTECOUNT     (127*512U)  /* largest multiple of 512 in UWORD */
+
+
+/* data returned by IDENTIFY DEVICE command */
+
+struct IDENTIFY {
+    UWORD general_config;       /* ATAPI */
+    UWORD logical_cylinders;    /* for CHS mode only */
+    UWORD filler02;
+    UWORD logical_heads;        /* for CHS mode only */
+    UWORD filler04[2];
+    UWORD logical_spt;          /* for CHS mode only */
+    UWORD filler07[16];
+    char firmware_revision[8];  /* also in ATAPI */
+    char model_number[40];      /* also in ATAPI */
+    UWORD multiple_io_info;
+    UWORD filler30;
+    UWORD capabilities;
+    UWORD filler32[10];
+    UWORD numsecs_lba28[2]; /* number of sectors for LBA28 cmds */
+    UWORD filler3e[20];
+    UWORD cmds_supported[3];
+    UWORD filler55[15];
+    UWORD maxsec_lba48[4];  /* max sector number for LBA48 cmds */
+    UWORD filler68[152];
+};
+
+#define LBA_SUPPORTED   0x0200  /* in 'capabilities' field of IDENTIFY struct */
 
 
 /* timing stuff */
@@ -285,32 +339,63 @@ struct IFINFO {
 #define XFER_TIMEOUT    (3*CLOCKS_PER_SEC)  /* 3 seconds for data xfer */
 #define LONG_TIMEOUT    (3*CLOCKS_PER_SEC)  /* 3 seconds for reset */
 
+/*
+ * basic data used by IDE driver
+ */
 static int has_ide;
 static struct IFINFO ifinfo[NUM_IDE_INTERFACES];
 static ULONG delay400ns;
 static ULONG delay5us;
+static struct IDENTIFY identify;
+
+
+#if CONF_WITH_SCSI_DRIVER
 static struct {
-    UWORD filler00[27];
-    char model_number[40];
-    UWORD multiple_io_info;
-    UWORD filler2f;
-    UWORD capabilities;
-    UWORD filler32[10];
-    UWORD numsecs_lba28[2]; /* number of sectors for LBA28 cmds */
-    UWORD filler3e[20];
-    UWORD cmds_supported[3];
-    UWORD filler55[15];
-    UWORD maxsec_lba48[4];  /* max sector number for LBA48 cmds */
-    UWORD filler68[152];
-} identify;
+    UBYTE error_code;
+    UBYTE segment;
+    UBYTE sense_key;
+    UBYTE information[4];
+    UBYTE addl_length;
+    ULONG cmd_specific;
+    UBYTE asc;
+    UBYTE ascq;
+    UBYTE fru_code;
+    UBYTE sense_specific[3];
+} reqsense;
+
+static struct {             /* space to build return data for Inquiry */
+    UBYTE devtype;
+    UBYTE devtype_mod;
+    UBYTE versions;
+    UBYTE response_fmt;
+    UBYTE addl_length;
+    UBYTE resvd;
+    UBYTE flags1;
+    UBYTE flags2;
+    UBYTE vendor_id[8];
+    UBYTE product_id[16];
+    UBYTE product_rev[4];
+} inquiry;
+#endif
 
 
 /* prototypes */
 static WORD clear_multiple_mode(UWORD ifnum,UWORD dev);
 static void ide_detect_devices(UWORD ifnum);
-static LONG ide_identify(WORD dev);
+static LONG ata_identify(WORD dev);
+static int ide_select_device(volatile struct IDE *interface,UWORD dev);
+static void set_chs_mode(WORD dev,struct IDENTIFY *identify);
 static void set_multiple_mode(WORD dev,UWORD multi_io);
+static void set_lba48_mode(WORD dev, UWORD lba48);
+static UWORD get_start_count(volatile struct IDE *interface);
+static void set_start_count(volatile struct IDE *interface,UBYTE sector,UBYTE count);
 static int wait_for_not_BSY(volatile struct IDE *interface,LONG timeout);
+
+#if CONF_WITH_SCSI_DRIVER
+static LONG ata_request_sense(WORD dev,WORD buflen,UBYTE *buffer);
+static LONG atapi_identify(WORD dev);
+static void set_packet_size(WORD dev,UWORD config);
+#endif
 
 /*
  * some add-on IDE interfaces for Atari systems do not completely
@@ -471,7 +556,7 @@ static int ide_interface_exists(WORD ifnum, LONG timeout)
 }
 #endif
 
-void detect_ide(void)
+BOOL detect_ide(void)
 {
     int i, bitmask;
 
@@ -515,6 +600,8 @@ void detect_ide(void)
 #endif
 
     KDEBUG(("detect_ide(): has_ide = 0x%02x\n",has_ide));
+
+    return has_ide ? TRUE : FALSE;
 }
 
 /*
@@ -558,51 +645,68 @@ void ide_init(void)
 
     /* set multiple mode for all devices that we have info for */
     for (i = 0; i < DEVICES_PER_BUS; i++)
-        if (ide_identify(i) == 0)
+        if (ata_identify(i) == 0) {
+            set_chs_mode(i,&identify);
             set_multiple_mode(i,identify.multiple_io_info);
+            set_lba48_mode(i,identify.cmds_supported[1]);
+        }
+
+#if CONF_WITH_SCSI_DRIVER
+    /* set packet size for all ATAPI devices */
+    for (i = 0; i < DEVICES_PER_BUS; i++)
+        if (atapi_identify(i) == 0)
+            set_packet_size(i,identify.general_config);
+#endif
 }
 
-static int ide_device_exists(WORD dev)
+/*
+ * return the type of device on the IDE bus
+ *
+ * returns DEVTYPE_ATA, DEVTYPE_ATAPI or DEVTYPE_NONE; the latter is
+ * returned if the bus doesn't exist, or the device doesn't exist, or
+ * the device type is unknown
+ */
+static UWORD ide_device_type(WORD dev)
 {
     WORD ifnum;
+    UWORD type;
 
     ifnum = dev / 2;/* i.e. primary IDE, secondary IDE, ... */
     dev &= 1;       /* 0 or 1 */
 
     if (!(has_ide & (1<<ifnum)))    /* interface does not exist */
-        return 0;
+        return DEVTYPE_NONE;
 
-    if (ifinfo[ifnum].dev[dev].type != DEVTYPE_ATA)
-        return 0;
+    type = ifinfo[ifnum].dev[dev].type;
 
-    return 1;
+    if ((type == DEVTYPE_ATA) || (type == DEVTYPE_ATAPI))
+        return type;
+
+    return DEVTYPE_NONE;
 }
 
 /*
  * the following routines for device type detection are adapted
  * from Hale Landis's public domain ATA driver, MINDRVR.
  */
-static int wait_for_signature(volatile struct IDE *interface,LONG timeout)
+static int wait_for_not_BSY_and_DRDY(volatile struct IDE *interface,LONG timeout)
 {
     LONG next = hz_200 + timeout;
-    UWORD n;
 
     DELAY_400NS;
     while(hz_200 < next) {
-        n = IDE_READ_SECTOR_NUMBER_SECTOR_COUNT(interface);
-        if (n == 0x0101)
+        if ((IDE_READ_ALT_STATUS(interface) & (IDE_STATUS_BSY|IDE_STATUS_DRDY)) == IDE_STATUS_DRDY)
             return 0;
     }
 
-    KDEBUG(("Timeout in wait_for_signature(%p,%ld)\n",interface,timeout));
+    KDEBUG(("Timeout in wait_for_not_BSY_and_DRDY(%p,%ld)\n",interface,timeout));
     return 1;
 }
 
 static void ide_reset(UWORD ifnum)
 {
-    volatile struct IDE *interface = ifinfo[ifnum].base_address;
     struct IFINFO *info = ifinfo + ifnum;
-    int err;
+    volatile struct IDE *interface = info->base_address;
 
     /* set, then reset, the soft reset bit */
     IDE_WRITE_CONTROL(interface,(IDE_CONTROL_SRST|IDE_CONTROL_nIEN));
@@ -610,26 +714,10 @@ static void ide_reset(UWORD ifnum)
     IDE_WRITE_CONTROL(interface,IDE_CONTROL_nIEN);
     DELAY_400NS;
 
-    /* if device 0 exists, wait for it to clear BSY */
-    if (info->dev[0].type != DEVTYPE_NONE) {
-        if (wait_for_not_BSY(interface,LONG_TIMEOUT)) {
-            info->dev[0].type = DEVTYPE_NONE;
-            KDEBUG(("IDE i/f %d device 0 timeout after soft reset\n",ifnum));
-        }
-    }
-
-    /* if device 1 exists, wait for the signature bits, then check BSY */
-    if (info->dev[1].type != DEVTYPE_NONE) {
-        err = 0;
-        if (wait_for_signature(interface,LONG_TIMEOUT))
-            err = 1;
-        else if ((IDE_READ_ALT_STATUS(interface) & IDE_STATUS_BSY) == 0)
-            err = 1;
-        if (err) {
-            info->dev[1].type = DEVTYPE_NONE;
-            KDEBUG(("IDE i/f %d device 1 timeout after soft reset\n",ifnum));
-        }
-    }
+    /* if at least one device exists, wait for it to clear BSY and set DRDY */
+    if ((info->dev[0].type != DEVTYPE_NONE)
+     || (info->dev[1].type != DEVTYPE_NONE))
+        wait_for_not_BSY_and_DRDY(interface,LONG_TIMEOUT);
 }
 
 static UBYTE ide_decode_type(UBYTE status,UWORD signature)
@@ -664,34 +752,34 @@ static void ide_detect_devices(UWORD ifnum)
 
     /* initial check for devices */
     for (i = 0; i < 2; i++) {
-        IDE_WRITE_HEAD(interface,IDE_DEVICE(i));
-        DELAY_400NS;
-        IDE_WRITE_SECTOR_NUMBER_SECTOR_COUNT(interface,0xaa,0x55);
-        IDE_WRITE_SECTOR_NUMBER_SECTOR_COUNT(interface,0x55,0xaa);
-        IDE_WRITE_SECTOR_NUMBER_SECTOR_COUNT(interface,0xaa,0x55);
-        if (IDE_READ_SECTOR_NUMBER_SECTOR_COUNT(interface) == 0xaa55) {
+        ide_select_device(interface,i);
+        set_start_count(interface,0xaa,0x55);
+        set_start_count(interface,0x55,0xaa);
+        set_start_count(interface,0xaa,0x55);
+        if (get_start_count(interface) == 0xaa55) {
             info->dev[i].type = DEVTYPE_UNKNOWN;
             KDEBUG(("IDE i/f %d device %d detected\n",ifnum,i));
         } else
             info->dev[i].type = DEVTYPE_NONE;
         info->dev[i].options = 0;
         info->dev[i].spi = 0;   /* changed if using READ/WRITE MULTIPLE */
+#if CONF_WITH_SCSI_DRIVER
+        info->dev[i].sense = 0;
+#endif
     }
 
     /* recheck after soft reset, also detect ata/atapi */
-    IDE_WRITE_HEAD(interface,IDE_DEVICE(0));
-    DELAY_400NS;
+    ide_select_device(interface,0);
     ide_reset(ifnum);
 
     for (i = 0; i < 2; i++) {
-        IDE_WRITE_HEAD(interface,IDE_DEVICE(i));
-        DELAY_400NS;
-        
+        ide_select_device(interface,i);
+
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
-    /* We get aa55. Spec says sector number and count should be 01. FPGA bug ? */    
+        /* We get aa55. Spec says sector number and count should be 01. FPGA bug ? */    
 #else
-        if (IDE_READ_SECTOR_NUMBER_SECTOR_COUNT(interface) == 0x0101)
-#endif       
+        if (get_start_count(interface) == 0x0101)
+#endif
         {
             status = IDE_READ_STATUS(interface);
             signature = IDE_READ_CYLINDER_HIGH_CYLINDER_LOW(interface);
@@ -770,15 +858,100 @@ static int ide_select_device(volatile struct IDE *interface,UWORD dev)
 }
 
 /*
+ * get sector number / sector count IDE registers
+ */
+static UWORD get_start_count(volatile struct IDE *interface)
+{
+    wait_for_not_BSY_not_DRQ(interface,SHORT_TIMEOUT);
+    return IDE_READ_SECTOR_NUMBER_SECTOR_COUNT(interface);
+}
+
+/*
+ * set sector number / sector count IDE registers
+ */
+static void set_start_count(volatile struct IDE *interface,UBYTE sector,UBYTE count)
+{
+    wait_for_not_BSY_not_DRQ(interface,SHORT_TIMEOUT);
+    IDE_WRITE_SECTOR_NUMBER_SECTOR_COUNT(interface,sector,count);
+}
+
+/*
+ * set cylinder high / cylinder low IDE registers
+ */
+static void set_cylinder(volatile struct IDE *interface,UWORD cylinder)
+{
+    wait_for_not_BSY_not_DRQ(interface,SHORT_TIMEOUT);
+    IDE_WRITE_CYLINDER_HIGH_CYLINDER_LOW(interface,cylinder);
+}
+
+/*
+ * set command / head IDE registers
+ */
+static void set_command_head(volatile struct IDE *interface,UBYTE cmd,UBYTE head)
+{
+    wait_for_not_BSY_not_DRQ(interface,SHORT_TIMEOUT);
+    IDE_WRITE_COMMAND_HEAD(interface,cmd,head);
+}
+
+/*
  * set device / command / sector start / count / LBA mode in IDE registers
  */
-static void ide_rw_start(volatile struct IDE *interface,UWORD dev,ULONG sector,UWORD count,UBYTE cmd)
+static void ide_rw_start(UWORD ifnum,UWORD dev,ULONG sector,UWORD count,UBYTE cmd)
 {
-    KDEBUG(("ide_rw_start(%p, %u, %lu, %u, 0x%02x)\n", interface, dev, sector, count, cmd));
+    struct IFINFO *info = &ifinfo[ifnum];
+    struct IFINFO_DEV *devinfo = &info->dev[dev];
+    volatile struct IDE *interface = info->base_address;
 
-    IDE_WRITE_SECTOR_NUMBER_SECTOR_COUNT(interface,LOBYTE(sector), LOBYTE(count));
-    IDE_WRITE_CYLINDER_HIGH_CYLINDER_LOW(interface,(UWORD)((sector & 0xffff00) >> 8));
-    IDE_WRITE_COMMAND_HEAD(interface,cmd,IDE_MODE_LBA|IDE_DEVICE(dev)|(UBYTE)((sector>>24)&0x0f));
+    KDEBUG(("ide_rw_start(%p, %u, %u, %lu, %u, 0x%02x)\n",
+            interface, ifnum, dev, sector, count, cmd));
+
+    /*
+     * handle CHS device
+     */
+    if (devinfo->options & CHS_MODE) {
+        UWORD n, cylnum;
+        UBYTE headnum, secnum;
+
+        n = divu(sector,devinfo->sectors);
+        secnum = (UBYTE)(sector-(n*devinfo->sectors) + 1);  /* sectors start at 1 */
+        cylnum = n / devinfo->heads;
+        headnum = (UBYTE)(n-(cylnum*devinfo->heads));
+
+        KDEBUG((" CHS mode: %u/%u/%u\n",cylnum,headnum,secnum));
+
+        set_start_count(interface,secnum,LOBYTE(count));
+        set_cylinder(interface,cylnum);
+        set_command_head(interface,cmd,IDE_MODE_CHS|IDE_DEVICE(dev)|headnum);
+        return;
+    }
+
+    /*
+     * handle LBA device
+     */
+    if (cmd == IDE_CMD_READ_SECTOR_EX ||
+        cmd == IDE_CMD_WRITE_SECTOR_EX ||
+        cmd == IDE_CMD_READ_MULTIPLE_EX ||
+        cmd == IDE_CMD_WRITE_MULTIPLE_EX) {
+        set_start_count(interface,(sector>>24),(count>>8));
+        set_start_count(interface,(sector),(count));
+
+        /*
+         * We should do this, but for now we only support 2^32
+         * sector sizes, i.e. max 2TB disks. It would mean using
+         * ULLONG for sector to support 2^48 disk sizes.
+         * Additionally, XHDI, etc would need extensions.
+         *
+         *   set_cylinder(interface,(UWORD)((sector & 0xffff00000000UL) >> 32));
+         */
+        set_cylinder(interface,0);
+
+        set_cylinder(interface,(UWORD)((sector & 0xffff00) >> 8));
+        set_command_head(interface,cmd,IDE_MODE_LBA|IDE_DEVICE(dev));
+    } else {
+        set_start_count(interface,LOBYTE(sector),LOBYTE(count));
+        set_cylinder(interface,(UWORD)((sector & 0xffff00) >> 8));
+        set_command_head(interface,cmd,IDE_MODE_LBA|IDE_DEVICE(dev)|(UBYTE)((sector>>24)&0x0f));
+    }
 }
 
 /*
@@ -792,7 +965,7 @@ static LONG ide_nodata(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count)
     if (ide_select_device(interface,dev) < 0)
         return EGENRL;
 
-    ide_rw_start(interface,dev,sector,count,cmd);
+    ide_rw_start(ifnum,dev,sector,count,cmd);
 
     if (wait_for_not_BSY(interface,SHORT_TIMEOUT))  /* should vary depending on command? */
         return EGENRL;
@@ -809,7 +982,9 @@ static LONG ide_nodata(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count)
 static void ide_get_data_32(volatile struct IDE *interface,UBYTE *buffer,ULONG bufferlen,int need_byteswap)
 {
     ULONG *p = (ULONG *)buffer;
-    ULONG *end = (ULONG *)(buffer + bufferlen);
+    ULONG *end = (ULONG *)(buffer + (bufferlen & ~(4-1)));
+    UWORD *p2;
+    UWORD *end2 = (UWORD *)(buffer + bufferlen);
     volatile ULONG_ALIAS *pdatareg = (volatile ULONG_ALIAS *)&interface->data;
 
     if (need_byteswap) {
@@ -823,19 +998,30 @@ static void ide_get_data_32(volatile struct IDE *interface,UBYTE *buffer,ULONG b
         while (p < end)
             *p++ = *pdatareg;
     }
+
+    /* transfer remaining word (if any) */
+    p2 = (UWORD *)p;
+    if (p2 < end2) {
+        UWORD temp;
+        temp = interface->data;
+        if (need_byteswap)
+            swpw(temp);
+        *p2 = temp;
+    }
 }
 #endif /* CONF_WITH_APOLLO_68080 */
 
 /*
  * get data from IDE device
  */
-static void ide_get_data(volatile struct IDE *interface,UBYTE *buffer,UWORD numsecs,int need_byteswap)
+static void ide_get_data(volatile struct IDE *interface,UBYTE *buffer,ULONG bufferlen,int need_byteswap)
 {
-    ULONG bufferlen = numsecs * SECTOR_SIZE;
     XFERWIDTH *p = (XFERWIDTH *)buffer;
-    XFERWIDTH *end = (XFERWIDTH *)(buffer + bufferlen);
+    XFERWIDTH *end;
+    UWORD *p2;
+    UWORD *end2 = (UWORD *)(buffer + bufferlen);
 
-    KDEBUG(("ide_get_data(%p, %p, %u, %d)\n", interface, buffer, numsecs, need_byteswap));
+    KDEBUG(("ide_get_data(%p, %p, %lu, %d)\n", interface, buffer, bufferlen, need_byteswap));
 
 #if CONF_WITH_APOLLO_68080
     if (is_apollo_68080)
@@ -846,6 +1032,7 @@ static void ide_get_data(volatile struct IDE *interface,UBYTE *buffer,UWORD nums
 #endif
 
     if (need_byteswap) {
+        end = (XFERWIDTH *)(buffer + (bufferlen & ~(16-1)));    /* mask must match unrolled loop */
         while (p < end) {
             XFERWIDTH temp;
 
@@ -866,10 +1053,20 @@ static void ide_get_data(volatile struct IDE *interface,UBYTE *buffer,UWORD nums
             xferswap(temp);
             *p++ = temp;
         }
+
+        /* transfer remainder 2 bytes at a time */
+        p2 = (UWORD *)p;
+        while (p2 < end2) {
+            UWORD temp;
+
+            temp = *(UWORD_ALIAS *)&interface->data;
+            swpw(temp);
+            *p2++ = temp;
+        }
     } else {
+        end = (XFERWIDTH *)(buffer + (bufferlen & ~(64-1)));    /* mask must match unrolled loop */
         while (p < end) {
             /* Unroll the loop 16 times, transferring 32/64 bytes in a row.
-             * We always transfer multiples of SECTOR_SIZE (512 bytes).
              * Note that the pointer p gets incremented implicitly.
              */
             ide_get_and_incr(&(interface->data), p);
@@ -891,6 +1088,11 @@ static void ide_get_data(volatile struct IDE *interface,UBYTE *buffer,UWORD nums
             ide_get_and_incr(&(interface->data), p);
             ide_get_and_incr(&(interface->data), p);
             ide_get_and_incr(&(interface->data), p);
+        }
+        /* transfer remainder 2 bytes at a time */
+        p2 = (UWORD *)p;
+        while (p2 < end2) {
+            *p2++ = *(UWORD_ALIAS *)&interface->data;
         }
     }
 }
@@ -913,16 +1115,30 @@ static LONG ide_read(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count,UB
 
     /*
      * if READ SECTOR and MULTIPLE MODE, set cmd & spi accordingly
+     *
+     * If the sector is > LBA28 range use LBA48 if supported.
+     * This aids performance in for LBA28 addressable sectors.
      */
     spi = 1;
     if ((cmd == IDE_CMD_READ_SECTOR)
      && (info->dev[dev].options & MULTIPLE_MODE_ACTIVE)) {
-        cmd = IDE_CMD_READ_MULTIPLE;
+        if ((info->dev[dev].options & LBA48_ACTIVE) &&
+            (sector > 0x0FFFFFFFUL)) {
+            cmd = IDE_CMD_READ_MULTIPLE_EX;
+        } else {
+            cmd = IDE_CMD_READ_MULTIPLE;
+        }
         spi = info->dev[dev].spi;
         KDEBUG(("spi=%u\n", spi));
     }
 
-    ide_rw_start(interface,dev,sector,count,cmd);
+    if ((info->dev[dev].options & LBA48_ACTIVE) &&
+        (sector > 0x0FFFFFFFUL) &&
+        (cmd == IDE_CMD_READ_SECTOR)) {
+       cmd = IDE_CMD_READ_SECTOR_EX;
+    }
+
+    ide_rw_start(ifnum,dev,sector,count,cmd);
 
     /*
      * each iteration of this loop handles one DRQ block
@@ -944,9 +1160,9 @@ static LONG ide_read(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count,UB
         rc = E_OK;
         if (status1 & IDE_STATUS_DRQ) {
             if (info->twisted_cable) {
-                ide_get_data((volatile struct IDE *)(((ULONG)interface)+1),buffer,numsecs,need_byteswap);
+                ide_get_data((volatile struct IDE *)(((ULONG)interface)+1),buffer,xferlen,need_byteswap);
             } else {
-                ide_get_data(interface,buffer,numsecs,need_byteswap);
+                ide_get_data(interface,buffer,xferlen,need_byteswap);
             }
         } else {
             rc = EREADF;
@@ -961,6 +1177,15 @@ static LONG ide_read(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count,UB
         count -= numsecs;
     }
 
+    /*
+     * the following was added to handle an ATAPI DVD recorder that left
+     * BSY asserted for more than 5 microseconds after the last word of
+     * data from an ATAPI IDENTIFY command was received.  it should be
+     * harmless in general.
+     */
+    if (wait_for_not_BSY(interface,SHORT_TIMEOUT))
+        return EREADF;
+
     status2 = IDE_READ_ALT_STATUS(interface);    /* alternate status, ignore */
     status2 = IDE_READ_STATUS(interface);        /* status, clear pending interrupt */
 
@@ -973,13 +1198,15 @@ static LONG ide_read(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count,UB
 /*
  * send data to IDE device
  */
-static void ide_put_data(volatile struct IDE *interface,UBYTE *buffer,UWORD numsecs,int need_byteswap)
+static void ide_put_data(volatile struct IDE *interface,UBYTE *buffer,ULONG bufferlen,int need_byteswap)
 {
-    ULONG bufferlen = numsecs * SECTOR_SIZE;
     XFERWIDTH *p = (XFERWIDTH *)buffer;
-    XFERWIDTH *end = (XFERWIDTH *)(buffer + bufferlen);
+    XFERWIDTH *end;
+    UWORD *p2;
+    UWORD *end2 = (UWORD *)(buffer + bufferlen);
 
     if (need_byteswap) {
+        end = (XFERWIDTH *)(buffer + (bufferlen & ~(16-1)));    /* mask must match unrolled loop */
         while (p < end) {
             XFERWIDTH temp;
 
@@ -1000,10 +1227,20 @@ static void ide_put_data(volatile struct IDE *interface,UBYTE *buffer,UWORD nums
             xferswap(temp);
             interface->data = temp;
         }
+
+        /* transfer remainder 2 bytes at a time */
+        p2 = (UWORD *)p;
+        while (p2 < end2) {
+            UWORD temp;
+
+            temp = *p2++;
+            swpw(temp);
+            *(UWORD_ALIAS *)&interface->data = temp;
+        }
     } else {
+        end = (XFERWIDTH *)(buffer + (bufferlen & ~(64-1)));    /* mask must match unrolled loop */
         while (p < end) {
             /* Unroll the loop 16 times, transferring 32/64 bytes in a row.
-             * We always transfer multiples of SECTOR_SIZE (512 bytes).
              * Note that the pointer p gets incremented implicitly.
              */
             ide_put_and_incr(p, &(interface->data));
@@ -1026,6 +1263,11 @@ static void ide_put_data(volatile struct IDE *interface,UBYTE *buffer,UWORD nums
             ide_put_and_incr(p, &(interface->data));
             ide_put_and_incr(p, &(interface->data));
         }
+        /* transfer remainder 2 bytes at a time */
+        p2 = (UWORD *)p;
+        while (p2 < end2) {
+            *(UWORD_ALIAS *)&interface->data = *p2++;
+        }
     }
 }
 
@@ -1047,15 +1289,28 @@ static LONG ide_write(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count,U
 
     /*
      * if WRITE SECTOR and MULTIPLE MODE, set cmd & spi accordingly
+     *
+     * If the sector is > LBA28 range use LBA48 if supported.
+     * This aids performance in for LBA28 addressable sectors.
      */
     spi = 1;
     if ((cmd == IDE_CMD_WRITE_SECTOR)
      && (info->dev[dev].options & MULTIPLE_MODE_ACTIVE)) {
-        cmd = IDE_CMD_WRITE_MULTIPLE;
+        if ((info->dev[dev].options & LBA48_ACTIVE) &&
+            (sector > 0x0FFFFFFFUL))
+            cmd = IDE_CMD_WRITE_MULTIPLE_EX;
+        else
+            cmd = IDE_CMD_WRITE_MULTIPLE;
         spi = info->dev[dev].spi;
     }
 
-    ide_rw_start(interface,dev,sector,count,cmd);
+    if ((info->dev[dev].options & LBA48_ACTIVE) &&
+        (sector > 0x0FFFFFFFUL) &&
+        (cmd == IDE_CMD_WRITE_SECTOR)) {
+       cmd = IDE_CMD_WRITE_SECTOR_EX;
+    }
+
+    ide_rw_start(ifnum,dev,sector,count,cmd);
 
     if (wait_for_not_BSY(interface,SHORT_TIMEOUT))
         return EWRITF;
@@ -1075,9 +1330,9 @@ static LONG ide_write(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count,U
         status1 = IDE_READ_STATUS(interface);    /* status, clear pending interrupt */
         if (status1 & IDE_STATUS_DRQ) {
             if (info->twisted_cable) {
-                ide_put_data((volatile struct IDE *)(((ULONG)interface)+1),buffer,numsecs,need_byteswap);
+                ide_put_data((volatile struct IDE *)(((ULONG)interface)+1),buffer,xferlen,need_byteswap);
             } else {
-                ide_put_data(interface,buffer,numsecs,need_byteswap);
+                ide_put_data(interface,buffer,xferlen,need_byteswap);
             }
         } else {
             rc = EWRITF;
@@ -1103,7 +1358,7 @@ static LONG ide_write(UBYTE cmd,UWORD ifnum,UWORD dev,ULONG sector,UWORD count,U
     return rc;
 }
 
-LONG ide_rw(WORD rw,LONG sector,WORD count,UBYTE *buf,WORD dev,BOOL need_byteswap)
+LONG ide_rw(WORD rw,ULONG sector,UWORD count,UBYTE *buf,WORD dev,BOOL need_byteswap)
 {
     UBYTE *p;
     UWORD ifnum;
@@ -1111,7 +1366,7 @@ LONG ide_rw(WORD rw,LONG sector,WORD count,UBYTE *buf,WORD dev,BOOL need_byteswa
     BOOL use_tmpbuf = FALSE;
     LONG ret;
 
-    if (!ide_device_exists(dev))
+    if (ide_device_type(dev) != DEVTYPE_ATA)
         return EUNDEV;
 
     ifnum = dev / 2;/* i.e. primary IDE, secondary IDE, ... */
@@ -1146,7 +1401,7 @@ LONG ide_rw(WORD rw,LONG sector,WORD count,UBYTE *buf,WORD dev,BOOL need_byteswa
         ret = rw ? ide_write(IDE_CMD_WRITE_SECTOR,ifnum,dev,sector,numsecs,p,need_byteswap)
                 : ide_read(IDE_CMD_READ_SECTOR,ifnum,dev,sector,numsecs,p,need_byteswap);
         if (ret < 0) {
-            KDEBUG(("ide_rw(%d,%d,%d,%ld,%u,%p,%d) ret=%ld\n",
+            KDEBUG(("ide_rw(%d,%d,%d,%lu,%u,%p,%d) ret=%ld\n",
                     rw,ifnum,dev,sector,numsecs,p,need_byteswap,ret));
             if (clear_multiple_mode(ifnum,dev)) /* retry after multiple mode reset ? */
                 continue;                       /* yes, do so                        */
@@ -1162,6 +1417,55 @@ LONG ide_rw(WORD rw,LONG sector,WORD count,UBYTE *buf,WORD dev,BOOL need_byteswa
     }
 
     return E_OK;
+}
+
+static void set_chs_mode(WORD dev,struct IDENTIFY *identify)
+{
+    UWORD ifnum, ifdev;
+    struct IFINFO_DEV *info;
+
+    if (identify->capabilities & LBA_SUPPORTED) /* normal case */
+        return;
+
+    ifnum = dev / 2;    /* i.e. primary IDE, secondary IDE, ... */
+    ifdev = dev & 1;    /* 0 or 1 */
+
+    info = &ifinfo[ifnum].dev[ifdev];
+    info->options |= CHS_MODE;
+    info->sectors = identify->logical_spt;
+    info->heads = identify->logical_heads;
+
+    KDEBUG(("CHS mode detected: ifnum=%d, dev=%d, heads=%d, spt=%d\n",ifnum,ifdev,info->heads,info->sectors));
+
+    /*
+     * here we issue INITIALIZE_DEVICE_PARAMETERS, since some ATA-1
+     * devices are reported to require it before media access.  as
+     * specified in the ATA-2 spec, we use the default translation
+     * mode from the IDENTIFY DEVICE command.
+     *
+     * we set the sector number to pass to ide_nodata() such that the
+     * device/head register will contain (number of logical heads - 1),
+     * as required by the command.
+     *
+     * we don't care about the result, since some ATA-1 implementations
+     * may not return an error indication even if the command fails.
+     */
+    ide_nodata(IDE_CMD_INIT_DEV_PARAMS,ifnum,ifdev,(info->heads-1)*info->sectors,info->sectors);
+}
+
+static void set_lba48_mode(WORD dev, UWORD lba48)
+{
+    UWORD ifnum;
+
+    if (!(lba48 & IDE_CAPABILITY_LBA48))
+        return;
+
+    ifnum = dev / 2;    /* i.e. primary IDE, secondary IDE, ... */
+    dev &= 1;           /* 0 or 1 */
+
+    KDEBUG(("Setting lba48 for ifnum %d dev %d\n",ifnum,dev));
+
+    ifinfo[ifnum].dev[dev].options |= LBA48_ACTIVE;
 }
 
 /*
@@ -1212,7 +1516,7 @@ static void set_multiple_mode(WORD dev,UWORD multi_io)
     ifinfo[ifnum].dev[dev].spi = spi;
 }
 
-static LONG ide_identify(WORD dev)
+static LONG ata_identify(WORD dev)
 {
     LONG ret;
     UWORD ifnum, ifdev;
@@ -1220,16 +1524,16 @@ static LONG ide_identify(WORD dev)
     ifnum = dev / 2;    /* i.e. primary IDE, secondary IDE, ... */
     ifdev = dev & 1;    /* 0 or 1 */
 
-    KDEBUG(("ide_identify(%d [ifnum=%d ifdev=%d])\n", dev, ifnum, ifdev));
+    KDEBUG(("ata_identify(%d [ifnum=%d ifdev=%d])\n", dev, ifnum, ifdev));
 
     /* with twisted cable the response of IDENTIFY_DEVICE will be byte-swapped */
-    if (ide_device_exists(dev)) {
+    if (ide_device_type(dev) == DEVTYPE_ATA) {
         ret = ide_read(IDE_CMD_IDENTIFY_DEVICE,ifnum,ifdev,0L,1,(UBYTE *)&identify,
                        ifinfo[ifnum].twisted_cable != IDE_DATA_REGISTER_IS_BYTESWAPPED);
     } else ret = EUNDEV;
 
     if (ret < 0)
-        KDEBUG(("ide_identify(%d [ifnum=%d ifdev=%d]) ret=%ld\n", dev, ifnum, ifdev, ret));
+        KDEBUG(("ata_identify(%d [ifnum=%d ifdev=%d]) ret=%ld\n", dev, ifnum, ifdev, ret));
 
     return ret;
 }
@@ -1245,16 +1549,29 @@ LONG ide_ioctl(WORD dev,UWORD ctrl,void *arg)
 
     switch(ctrl) {
     case GET_DISKINFO:
-        ret = ide_identify(dev);    /* reads into identify structure */
+        ret = ata_identify(dev);    /* reads into identify structure */
         if (ret >= 0) {
-            info[0] = MAKE_ULONG(identify.numsecs_lba28[1],
-                        identify.numsecs_lba28[0]);
+            if (identify.cmds_supported[1] & IDE_CAPABILITY_LBA48) {
+                if (identify.maxsec_lba48[2] ||
+                    identify.maxsec_lba48[3]) {
+                    /*
+                     * Should we return an error here ?
+                     */
+                    KDEBUG(("Disk size >= 2^32 sectors, unsupported\n"));
+                }
+
+                info[0] = MAKE_ULONG(identify.maxsec_lba48[1],
+                                     identify.maxsec_lba48[0]);
+            } else {
+                info[0] = MAKE_ULONG(identify.numsecs_lba28[1],
+                                     identify.numsecs_lba28[0]);
+            }
             info[1] = SECTOR_SIZE;  /* note: could be different under ATAPI 7 */
             ret = E_OK;
         }
         break;
     case GET_DISKNAME:
-        ret = ide_identify(dev);    /* reads into identify structure */
+        ret = ata_identify(dev);    /* reads into identify structure */
         if (ret >= 0) {
             identify.model_number[39] = 0;  /* null terminate string */
 
@@ -1279,9 +1596,520 @@ LONG ide_ioctl(WORD dev,UWORD ctrl,void *arg)
     case GET_MEDIACHANGE:
         ret = MEDIANOCHANGE;
         break;
+#if CONF_WITH_SCSI_DRIVER
+    case CHECK_DEVICE:
+        switch(ide_device_type(dev)) {
+        case DEVTYPE_ATA:
+            ret = ata_identify(dev);
+            break;
+        case DEVTYPE_ATAPI:
+            ret = atapi_identify(dev);
+            break;
+        default:
+            ret = EUNDEV;
+            break;
+        }
+        break;
+#endif
     }
 
     return ret;
 }
+
+#if CONF_WITH_SCSI_DRIVER
+/*
+ * check for the presence of an ATAPI device on the IDE bus
+ */
+static LONG atapi_identify(WORD dev)
+{
+    LONG ret;
+    UWORD ifnum, ifdev;
+
+    ifnum = dev / 2;    /* i.e. primary IDE, secondary IDE, ... */
+    ifdev = dev & 1;    /* 0 or 1 */
+
+    KDEBUG(("atapi_identify(%d [ifnum=%d ifdev=%d])\n", dev, ifnum, ifdev));
+
+    /* with twisted cable the response of IDENTIFY_DEVICE will be byte-swapped */
+    if (ide_device_type(dev) == DEVTYPE_ATAPI)
+    {
+        ret = ide_read(IDE_CMD_ATAPI_IDENTIFY,ifnum,ifdev,0L,1,(UBYTE *)&identify,
+                       ifinfo[ifnum].twisted_cable != IDE_DATA_REGISTER_IS_BYTESWAPPED);
+    } else ret = EUNDEV;
+
+    if (ret < 0)
+    {
+        KDEBUG(("atapi_identify(%d) ret=%ld\n", dev, ret));
+    }
+    else if ((identify.general_config & 0xc000) != 0x8000)
+    {
+        KDEBUG(("atapi_identify(%d) conflicting protocol(0x%02x)\n", dev, identify.general_config&0xc0));
+        ret = EUNDEV;
+    }
+
+    return ret;
+}
+
+static void set_packet_size(WORD dev, UWORD config)
+{
+    UWORD ifnum;
+    UBYTE size;
+
+    ifnum = dev / 2;    /* i.e. primary IDE, secondary IDE, ... */
+    dev &= 1;           /* 0 or 1 */
+
+    size = (config & 0x03) ? 16 : 12;
+
+    KDEBUG(("Setting packet size %d for ifnum %d dev %d\n",size,ifnum,dev));
+
+    ifinfo[ifnum].dev[dev].packet_size = size;
+}
+
+/*
+ * in the cdb, check the LUN and the bytes that should be zeroes
+ *
+ * the LUN should always be zero; the bytes that should be zero are
+ * indicated by 1 bits in the 'zerobits' bitmask.  for example, if
+ * zerobits contains 0x0872, bytes 1, 4-6, and 11 should be zero.
+ *
+ * note that INVALID_CDB takes precedence over INVALID_LUN, since an
+ * invalid CDB should always cause a check condition, whereas an invalid
+ * LUN may not.
+ */
+static LONG check_lun_and_zeroes(IDECmd *cmd, UWORD zerobits)
+{
+    UBYTE *p;
+    UWORD mask;
+    LONG ret = E_OK;
+    int i;
+
+    for (i = 0, mask = 0x01, p = cmd->cdbptr; i < cmd->cdblen; i++, mask <<= 1, p++)
+    {
+        if ((zerobits & mask) && *p)    /* should be zero but isn't */
+        {
+            if ((i == 1)                /* handle byte containing LUN: */
+             && ((*p & 0x1f) == 0))     /*  if rest of byte is zero,   */
+            {                           /*  LUN must be non-zero       */
+                ret = INVALID_LUN;      /* remember! */
+                continue;
+            }
+            return INVALID_CDB;
+        }
+    }
+
+    /*
+     * in the case where the non-LUN bits of CDB byte 1 are not expected
+     * to be zero (e,g, the READ6 command), byte 1 won't have been checked
+     * above, so check it now
+     */
+    if (cmd->cdbptr[1] & 0xe0)
+        ret = INVALID_LUN;
+
+    return ret;
+}
+
+static ULONG get_disk_size(WORD dev)
+{
+    UNIT *unit = units + GET_UNITNUM(IDE_BUS, dev);
+
+    return unit->valid ? unit->size : 0UL;
+}
+
+/*
+ * emulate a basic set of SCSI commands on an ATA device
+ */
+static LONG handle_ata_device(WORD dev, IDECmd *cmd)
+{
+    UWORD ifnum, ifdev, unitnum, count;
+    ULONG start;
+    LONG info[2];
+    LONG ret, oldret;
+
+    ifnum = dev / 2;
+    ifdev = dev & 1;
+
+    switch(cmd->cdbptr[0]) {
+    case TEST_UNIT_READY:
+        ret = check_lun_and_zeroes(cmd, 0x003e);
+        /* at this time we do nothing except validate the CDB */
+        break;
+    case REQUEST_SENSE:
+        ret = check_lun_and_zeroes(cmd, 0x002e);
+        if (ret == INVALID_CDB)
+            break;
+        /*
+         * for invalid LUN, update stored sense, so that ata_request_sense()
+         * will fill in ASC & ASCQ (this is apparently standard SCSI)
+         */
+        if (ret == INVALID_LUN)
+            ifinfo[ifnum].dev[ifdev].sense = ret;
+        oldret = ret;
+        ret = ata_request_sense(dev, cmd->buflen, cmd->bufptr);
+        if (oldret == INVALID_LUN)  /* for invalid LUN, we clear the error code, */
+            cmd->bufptr[0] = 0x00;  /* which is also apparently standard SCSI    */
+        break;
+    case INQUIRY:
+        ret = check_lun_and_zeroes(cmd, 0x002e);
+        if (ret == INVALID_CDB)
+            break;
+        /* direct access device unless LUN is invalid ... */
+        inquiry.devtype = (ret==INVALID_LUN) ? 0x7f : 0x00;
+        ret = ata_identify(dev);    /* reads into identify structure */
+        if (ret)
+            break;
+        /*
+         * initialise Inquiry data, then copy to user's buffer
+         */
+        inquiry.devtype_mod = 0;
+        inquiry.versions = 0x02;        /* iso=0, ecma=0, ansi=2 */
+        inquiry.response_fmt = 0x02;    /* scsi 2 */
+        inquiry.addl_length = INQUIRY_LENGTH - 1;
+        inquiry.resvd = 0;
+        inquiry.flags1 = 0;
+        inquiry.flags2 = 0;
+        memcpy(inquiry.vendor_id, identify.model_number, 24);
+        memcpy(inquiry.product_rev, identify.firmware_revision, 4);
+        memcpy(cmd->bufptr, &inquiry, min(cmd->buflen, INQUIRY_LENGTH));
+        break;
+    case READ_CAPACITY:
+        ret = check_lun_and_zeroes(cmd, 0x07fe);
+        if (ret)
+            break;
+        ret = ata_identify(dev);
+        if (ret)
+            break;
+        if (identify.cmds_supported[1] & IDE_CAPABILITY_LBA48) {
+            if (identify.maxsec_lba48[2] ||
+                identify.maxsec_lba48[3]) {
+                /*
+                 * Should we return an error here ?
+                 */
+                KDEBUG(("Disk size >= 2^32 sectors, unsupported\n"));
+            }
+
+            info[0] = MAKE_ULONG(identify.maxsec_lba48[1],
+                                 identify.maxsec_lba48[0]) - 1;
+        } else {
+            info[0] = MAKE_ULONG(identify.numsecs_lba28[1],
+                                 identify.numsecs_lba28[0]) - 1;
+        }
+        info[1] = SECTOR_SIZE;
+        memcpy(cmd->bufptr, (void *)info, 2*sizeof(LONG));
+        break;
+    case READ6:
+        ret = check_lun_and_zeroes(cmd, 0x0020);
+        if (ret)
+            break;
+        start = ((ULONG)cmd->cdbptr[1] << 16) + MAKE_UWORD(cmd->cdbptr[2], cmd->cdbptr[3]);
+        count = cmd->cdbptr[4];
+        if (!count)
+            count = 256;
+        if (start + count > get_disk_size(dev))
+        {
+            ret = INVALID_SECTOR;
+            break;
+        }
+        unitnum = GET_UNITNUM(IDE_BUS, dev);
+        ret = ide_rw(RW_READ, start, count, cmd->bufptr, dev, units[unitnum].byteswap);
+        break;
+    case READ10:
+        ret = check_lun_and_zeroes(cmd, 0x0242);
+        if (ret)
+            break;
+        start = MAKE_UWORD(cmd->cdbptr[2], cmd->cdbptr[3]);
+        start = (start << 16) + MAKE_UWORD(cmd->cdbptr[4], cmd->cdbptr[5]);
+        count = MAKE_UWORD(cmd->cdbptr[7], cmd->cdbptr[8]);
+        if (start + count > get_disk_size(dev))
+        {
+            ret = INVALID_SECTOR;
+            break;
+        }
+        if (count)
+        {
+            unitnum = GET_UNITNUM(IDE_BUS, dev);
+            ret = ide_rw(RW_READ, start, count, cmd->bufptr, dev, units[unitnum].byteswap);
+        }
+        break;
+    case WRITE6:
+        ret = check_lun_and_zeroes(cmd, 0x0020);
+        if (ret)
+            break;
+        start = ((ULONG)cmd->cdbptr[1] << 16) + MAKE_UWORD(cmd->cdbptr[2], cmd->cdbptr[3]);
+        count = cmd->cdbptr[4];
+        if (!count)
+            count = 256;
+        if (start + count > get_disk_size(dev))
+        {
+            ret = INVALID_SECTOR;
+            break;
+        }
+        unitnum = GET_UNITNUM(IDE_BUS, dev);
+        ret = ide_rw(RW_WRITE, start, count, cmd->bufptr, dev, units[unitnum].byteswap);
+        break;
+    case WRITE10:
+        ret = check_lun_and_zeroes(cmd, 0x0242);
+        if (ret)
+            break;
+        start = MAKE_UWORD(cmd->cdbptr[2], cmd->cdbptr[3]);
+        start = (start << 16) + MAKE_UWORD(cmd->cdbptr[4], cmd->cdbptr[5]);
+        count = MAKE_UWORD(cmd->cdbptr[7], cmd->cdbptr[8]);
+        if (start + count > get_disk_size(dev))
+        {
+            ret = INVALID_SECTOR;
+            break;
+        }
+        if (count)
+        {
+            unitnum = GET_UNITNUM(IDE_BUS, dev);
+            ret = ide_rw(RW_WRITE, start, count, cmd->bufptr, dev, units[unitnum].byteswap);
+        }
+        break;
+    default:
+        /* check condition: invalid opcode */
+        ret = INVALID_OPCODE;
+        break;
+    }
+
+    if (ret <= 0)
+        return ret;
+
+    /*
+     * a check condition was detected, save the details for later
+     */
+    ifinfo[ifnum].dev[ifdev].sense = ret;
+
+    return 0x02;    /* check condition */
+}
+
+/*
+ * set device / command / bytecount for ATAPI device in IDE registers
+ */
+static void atapi_rw_start(volatile struct IDE *interface,UWORD ifdev,UWORD bytecount,UBYTE cmd)
+{
+    KDEBUG(("atapi_rw_start(%p, %u, %u, 0x%02x)\n", interface, ifdev, bytecount, cmd));
+
+    set_cylinder(interface,bytecount);
+    set_command_head(interface,cmd,0xa0|IDE_DEVICE(ifdev));
+}
+
+/*
+ * send CDB to ATAPI device
+ *
+ * note the following (currently true) assumptions about packet size:
+ *  . it is an exact multiple of XFERWIDTH
+ *  . it is less than or equal to MAX_SCSI_CDBLEN
+ */
+static void atapi_send_cdb(WORD dev,UBYTE *cdbptr,WORD cdblen)
+{
+    struct IFINFO *info;
+    volatile struct IDE *interface;
+    UWORD cdb[MAX_SCSI_CDBLEN/sizeof(UWORD)];
+    WORD ifnum, ifdev, packetlen;
+
+    ifnum = dev / 2;
+    ifdev = dev & 1;
+
+    info = &ifinfo[ifnum];
+    interface = info->base_address;
+    packetlen = info->dev[ifdev].packet_size;
+
+    /* copy cdb to word-aligned area with zero fill */
+    memset(cdb,0,MAX_SCSI_CDBLEN);
+    memcpy(cdb,(void *)cdbptr,min(cdblen,packetlen));
+
+    KDEBUG(("atapi_send_cdb(): dev=%d, cdblen=%d, cdb=%02x...\n",dev, cdblen,cdb[0]));
+
+    /*
+     * we assume that data on ATAPI devices is always byte-swapped,
+     * so iff we have a twisted cabel, we don't byte-swap
+     */
+    if (info->twisted_cable) {
+        ide_put_data((volatile struct IDE *)(((ULONG)interface)+1),(UBYTE *)cdb,packetlen,0);
+    } else {
+        ide_put_data(interface,(UBYTE *)cdb,packetlen,1);
+    }
+}
+
+/*
+ * send SCSI commands to an ATAPI device
+ */
+static LONG handle_atapi_device(WORD dev, IDECmd *cmd)
+{
+    struct IFINFO *info;
+    volatile struct IDE *interface;
+    UBYTE *buf;
+    UWORD bytecount, ifdev, ifnum;
+    UBYTE status;
+
+    KDEBUG(("handle_atapi_device(%d): cmd=0x%02x (%d,%p,%ld,%ld,%u)\n",
+            dev,cmd->cdbptr[0],cmd->cdblen,cmd->bufptr,cmd->buflen,cmd->timeout,cmd->flags));
+
+    ifnum = dev / 2;
+    ifdev = dev & 1;
+    info = ifinfo + ifnum;
+    interface = info->base_address;
+
+    if (ide_select_device(interface,ifdev) < 0)
+        return SELECT_ERROR;
+
+    /* determine byte count for cdb packet */
+    bytecount = min(cmd->buflen,ATAPI_MAX_BYTECOUNT);
+
+    atapi_rw_start(interface,ifdev,bytecount,IDE_CMD_ATAPI_PACKET);
+    if (wait_for_not_BSY(interface,SHORT_TIMEOUT))
+        return TIMEOUT_ERROR;
+
+    /* send the packet containing the cdb */
+    atapi_send_cdb(dev,cmd->cdbptr,cmd->cdblen);
+
+    buf = cmd->bufptr;
+    while(1) {
+        if (wait_for_not_BSY(interface,cmd->timeout))
+            return TIMEOUT_ERROR;
+
+        status = IDE_READ_STATUS(interface);    /* status, clear pending interrupt */
+        if (!(status & IDE_STATUS_DRQ))
+            break;
+
+        /*
+         * find out how many bytes the device wants to send (or receive),
+         * and get (or put) them.
+         */
+        bytecount = IDE_READ_CYLINDER_HIGH_CYLINDER_LOW(interface);
+        if (cmd->flags == RW_WRITE) {
+            if (info->twisted_cable) {
+                ide_put_data((volatile struct IDE *)(((ULONG)interface)+1),buf,bytecount,0);
+            } else {
+                ide_put_data(interface,buf,bytecount,1);
+            }
+        } else {
+            if (info->twisted_cable) {
+                ide_get_data((volatile struct IDE *)(((ULONG)interface)+1),buf,bytecount,0);
+            } else {
+                ide_get_data(interface,buf,bytecount,1);
+            }
+        }
+        buf += bytecount;
+    }
+
+    if (status & IDE_STATUS_DF)
+        return STATUS_ERROR;
+
+    if (status & IDE_STATUS_ERR) {
+        status = IDE_READ_ERROR(interface);
+        if (status&0xf0) {      /* non-zero sense key */
+            return 0x02;        /* check condition */
+        }
+    }
+
+    return E_OK;
+}
+
+LONG send_ide_command(WORD dev, IDECmd *cmd)
+{
+    LONG ret;
+
+    switch(ide_device_type(dev)) {
+    case DEVTYPE_ATA:
+        ret = handle_ata_device(dev, cmd);
+        break;
+    case DEVTYPE_ATAPI:
+        ret = handle_atapi_device(dev, cmd);
+        break;
+    default:
+        ret = STATUS_ERROR;     /* "can't happen" */
+    }
+
+    return ret;
+}
+
+/*
+ * creates a request sense response based on the last 'check condition'
+ */
+static LONG ata_request_sense(WORD dev, WORD buflen, UBYTE *buffer)
+{
+    UWORD ifnum, ifdev;
+    UBYTE sense, *senseptr;
+
+    bzero(&reqsense, REQSENSE_LENGTH);
+    reqsense.addl_length = (REQSENSE_LENGTH-1) - 7;
+
+    ifnum = dev / 2;
+    ifdev = dev & 1;
+
+    senseptr = &ifinfo[ifnum].dev[ifdev].sense;
+    sense = *senseptr;      /* get last saved check condition */
+    *senseptr = 0;          /*  & reset it                    */
+
+    if (sense)
+    {
+        reqsense.error_code = 0xf0; /* valid / error code 0x70 */
+        reqsense.sense_key = 0x05;  /* illegal request */
+    }
+
+    switch(sense) {
+    case INVALID_OPCODE:
+        reqsense.asc = 0x20;        /* invalid command operation code */
+        break;
+    case INVALID_SECTOR:
+        reqsense.asc = 0x21;        /* logical block address out of range */
+        break;
+    case INVALID_CDB:
+        reqsense.asc = 0x24;        /* invalid field in cdb */
+        break;
+    case INVALID_LUN:
+        reqsense.asc = 0x25;        /* logical unit not supported */
+        break;
+    }
+
+    memcpy(buffer, &reqsense, min(buflen, REQSENSE_LENGTH));
+
+    return E_OK;
+}
+
+/*
+ * issue REQUEST SENSE on ATAPI
+ */
+static LONG atapi_request_sense(WORD dev, WORD buflen, UBYTE *buffer)
+{
+    UBYTE cdb[6];
+    IDECmd cmd;
+
+    cdb[0] = REQUEST_SENSE;
+    cdb[1] = 0;
+    cdb[2] = 0;
+    cdb[3] = 0;
+    cdb[4] = REQSENSE_LENGTH;
+    cdb[5] = 0;
+
+    cmd.cdbptr = cdb;
+    cmd.cdblen = 6;
+    cmd.bufptr = buffer;
+    cmd.buflen = buflen;
+    cmd.timeout = XFER_TIMEOUT;
+    cmd.flags = RW_READ;
+
+    return handle_atapi_device(dev, &cmd);
+}
+
+LONG ide_request_sense(WORD dev, WORD buflen, UBYTE *buffer)
+{
+    LONG ret;
+
+    switch(ide_device_type(dev)) {
+    case DEVTYPE_ATA:
+        ret = ata_request_sense(dev, buflen, buffer);
+        break;
+    case DEVTYPE_ATAPI:
+        ret = atapi_request_sense(dev, buflen, buffer);
+        break;
+    default:
+        ret = STATUS_ERROR;     /* "can't happen" */
+    }
+
+    return ret;
+}
+
+#endif
 
 #endif /* CONF_WITH_IDE */

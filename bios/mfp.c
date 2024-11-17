@@ -13,85 +13,38 @@
  */
 
 #include "emutos.h"
+#include "bios.h"
 #include "string.h"
 #include "mfp.h"
+#include "timer.h"
 #include "tosvars.h"
 #include "vectors.h"
+
 #include "coldfire.h"
 #include "lisa.h"
 #include "a2560u_bios.h"
 
 #if CONF_WITH_MFP || CONF_WITH_TT_MFP
-
-static void reset_mfp_regs(MFP *mfp)
-{
-    volatile UBYTE *p;
-    /*
-     * The following writes zeroes to everything except the UDR (anything
-     * written to the UDR would be sent as soon as the baud rate clock
-     * (Timer D) was enabled).  We avoid writing to the even addresses,
-     * because some buggy emulators (I'm looking at you, STonXDOS)
-     * generate bus errors there.
-     */
-    for (p = &mfp->gpip; p <= &mfp->tsr; p += 2)
-        *p = 0;
-}
-
-static void disable_mfp_interrupt(MFP *mfp, WORD num)
-{
-    UBYTE mask;
-
-    num &= 0x0F;
-    if (num >= 8) {
-        mask = ~(1<<(num-8));
-        mfp->imra &= mask;
-        mfp->iera &= mask;
-        mfp->ipra = mask;   /* note: IPRA/ISRA ignore '1' bits */
-        mfp->isra = mask;
-    } else {
-        mask = ~(1<<num);
-        mfp->imrb &= mask;
-        mfp->ierb &= mask;
-        mfp->iprb = mask;   /* note: IPRB/ISRB ignore '1' bits */
-        mfp->isrb = mask;
-    }
-}
-
-static void enable_mfp_interrupt(MFP *mfp, WORD num)
-{
-    UBYTE mask;
-
-    num &= 0x0F;
-    if (num >= 8) {
-        mask = 1 << (num - 8);
-        mfp->iera |= mask;
-        mfp->imra |= mask;
-    } else {
-        mask = 1 << num;
-        mfp->ierb |= mask;
-        mfp->imrb |= mask;
-    }
-}
-
+# include "mfp68901.h"
 #endif
 
 
 #if CONF_WITH_TT_MFP
 
-void tt_mfp_init(void)
+void mfptt_init(void)
 {
     MFP *mfp = TT_MFP_BASE; /* set base address of MFP */
 
-    reset_mfp_regs(mfp);    /* reset the MFP registers */
+    mfp68901_reset_regs(mfp);    /* reset the MFP registers */
     mfp->vr = 0x58;         /* vectors 0x50 to 0x5F, software end of interrupt */
 }
 
 void tt_mfpint(WORD num, LONG vector)
 {
     num &= 0x0F;
-    disable_mfp_interrupt(TT_MFP_BASE, num);
+    mfp68901_disable_interrupt(TT_MFP_BASE, num);
     *(LONG *)((0x50L + num)*4) = vector;
-    enable_mfp_interrupt(TT_MFP_BASE, num);
+    mfp68901_enable_interrupt(TT_MFP_BASE, num);
 }
 
 #endif
@@ -99,14 +52,12 @@ void tt_mfpint(WORD num, LONG vector)
 
 #if CONF_WITH_MFP
 
-/*==== mfp_init - initialize the MFP ========================================*/
-
+/* Initialise the MCP */
 void mfp_init(void)
 {
-    MFP *mfp = MFP_BASE;    /* set base address of MFP */
-
-    reset_mfp_regs(mfp);    /* reset the MFP registers */
-    mfp->vr = 0x48;         /* vectors 0x40 to 0x4F, software end of interrupt */
+    MFP *mfp = MFP_BASE;      /* set base address of MFP */
+    mfp68901_reset_regs(mfp); /* reset the MFP registers */
+    mfp->vr = 0x48;           /* vectors 0x40 to 0x4F, software end of interrupt */
 }
 
 
@@ -116,22 +67,25 @@ void mfpint(WORD num, LONG vector)
 {
     num &= 0x0F;
     jdisint(num);
-    *(LONG *)((0x40L + num)*4) = vector;
+    setexc(0x40L + num, vector); /* 0x100/4=0x40 is the base address of MFP interrupt vectors */
     jenabint(num);
 }
 
+
 void jdisint(WORD num)
 {
-    disable_mfp_interrupt(MFP_BASE, num);
+    mfp68901_disable_interrupt(MFP_BASE, num);
 }
+
 
 void jenabint(WORD num)
 {
-    enable_mfp_interrupt(MFP_BASE, num);
+    mfp68901_enable_interrupt(MFP_BASE, num);
 }
 
+
 /* setup the timer, but do not activate the interrupt */
-void setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
+void mfp_setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
 {
     switch(timer) {
     case 0:  /* timer A */
@@ -159,57 +113,21 @@ void setup_timer(MFP *mfp, WORD timer, WORD control, WORD data)
     }
 }
 
-static const WORD timer_num[] = { MFP_TIMERA, MFP_TIMERB, MFP_200HZ, MFP_TIMERD };
 
-void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
-{
-    if(timer < 0 || timer > 3)
-        return;
-    setup_timer(MFP_BASE,timer, control, data);
-    mfpint(timer_num[timer], vector);
+#if CONF_WITH_FDC || CONF_WITH_ACSI
+
+/* TRUE is the Floppy Disk Controller of the DMA (hard drive) are requesting an interrupt */
+static BOOL mfp_gpip_disk_interrupt(void) {
+    return (MFP_BASE->gpip & 0x20) == 0;
 }
 
-/* returns 1 if the timeout (in clock ticks) elapsed before gpip went low */
-int timeout_gpip(LONG delay)
-{
-    MFP *mfp = MFP_BASE;
-    LONG next = hz_200 + delay;
 
-    while(hz_200 < next) {
-        if((mfp->gpip & 0x20) == 0) {
-            return 0;
-        }
-    }
-    return 1;
+/* Returns TRUE if the timeout (in clock ticks) elapsed before gpip bit went low */
+BOOL mfp_wait_disk_irq_with_timeout(LONG delay)
+{
+    return !timer_test_with_timeout(mfp_gpip_disk_interrupt, delay); /* GPIP bit 5 is FDC and DMA */
 }
+
+#endif /* CONF_WITH_FDC || CONF_WITH_ACSI */
 
 #endif /* CONF_WITH_MFP */
-
-/*
- * "sieve", to get only the fourth interrupt.  because this is
- * a global variable, it is automatically initialised to zero.
- */
-WORD timer_c_sieve;
-
-void init_system_timer(void)
-{
-    /* The system timer is initially disabled since the sieve is zero (see note above) */
-    timer_ms = 20;
-
-#if !CONF_WITH_MFP
-    vector_5ms = int_timerc;
-#endif
-
-#if CONF_COLDFIRE_TIMER_C
-    coldfire_init_system_timer();
-#elif defined(MACHINE_LISA)
-    lisa_init_system_timer();
-#elif CONF_WITH_MFP
-    /* Timer C: ctrl = divide 64, data = 192 */
-    xbtimer(2, 0x50, 192, (LONG)int_timerc);
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
-    a2560_set_timer(HZ200_TIMER_NUMBER, 200, true, int_timerc);
-#endif
-
-    /* The timer will really be enabled when sr is set to 0x2500 or lower. */
-}

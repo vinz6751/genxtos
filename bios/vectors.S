@@ -32,7 +32,6 @@
 #if CONF_WITH_ATARI_VIDEO
         .globl  _int_hbl
 #endif
-        .globl  _int_timerc
         .globl  _int_illegal
         .globl  _int_priv
 #if CONF_WITH_ADVANCED_CPU
@@ -53,10 +52,7 @@
         .extern _frclock
         .extern _vblqueue
         .extern _swv_vec
-        .extern _hz_200
-        .extern etv_timer
         .extern etv_critic
-        .extern _timer_ms
         .extern _v_bas_ad
 
         .extern _detect_monitor_change  // screen.c
@@ -75,7 +71,6 @@
         .extern _proc_usp
         .extern _proc_stk
 
-        .extern _GSX_ENTRY
         .extern _vblsem
         .extern _colorptr
 #if CONF_WITH_VIDEL
@@ -89,8 +84,6 @@
         .extern _nvbls
         .extern _timer_c_sieve
         .extern _kb_timerc_int
-        .extern _sndirq
-        .extern _etv_timer
         .extern _etv_critic
         .extern _mcpu
         .extern _bios_ent
@@ -538,87 +531,6 @@ vbl_end:
         rts
 #endif
 
-// ==== Timer C interrupt handler ============================================
-
-#define REAL_TIMER_C_HANDLER (CONF_WITH_MFP && !CONF_COLDFIRE_TIMER_C)
-
-_int_timerc:
-        addq.l  #1, _hz_200.w           // increment 200 Hz counter
-#ifdef __mcoldfire__
-        // Save early ColdFire registers
-        move.l  d0,-(sp)
-        move.l  a0,-(sp)
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
-        move.w  #0x0400,IRQ_PENDING_GRP1  // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
-#endif
-
-#ifdef __mcoldfire__
-        lea     _timer_c_sieve,a0
-        move.w  (a0),d0
-        swap    d0
-        move.w  (a0),d0
-        lsl.l   #1,d0                   // check for 4th call
-        swap    d0
-        move.w  d0,(a0)
-        jpl     timerc_end
-#else
-        rol.w   _timer_c_sieve          // check for 4th call
-        jpl     timerc_end
-#endif
-
-#ifdef __mcoldfire__
-        // On ColdFire, d0 and a0 were saved earlier
-        lea     -52(sp),sp
-        movem.l d1-d7/a1-a6,(sp)        // save registers
-#else
-        movem.l d0-d7/a0-a6,-(sp)       // save registers
-#endif
-
-        // repeat keys
-        jsr     _kb_timerc_int
-
-#if CONF_WITH_YM2149
-        // dosound support
-        jsr     _sndirq
-#endif
-
-        move.w  _timer_ms.w, -(sp)
-        move.l  _etv_timer.w, a0
-        jsr     (a0)                    // jump to etv_timer routine
-        addq.l  #2, sp                  // correct stack
-
-#ifdef __mcoldfire__
-        // On ColdFire, d0 and a0 will be restored later
-        movem.l (sp),d1-d7/a1-a6
-        lea     52(sp),sp
-#else
-        movem.l (sp)+,d0-d7/a0-a6
-#endif
-
-timerc_end:
-#if REAL_TIMER_C_HANDLER
-#ifdef __mcoldfire__
-        lea     0xfffffa11.w, a0
-        move.b  #0xdf,(a0)              // clear interrupt service bit
-#else
-        move.b  #0xdf,0xfffffa11.w      // clear interrupt service bit
-#endif
-#endif /* REAL_TIMER_C_HANDLER */
-
-#ifdef __mcoldfire__
-        // Restore late ColdFire registers
-        move.l  (sp)+, a0
-        move.l  (sp)+, d0
-#endif
-
-        // Note for non-Atari hardware:
-        // It is important to return with RTE here, because FreeMiNT may have
-        // hooked this routine. Every fourth interrupt, it pushes an additional
-        // exception stack frame pointing to a pseudo-VBL routine. In that case,
-        // the RTE below jumps to that pseudo-VBL. Then that one will return to
-        // our caller with RTE.
-        rte
-
 #if CONF_WITH_MFP_RS232
 
 // ==== MFP USART interrupt handlers ============================================
@@ -929,10 +841,11 @@ pi_not30:
         cmpi.b  #60,_mcpu+3
         jne     pi_next
 
-        // on 68040 and 68060, invalidate the line holding the opcode only
+        // on 68040 and 68060, push the whole dcache and invalidate the entire icache
+        // as we have no guarantee that physical = virtual
 pi_inval:
         nop
-        CINVL_IC_A0                     // cinvl   ic,(a0)
+        CPUSHA_BC
         nop
 
 pi_next:

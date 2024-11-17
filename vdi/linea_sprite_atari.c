@@ -54,7 +54,7 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
         x += 16;                /* get address of right word */
         op = 1;                 /* remember we're clipping left */
     }
-    else if (x >= (V_REZ_HZ-15)) {  /* clip right */
+    else if (x >= (xres-15)) {  /* clip right */
         op = 2;                 /* remember we're clipping right */
     }
     else {                  /* no clipping */
@@ -71,8 +71,8 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
         mask_start -= y << 1;   /* point to first visible row of MASK/FORM */
         y = 0;                  /* and reset starting row */
     }
-    else if (y > (V_REZ_VT-15)) {   /* clip bottom */
-        row_count = V_REZ_VT - y + 1;
+    else if (y > (yres-15)) {   /* clip bottom */
+        row_count = yres - y + 1;
     }
     else {
         row_count = 16;
@@ -86,7 +86,7 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
     shft = 16 - (x&0x0f);       /* amount to shift forms by */
 
     /*
-     *  Store values required by mouse_set_invisible()
+     *  Store values required by cur_replace()
      */
     mcs->len = row_count;       /* number of cursor rows */
     mcs->addr = addr;           /* save area: origin of material */
@@ -97,7 +97,7 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
      *  L/R clipping in a separate function
      */
     if (op) {
-        paint_clipped_sprite(op,sprite, mcs, mask_start, shft);
+        paint_clipped_sprite(op,sprite,mcs,mask_start,shft);
         return;
     }
 

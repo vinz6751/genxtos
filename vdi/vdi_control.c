@@ -18,6 +18,7 @@
 #include "asm.h"
 #include "linea.h"
 #include "string.h"
+#include "has.h"
 #include "intmath.h"
 #include "bdosbind.h"
 #include "tosvars.h"
@@ -25,6 +26,7 @@
 #define FIRST_VDI_HANDLE    1
 #define LAST_VDI_HANDLE     (FIRST_VDI_HANDLE+NUM_VDI_HANDLES-1)
 #define VDI_PHYS_HANDLE     FIRST_VDI_HANDLE
+
 
 /*
  * Mxalloc() mode used when allocating the virtual workstation.  This
@@ -46,7 +48,9 @@ MCS *mcs_ptr;
  */
 static Vwk *vwk_ptr[NUM_VDI_HANDLES+1];
 extern Vwk phys_work;       /* attribute area for physical workstation */
-
+#if CONF_WITH_VDI_16BIT
+static VwkExt phys_work_ext;
+#endif
 
 /*
  * template for SIZ_TAB - Returns text, line and marker sizes in device
@@ -201,7 +205,6 @@ void vdi_resolution_changed(void)
 }
 
 
-
 /*
  * validate colour index
  *
@@ -215,7 +218,6 @@ WORD validate_color_index(WORD colnum)
 
     return colnum;
 }
-
 
 
 /* Set Clip Region */
@@ -267,7 +269,7 @@ static void init_wk(Vwk * vwk)
         l = DEF_LINE_STYLE;
     vwk->line_index = l - 1;
 
-    l = validate_color_index(*pointer++);   /* INTIN[2] */
+    l = linea_validate_color_index(*pointer++);   /* INTIN[2] */
     vwk->line_color = MAP_COL[l];
 
     l = *pointer++;             /* INTIN[3] */
@@ -275,13 +277,13 @@ static void init_wk(Vwk * vwk)
         l = DEF_MARK_STYLE;
     vwk->mark_index = l - 1;
 
-    l = validate_color_index(*pointer++);   /* INTIN[4] */
+    l = linea_validate_color_index(*pointer++);   /* INTIN[4] */
     vwk->mark_color = MAP_COL[l];
 
     /* You always get the default font */
     pointer++;                  /* INTIN[5] */
 
-    l = validate_color_index(*pointer++);   /* INTIN[6] */
+    l = linea_validate_color_index(*pointer++);   /* INTIN[6] */
     vwk->text_color = MAP_COL[l];
 
     vwk->mark_height = DEF_MKHT;
@@ -297,7 +299,7 @@ static void init_wk(Vwk * vwk)
         l = ((l > MAX_FILL_HATCH) || (l < MIN_FILL_HATCH)) ? DEF_FILL_HATCH : l;
     vwk->fill_index = l;
 
-    l = validate_color_index(*pointer++);   /* INTIN[9] */
+    l = linea_validate_color_index(*pointer++);   /* INTIN[9] */
     vwk->fill_color = MAP_COL[l];
 
     vwk->xfm_mode = *pointer;      /* INTIN[10] */
@@ -337,6 +339,17 @@ static void init_wk(Vwk * vwk)
     src_ptr = SIZ_TAB;
     for (l = 0; l < 12; l++)
         *pointer++ = *src_ptr++;
+
+#if CONF_WITH_VDI_16BIT
+    /* set up virtual palette stuff if we're not using a real one */
+    if (TRUECOLOR_MODE) {
+        memcpy(vwk->ext->req_col, REQ_COL, sizeof(REQ_COL));
+        memcpy(vwk->ext->req_col+16, req_col2, sizeof(req_col2));
+        /* convert requested colour values to pseudo-palette */
+        for (l = 0; l < 255; l++)
+            set_color16(vwk, l, vwk->ext->req_col[l]);
+    }
+#endif
 
 #if HAVE_BEZIER
     /* setup initial bezier values */
@@ -383,6 +396,7 @@ static void build_vwk_chain(void)
 void vdi_v_opnvwk(Vwk * vwk)
 {
     WORD handle;
+    LONG size;
     Vwk **p;
 
     /*
@@ -410,11 +424,22 @@ void vdi_v_opnvwk(Vwk * vwk)
      * To avoid problems when running FreeMiNT with memory protection, we
      * must allocate the virtual workstations in supervisor-accessible memory.
      */
-    vwk = (Vwk *)Mxalloc(sizeof(Vwk), MX_SUPER);
+    size = sizeof(Vwk);
+#if CONF_WITH_VDI_16BIT
+    if (TRUECOLOR_MODE)
+        size += sizeof(VwkExt); /* for simplicity, allocate them together */
+#endif
+    vwk = (Vwk *)Mxalloc(size, MX_SUPER);
     if (vwk == NULL) {
         CONTRL[6] = 0;  /* No memory available, exit */
         return;
     }
+
+#if CONF_WITH_VDI_16BIT
+    vwk->ext = NULL;
+    if (TRUECOLOR_MODE)
+        vwk->ext = (VwkExt *)(vwk + 1); /* immediately follows Vwk */
+#endif
 
     vwk_ptr[handle] = vwk;
     vwk->handle = CONTRL[6] = handle;
@@ -517,6 +542,12 @@ void vdi_v_opnwk(Vwk * vwk)
 
     text_init();                /* initialize the SIZ_TAB info */
 
+#if CONF_WITH_VDI_16BIT
+    vwk->ext = NULL;
+    if (TRUECOLOR_MODE)
+        vwk->ext = &phys_work_ext;  /* workstation extension */
+#endif
+
     init_wk(vwk);
 
     timer_init();
@@ -559,12 +590,23 @@ void vdi_v_clswk(Vwk * vwk)
 void vdi_v_clrwk(Vwk * vwk)
 {
     ULONG size;
+    UBYTE fill;
 
     /* Calculate screen size */
     size = (ULONG)v_lin_wr * V_REZ_VT;
 
     /* clear the screen */
-    bzero(v_bas_ad, size);
+#if CONF_WITH_VDI_16BIT
+    if (TRUECOLOR_MODE)
+    {
+        fill = 0xff;
+    }
+    else
+#endif
+    {
+        fill = 0x00;
+    }
+    memset(v_bas_ad, fill, size);
 }
 
 

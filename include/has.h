@@ -1,7 +1,7 @@
 /*
  * has.h - BIOS HAS_* macros to determine if hardware is available
  *
- * Copyright (C) 2001-2021 The EmuTOS development team
+ * Copyright (C) 2001-2024 The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -15,6 +15,12 @@ extern int is_aranym;
   #define IS_ARANYM is_aranym
 #else
   #define IS_ARANYM 0
+#endif
+
+#if DETECT_NATIVE_FEATURES
+  #define HAS_NATFEATS has_natfeats()   /* declared in natfeat.h */
+#else
+  #define HAS_NATFEATS 0
 #endif
 
 #if CONF_WITH_STE_SHIFTER

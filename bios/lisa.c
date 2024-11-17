@@ -1,7 +1,7 @@
 /*
  * lisa.c - Apple Lisa specific functions
  *
- * Copyright (C) 2021 The EmuTOS development team
+ * Copyright (C) 2021-2024 The EmuTOS development team
  *
  * Authors:
  *  VRI   Vincent Rivière
@@ -77,6 +77,22 @@
 #define INT_SHIFT   0x04    /* Shift register */
 #define INT_CA1     0x02    /* Peripheral A control line 1 */
 #define INT_CA2     0x01    /* Peripheral A control line 2 */
+
+/* Disk controller shared memory */
+#define DISKMEM 0x00fcc001  /* Base address */
+#define GOBYTE  (*(volatile UBYTE*)(DISKMEM + 0x00)) /* Command */
+#define CMD     (*(volatile UBYTE*)(DISKMEM + 0x02)) /* Function */
+#define DRV     (*(volatile UBYTE*)(DISKMEM + 0x04)) /* Drive */
+
+/* Floppy drive IDs */
+#define DRV1    0x00 /* Drive 1 of Lisa 1 */
+#define DRV2    0x80 /* Drive 2 of Lisa 1, or unique drive of Lisa 2 */
+
+/* Disk controller commands */
+#define EXRW 0x81 /* Execute RWTS function */
+
+/* RWTS functions */
+#define UNCLAMP 0x02 /* Eject floppy */
 
 /******************************************************************************/
 /* Variables                                                                  */
@@ -533,6 +549,14 @@ LONG lisa_flop_mediach(WORD dev)
 {
     /* FIXME: Implement proper floppy eject and media change */
     return MEDIANOCHANGE;
+}
+
+void lisa_flop_eject(void)
+{
+    DRV = DRV2; /* Lisa 2 unique drive */
+    CMD = UNCLAMP;
+    GOBYTE = EXRW;
+    /* FIXME: Wait for interrupt */
 }
 
 #endif /* MACHINE_LISA */

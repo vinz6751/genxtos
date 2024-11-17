@@ -9,6 +9,7 @@
  * Authors:
  *  MAD     Martin Doering
  *  VB      Vincent Barrilliot
+ *  RB      Roger Burrows
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -33,9 +34,16 @@
 #include "conout.h"
 #include "font.h"
 #include "a2560u_bios.h"
+#include "../vdi/vdi_defs.h"    /* for phys_work stuff */
 
 #define PLANE_OFFSET    2       /* interleaved planes */
 
+#define FALCON_BLACK    0x0000
+#define FALCON_WHITE    0xffbf
+
+#if CONF_WITH_VDI_16BIT
+extern Vwk phys_work;           /* attribute area for physical workstation */
+#endif
 
 static void init(const Fonthead *font)
 {
@@ -45,19 +53,35 @@ static void init(const Fonthead *font)
     v_cur_ad.pxaddr = v_bas_ad;                /* set cursor to start of screen */
 }
 
+
+/*
+ * cell_addr - convert cell X,Y to a screen address.
+ *
+ * convert cell X,Y to a screen address. also clip cartesian coordinates
+ * to the limits of the current screen.
+ */
+
 static CHAR_ADDR cell_addr(UWORD x, UWORD y)
 {
     ULONG disx, disy;
 
-    /*
-    * v_planes cannot be more than 8, so as long as there are no more
-    * than 4000 characters per line, the result will fit in a word ...
-    *
-    * X displacement = even(X) * v_planes + Xmod2
-    */
-    disx = v_planes * (x & ~1);
-    if (IS_ODD(x)) {            /* Xmod2 = 0 ? */
-        disx++;                 /* Xmod2 = 1 */
+#if CONF_WITH_VIDEL
+    if (TRUECOLOR_MODE) {       /* chunky pixels */
+        disx = v_planes * x;
+    }
+    else
+#endif
+    {
+        /*
+         * v_planes cannot be more than 8, so as long as there are no more
+         * than 4000 characters per line, the result will fit in a word ...
+         *
+         * X displacement = even(X) * v_planes + Xmod2
+         */
+        disx = v_planes * (x & ~1);
+        if (IS_ODD(x)) {        /* Xmod2 = 0 ? */
+            disx++;             /* Xmod2 = 1 */
+        }
     }
 
     /* Y displacement = Y // cell conversion factor */
@@ -78,6 +102,59 @@ static int get_char_source(unsigned char c, CHAR_ADDR *src)
 }
 
 
+#if CONF_WITH_VIDEL
+/*
+ * cell_xfer16 - cell_xfer() for Falcon 16-bit graphics
+ *
+ * see the comments in cell_xfer() for more details
+ */
+static void cell_xfer16(UBYTE *src, UBYTE *dst)
+{
+    UWORD *p;
+    UWORD fg, fgcol;
+    UWORD bg, bgcol;
+    WORD fnt_wr, line_wr, i, mask;
+
+    MAYBE_UNUSED(fg);
+    MAYBE_UNUSED(bg);
+
+    fnt_wr = v_fnt_wr;
+    line_wr = v_lin_wr;
+
+#if CONF_WITH_VDI_16BIT
+    if (v_stat_0 & M_REVID) {   /* handle reversed foreground and background colours */
+        fg = v_col_bg;
+        bg = v_col_fg;
+    } else {
+        fg = v_col_fg;
+        bg = v_col_bg;
+    }
+    fgcol = phys_work.ext->palette[fg];
+    bgcol = phys_work.ext->palette[bg];
+#else
+    /*
+     * the foreground & backround colours should really come from the
+     * physical workstation, but that requires 16-bit support in the VDI
+     */
+    if (v_stat_0 & M_REVID) {   /* handle reversed foreground and background colours */
+        fgcol = FALCON_WHITE;
+        bgcol = FALCON_BLACK;
+    } else {
+        fgcol = FALCON_BLACK;
+        bgcol = FALCON_WHITE;
+    }
+#endif
+    for (i = v_cel_ht; i--; ) {
+        for (mask = 0x80, p = (UWORD *)dst; mask; mask >>= 1) {
+            *p++ = (*src & mask) ? fgcol : bgcol;
+        }
+        dst += line_wr;
+        src += fnt_wr;
+    }
+}
+#endif
+
+
 /*
  * cell_xfer - Performs a byte aligned block transfer.
  *
@@ -96,9 +173,22 @@ static int get_char_source(unsigned char c, CHAR_ADDR *src)
  */
 
 static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
-{    
+{
+    UBYTE * src_sav, * dst_sav;
     UWORD fg;
     UWORD bg;
+    int fnt_wr, line_wr;
+    int plane;
+
+#if CONF_WITH_VIDEL
+    if (TRUECOLOR_MODE) {
+        cell_xfer16(src, dst);
+        return;
+    }
+#endif
+
+    fnt_wr = v_fnt_wr;
+    line_wr = v_lin_wr;
 
     /* check for reversed foreground and background colors */
     if (v_stat_0 & M_REVID) {
@@ -109,13 +199,6 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
         fg = v_col_fg;
         bg = v_col_bg;
     }
-
-    UBYTE * src_sav, * dst_sav;
-    int fnt_wr, line_wr;
-    int plane;
-
-    fnt_wr = v_fnt_wr;
-    line_wr = v_lin_wr;
 
     src_sav = src.pxaddr;
     dst_sav = dst.pxaddr;
@@ -192,15 +275,29 @@ static void neg_cell(CHAR_ADDR cell)
     int lin_wr = v_lin_wr;
     int cell_len = v_cel_ht;
 
-    for (plane = v_planes; plane--; ) {
-        UBYTE * addr = cell.pxaddr;            /* top of current dest plane */
-
-        /* reset cell length counter */
+#if CONF_WITH_VIDEL
+    if (TRUECOLOR_MODE) {               /* chunky pixels */
         for (len = cell_len; len--; ) {
-            *addr = ~*addr;
-            addr += lin_wr;
+            WORD i;
+            UWORD *addr;
+            for (i = 8, addr = (UWORD *)cell; i--; addr++)
+                *addr = ~*addr;
+            cell += lin_wr;
         }
-        cell.pxaddr += PLANE_OFFSET;           /* a1 -> top of block in next plane */
+    }
+    else
+#endif
+    {
+        for (plane = v_planes; plane--; ) {
+            UBYTE * addr = cell.pxaddr;            /* top of current dest plane */
+
+            /* reset cell length counter */
+            for (len = cell_len; len--; ) {
+                *addr = ~*addr;
+                addr += lin_wr;
+            }
+            cell.pxaddr += PLANE_OFFSET;           /* a1 -> top of block in next plane */
+        }
     }
 }
 
@@ -218,18 +315,66 @@ static void neg_cell(CHAR_ADDR cell)
 
 static void next_cell(void)
 {
+#if CONF_WITH_VIDEL
+    if (TRUECOLOR_MODE) {               /* chunky pixels */
+        v_cur_ad += 16;
+        return;
+    }
+#endif
+
     /* if X is even, move to next word in the plane */
     if (IS_ODD(v_cur_cx)) {
         /* x is odd */
-        v_cur_ad.pxaddr += 1;                  /* a1 -> new cell */
+        v_cur_ad.pxaddr += 1;           /* a1 -> new cell */
+        return;
     }
-    else
-    {
-        /* new cell (1st plane), added offset to next word in plane */
-        v_cur_ad.pxaddr += (v_planes << 1) - 1;
-    }
+
+    /* new cell (1st plane), added offset to next word in plane */
+    v_cur_ad.pxaddr += (v_planes << 1) - 1;
 }
 
+
+#if CONF_WITH_VIDEL
+/*
+ * blank_out16 - blank_out() for Falcon 16-bit graphics
+ *
+ * see the header comments in blank_out() for more details
+ */
+static void blank_out16(int topx, int topy, int botx, int boty)
+{
+    UWORD *addr;
+    UWORD bgcol;
+    WORD i, j;
+    WORD offs, rows, width;
+
+    width = (botx - topx + 1) * 8;          /* in words */
+
+    /* calculate the offset from the end of row to next row start */
+    offs = v_lin_wr/sizeof(WORD) - width;   /* in words */
+
+    rows = (boty - topy + 1) * v_cel_ht;    /* in pixels */
+
+    /* set standard background colour */
+    bgcol = FALCON_WHITE;
+
+#if CONF_WITH_VDI_16BIT
+    /*
+     * if we're already in 16-bit mode, we can get the pixel value of
+     * the background colour from the physical workstation's palette instead
+     */
+    if (phys_work.ext)
+        bgcol = phys_work.ext->palette[v_col_bg];
+#endif
+
+    addr = (UWORD *)cell_addr(topx, topy);  /* running pointer to screen */
+    for (i = 0; i < rows; i++) {
+        for (j = 0; j < width; j++) {
+            *addr++ = bgcol;
+        }
+        addr += offs;
+    }
+}
+#endif
 
 
 /*
@@ -252,9 +397,20 @@ static void next_cell(void)
 
 static void blank_out(int topx, int topy, int botx, int boty)
 {
-    UWORD color = v_col_bg;             /* bg color value */
+    UWORD color;
     int pair, pairs, row, rows, offs;
-    UBYTE * addr = cell_addr(topx, topy).pxaddr;   /* running pointer to screen */
+    UBYTE *addr;
+
+#if CONF_WITH_VIDEL
+    if (TRUECOLOR_MODE) {
+        blank_out16(topx, topy, botx, boty);
+        return;
+    }
+#endif
+
+    color = v_col_bg;                   /* bg color value */
+
+    addr = cell_addr(topx, topy).pxaddr;   /* running pointer to screen */
 
     /*
      * # of cell-pairs per row in region - 1

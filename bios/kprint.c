@@ -33,7 +33,9 @@
 #include "ikbd.h"
 #include "midi.h"
 #include "amiga.h"
-#include "../foenix/vicky2_txt_a_logger.h"
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+# include "../foenix/vicky2_txt_a_logger.h"
+#endif
 
 #define DISPLAY_INSTRUCTION_AT_PC   0   /* set to 1 for extra info from dopanic() */
 #define DISPLAY_STACK               0   /* set to 1 for extra info from dopanic() */
@@ -131,7 +133,7 @@ static void kprintf_outc_stonx(int c)
 }
 #endif
 
-#ifdef FOENIX_CHANNEL_A_DEBUG_PRINT
+#if FOENIX_CHANNEL_A_DEBUG_PRINT
 static void kprintf_outc_foenix_channel_a(int c)
 {
     char buf[2];

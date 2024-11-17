@@ -1,0 +1,2 @@
+_etv_term = 0x408;
+_bufl = 0x4b2;

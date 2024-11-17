@@ -1,7 +1,7 @@
 /*
  * biosdefs.h - Public BIOS defines and structures
  *
- * Copyright (C) 2016-2022 The EmuTOS development team
+ * Copyright (C) 2016-2024 The EmuTOS development team
  *
  * Authors:
  *  RFB   Roger Burrows
@@ -13,6 +13,8 @@
 
 #ifndef BIOSDEFS_H
 #define BIOSDEFS_H
+
+#include "portab.h"
 
 /* Number of hz_200 ticks per second */
 #define CLOCKS_PER_SEC 200UL

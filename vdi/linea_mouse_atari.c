@@ -15,7 +15,7 @@
 
 #include "linea.h"
 #include "lineavars.h"
-
+#include "vdi_defs.h" // Yes I know, that breaks layering :(
 
 static MCS  *mcs_ptr;  /* ptr to Mouse Cursor Save area in use */
  
@@ -39,18 +39,32 @@ static void mouse_move_to(WORD x, WORD y)
 }
 
 
-static void set_mouse_cursor(const MFORM *src) {
+static void set_mouse_cursor(const MFORM *src)
+{
     int i;
+    WORD col;
     UWORD * gmdt;                /* global mouse definition table */
     MCDB *dst = &mouse_cdb;
     const UWORD * mask;
     const UWORD * data;
     
+
+    mouse_flag += 1;            /* disable updates while redefining cursor */
+
     /* save x-offset of mouse hot spot */
     dst->xhot = src->mf_xhot & 0x000f;
 
     /* save y-offset of mouse hot spot */
     dst->yhot = src->mf_yhot & 0x000f;
+
+    /* TODO: this is broken, it makes this code (LineA depend on the VDI) */
+    /* check/fix background color index */
+    col = linea_validate_color_index(src->mf_bg);
+    dst->bg_col = MAP_COL[col];
+
+    /* check/fix foreground color index */
+    col = linea_validate_color_index(src->mf_fg);
+    dst->fg_col = MAP_COL[col];
 
     /*
      * Move the new mouse definition into the global mouse cursor definition
@@ -67,7 +81,9 @@ static void set_mouse_cursor(const MFORM *src) {
     for (i = 15; i >= 0; i--) {
         *gmdt++ = *mask++;              /* get next word of mask */
         *gmdt++ = *data++;              /* get next word of data */
-    }    
+    }
+
+    mouse_flag -= 1;                    /* re-enable mouse drawing */
 }
 
 

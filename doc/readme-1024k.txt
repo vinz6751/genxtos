@@ -22,7 +22,7 @@ emuicon.def - definition file for the above
 
 Additional information on debugging EmuTOS and its software compatibility
 is included with Hatari:
-	https://hatari.tuxfamily.org/doc/emutos.txt
+    https://hatari.tuxfamily.org/doc/emutos.txt
 
 The default language is English.  Other supported languages are:
 - Czech
@@ -35,6 +35,7 @@ The default language is English.  Other supported languages are:
 - Italian
 - Norwegian
 - Polish
+- Romanian
 - Russian
 - Spanish
 - Swedish

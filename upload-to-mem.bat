@@ -1,0 +1,1 @@
+python ..\FoenixMCP\C256Mgr\c256mgr.py --binary emutos-a2560u.rom --address 0x100000 --port COM3

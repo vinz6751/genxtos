@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "lan9221.h"
+
+int main() {
+    // Initialize the LAN9221I-ABZJ Ethernet controller
+    LAN9221_Init();
+
+    // Set the MAC address
+    uint8_t mac_addr[6] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
+    LAN9221_SetMACAddress(mac_addr);
+
+    // Set the IP address
+    uint8_t ip_addr[4] = {192, 168, 1, 100};
+    LAN9221_SetIPAddress(ip_addr);
+
+    // Set the subnet mask
+    uint8_t subnet_mask[4] = {255, 255, 255, 0};
+    LAN9221_SetSubnetMask(subnet_mask);
+
+    // Set the default gateway
+    uint8_t default_gateway[4] = {192, 168, 1, 1};
+    LAN9221_SetDefaultGateway(default_gateway);
+
+    // Send a message
+    char message[] = "Hello, world!";
+    LAN9221_SendMessage(message, strlen(message));
+
+    // Receive a message
+    char buffer[1024];
+    int length = LAN9221_ReceiveMessage(buffer, sizeof(buffer));
+    buffer[length] = '\0';
+    printf("Received message: %s\n", buffer);
+
+    // Close the LAN9221I-ABZJ Ethernet controller
+    LAN9221_Close();
+
+    return 0;
+}

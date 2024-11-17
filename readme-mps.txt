@@ -2,6 +2,10 @@ This is a hacked EmuTOS with some goodies to make it cooler.
 It is specifically targetted for the stock Atari ST/STe.
 
 Changelog:
+2024-11-24 VB:
+	* Merged current EmuTOS. But I'm not happy that linea_validate_color_index has to be
+	  used within the VDI, that should be refactored or done differently.
+
 2021-Nov-09 VB:
 	* Move AES configuration parsing into a separate file aescfg.c, so we can later
 	* improve things there by allowing more user friendly command than these cryptic

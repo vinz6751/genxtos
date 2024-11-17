@@ -1,7 +1,7 @@
 #
 # release.mk - Makefile fragment for building releases
 #
-# Copyright (C) 2011-2022 The EmuTOS development team.
+# Copyright (C) 2011-2024 The EmuTOS development team.
 #
 # Authors:
 #  VRI      Vincent Rivière
@@ -18,7 +18,7 @@
 # This subset of the doc directory will be included in all the binary archives
 DOCFILES = doc/announce.txt doc/authors.txt doc/bugs.txt doc/changelog.txt \
   doc/emudesk.txt doc/incompatible.txt doc/license.txt doc/status.txt \
-  doc/todo.txt doc/xhdi.txt
+  doc/todo.txt doc/tools.txt doc/xhdi.txt
 
 # This subset of the extras directory will be included in all the binary archives
 # that have a desktop

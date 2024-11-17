@@ -1,7 +1,7 @@
 /*
  * coldfire.h - ColdFire specific functions
  *
- * Copyright (C) 2013-2022 The EmuTOS development team
+ * Copyright (C) 2013-2024 The EmuTOS development team
  *
  * Authors:
  *  VRI   Vincent Rivière
@@ -107,6 +107,9 @@ typedef struct {
 } MCF_COOKIE;
 
 extern MCF_COOKIE cookie_mcf;
+
+/* MCF_DSPI_DTFR value for SPI chip select. */
+extern ULONG cf_spi_chip_select;
 
 void setvalue_mcf(void);
 

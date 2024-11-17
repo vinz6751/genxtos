@@ -3,7 +3,7 @@
  *
  * This file exists to centralise the handling of serial port hardware.
  *
- * Copyright (C) 2013-2022 The EmuTOS development team
+ * Copyright (C) 2013-2024 The EmuTOS development team
  *
  * Authors:
  *  RFB    Roger Burrows
@@ -158,19 +158,13 @@ static WORD incr_tail(IOREC *iorec)
 #if (!CONF_WITH_COLDFIRE_RS232 && CONF_WITH_MFP_RS232 && !RS232_DEBUG_PRINT) || CONF_WITH_TT_MFP || CONF_WITH_SCC
 static void put_iorecbuf(IOREC *out, WORD b)
 {
-    WORD old_sr, tail;
-
-    /* disable interrupts */
-    old_sr = set_sr(0x2700);
+    WORD tail;
 
     *(out->buf + out->tail) = (UBYTE)b;
     tail = incr_tail(out);
     if (tail != out->head) {        /* buffer not full,  */
         out->tail = tail;           /*  so ok to advance */
     }
-
-    /* restore interrupts */
-    set_sr(old_sr);
 }
 #endif
 
@@ -238,7 +232,7 @@ static ULONG rsconf_mfp(MFP *mfp, EXT_IOREC *iorec, WORD baud, WORD ctrl, WORD u
     if ((baud >= MIN_BAUDRATE_CODE ) && (baud <= MAX_BAUDRATE_CODE)) {
         iorec->baudrate = baud;
         init = &mfp_rs232_init[baud];
-        setup_timer(mfp,3,init->control,init->data);
+        mfp_setup_timer(mfp,3,init->control,init->data);
     }
 
     if ((ctrl >= MIN_FLOW_CTRL) && (ctrl <= MAX_FLOW_CTRL))
@@ -297,6 +291,10 @@ LONG bcostat1(void)
 
 LONG bconout1(WORD dev, WORD b)
 {
+    WORD old_sr;
+
+    MAYBE_UNUSED(old_sr);
+
     /* Wait for transmit buffer to become empty */
     while(!bcostat1())
         ;
@@ -312,6 +310,9 @@ LONG bconout1(WORD dev, WORD b)
     MFP_BASE->udr = (char)b;
     return 1L;
 # else
+    /* disable interrupts */
+    old_sr = set_sr(0x2700);
+
     /*
      * If the buffer is empty & the port is empty, output directly.
      * otherwise queue the data.
@@ -321,6 +322,10 @@ LONG bconout1(WORD dev, WORD b)
     } else {
         put_iorecbuf(&iorec1.out, b);
     }
+
+    /* restore interrupts */
+    set_sr(old_sr);
+
     return 1L;
 # endif
 #else
@@ -420,9 +425,15 @@ static LONG bcostatTT(void)
 
 static LONG bconoutTT(WORD dev, WORD b)
 {
+    WORD old_sr;
+
     /* Wait for transmit buffer to become empty */
     while(!bcostatTT())
         ;
+
+    /* disable interrupts */
+    old_sr = set_sr(0x2700);
+
      /*
      * If the buffer is empty & the port is empty, output directly.
      * otherwise queue the data.
@@ -432,6 +443,10 @@ static LONG bconoutTT(WORD dev, WORD b)
     } else {
         put_iorecbuf(&iorecTT.out, b);
     }
+
+    /* restore interrupts */
+    set_sr(old_sr);
+
     return 1L;
 }
 
@@ -511,10 +526,14 @@ static LONG bconoutA(WORD dev, WORD b)
 {
     SCC *scc = (SCC *)SCC_BASE;
     IOREC *out;
+    WORD old_sr;
 
     /* Wait for transmit buffer to become available */
     while(!bcostatA())
         ;
+
+    /* disable interrupts */
+    old_sr = set_sr(0x2700);
 
      /*
      * If the buffer is empty & the port is empty, output directly.
@@ -527,6 +546,9 @@ static LONG bconoutA(WORD dev, WORD b)
     } else {
         put_iorecbuf(out, b);
     }
+
+    /* restore interrupts */
+    set_sr(old_sr);
 
     return 1L;
 }
@@ -572,8 +594,10 @@ LONG bconoutB(WORD dev, WORD b)
 {
     SCC *scc = (SCC *)SCC_BASE;
     IOREC *out;
+    WORD old_sr;
 
     MAYBE_UNUSED(out);
+    MAYBE_UNUSED(old_sr);
 
     while(!bcostatB())
         ;
@@ -582,6 +606,9 @@ LONG bconoutB(WORD dev, WORD b)
     scc->portB.data = (UBYTE)b;
     RECOVERY_DELAY;
 #else
+    /* disable interrupts */
+    old_sr = set_sr(0x2700);
+
     /*
      * If the buffer is empty & the port is empty, output directly.
      * otherwise queue the data.
@@ -593,6 +620,9 @@ LONG bconoutB(WORD dev, WORD b)
     } else {
         put_iorecbuf(out, b);
     }
+
+    /* restore interrupts */
+    set_sr(old_sr);
 #endif
 
     return 1L;
@@ -679,6 +709,12 @@ void scc_tx_interrupt_handler(WORD portnum)
     }
     out = &extiorec->out;
 
+    /* reset TX interrupt pending */
+    write_scc_reg0(port, SCC_RESET_TX_INT);
+
+    /* reset highest IUS, allows lower priority interrupts */
+    write_scc_reg0(port, SCC_RESET_HIGH_IUS);
+
     /* make sure TX buffer is empty ... unnecessary check? */
     empty = port->ctl & 0x04;
     RECOVERY_DELAY;
@@ -694,12 +730,6 @@ void scc_tx_interrupt_handler(WORD portnum)
         if (++out->head >= out->size)
             out->head = 0;
     }
-
-    /* reset TX interrupt pending */
-    write_scc_reg0(port, SCC_RESET_TX_INT);
-
-    /* reset highest IUS, allows lower priority interrupts */
-    write_scc_reg0(port, SCC_RESET_HIGH_IUS);
 }
 
 /*
@@ -1083,7 +1113,7 @@ LONG bconmap(WORD dev)
      * in the 'old_dev' slot of the mapping table.  this preserves
      * any changes that may have been made to them.
      */
-    maptabptr = &maptable[old_dev-BCONMAP_START_HANDLE];
+    maptabptr = &bconmap_root.maptab[old_dev-BCONMAP_START_HANDLE];
     maptabptr->Bconstat = bconstat_vec[1];
     maptabptr->Bconin = bconin_vec[1];
     maptabptr->Bcostat = bcostat_vec[1];
@@ -1092,7 +1122,7 @@ LONG bconmap(WORD dev)
     maptabptr->Iorec = rs232iorecptr;
 
     /* now we update the low-memory vectors */
-    maptabptr = &maptable[map_index];
+    maptabptr = &bconmap_root.maptab[map_index];
     bconstat_vec[1] = maptabptr->Bconstat;
     bconin_vec[1] = maptabptr->Bconin;
     bcostat_vec[1] = maptabptr->Bcostat;
