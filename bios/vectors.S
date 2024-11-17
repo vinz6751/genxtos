@@ -71,7 +71,6 @@
         .extern _proc_usp
         .extern _proc_stk
 
-        .extern _GSX_ENTRY
         .extern _vblsem
         .extern _colorptr
 #if CONF_WITH_VIDEL
