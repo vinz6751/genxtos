@@ -15,7 +15,6 @@
 #define SCREEN_H
 
 #define ST_VRAM_SIZE        32000UL
-#define TT_VRAM_SIZE        153600UL
 #define FALCON_VRAM_SIZE    368640UL    /* 768x480x256 (including overscan) */
 
 #if CONF_WITH_ATARI_VIDEO
@@ -27,29 +26,14 @@
 #define SYNCMODE            0xffff820aL
 
 #define ST_SHIFTER          0xffff8260L
-#define TT_SHIFTER          0xffff8262L
-#define SPSHIFT             0xffff8266L
 
-#define TT_SHIFTER_BITMASK  0x970f      /* valid bits in TT_SHIFTER */
+#define SPSHIFT             0xffff8266L
 
 #define STE_LINE_OFFSET     0xffff820fL /* additional registers in STe */
 #define STE_HORZ_SCROLL     0xffff8265L
 
 #define ST_PALETTE_REGS     0xffff8240L
 #define FALCON_PALETTE_REGS 0xffff9800L
-
-#define TT_PALETTE_BITMASK  0x0fff      /* valid bits in TT_PALETTE_REGS */
-
-/* hardware-dependent xbios routines */
-
-WORD esetshift(WORD mode);
-WORD egetshift(void);
-WORD esetbank(WORD bank);
-WORD esetcolor(WORD index,UWORD color);
-WORD esetpalette(WORD index,WORD count,UWORD *rgb);
-WORD egetpalette(WORD index,WORD count,UWORD *rgb);
-WORD esetgray(WORD mode);
-WORD esetsmear(WORD mode);
 
 /* palette color definitions */
 
@@ -69,23 +53,6 @@ WORD esetsmear(WORD mode);
 #define RGB_YELLOW    0x0ff0
 #define RGB_LTYELLOW  0x0ff3
 #define RGB_WHITE     0x0fff
-
-#define TTRGB_BLACK     0x0000          /* TT palette */
-#define TTRGB_BLUE      0x000f
-#define TTRGB_GREEN     0x00f0
-#define TTRGB_CYAN      0x00ff
-#define TTRGB_RED       0x0f00
-#define TTRGB_MAGENTA   0x0f0f
-#define TTRGB_LTGRAY    0x0aaa
-#define TTRGB_GRAY      0x0666
-#define TTRGB_LTBLUE    0x099f
-#define TTRGB_LTGREEN   0x09f9
-#define TTRGB_LTCYAN    0x09ff
-#define TTRGB_LTRED     0x0f99
-#define TTRGB_LTMAGENTA 0x0f9f
-#define TTRGB_YELLOW    0x0ff0
-#define TTRGB_LTYELLOW  0x0ff9
-#define TTRGB_WHITE     0x0fff
 
 #endif /* CONF_WITH_ATARI_VIDEO */
 

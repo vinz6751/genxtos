@@ -166,13 +166,8 @@ void vecs_init(void)
      * previous one. This panics with "Exception number 27" if VEC_LEVEL3 is
      * not initialized with a valid default handler.
      */
-    VEC_LEVEL1 = just_rte;
-    VEC_LEVEL2 = just_rte;
-    VEC_LEVEL3 = just_rte;
-    VEC_LEVEL4 = just_rte;
-    VEC_LEVEL5 = just_rte;
-    VEC_LEVEL6 = just_rte;
-    VEC_LEVEL7 = just_rte;
+    for (i=VEC_LEVEL1/4; i<=VEC_LEVEL7/4; i++)
+        setexc(i, (LONG)just_rte);
 
 #ifdef __mcoldfire__
     /* On ColdFire, when a zero divide exception occurs, the PC value in the

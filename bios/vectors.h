@@ -52,13 +52,13 @@ extern WORD trap_save_area[];
 #define VEC_DIVNULL (*(volatile PFVOID*)0x14) /* division by zero exception vector */
 #define VEC_PRIVLGE (*(volatile PFVOID*)0x20) /* privilege exception vector */
 #define VEC_LINEA   (*(volatile PFVOID*)0x28) /* LineA exception vector */
-#define VEC_LEVEL1  (*(volatile PFVOID*)0x64) /* Level 1 interrupt vector */
-#define VEC_LEVEL2  (*(volatile PFVOID*)0x68) /* Level 2 interrupt vector */
-#define VEC_LEVEL3  (*(volatile PFVOID*)0x6c) /* Level 3 interrupt vector */
-#define VEC_LEVEL4  (*(volatile PFVOID*)0x70) /* Level 4 interrupt vector */
-#define VEC_LEVEL5  (*(volatile PFVOID*)0x74) /* Level 5 interrupt vector */
-#define VEC_LEVEL6  (*(volatile PFVOID*)0x78) /* Level 6 interrupt vector */
-#define VEC_LEVEL7  (*(volatile PFVOID*)0x7c) /* Level 7 interrupt (not maskable) */
+#define VEC_LEVEL1  0x64 /* Level 1 interrupt vector */
+#define VEC_LEVEL2  0x68 /* Level 2 interrupt vector */
+#define VEC_LEVEL3  0x6c /* Level 3 interrupt vector */
+#define VEC_LEVEL4  0x70 /* Level 4 interrupt vector */
+#define VEC_LEVEL5  0x74 /* Level 5 interrupt vector */
+#define VEC_LEVEL6  0x78 /* Level 6 interrupt vector */
+#define VEC_LEVEL7  0x7c /* Level 7 interrupt (not maskable) */
 #define VEC_TRAP1   (*(volatile PFVOID*)0x84) /* TRAP #1 exception vector */
 #define VEC_TRAP2   (*(volatile PFVOID*)0x88) /* TRAP #2 exception vector */
 #define VEC_TRAP13  (*(volatile PFVOID*)0xb4) /* TRAP #13 exception vector */

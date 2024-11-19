@@ -112,7 +112,7 @@ void lisa_screen_init(void)
     sshiftmod = ST_HIGH;
 
     /* Enable the Vertical Retrace Interrupt (VBL) */
-    VEC_LEVEL1 = lisa_int_1;
+    setexc(VEC_LEVEL1/4, (LONG)lisa_int_1);
     FORCE_READ(VTIRENB);
 }
 
@@ -198,7 +198,7 @@ void lisa_kbd_init(void)
 
     /* Enable mouse interrupts every 20ms */
     lisa_write_cops(0x70 | 0x08 | 0x05);
-    VEC_LEVEL2 = lisa_int_2;
+    setexc(VEC_LEVEL2/4, (LONG)lisa_int_2);
 }
 
 /* LisaEm hack! Here are locations of Lisa OS variables for mouse position.
