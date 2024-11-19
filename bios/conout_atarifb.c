@@ -534,26 +534,20 @@ static void paint_cursor(void)
 }
 
 
-static void unpaint_cursor(void)
-{
-    neg_cell(v_cur_ad);
-}
-
-
 const CONOUT_DRIVER conout_atarifb =
 {
-    init,    
+    init,
     blank_out,
     neg_cell,
     next_cell,
-    NULL,
+    NULL, /* no blink routine */
     scroll_up,
     scroll_down,
     get_char_source,
     cell_addr,
     cell_xfer,
     paint_cursor,
-    unpaint_cursor,
+    paint_cursor, /* painting/unpainting are symetric operations */
     0L /* Use default method for blinking */
 };
 

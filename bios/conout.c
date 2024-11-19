@@ -1,5 +1,5 @@
 /*
- * conout.c - lowlevel color model dependent screen handling routines
+ * conout.c - character screen manipulation routines
  *
  *
  * Copyright (C) 2004 by Authors (see below)
@@ -132,7 +132,7 @@ static BOOL next_cell(void)
 
 
 /*
- * conout_invert_cell - negates the cells bits
+ * conout_invert_cell - negates the cell's bits
  *
  * This routine negates the contents of an arbitrarily-tall byte-wide cell
  * composed of an arbitrary number of (Atari-style) bit-planes.
@@ -183,47 +183,62 @@ void conout_move_cursor(int x, int y)
     if (conout->cursor_moved)
         conout->cursor_moved();
 
-    if (v_stat_0 & M_CVIS) {
-        /* is cursor flashing? */
-        if (v_stat_0 & M_CFLASH) {
-            v_stat_0 &= ~M_CVIS;  /* yes, make invisible...semaphore. */
-
-            /* if cursor flashing enabled and cursor is presently painted, unpaint */
-            if (v_stat_0 & M_CSTATE)
-                conout_unpaint_cursor();
-
-            /* set new coordinates and paint there */
-            v_cur_ad = cell_addr(x, y);
-            conout_paint_cursor();
-        }
-    }
-    else {
+    if (!CURSOR_IS_ENABLED) {
         /* not visible */
         v_cur_ad = cell_addr(x, y);             /* just set new coordinates */
-    }  
+        return;
+    }
+
+    /* is cursor flashing? */
+    if (CURSOR_FLASH_ENABLED) {
+        CURSOR_DISABLE;  /* yes, make invisible...semaphore. */
+
+        /* if cursor presently displayed, display it when it moves */
+        if (!CURSOR_FLASH_IS_UP) {
+            /* not displayed */
+            v_cur_ad = cell_addr(x, y);         /* just set new coordinates */
+
+            /* show the cursor when it moves */
+            conout_paint_cursor();
+            CURSOR_FLASH_UP;
+
+            v_cur_tim = v_period;          /* reset the timer. */
+
+            CURSOR_ENABLE;                 /* end of critical section. */
+            return;
+        }
+    }
+
+    /* move the cursor after all special checks failed */
+    conout_unpaint_cursor();    /* erase from current location */
+    v_cur_ad = cell_addr(x, y); /* set new location */
+    conout_paint_cursor();      /* paintthere */
+    v_cur_tim = v_period;       /* reset the timer so the cursor doesn't flash when it moves */
+
+    CURSOR_ENABLE;              /* end of critical section. */
 #else
     /* is cursor visible? */
-    if (!(v_stat_0 & M_CVIS)) {
+    if (!CURSOR_IS_ENABLED) {
         /* not visible */
         v_cur_ad = cell_addr(x, y);             /* just set new coordinates */
         return;                                 /* and quit */
     }
 
     /* is cursor flashing? */
-    if (v_stat_0 & M_CFLASH) {
-        v_stat_0 &= ~M_CVIS;                    /* yes, make invisible...semaphore. */
+    if (CURSOR_FLASH_ENABLED) {
+        CURSOR_DISABLE;                    /* yes, make invisible...semaphore. */
 
         /* is cursor presently displayed ? */
-        if (!(v_stat_0 & M_CSTATE)) {
+        if (!CURSOR_FLASH_IS_UP) {
             /* not displayed */
             v_cur_ad = cell_addr(x, y);         /* just set new coordinates */
 
             /* show the cursor when it moves */
             neg_cell(v_cur_ad);                 /* complement cursor. */
-            v_stat_0 |= M_CSTATE;
+            CURSOR_FLASH_UP;
             v_cur_tim = v_period;               /* reset the timer. */
 
-            v_stat_0 |= M_CVIS;                 /* end of critical section. */
+            CURSOR_ENABLE;                 /* end of critical section. */
             return;
         }
     }
@@ -237,7 +252,7 @@ void conout_move_cursor(int x, int y)
     /* do not flash the cursor when it moves */
     v_cur_tim = v_period;                       /* reset the timer. */
 
-    v_stat_0 |= M_CVIS;                         /* end of critical section. */
+    CURSOR_ENABLE;                         /* end of critical section. */
 
 #endif
 }
@@ -263,9 +278,9 @@ void conout_ascii_out(int ch)
 
     dst = v_cur_ad;                     /* a1 -> get destination */
 
-    visible = v_stat_0 & M_CVIS;        /* test visibility bit */
+    visible = CURSOR_IS_ENABLED;        /* test visibility bit */
     if (visible)
-        v_stat_0 &= ~M_CVIS;            /* start of critical section */
+        CURSOR_DISABLE;            /* start of critical section */
 
     /* put the cell out (this covers the cursor) */    
     conout->cell_xfer(src, dst);
@@ -297,17 +312,17 @@ void conout_ascii_out(int ch)
     /* if visible */
     if (visible) {
 #if 1
-        conout_paint_cursor();             /* display cursor. */
+        conout_paint_cursor();          /* display cursor. */
 #else
         neg_cell(v_cur_ad);             /* display cursor. */
-        v_stat_0 |= M_CSTATE;           /* set state flag (cursor on). */
-        v_stat_0 |= M_CVIS;             /* end of critical section. */
+#endif        
+        CURSOR_FLASH_UP;                /* set state flag (cursor on). */
+        CURSOR_ENABLE;                  /* end of critical section. */
 
         /* do not flash the cursor when it moves */
-        if (v_stat_0 & M_CFLASH) {
+        if (CURSOR_FLASH_ENABLED) {
             v_cur_tim = v_period;       /* reset the timer. */
         }
-#endif
     }
 }
 
@@ -369,20 +384,77 @@ void conout_scroll_down(UWORD start_line)
 
 void conout_paint_cursor(void)
 {
-    v_stat_0 |= M_CSTATE;
-
     conout->con_paint_cursor();
-
-    v_cur_tim = v_period; /* reset the timer for blinking */
-    v_stat_0 |= M_CVIS;   /* set visibility bit */
 }
 
 
 void conout_unpaint_cursor(void)
 {
-    v_stat_0 &= ~M_CSTATE;
-
     conout->unpaint_cursor();
+}
+
+
+void conout_enable_cursor(void)
+{
+    CURSOR_ENABLE;                           /* set visibility bit */
+    conout->con_paint_cursor();
+
+    /* see if flashing is enabled */
+    if (CURSOR_FLASH_ENABLED)
+    {
+        CURSOR_FLASH_UP;                     /* set cursor on */
+
+        /* do not flash the cursor when it moves */
+        v_cur_tim = v_period;                /* reset the timer */
+    }
+#if 0  // Previous EmuTOS code
+    conout_invert_cell(v_cur_cx, v_cur_cy);  /* complement cursor */
+    CURSOR_ENABLE;                           /* set visibility bit */
+
+    /* see if flashing is enabled */
+    if (CURSOR_FLASH_ENABLED) {
+        CURSOR_FLASH_UP;                     /* set cursor on */
+
+        /* do not flash the cursor when it moves */
+        v_cur_tim = v_period;                   /* reset the timer */
+    }
+#endif
+}
+
+
+void conout_disable_cursor(void)
+{
+    if (!CURSOR_IS_ENABLED)
+        return;                         /* if already invisible, just return */
+    
+    CURSOR_DISABLE;                 /* make invisible! */
+
+    /* see, if flashing is disabled */
+    if (!CURSOR_FLASH_ENABLED) {
+        conout_unpaint_cursor();
+    }
+    /* see, if cursor is on or off */
+    else if (CURSOR_FLASH_IS_UP) {
+        CURSOR_FLASH_DOWN;    /* cursor off? */
+        conout_unpaint_cursor();;
+    }
+#if 0 // Previous EmuTOS code
+    /* test and clear the visible state bit */
+    if (!CURSOR_ENABLED)
+        return;                         /* if already invisible, just return */
+
+    CURSOR_DISABLE;                     /* make invisible! */
+
+    /* see, if flashing is disabled */
+    if (!CURSOR_FLASH_ENABLED) {
+        conout_invert_cell(v_cur_cx, v_cur_cy);
+    }
+    /* see, if cursor is on or off */
+    else if (CURSOR_FLASH_IS_UP) {
+        CURSOR_FLASH_DOWN;    /* cursor off? */
+        conout_invert_cell(v_cur_cx, v_cur_cy);
+    }
+#endif
 }
 
 
@@ -398,28 +470,9 @@ void conout_blink_cursor(void)
     {
         conout->blink_cursor();
     }
-    else
+    else if (CURSOR_IS_ENABLED && CURSOR_FLASH_ENABLE && (--v_cur_tim) == 0 )
     {
-        /* test visibility/semaphore bit */
-        if (!(v_stat_0 & M_CVIS) )
-            return;    /* if invisible or blocked, return */
-
-        /* test flash bit */
-        if (!(v_stat_0 & M_CFLASH) )
-            return;    /* if not flashing, return */
-
-        /* decrement cursor flash timer */
-        if ( --v_cur_tim )
-            return;    /* if <> 0, return */
-
-        v_cur_tim = v_period;       /* else reset timer */
-
-        /* toggle cursor state */
-        if ( v_stat_0 & M_CSTATE ) {
-            conout_unpaint_cursor();
-        }
-        else {
-            conout_paint_cursor();
-        }
+        v_cur_tim = v_period; /* reset timer */
+        CURSOR_FLASH_IS_UP ? conout_unpaint_cursor() : conout_paint_cursor(); /* toggle state*/ 
     }
 }

@@ -354,10 +354,10 @@ static void clear_and_home(void)
 # endif
 #endif
 
-    cursor_off();                               /* hide cursor */
-    conout_move_cursor(0, 0);                   /* cursor home */
-    conout_blank_out (0, 0, v_cel_mx, v_cel_my);       /* clear screen */
-    cursor_on_cnt();                            /* show cursor */
+    cursor_off();                                /* hide cursor */
+    conout_move_cursor(0, 0);                    /* cursor home */
+    conout_blank_out (0, 0, v_cel_mx, v_cel_my); /* clear screen */
+    cursor_on_cnt();                             /* show cursor */
 }
 
 
@@ -370,7 +370,7 @@ static void cursor_up(void)
     bconout_str(1, "\033[A");
 #endif
 
-    if ( v_cur_cy )
+    if (v_cur_cy)
         conout_move_cursor(v_cur_cx, v_cur_cy - 1);
 }
 
@@ -407,7 +407,7 @@ static void cursor_right(void)
     bconout_str(1, "\033[C");
 #endif
 
-    if ( v_cur_cx != v_cel_mx)
+    if (v_cur_cx != v_cel_mx)
         conout_move_cursor(v_cur_cx + 1, v_cur_cy);
 }
 
@@ -417,7 +417,7 @@ static void cursor_right(void)
  */
 static void cursor_left_impl(void)
 {
-    if ( v_cur_cx )
+    if (v_cur_cx )
         conout_move_cursor(v_cur_cx - 1, v_cur_cy);
 }
 
@@ -465,7 +465,7 @@ static void erase_to_eos(void)
     erase_to_eol_impl(); /* erase to end of line */
 
     /* last line? */
-    if ( v_cur_cy == v_cel_my )
+    if (v_cur_cy == v_cel_my)
         return;    /* yes, done */
 
     /* erase from upper left corner to lower right corner */
@@ -489,18 +489,18 @@ static void erase_to_eol_impl(void)
     s_cur_y = v_cur_cy;
 
     /* is x = x maximum? */
-    if ( v_cur_cx == v_cel_mx )
+    if (v_cur_cx == v_cel_mx)
         conout_ascii_out(' ');         /* output a space, the cell is odd! */
     else {
         /* test, if x is even or odd */
-        if ( IS_ODD(v_cur_cx) )
+        if (IS_ODD(v_cur_cx))
             conout_ascii_out(' ');     /* first output a space */
 
         conout_blank_out (v_cur_cx, v_cur_cy, v_cel_mx, v_cur_cy);
     }
 
     /* restore wrap flag, the result of EOL test */
-    if ( wrap )
+    if (wrap)
         v_stat_0 |= M_CEOL;
 
     conout_move_cursor(s_cur_x, s_cur_y); /* restore cursor position */
@@ -553,10 +553,11 @@ static void reverse_video_off(void)
 static void reverse_linefeed(void)
 {
     /* if not at top of screen */
-    if ( v_cur_cy ) {
+    if (v_cur_cy) {
         conout_move_cursor(v_cur_cx, v_cur_cy - 1);
     }
-    else {
+    else
+    {
         int savex = v_cur_cx;           /* save current x position */
         insert_line();                  /* Insert a line */
         conout_move_cursor(savex, 0);
@@ -606,7 +607,7 @@ static void erase_from_home(void)
     erase_from_bol_impl(); /* erase from beginning of line */
 
     /* first line? */
-    if ( !v_cur_cy )
+    if (!v_cur_cy)
         return;    /* yes, done */
 
     /* erase rest of screen */
@@ -619,20 +620,7 @@ static void erase_from_home(void)
  */
 static void do_cnt_esce(void)
 {
-    #if 1
-        conout_paint_cursor();
-    #else // Previous EmuTOS code
-    conout_invert_cell(v_cur_cx, v_cur_cy);        /* complement cursor */
-    v_stat_0 |= M_CVIS;                     /* set visibility bit */
-
-    /* see if flashing is enabled */
-    if ( v_stat_0 & M_CFLASH ) {
-        v_stat_0 |= M_CSTATE;                   /* set cursor on */
-
-        /* do not flash the cursor when it moves */
-        v_cur_tim = v_period;                   /* reset the timer */
-    }
-    #endif
+    conout_enable_cursor();
 }
 
 
@@ -647,7 +635,7 @@ static void cursor_on(void)
 #endif
 
     /* if disable count is zero (cursor still shown) then return */
-    if ( !disab_cnt )
+    if (!disab_cnt)
         return;
 
     disab_cnt = 0;                      /* reset the disable counter */
@@ -661,7 +649,7 @@ static void cursor_on(void)
 static void cursor_on_cnt(void)
 {
     /* if disable count is zero (cursor still shown) then return */
-    if ( !disab_cnt )
+    if (!disab_cnt)
         return;
 
     disab_cnt--;                        /* decrement the disable counter */
@@ -682,32 +670,7 @@ static void cursor_off(void)
 
     disab_cnt++;                        /* increment the disable counter */
 
-    #if 1
-    if (v_stat_0 & M_CVIS) {
-        v_stat_0 &= ~M_CVIS;                /* make invisible! */
-
-        if (!(v_stat_0 & M_CFLASH) || (v_stat_0 & M_CSTATE)) {
-            conout_unpaint_cursor();
-        }
-        v_stat_0 |= M_CVIS;
-    }
-    #else // Previous EmuTOS code
-    /* test and clear the visible state bit */
-    if (!(v_stat_0 & M_CVIS) )
-        return;                         /* if already invisible, just return */
-
-    v_stat_0 &= ~M_CVIS;                /* make invisible! */
-
-    /* see, if flashing is disabled */
-    if ( ! (v_stat_0 & M_CFLASH) ) {
-        conout_invert_cell(v_cur_cx, v_cur_cy);
-    }
-    /* see, if cursor is on or off */
-    else if ( v_stat_0 & M_CSTATE ) {
-        v_stat_0 &= ~M_CSTATE;    /* cursor off? */
-        conout_invert_cell(v_cur_cx, v_cur_cy);
-    }
-    #endif
+    conout_disable_cursor();
 }
 
 
@@ -785,7 +748,7 @@ static void erase_from_bol_impl(void)
      * because conout_blank_out() requires the ending x position to be
      * odd, we need to handle the two possibilities separately
      */
-    if ( !IS_ODD(s_cur_x) ) {
+    if (!IS_ODD(s_cur_x)) {
         conout_ascii_out(' ');     /* first output a space */
         if (s_cur_x)
             conout_blank_out(0, s_cur_y, s_cur_x-1, s_cur_y);
@@ -903,16 +866,16 @@ WORD cursconf(WORD function, WORD operand)
         cursor_on();                    /* set cursor visible */
         break;
     case 2:
-        v_stat_0 &= ~M_CFLASH;          /* unset cursor flash bit */
+        CURSOR_FLASH_DISABLE;           /* unset cursor flash bit */
         break;
     case 3:
-        v_stat_0 |= M_CFLASH;           /* set cursor flash bit */
+        CURSOR_FLASH_ENABLE;            /* set cursor flash bit */
         break;
     case 4:
         v_period = LOBYTE(operand);     /* set cursor flash interval */
         break;
     case 5:
-        return(v_period);               /* set cursor flash interval */
+        return(v_period);               /* get cursor flash interval */
     }
     KDEBUG(("cursconf exiting\n"));
     return 0;
