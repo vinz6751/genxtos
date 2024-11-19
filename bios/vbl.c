@@ -1,5 +1,6 @@
 
 #include "config.h"
+#include "conout.h"
 #if CONF_WITH_FDC
 # include "floppy.h"
 #endif
@@ -8,7 +9,7 @@
 # include "screen.h"
 #endif
 #include "tosvars.h"
-#include "vt52.h"
+
 
 // These are separate functions for clarity, but GCC will inline them.
 static void dump_screen(void);
@@ -29,7 +30,7 @@ void vbl_handler(void) {
 
 #if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
     // blink cursor
-    vt52_blink();
+    conout_blink_cursor();
 #endif
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
