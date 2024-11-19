@@ -117,7 +117,6 @@ static void process_vbl_queue(void) {
     for (i_vbl_queue=0; i_vbl_queue<nvbls; i_vbl_queue++) {
         PFVOID routine = vblqueue[i_vbl_queue];
         if (routine) {
-            // TODO ! SAVE/RESTORE REGISTERS
             routine();
         }
     }
