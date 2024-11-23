@@ -138,6 +138,7 @@ typedef void (*ETV_TIMER_T)(int ms); /* Type of BDOS Event Timer */
 #define ST_HIGH         2
 #define FALCON_REZ      3   /* used as a Falcon indicator */
 #define TT_MEDIUM       4   /* used for TT */
+#define REZ_UNSUPPORTED 5
 #define TT_HIGH         6
 #define TT_LOW          7
 

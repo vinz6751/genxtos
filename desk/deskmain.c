@@ -393,7 +393,7 @@ static void play_sound(UWORD frequency, UWORD duration)
 
 static void detect_features(void)
 {
-    can_change_resolution = rez_changeable();
+    can_change_resolution = screen_can_change_resolution();
     blitter_is_present = Blitmode(-1) & 0x0002;
 #if CONF_WITH_CACHE_CONTROL
     cache_is_present = cache_exists();

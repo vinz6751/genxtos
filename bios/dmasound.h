@@ -16,6 +16,9 @@
 
 #if CONF_WITH_DMASOUND
 
+#define DMASOUND_IRQ  0xffff8900L
+#define DMASOUND_CTRL 0xffff8901L
+
 #define SNDNOTLOCK  -128        /* error codes from Unlocksnd(), Locksnd() */
 #define SNDLOCKED   -129
 

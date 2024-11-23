@@ -1,8 +1,7 @@
 #ifndef SCREEN_TT_H
 #define SCREEN_TT_H
 
-#include "config.h"
-#include "portab.h"
+#include "emutos.h"
 
 #if CONF_WITH_TT_SHIFTER
 

@@ -24,6 +24,7 @@
 #include "tosvars.h"
 #include "linea.h" // linea_set_screen_shift
 #include "lineavars.h"
+#include "mfp.h"
 #include "nvram.h"
 #include "font.h"
 #include "vt52.h"
@@ -38,6 +39,7 @@
 #include "amiga.h"
 #include "lisa.h"
 #include "nova.h"
+#include "screen_atari.h"
 #include "screen_tt.h"
 #include "a2560u_bios.h"
 
@@ -49,39 +51,15 @@ void *video_ram_addr;
 
 #if CONF_WITH_ATARI_VIDEO
 
-/* Define palette */
+/* 16 color palette 0x0RGB format (4 bits per component) */
 
-static const UWORD dflt_palette[] = {
+const UWORD default_palette[] = {
     RGB_WHITE, RGB_RED, RGB_GREEN, RGB_YELLOW,
     RGB_BLUE, RGB_MAGENTA, RGB_CYAN, RGB_LTGRAY,
     RGB_GRAY, RGB_LTRED, RGB_LTGREEN, RGB_LTYELLOW,
     RGB_LTBLUE, RGB_LTMAGENTA, RGB_LTCYAN, RGB_BLACK
 };
 
-/*
- * Initialise ST(e) palette registers
- */
-static void initialise_ste_palette(UWORD mask)
-{
-    volatile UWORD *col_regs = (UWORD *) ST_PALETTE_REGS;
-    int i;
-
-    for (i = 0; i < 16; i++)
-        col_regs[i] = dflt_palette[i] & mask;
-}
-
-/*
- * Fixup ST(e) palette registers
- */
-static void fixup_ste_palette(WORD rez)
-{
-    volatile UWORD *col_regs = (UWORD *) ST_PALETTE_REGS;
-
-    if (rez == ST_MEDIUM)
-        col_regs[3] = col_regs[15];
-    else if (rez == ST_HIGH)
-        col_regs[1] = col_regs[15];
-}
 
 static WORD shifter_check_moderez(WORD moderez)
 {
@@ -107,7 +85,7 @@ static WORD shifter_check_moderez(WORD moderez)
     return (return_rez==getrez())?0:(0xff00|return_rez);
 }
 
-static int shifter_rez_changeable(void)
+static int shifter_screen_can_change_resolution(void)
 {
     int rez = Getrez();     /* we might be in running in user mode */
 
@@ -147,7 +125,7 @@ static WORD shifter_get_monitor_type(void)
  */
 WORD check_moderez(WORD moderez)
 {
-    if (!rez_changeable())
+    if (!screen_can_change_resolution())
         return 0;
 
 #ifdef MACHINE_AMIGA
@@ -173,7 +151,7 @@ WORD check_moderez(WORD moderez)
 void initialise_palette_registers(WORD rez,WORD mode)
 {
 #if CONF_WITH_ATARI_VIDEO
-UWORD mask;
+    UWORD mask;
 
     if (HAS_VIDEL || HAS_TT_SHIFTER || HAS_STE_SHIFTER)
         mask = 0x0fff;
@@ -246,6 +224,8 @@ void screen_init_mode(void)
     monitor_type = get_monitor_type();
     KDEBUG(("monitor_type = %d\n", monitor_type));
 
+    /* Then figure out and set the default video mode */
+
 #if CONF_WITH_VIDEL
     if (has_videl) {
         WORD ret;
@@ -298,9 +278,10 @@ void screen_init_mode(void)
     }
     else
 #endif /* CONF_WITH_VIDEL */
+
 #if CONF_WITH_TT_SHIFTER
     if (has_tt_shifter) {
-        sshiftmod = rez = monitor_type?TT_MEDIUM:TT_HIGH;
+        sshiftmod = rez = monitor_type ? TT_MEDIUM : TT_HIGH;
         *(volatile UBYTE *) TT_SHIFTER = rez;
     }
     else
@@ -317,7 +298,7 @@ void screen_init_mode(void)
         vsync();
 #endif
 
-        sshiftmod = rez = monitor_type?ST_LOW:ST_HIGH;
+        sshiftmod = rez = monitor_type ? ST_LOW : ST_HIGH;
         *(volatile UBYTE *) ST_SHIFTER = rez;
 
 #if CONF_WITH_STE_SHIFTER
@@ -329,6 +310,7 @@ void screen_init_mode(void)
 #endif
     }
 
+    // Then adjust the PAL/NTSC mode
 #if CONF_WITH_VIDEL
     if (has_videl) {        /* detected a Falcon */
         sync_mode = (boot_resolution&VIDEL_PAL)?0x02:0x00;
@@ -345,7 +327,7 @@ void screen_init_mode(void)
     else
     {
         BOOL palmode = get_default_palmode();
-        sync_mode = palmode?0x02:0x00;
+        sync_mode = palmode ? 0x02 : 0x00;
     }
     *(volatile UBYTE *) SYNCMODE = sync_mode;
 
@@ -375,6 +357,7 @@ void screen_init_mode(void)
 
     rez_was_hacked = FALSE; /* initial assumption */
 }
+
 
 /* Initialize the video address (mode is already set) */
 void screen_init_address(void)
@@ -428,7 +411,7 @@ void screen_set_rez_hacked(void)
  *
  * returns 1 iff TRUE
  */
-int rez_changeable(void)
+int screen_can_change_resolution(void)
 {
     if (rez_was_hacked)
         return FALSE;
@@ -443,7 +426,7 @@ int rez_changeable(void)
 #endif
 
 #if CONF_WITH_ATARI_VIDEO
-    return shifter_rez_changeable();
+    return shifter_screen_can_change_resolution();
 #else
     return FALSE;
 #endif
@@ -743,7 +726,7 @@ static void atari_setrez(WORD rez, WORD videlmode)
     }
 #if CONF_WITH_VIDEL
     else if (has_videl) {
-        if ((rez >= 0) && (rez <= 3)) {
+        if ((rez >= ST_LOW) && (rez <= FALCON_REZ)) {
             videl_setrez(rez, videlmode);   /* sets 'sshiftmod' */
             /* Atari TOS 4 re-inits the palette */
             initialise_falcon_palette(videlmode);
@@ -752,11 +735,11 @@ static void atari_setrez(WORD rez, WORD videlmode)
 #endif
 #if CONF_WITH_TT_SHIFTER
     else if (has_tt_shifter) {
-        if ((rez != 3) && (rez != 5))
+        if ((rez != FALCON_REZ) && (rez != REZ_UNSUPPORTED))
             *(volatile UBYTE *)TT_SHIFTER = sshiftmod = rez;
     }
 #endif
-    else if (rez < 3) {         /* ST resolution */
+    else if (rez <= ST_HIGH) {         /* ST resolution */
         *(volatile UBYTE *)ST_SHIFTER = sshiftmod = rez;
     }
 }
@@ -988,105 +971,3 @@ void vsync(void)
 #endif /* CONF_WITH_ATARI_VIDEO */
 }
 
-#if CONF_WITH_ATARI_VIDEO
-/*
- * detect_monitor_change(): called by VBL interrupt handler
- *
- * this checks if the current monitor mode (monochrome/colour) is the
- * same as that set in the shifter.  if not, it calls swv_vec() which
- * by default does a system restart.
- */
-void detect_monitor_change(void)
-{
-    SBYTE monoflag;
-    volatile SBYTE *gpip = ((volatile SBYTE *)0xfffffa01);
-    volatile UBYTE *shifter;
-    UBYTE monores;
-    UBYTE curres;
-    UBYTE newres;
-
-    /* not supported on VIDEL */
-    if (HAS_VIDEL)
-        return;
-
-    monoflag = *gpip;
-    if (HAS_DMASOUND)
-    {
-        WORD sr = set_sr(0x2700);
-        SBYTE monoflag2;
-        SBYTE dmaplay;
-
-        /*
-         * on systems with DMA sound, the 'DMA sound active' bit (bit 0
-         * of 0xffff8901) is XOR'ed with the monochrome detect bit before
-         * being presented at MFP GPIP bit 7.  therefore we must read both
-         * bits in order to determine the monitor type.  since the 'sound
-         * active' bit can be changed by the hardware at any time, we must
-         * avoid a race condition.  the following code waits for both the
-         * 'sound active' bit and MFP GPIP bit 7 to stabilise before
-         * determining the type of monitor connected.
-         */
-        for (;;)
-        {
-            dmaplay = *((volatile SBYTE *)0xffff8901);
-            monoflag = *gpip;
-            monoflag2 = *gpip;
-            if ((monoflag ^ monoflag2) < 0)
-                continue;
-            if (*((volatile SBYTE *)0xffff8901) == dmaplay)
-                break;
-        }
-
-        set_sr(sr);
-        if (dmaplay & 1)
-            monoflag = -monoflag;
-    }
-
-    if (HAS_TT_SHIFTER)
-    {
-        shifter = ((volatile UBYTE *)0xffff8262);
-        curres = *shifter & 7;
-        monores = TT_HIGH;
-    }
-    else    /* assumed ST(e) shifter */
-    {
-        shifter = ((volatile UBYTE *)0xffff8260);
-        curres = *shifter & 3;
-        monores = ST_HIGH;
-    }
-
-    if (curres == monores)  /* current resolution is mono */
-    {
-        if (monoflag >= 0)  /* mono monitor detected */
-            return;
-        /* colour monitor detected: switch resolution */
-        newres = defshiftmod;   /* use default shifter mode */
-        if (newres == monores)  /* but if it's mono, make it ST LOW */
-            newres = ST_LOW;
-    }
-    else        /* current resolution is a colour resolution */
-    {
-        if (monoflag < 0)   /* & colour monitor detected */
-            return;
-        /* mono monitor detected: switch resolution */
-#if 0
-        /*
-         * TOS 2.06 & 3.06 (at least) call this here to wait until just
-         * after a VBL.  it is surmised that this is because:
-         * (a) experience shows that at least some video hardware
-         *     misbehaves if the shifter value is not changed 'soon'
-         *     after the interrupt, and
-         * (b) in TOS 2/3, the vblqueue is processed before this routine
-         *     is called, and thus lengthy vblqueue function(s) could
-         *     trigger the misbehaviour.
-         */
-        vsync();
-#endif
-        newres = monores;
-    }
-
-    sshiftmod = newres;
-    *shifter = (*shifter & 0xf8) | newres;
-    (*swv_vec)();
-}
-#endif /* CONF_WITH_ATARI_VIDEO */

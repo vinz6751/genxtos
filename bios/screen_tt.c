@@ -1,5 +1,5 @@
 /*
- * screen.c - low-level screen routines for the Atari TT
+ * screen_tt.c - low-level screen routines for the Atari TT
  *
  * Copyright (C) 2001-2024 The EmuTOS development team
  *

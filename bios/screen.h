@@ -14,6 +14,8 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#include "emutos.h"
+
 #define ST_VRAM_SIZE        32000UL
 #define FALCON_VRAM_SIZE    368640UL    /* 768x480x256 (including overscan) */
 
@@ -29,10 +31,7 @@
 
 #define SPSHIFT             0xffff8266L
 
-#define STE_LINE_OFFSET     0xffff820fL /* additional registers in STe */
-#define STE_HORZ_SCROLL     0xffff8265L
 
-#define ST_PALETTE_REGS     0xffff8240L
 #define FALCON_PALETTE_REGS 0xffff9800L
 
 /* palette color definitions */
@@ -55,6 +54,9 @@
 #define RGB_WHITE     0x0fff
 
 #endif /* CONF_WITH_ATARI_VIDEO */
+
+/* 16 color palette 0x0RGB format (4 bits per component) */
+extern const UWORD default_palette[];
 
 /* Called when we detect that a different monitor is plugged */
 void detect_monitor_change(void);

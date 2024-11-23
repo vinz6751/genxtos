@@ -82,7 +82,7 @@ extern void (*mousexvec)(WORD scancode);    /* Additional mouse buttons */
 WORD get_monitor_type(void);
 WORD get_palette(void);
 void get_pixel_size(WORD *width,WORD *height);
-int rez_changeable(void);
+int screen_can_change_resolution(void);
 WORD check_moderez(WORD moderez);
 void initialise_palette_registers(WORD rez,WORD mode);
 

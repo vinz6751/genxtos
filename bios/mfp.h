@@ -1,5 +1,5 @@
 /*
- *  mfp.h - BIOS/XBIOS functions related to the 68901 MFP 
+ *  mfp.h - BIOS/XBIOS functions related to the 68901 MFP implemented in the Atari
  *
  * Copyright (C) 2001 Martin Doering
  * Copyright (C) 2001-2022 The EmuTOS development team
@@ -19,6 +19,7 @@
 
 #include "mfp68901.h"
 
+
 #if CONF_WITH_TT_MFP
 
 #define TT_MFP_BASE     ((MFP *)(0xfffffa80L))
@@ -33,6 +34,7 @@ void tt_mfpint(WORD num, LONG vector);
 
 /*==== Defines ============================================================*/
 #define MFP_BASE        ((MFP *)(0xfffffa00L))
+#define MFP_GPIP        0xfffffa01L
 
 /*==== Xbios functions ====================================================*/
 
