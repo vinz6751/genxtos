@@ -1579,7 +1579,7 @@ LONG ide_ioctl(WORD dev,UWORD ctrl,void *arg)
             for (i = 38; i >= 0 && identify.model_number[i] == ' '; i--)
                 identify.model_number[i] = 0;
 
-#ifdef defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
             /* characters are in little endian words */
             for (i = 0; i <= 38; i += 2) {
                 char c;
