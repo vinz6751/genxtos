@@ -310,6 +310,36 @@ static const VMODE_ENTRY other_init_table[] = {
  * functions for VIDEL programming
  */
 
+
+WORD videl_getrez(void)
+{
+    UBYTE rez;
+
+    /* Get the video mode for Falcon-hardware */
+    WORD vmode = vsetmode(-1);
+    if (vmode & VIDEL_COMPAT) {
+        switch(vmode&VIDEL_BPPMASK) {
+        case VIDEL_1BPP:
+            rez = 2;
+            break;
+        case VIDEL_2BPP:
+            rez = 1;
+            break;
+        case VIDEL_4BPP:
+            rez = 0;
+            break;
+        default:
+            KINFO(("Problem - unsupported video mode\n"));
+            rez = 0;
+        }
+    }
+    else
+        rez = 2;
+
+    return rez;
+}
+
+
 /*
  * get the number of bits-per-pixel from the current hardware settings;
  * this is ultimately used by linea_init() to derive v_planes & V_REZ_HZ

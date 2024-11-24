@@ -14,6 +14,9 @@
  */
 
 #include "emutos.h"
+
+#if CONF_WITH_TT_SHIFTER
+
 #include "has.h"
 #include "screen.h"
 #include "screen_tt.h"
@@ -193,3 +196,4 @@ WORD esetsmear(WORD mode)
     return (old&0x80)?1:0;
 }
 
+#endif /* CONF_WITH_TT_SHIFTER */
