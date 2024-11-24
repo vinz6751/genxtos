@@ -87,6 +87,7 @@ void videl_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez);
 void videl_setrez(WORD rez, WORD videlmode);
 
 extern WORD current_video_mode;
+extern LONG falcon_shadow_count;
 
 #endif /* CONF_WITH_VIDEL */
 

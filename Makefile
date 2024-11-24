@@ -309,7 +309,7 @@ bios_src = startup.S
 bios_src += lowstram.c
 
 # Other BIOS sources can be put in any order
-bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
+bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c xbios_tt.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
              conout.c conout_atarifb.c \
              cartridge_atari.S country.c \

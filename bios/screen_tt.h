@@ -30,16 +30,7 @@
 
 #define TT_VRAM_SIZE        153600UL
 
-/* hardware-dependent xbios routines */
-
-WORD esetshift(WORD mode);
-WORD egetshift(void);
-WORD esetbank(WORD bank);
-WORD esetcolor(WORD index,UWORD color);
-WORD esetpalette(WORD index,WORD count,UWORD *rgb);
-WORD egetpalette(WORD index,WORD count,UWORD *rgb);
-WORD esetgray(WORD mode);
-WORD esetsmear(WORD mode);
+void initialise_tt_palette(WORD rez);
 
 #endif
 

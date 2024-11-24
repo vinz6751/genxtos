@@ -26,6 +26,7 @@
 #include "machine.h"
 #include "has.h"
 #include "screen.h"
+#include "screen_tt.h"
 #include "videl.h"
 #include "sound.h"
 #include "dmasound.h"
@@ -40,6 +41,7 @@
 #include "vectors.h"
 #include "xbios.h"
 #include "a2560u_bios.h"
+#include "xbios_tt.h"
 
 #define DBG_XBIOS        0
 

@@ -182,7 +182,7 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
 
 #if CONF_WITH_VIDEL
     if (TRUECOLOR_MODE) {
-        cell_xfer16(src, dst);
+        cell_xfer16(src.pxaddr, dst.pxaddr);
         return;
     }
 #endif
@@ -280,9 +280,9 @@ static void neg_cell(CHAR_ADDR cell)
         for (len = cell_len; len--; ) {
             WORD i;
             UWORD *addr;
-            for (i = 8, addr = (UWORD *)cell; i--; addr++)
+            for (i = 8, addr = (UWORD *)cell.pxaddr; i--; addr++)
                 *addr = ~*addr;
-            cell += lin_wr;
+            cell.pxaddr += lin_wr;
         }
     }
     else
@@ -302,7 +302,6 @@ static void neg_cell(CHAR_ADDR cell)
 }
 
 
-
 /*
  * next_cell - Return the next cell address.
  *
@@ -317,7 +316,7 @@ static void next_cell(void)
 {
 #if CONF_WITH_VIDEL
     if (TRUECOLOR_MODE) {               /* chunky pixels */
-        v_cur_ad += 16;
+        v_cur_ad.pxaddr += 16;
         return;
     }
 #endif
@@ -366,7 +365,7 @@ static void blank_out16(int topx, int topy, int botx, int boty)
         bgcol = phys_work.ext->palette[v_col_bg];
 #endif
 
-    addr = (UWORD *)cell_addr(topx, topy);  /* running pointer to screen */
+    addr = (UWORD *)cell_addr(topx, topy).pxaddr;  /* running pointer to screen */
     for (i = 0; i < rows; i++) {
         for (j = 0; j < width; j++) {
             *addr++ = bgcol;

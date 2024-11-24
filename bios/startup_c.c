@@ -136,10 +136,9 @@ static void run_diagnostics_cartridge(void) {
 
 #if CONF_WITH_VIDEL
 static void falcon_reset(void) {
-    WORD dummy;
-    dummy = *((volatile WORD *)VIDEL_MONITOR_TYPE);
+    (void)*((volatile WORD *)VIDEL_MONITOR_TYPE);
     m68k_reset();
-    dummy = *((volatile WORD *)VIDEL_MONITOR_TYPE);
+    (void)*((volatile WORD *)VIDEL_MONITOR_TYPE);
 }
 #endif
 
@@ -157,7 +156,7 @@ static void reset_cpu_peripherals(void) {
     // We don't need to call reset on Amiga because either this is a cold boot
     // or reset has been called just before amiga_main
 #if CONF_WITH_VIDEL
-    if (m68k_do_with_maybe_bus_err(falcon_reset) == FALSE) {
+    if (m68k_do_ignoring_exceptions(falcon_reset) == FALSE) {
         // If got a bus error, it's not a Falcon
         m68k_reset();
     }

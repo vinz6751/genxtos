@@ -75,9 +75,6 @@
 
         .extern _vblsem
         .extern _colorptr
-#if CONF_WITH_VIDEL
-        .extern _falcon_shadow_count
-#endif
         .extern _screenpt
         .extern _has_videl
         .extern _has_tt_shifter

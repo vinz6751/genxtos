@@ -26,6 +26,7 @@
 #include "clock.h"
 #include "natfeat.h"
 #include "xhdi.h"
+#include "screen_tt.h"
 #include "string.h"
 #include "dmasound.h"
 #include "dsp.h"

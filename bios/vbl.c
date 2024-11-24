@@ -9,6 +9,7 @@
 # include "screen.h"
 #endif
 #include "tosvars.h"
+#include "videl.h"
 
 
 // These are separate functions for clarity, but GCC will inline them.

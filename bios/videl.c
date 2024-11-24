@@ -17,6 +17,7 @@
 #include "machine.h"
 #include "has.h"
 #include "screen.h"
+#include "screen_atari.h"
 #include "videl.h"
 #include "biosext.h"
 #include "asm.h"
@@ -365,7 +366,8 @@ static UWORD get_videl_height(void)
      * VDE. If interlace mode off unit of VC-registers is
      * half lines, else lines.
      */
-    UWORD yres = vde - vdb;
+    UWORD yres;
+    yres = vde - vdb;
     if (!(vmode & 0x02))        /* interlace */
         yres >>= 1;
     if (vmode & 0x01)           /* double */
