@@ -34,10 +34,19 @@
 
 #if CONF_WITH_ATARI_VIDEO
 
+/* 16 color palette 0x0RGB format (4 bits per component) */
+
+const UWORD default_palette[] = {
+    RGB_WHITE, RGB_RED, RGB_GREEN, RGB_YELLOW,
+    RGB_BLUE, RGB_MAGENTA, RGB_CYAN, RGB_LTGRAY,
+    RGB_GRAY, RGB_LTRED, RGB_LTGREEN, RGB_LTYELLOW,
+    RGB_LTBLUE, RGB_LTMAGENTA, RGB_LTCYAN, RGB_BLACK
+};
+
+
 static BOOL get_default_palmode(void);
-
-
 static WORD shifter_check_moderez(WORD moderez);
+
 
 /*
  * In the original TOS there used to be an early screen init,

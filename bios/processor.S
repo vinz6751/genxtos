@@ -244,6 +244,7 @@ nosfp:  move.l  a1,(0x08).w     // restore bus error
 
 #endif /* __mcoldfire__ */
 
+
 /*
  * void processor_init(void) - sets mcpu and fputype.
  */
@@ -434,6 +435,7 @@ ii_done:
         rts
 #endif
 
+
 /*
  * void flush_data_cache(void *start, long size)
  *
@@ -467,6 +469,7 @@ fd_no_dirty:
 #endif
         rts
 #endif
+
 
 /*
  * void invalidate_data_cache(void *start, long size)

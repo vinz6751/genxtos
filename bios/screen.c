@@ -18,29 +18,16 @@
 #include "emutos.h"
 #include "asm.h"
 #include "bios.h"
-#include "biosext.h"
 #include "biosmem.h"
-#include "bdosbind.h"
-#include "country.h"
-#include "font.h"
 #include "has.h"
 #include "linea.h" // linea_set_screen_shift
-#include "lineavars.h"
-#include "machine.h"
-#include "mfp.h"
-#include "nvram.h"
 #include "screen.h"
 #include "tosvars.h"
-#include "vectors.h"
-#include "videl.h"
 #include "vt52.h"
-#include "xbiosbind.h"
-#include "../obj/header.h"
 #include "amiga.h"
 #include "lisa.h"
 #include "nova.h"
 #include "screen_atari.h"
-#include "screen_tt.h"
 #include "a2560u_bios.h"
 
 
@@ -48,19 +35,6 @@
 LONG video_ram_size;        /* these are used by Srealloc() */
 void *video_ram_addr;
 #endif
-
-#if CONF_WITH_ATARI_VIDEO
-
-/* 16 color palette 0x0RGB format (4 bits per component) */
-
-const UWORD default_palette[] = {
-    RGB_WHITE, RGB_RED, RGB_GREEN, RGB_YELLOW,
-    RGB_BLUE, RGB_MAGENTA, RGB_CYAN, RGB_LTGRAY,
-    RGB_GRAY, RGB_LTRED, RGB_LTGREEN, RGB_LTYELLOW,
-    RGB_LTBLUE, RGB_LTMAGENTA, RGB_LTCYAN, RGB_BLACK
-};
-
-#endif /* CONF_WITH_ATARI_VIDEO */
 
 
 /*
@@ -129,8 +103,7 @@ void initialise_palette_registers(WORD rez, WORD mode)
 static char rez_was_hacked;
 
 
-
-/* Initialize the video mode (address will be done later) */
+/* Initialize the video mode and palette. The video memory address will be done later. */
 void screen_init_mode(void)
 {
 #if CONF_WITH_ATARI_VIDEO
