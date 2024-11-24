@@ -26,8 +26,8 @@
 /* Startup                                                                    */
 /******************************************************************************/
 
-        .globl  amiga_startup
-amiga_startup:
+        .globl  _amiga_startup
+_amiga_startup:
         move.l  #0x020000,D0
 delay:  subq.l  #1,D0                   // Delay loop.
         jgt     delay
@@ -46,7 +46,7 @@ delay:  subq.l  #1,D0                   // Delay loop.
         move.w  d0,0x96(a0)             // Disable all DMA.
         bclr.b  #7,0xdaa000             // Disable Gayle interrupts (IDE)
 
-        jmp     (a6)                    // Return
+        rts
 
 /******************************************************************************/
 /* memconf                                                                    */

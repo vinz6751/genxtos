@@ -16,6 +16,8 @@
 
 #if CONF_WITH_VIDEL
 
+#define VIDEL_MONITOR_TYPE 0xffff8006L
+
 /* Falcon video shift register */
 #define SPSHIFT         0xffff8266L
 

@@ -19,14 +19,13 @@
 
 // ==== Definitions ==========================================================
 
-        .globl  meminit                 // memory initialization
+        .globl  _meminit                 // memory initialization
 #if CONF_WITH_ADVANCED_CPU
         .globl  _detect_32bit_address_bus
 #endif
 
 // ==== References ===========================================================
 
-        .extern memdone       // return to, after memory config is done
         .extern _warm_magic
         .extern _stktop
         .extern _meminit_flags
@@ -60,7 +59,7 @@
 // ===========================================================================
 // ==== meminit - Reuse or detect RAM settings, then initialize RAM areas ====
 // ===========================================================================
-meminit:
+_meminit:
 
 /*
  * Exception vectors must point to actual RAM, so exceptions can be used for
@@ -219,7 +218,7 @@ a2560_memconf_ret:
 #if CONF_WITH_FALCON_MMU
         btst    #MEMINIT_BIT_FALCON_MMU, d7 // is it Falcon MMU?
         jne     falcmemconf             // yes -> jump to Falcon mem routine
-#endif
+#endif /* CONF_WITH_FALCON_MMU */
 
 #if CONF_WITH_TT_MMU
 // ===========================================================================
@@ -320,7 +319,7 @@ refresh_done:
 
         jra     memconf_done
 after_tt_memconf:
-#endif
+#endif /* CONF_WITH_TT_MMU */
 
 #if CONF_WITH_ST_MMU
 
@@ -632,6 +631,7 @@ stram_detected:
 // ===========================================================================
 // ==== This part is executed on any boot (first boot or reset) ==============
 // ===========================================================================
+ .globl any_boot
 any_boot:
         // Clear the BSS segment.
         // Our stack is explicitly set outside the BSS, so this is safe:
@@ -648,7 +648,9 @@ any_boot:
         // Save the meminit_flags into BSS
         move.b  d7, _meminit_flags
 
-        jmp     memdone                 // config done -> return to startup.S
+        .globl _startup_stage2
+        jmp _startup_stage2 // config done -> return
+
 
 // ===========================================================================
 // ==== Below are utility functions ==========================================

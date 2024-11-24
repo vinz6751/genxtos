@@ -15,6 +15,7 @@
 
 #ifdef __mcoldfire__
 
+void coldfire_startup(void);
 void coldfire_early_init(void);
 
 #if CONF_WITH_COLDFIRE_RS232

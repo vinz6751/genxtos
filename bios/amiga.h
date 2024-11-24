@@ -49,6 +49,7 @@ extern const UBYTE *amiga_screenbase;
 extern UWORD *copper_list;
 extern int has_gayle;
 
+void amiga_startup(void);
 void amiga_machine_detect(void);
 const char *amiga_machine_name(void);
 void amiga_autoconfig(void);

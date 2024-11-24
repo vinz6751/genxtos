@@ -312,13 +312,14 @@ bios_src += lowstram.c
 bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
              conout.c conout_atarifb.c \
-             country.c \
+             cartridge_atari.S country.c \
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
              kprint.c kprintasm.S machine.c \
              mfp.c mfp68901.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c screen_atari.c screen_tt.c serport.c sound.c videl.c vt52.c xhdi.c \
              pmmu030.c 68040_pmmu.S \
              amiga.c amiga2.S spi_vamp.c \
+             m68k_s.S startup_c.c \
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c timer.c timer_.S memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S scsidriv.c vbl.c \

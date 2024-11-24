@@ -27,8 +27,8 @@
 # define __RAMBAR1 0x20001000
 #endif
 
-        .globl  coldfire_startup
-coldfire_startup:
+        .globl  _coldfire_startup
+_coldfire_startup:
         lea     __RAMBAR1+0x00001000,sp
 
 #if defined(MACHINE_M548X) && !CONF_WITH_BAS_MEMORY_MAP
@@ -60,8 +60,8 @@ coldfire_startup:
         movec   d0,CACR
 #endif
 
-        pea     (a6)            // Return address
-        jmp     _coldfire_early_init
+        jmp     (a6) // Return
+
 
 #if CONF_COLDFIRE_TIMER_C
         .extern _int_timerc

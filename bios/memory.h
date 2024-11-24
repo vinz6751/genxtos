@@ -29,8 +29,14 @@
 # define MEMINIT_BIT_TT_MMU 2 /* This machine has TT MMU */
 #endif
 
+#if CONF_WITH_ST_MMU
+# define ST_MMU_CONFIGURATION 0xffff8001L // byte
+#endif
+
+
 #ifndef ASM_SOURCE
 
+void meminit(PFVOID return_address);
 void ttram_detect(void);
 
 #if CONF_WITH_ALT_RAM

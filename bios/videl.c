@@ -666,7 +666,7 @@ WORD vmontype(void)
     if (!has_videl)
         return 0x59;    /* unimplemented xbios call: return function # */
 
-    return ((*(volatile UBYTE *)0xffff8006) >> 6) & 3;
+    return ((*(volatile UBYTE *)VIDEL_MONITOR_TYPE) >> 6) & 3;
 }
 
 /*
