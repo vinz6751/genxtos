@@ -17,10 +17,6 @@
 void user_vec(void);
 extern UWORD deflt_vec_table[];
 
-/* initialise acia vectors */
-
-void init_acia_vecs(void);
-
 /* some exception vectors */
 
 #if CONF_WITH_ATARI_VIDEO

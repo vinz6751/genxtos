@@ -47,6 +47,12 @@
 #define SPRINTF_STYLE
 #endif
 
+#ifdef __GNUC__
+#define ALWAYS_INLINE __inline__ __attribute__((always_inline))
+#else
+#error "You must specify how to force the compiler to inline a function"
+#endif
+
 /* Convenience macros to test the versions of glibc and gcc.
    Use them like this:
    #if __GNUC_PREREQ (2,8)
