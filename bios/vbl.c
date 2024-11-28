@@ -18,7 +18,7 @@ static void copy_palette(void);
 static void set_new_screen_address(void);
 static void process_vbl_queue(void);;
 
-
+// Doesn't need to be shared with anything (i.e put in a .h file), that's only called from vectors.S
 void vbl_handler(void);
 
 // C-side part of the VBL handling called from int_vbl
