@@ -27,7 +27,7 @@
 
 LONG bconstat3(void)
 {
-    return (midiiorec.head == midiiorec.tail) ? 0 : -1;
+    return iorec_can_read(&midiiorec);
 }
 
 
@@ -37,24 +37,7 @@ LONG bconin3(void)
         ;
 
 #if CONF_WITH_MIDI_ACIA || defined(FOENIX_WITH_MIDI)
-    {
-        WORD old_sr;
-        LONG value;
-
-        /* disable interrupts */
-        old_sr = set_sr(0x2700);
-
-        midiiorec.head++;
-        if (midiiorec.head >= midiiorec.size)
-        {
-            midiiorec.head = 0;
-        }
-        value = *(UBYTE *)(midiiorec.buf+midiiorec.head);
-
-        /* restore interrupts */
-        set_sr(old_sr);
-        return value;
-    }
+    return iorec_get(&midiiorec);
 #else
     return 0;
 #endif

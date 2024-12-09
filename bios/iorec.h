@@ -13,10 +13,15 @@
 #ifndef IOREC_H
 #define IOREC_H
 
+#include "emutos.h"
+
 /*==== Structs ============================================================*/
 
 typedef struct iorec IOREC;
 
+/* IOREC is a circular buffer used both to store incoming data (e.g. from the
+ * MIDI, serial port etc.) or data to send (serial port)
+ */
 struct iorec {
     UBYTE *buf;         /* input buffer */
     WORD size;          /* buffer size */
@@ -29,5 +34,10 @@ struct iorec {
 extern IOREC ikbdiorec, midiiorec;
 
 /*==== Functions ==========================================================*/
+
+UBYTE iorec_get(IOREC *iorec);
+WORD  iorec_can_read(IOREC *iorec);
+void  iorec_put_long(IOREC *iorec, ULONG value);
+LONG  iorec_get_long(IOREC *iorec);
 
 #endif /* IOREC_H */

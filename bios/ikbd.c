@@ -25,6 +25,7 @@
 /*#define ENABLE_KDEBUG*/
 
 #include "emutos.h"
+#include "aciavecs.h"
 #include "country.h"
 #include "acia.h"
 #include "tosvars.h"
@@ -128,25 +129,6 @@ LONG kbshift(WORD flag)
     return oldshifty;
 }
 
-/*=== iorec handling (bios) ==============================================*/
-
-static void push_ikbdiorec(ULONG value)
-{
-    short tail;
-
-    KDEBUG(("KBD iorec: Pushing value 0x%08lx\n", value));
-
-    tail = ikbdiorec.tail + 4;
-    if (tail >= ikbdiorec.size) {
-        tail = 0;
-    }
-    if (tail == ikbdiorec.head) {
-        /* iorec full */
-        return;
-    }
-    *(ULONG_ALIAS *) (ikbdiorec.buf + tail) = value;
-    ikbdiorec.tail = tail;
-}
 
 #if CONF_SERIAL_CONSOLE
 
@@ -203,7 +185,7 @@ void push_ascii_ikbdiorec(UBYTE ascii)
     ULONG value;
 
     value = ikbdiorec_from_ascii(ascii);
-    push_ikbdiorec(value);
+    iorec_put_long(&ikbdiorec, value);
 }
 
 #endif /* CONF_SERIAL_CONSOLE */
@@ -215,11 +197,7 @@ LONG bconstat2(void)
     return bconstat(1);
 #else
     /* Check the IKBD IOREC */
-    if (ikbdiorec.head == ikbdiorec.tail) {
-        return 0;               /* iorec empty */
-    } else {
-        return -1;              /* not empty => input available */
-    }
+    return iorec_can_read(&ikbdiorec);
 #endif
 }
 
@@ -231,25 +209,15 @@ LONG bconin2(void)
     UBYTE ascii = (UBYTE)bconin(1);
     value = ikbdiorec_from_ascii(ascii);
 #else
-    /* Check the IKBD IOREC */
-    WORD old_sr;
 
     while (!bconstat2()) {
 #if USE_STOP_INSN_TO_FREE_HOST_CPU
         stop_until_interrupt();
 #endif
     }
-    /* disable interrupts */
-    old_sr = set_sr(0x2700);
 
-    ikbdiorec.head += 4;
-    if (ikbdiorec.head >= ikbdiorec.size) {
-        ikbdiorec.head = 0;
-    }
-    value = *(ULONG_ALIAS *) (ikbdiorec.buf + ikbdiorec.head);
+    value = iorec_get_long(&ikbdiorec);
 
-    /* restore interrupts */
-    set_sr(old_sr);
 #endif /* CONF_SERIAL_CONSOLE_POLLING_MODE */
 
     if (!(conterm & 8))         /* shift status not wanted? */
@@ -497,7 +465,9 @@ static void do_key_repeat(void)
                     (UBYTE)mouse_packet[0],(UBYTE)mouse_packet[1],(UBYTE)mouse_packet[2]));
             call_mousevec(mouse_packet);
         }
-    } else push_ikbdiorec(kb_last.key);
+    }
+    else
+        iorec_put_long(&ikbdiorec, kb_last.key);
 
     /* The key will repeat again until some key up */
     kb_ticks = kb_repeat;
@@ -902,7 +872,7 @@ void kbd_int(UBYTE scancode)
      * if we're not sending mouse packets, send a real key
      */
     if (!mouse_packet[0])
-        push_ikbdiorec(kb_last.key);
+        iorec_put_long(&ikbdiorec, kb_last.key);
 }
 
 
