@@ -151,7 +151,7 @@ void vdimouse_init(void)
 
 #if CONF_WITH_EXTENDED_MOUSE
     {
-        struct kbdvecs *kbd_vectors = (struct kbdvecs *)Kbdvbase();
+        KBDVECS *kbd_vectors = (KBDVECS *)Kbdvbase();
         old_statvec = kbd_vectors->statvec;
         kbd_vectors->statvec = wheel_int;
         mousexvec = vdi_mousex_handler;
@@ -177,7 +177,7 @@ void vdimouse_exit(void)
 
 #if CONF_WITH_EXTENDED_MOUSE
     {
-        struct kbdvecs *kbd_vectors = (struct kbdvecs *)Kbdvbase();
+        KBDVECS *kbd_vectors = (KBDVECS *)Kbdvbase();
         kbd_vectors->statvec = old_statvec;
     }
 #endif

@@ -130,12 +130,11 @@ void push_ascii_ikbdiorec(UBYTE ascii);
 #endif
 
 /* the following is in aciavecs.S */
-void call_mousevec(SBYTE *packet);
 #ifdef MACHINE_AMIGA
 void call_joyvec(UBYTE *packet);
 #endif
 #if CONF_WITH_FLEXCAN || CONF_SERIAL_IKBD || defined(MACHINE_LISA)
-void call_ikbdraw(UBYTE b);
+#define call_ikbdraw(b) ikbdraw(b)
 #endif
 
 #endif /* IKBD_H */

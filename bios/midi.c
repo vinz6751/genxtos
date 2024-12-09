@@ -27,15 +27,9 @@
 
 LONG bconstat3(void)
 {
-    if (midiiorec.head == midiiorec.tail)
-    {
-        return 0;   /* iorec empty */
-    }
-    else
-    {
-        return -1;  /* not empty => input available */
-    }
+    return (midiiorec.head == midiiorec.tail) ? 0 : -1;
 }
+
 
 LONG bconin3(void)
 {
@@ -71,15 +65,7 @@ LONG bconin3(void)
 LONG bcostat3(void)
 {
 #if CONF_WITH_MIDI_ACIA
-    if (midi_acia.ctrl & ACIA_TDRE)
-    {
-        return -1;  /* OK */
-    }
-    else
-    {
-        /* Data register not empty */
-        return 0;   /* not OK */
-    }
+    return (midi_acia.ctrl & ACIA_TDRE) ? -1 : 0;
 #elif defined(FOENIX_WITH_MIDI)
     return a2560_bios_bcostat3();
 #else

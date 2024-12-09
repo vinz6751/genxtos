@@ -20,6 +20,7 @@
 // #define ENABLE_KDEBUG 1
 
 #include "emutos.h"
+#include "aciavecs.h"
 #include "biosext.h"
 #include "bios.h"
 #include "../bdos/bdosstub.h"

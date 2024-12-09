@@ -114,18 +114,19 @@ typedef struct
 /*
  * Struct returned by Kbdvbase()
  */
-struct kbdvecs
+typedef struct
 {
-    PFVOID midivec;     /* MIDI Input */
-    PFVOID vkbderr;     /* IKBD Error */
-    PFVOID vmiderr;     /* MIDI Error */
-    PFVOID statvec;     /* IKBD Status */
-    PFVOID mousevec;    /* IKBD Mouse */
-    PFVOID clockvec;    /* IKBD Clock */
-    PFVOID joyvec;      /* IKBD Joystick */
-    PFVOID midisys;     /* Main MIDI Vector */
-    PFVOID ikbdsys;     /* Main IKBD Vector */
-};
+   void (*midivec)(UBYTE data);   /* MIDI Input */
+   void (*vkbderr)(UBYTE data);   /* IKBD Error */
+   void (*vmiderr)(UBYTE data);   /* MIDI Error */
+   void (*statvec)(UBYTE *buf);   /* IKBD Status */
+   void (*mousevec)(UBYTE *buf);  /* IKBD Mouse */
+   void (*clockvec)(UBYTE *buf);  /* IKBD Clock */
+   void (*joyvec)(UBYTE *buf);    /* IKBD Joystick */
+   void (*midisys)(void);         /* Main MIDI Vector */
+   void (*ikbdsys)(void);         /* Main IKBD Vector */
+} KBDVECS;
+
 
 /*
  * Types for callbacks

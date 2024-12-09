@@ -13,7 +13,9 @@
 #ifndef CLOCK_H
 #define CLOCK_H
 
-void clockvec(char *buf);
+#include "portab.h"
+
+void clockvec(UBYTE *buf);
 
 /* interface for machine.c */
 

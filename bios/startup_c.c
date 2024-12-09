@@ -25,7 +25,6 @@ void startup(void);        // The purpose of this file
 void startup_stage2(void); // After memory has been configured
 
 // Some methods here we want to always inline to prevent the use of the stack for as long as it's not guaranteed to be functional
-#define ALWAYS_INLINE __inline__ __attribute__((always_inline))
 static ALWAYS_INLINE void asap(void);
 static ALWAYS_INLINE void ensure_minimum_ram_setup(void);
 
@@ -175,6 +174,7 @@ static void initialize_cpu(void) {
 
 
 // Users can set a vector and a magic number to indicate that the vector is valid and should be run after a reset
+// These 2 are TOS variables
 extern ULONG resvalid;
 extern PFVOID resvector;
 static void run_user_reset_code(void) {
@@ -189,7 +189,7 @@ static void run_user_reset_code(void) {
 
         jmp_to_with_return_address_in_a6(resvector);
         // So the reset routine must explicitly clear resvalid before returning
-       // to a6, otherwise there will be an infinite loop.
+        // to a6, otherwise there will be an infinite loop.
     }
 }
 
