@@ -23,6 +23,25 @@
 #endif
 
 
+
+/*==== midi_init - initialize the MIDI ==================*/
+
+void midi_init(void)
+{
+#if CONF_WITH_MIDI_ACIA
+    /* initialize midi ACIA */
+    midi_acia.ctrl = ACIA_RESET;    /* master reset */
+
+    midi_acia.ctrl = ACIA_RIE|      /* enable reception interrupts */
+                     ACIA_RLTID|    /* RTS low, transmit interrupts disabled */
+                     ACIA_DIV16|    /* clock/16 : 31250baud */
+                     ACIA_D8N1S;    /* 8 bit, 1 stop, no parity */
+#elif defined(FOENIX_WITH_MIDI)
+    a2560_bios_midi_init();
+#endif
+}
+
+
 /*==== MIDI bios functions =========================================*/
 
 LONG bconstat3(void)
@@ -44,7 +63,7 @@ LONG bconin3(void)
 }
 
 
-/* can we send a byte to the MIDI ACIA ? */
+/* can we send a byte to the MIDI ? */
 LONG bcostat3(void)
 {
 #if CONF_WITH_MIDI_ACIA
@@ -56,7 +75,8 @@ LONG bcostat3(void)
 #endif
 }
 
-/* send a byte to the MIDI ACIA */
+
+/* send a byte to the MIDI  */
 LONG bconout3(WORD dev, WORD c)
 {
     while(!bcostat3())
@@ -73,6 +93,7 @@ LONG bconout3(WORD dev, WORD c)
 #endif
 }
 
+
 /*==== MIDI xbios function =========================================*/
 
 /* cnt = number of bytes to send less one
@@ -88,22 +109,3 @@ void midiws(WORD cnt, const UBYTE *ptr)
     } while(cnt--);
 }
 
-
-/*==== midi_init - initialize the MIDI acia ==================*/
-/*
- *  Enable receive interrupts, set the clock for 31.25 kbaud
- */
-void midi_init(void)
-{
-#if CONF_WITH_MIDI_ACIA
-    /* initialize midi ACIA */
-    midi_acia.ctrl = ACIA_RESET;    /* master reset */
-
-    midi_acia.ctrl = ACIA_RIE|      /* enable RxINT */
-                     ACIA_RLTID|    /* RTS low, TxINT disabled */
-                     ACIA_DIV16|    /* clock/16 */
-                     ACIA_D8N1S;    /* 8 bit, 1 stop, no parity */
-#elif defined(FOENIX_WITH_MIDI)
-    a2560_bios_midi_init();
-#endif
-}
