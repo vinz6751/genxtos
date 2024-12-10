@@ -9,8 +9,10 @@
 # include "screen.h"
 #endif
 #include "tosvars.h"
+#include "vbl.h"
 #include "videl.h"
 
+extern PFVOID vbl_list[8]; /* Default array for the vblqueue TOS variable */
 
 // These are separate functions for clarity, but GCC will inline them.
 static void dump_screen(void);
@@ -20,6 +22,21 @@ static void process_vbl_queue(void);;
 
 // Doesn't need to be shared with anything (i.e put in a .h file), that's only called from vectors.S
 void vbl_handler(void);
+
+
+// Initialise the VBL stuff
+void vbl_init(void) {
+    nvbls = ARRAY_SIZE(vbl_list);
+    vblqueue = vbl_list;
+    {
+        int i;
+        for(i = 0 ; i < nvbls ; i++) {
+            vbl_list[i] = NULL;
+        }
+    }
+
+}
+
 
 // C-side part of the VBL handling called from int_vbl
 void vbl_handler(void) {

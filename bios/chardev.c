@@ -62,7 +62,7 @@ LONG charout_dummy(WORD dev,WORD b)
 
 void chardev_init(void)
 {
-int i;
+    int i;
 
     /* initialise bios device vectors */
     for (i = 0; i < NUM_CHAR_VECS; i++)

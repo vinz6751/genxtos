@@ -53,14 +53,14 @@ void calibration_timer(void);
  * an early init is to be able to use the Falcon SCC early for debugging
  * purposes.
  */
-void init_delay(void)
+void delay_init(void)
 {
 #ifdef __mcoldfire__
     /*
       For ColdFire, we don't know cookie_mcf.sysbus_frequency at this point.
       We know it will be between 100 and 133 MHz. Since also at this point
       it is okay for the loop time to be approximate, we just use 133 MHz
-      here and set the correct value later in calibrate_delay() below.
+      here and set the correct value later in delay_calibrate() below.
     */
 
     loopcount_1_msec = 133UL * 1000;
@@ -93,7 +93,7 @@ void init_delay(void)
     }
 #endif
 
-    KDEBUG(("init_delay loopcount_1_msec=%ld\n", loopcount_1_msec));
+    KDEBUG(("delay_init loopcount_1_msec=%ld\n", loopcount_1_msec));
 }
 
 /*
@@ -105,10 +105,10 @@ void init_delay(void)
  * NOTE3: ColdFire systems are not calibrated, since there is no
  *        independent clock that can be used to measure time
  */
-void calibrate_delay(void)
+void delay_calibrate(void)
 {
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
-    a2560_bios_calibrate_delay(CALIBRATION_TIME * loopcount_1_msec);
+    a2560_bios_delay_calibrate(CALIBRATION_TIME * loopcount_1_msec);
 #elif CONF_WITH_MFP
     ULONG loopcount, intcount;
 
@@ -141,5 +141,5 @@ void calibrate_delay(void)
     KDEBUG(("Warning: loopcount_1_msec isn't calibrated.\n"));
 #endif
 
-    KDEBUG(("calibrate_delay loopcount_1_msec=%ld\n", loopcount_1_msec));
+    KDEBUG(("delay_calibrate loopcount_1_msec=%ld\n", loopcount_1_msec));
 }

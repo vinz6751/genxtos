@@ -26,7 +26,7 @@ extern ULONG loopcount_1_msec;
 /*
  * function prototypes
  */
-void init_delay(void);
-void calibrate_delay(void);
+void delay_init(void);
+void delay_calibrate(void);
 
 #endif  /* _DELAY_H */

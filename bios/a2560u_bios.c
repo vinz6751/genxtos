@@ -345,7 +345,7 @@ uint32_t calibration_loop_count;
 void a2560_bios_irq_calibration(void);
 void a2560_run_calibration(void);
 
-void a2560_bios_calibrate_delay(uint32_t calibration_time)
+void a2560_bios_delay_calibrate(uint32_t calibration_time)
 {
     uint16_t masks[IRQ_GROUPS];
     uint32_t old_timer_vector;
@@ -353,7 +353,7 @@ void a2560_bios_calibrate_delay(uint32_t calibration_time)
     calibration_interrupt_count = 0;
     calibration_loop_count = calibration_time;
 
-    a2560_debugnl("a2560_bios_calibrate_delay(0x%ld)", calibration_time);
+    a2560_debugnl("a2560_bios_delay_calibrate(0x%ld)", calibration_time);
     /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
 
     /* Backup all interrupts masks because a2560_run_calibration will mask everything. We'll need to restore */

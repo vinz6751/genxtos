@@ -62,6 +62,7 @@
 #include "nova.h"
 #include "timer.h"
 #include "tosvars.h"
+#include "vbl.h"
 #include "amiga.h"
 #include "lisa.h"
 #include "coldfire.h"
@@ -216,7 +217,6 @@ void vecs_init(void)
 #endif
 }
 
-extern PFVOID vbl_list[8]; /* Default array for vblqueue */
 
 /*
  * Initialize the BIOS
@@ -255,9 +255,22 @@ static void bios_init(void)
     KDEBUG(("vecs_init()\n"));
     vecs_init();
 
+    /* Initialize the MFP, this ensures their IRQs are disabled */
+#if CONF_WITH_MFP
+    KDEBUG(("mfp_init()\n"));
+    mfp_init();
+#endif
+#if CONF_WITH_TT_MFP
+    if (has_tt_mfp)
+    {
+        KDEBUG(("mfptt_init()\n"));
+        mfptt_init();
+    }
+#endif
+
     /* Set 'reasonable' default values for delay */
-    KDEBUG(("init_delay()\n"));
-    init_delay();
+    KDEBUG(("delay_init()\n"));
+    delay_init();
 
     /* Detect optional hardware (video, sound, etc.) */
     KDEBUG(("machine_detect()\n"));
@@ -297,9 +310,6 @@ static void bios_init(void)
     KDEBUG(("fill_cookie_jar()\n"));
     fill_cookie_jar();  /* detect hardware features and fill the cookie jar */
 
-    KDEBUG(("font_init()\n"));
-    font_init();        /* initialize font ring (requires cookie_akp) */
-
 #if CONF_WITH_BLITTER
     /*
      * If a PAK 68/3 is installed, the blitter cannot access the PAK ROMs.
@@ -317,18 +327,7 @@ static void bios_init(void)
      * respective interrupts are disabled.
      */
 
-#if CONF_WITH_MFP
-    KDEBUG(("mfp_init()\n"));
-    mfp_init();
-#endif
 
-#if CONF_WITH_TT_MFP
-    if (has_tt_mfp)
-    {
-        KDEBUG(("mfptt_init()\n"));
-        mfptt_init();
-    }
-#endif
 
 #if CONF_WITH_SCC
     if (has_scc)
@@ -355,6 +354,10 @@ static void bios_init(void)
      */
     KDEBUG(("screen_init_address()\n"));
     screen_init_address();
+
+    /* Initialise the font list (requires cookie jar to be ready as it uses _AKP) */
+    KDEBUG(("font_init()\n"));
+    font_init();
 
     KDEBUG(("vt52_init()\n"));
     vt52_init();        /* initialize the vt52 console */
@@ -383,19 +386,13 @@ static void bios_init(void)
 
     /* setup default VBL queue with vbl_list[] */
     KDEBUG(("VBL queue\n"));
-    nvbls = ARRAY_SIZE(vbl_list);
-    vblqueue = vbl_list;
-    {
-        int i;
-        for(i = 0 ; i < nvbls ; i++) {
-            vbl_list[i] = NULL;
-        }
-    }
+    vbl_init();
 
    /* Initialize the RS-232 port(s) */
     KDEBUG(("chardev_init()\n"));
     chardev_init();     /* Initialize low-memory bios vectors */
     boot_status |= CHARDEV_AVAILABLE;   /* track progress */
+
     KDEBUG(("init_serport()\n"));
     init_serport();
     boot_status |= RS232_AVAILABLE;     /* track progress */
@@ -466,8 +463,8 @@ static void bios_init(void)
     /* Enable 50 Hz processing */
     timer_start_20ms_routine();
 
-    KDEBUG(("calibrate_delay()\n"));
-    calibrate_delay();  /* determine values for delay() function */
+    KDEBUG(("delay_calibrate()\n"));
+    delay_calibrate();  /* determine values for delay() function */
                         /*  - requires interrupts to be enabled  */
 
     /* Initialize the DSP.  Since we currently use the system timer

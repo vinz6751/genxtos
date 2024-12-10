@@ -52,7 +52,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
 
 /* Timing stuff */
 #define HZ200_TIMER_NUMBER 2
-void a2560_bios_calibrate_delay(uint32_t calibration_time);
+void a2560_bios_delay_calibrate(uint32_t calibration_time);
 void a2560_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *vector);
 
 /* Console support mode */
