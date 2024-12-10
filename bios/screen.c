@@ -20,7 +20,7 @@
 #include "bios.h"
 #include "biosmem.h"
 #include "has.h"
-#include "linea.h" // linea_set_screen_shift
+#include "linea.h" // V_REZ_HZ / V_REZ_VT
 #include "screen.h"
 #include "tosvars.h"
 #include "vt52.h"
