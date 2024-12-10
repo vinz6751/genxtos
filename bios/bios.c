@@ -255,26 +255,13 @@ static void bios_init(void)
     KDEBUG(("vecs_init()\n"));
     vecs_init();
 
-    /* Initialize the MFP, this ensures their IRQs are disabled */
-#if CONF_WITH_MFP
-    KDEBUG(("mfp_init()\n"));
-    mfp_init();
-#endif
-#if CONF_WITH_TT_MFP
-    if (has_tt_mfp)
-    {
-        KDEBUG(("mfptt_init()\n"));
-        mfptt_init();
-    }
-#endif
-
     /* Set 'reasonable' default values for delay */
     KDEBUG(("delay_init()\n"));
     delay_init();
 
     /* Detect optional hardware (video, sound, etc.) */
     KDEBUG(("machine_detect()\n"));
-    machine_detect();   /* detect hardware */
+    machine_detect();
     
     /* Initialise machine-specific stuff */
     KDEBUG(("machine_init()\n"));
@@ -369,9 +356,7 @@ static void bios_init(void)
     display_startup_msg();
 
 #if DETECT_NATIVE_FEATURES
-    /*
-     * Tell ARAnyM where the LineA variables are
-     */
+    /* Tell ARAnyM where the LineA variables are */
     nf_setlinea();
 #endif
 
@@ -384,7 +369,7 @@ static void bios_init(void)
     etv_term = just_rts;
     swv_vec = just_rts;
 
-    /* setup default VBL queue with vbl_list[] */
+    /* Setup VBL queue */
     KDEBUG(("VBL queue\n"));
     vbl_init();
 
