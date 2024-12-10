@@ -251,16 +251,21 @@ static void bios_init(void)
 #endif
     KDEBUG(("Address Bus width is %d-bit\n", IS_BUS32 ? 32 : 24));
 
+    /* Setup all exception vectors (above) */
     KDEBUG(("vecs_init()\n"));
-    vecs_init();        /* setup all exception vectors (above) */
+    vecs_init();
+
+    /* Set 'reasonable' default values for delay */
     KDEBUG(("init_delay()\n"));
-    init_delay();       /* set 'reasonable' default values for delay */
+    init_delay();
 
     /* Detect optional hardware (video, sound, etc.) */
     KDEBUG(("machine_detect()\n"));
     machine_detect();   /* detect hardware */
+    
+    /* Initialise machine-specific stuff */
     KDEBUG(("machine_init()\n"));
-    machine_init();     /* initialise machine-specific stuff */
+    machine_init();
 
     /* Initialize the BIOS memory management */
     KDEBUG(("bmem_init()\n"));
