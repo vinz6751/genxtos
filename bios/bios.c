@@ -251,7 +251,7 @@ static void bios_init(void)
 #endif
     KDEBUG(("Address Bus width is %d-bit\n", IS_BUS32 ? 32 : 24));
 
-    /* Setup all exception vectors (above) */
+    /* Setup all CPU exception vectors */
     KDEBUG(("vecs_init()\n"));
     vecs_init();
 
@@ -292,10 +292,11 @@ static void bios_init(void)
     }
 #endif /* CONF_WITH_68040_PMMU */
 
+    /* Setup and fill the cookie jar */
     KDEBUG(("cookie_init()\n"));
-    cookie_init();      /* sets a cookie jar */
+    cookie_init();
     KDEBUG(("fill_cookie_jar()\n"));
-    fill_cookie_jar();  /* detect hardware features and fill the cookie jar */
+    fill_cookie_jar();
 
 #if CONF_WITH_BLITTER
     /*
@@ -309,13 +310,7 @@ static void bios_init(void)
         has_blitter = 0;
 #endif
 
-    /*
-     * Initialize MFP and SCC: among other things this ensures that the
-     * respective interrupts are disabled.
-     */
-
-
-
+    /* Initialize SCC: among other things this ensures that the interrupts are disabled. */
 #if CONF_WITH_SCC
     if (has_scc)
     {
@@ -324,21 +319,17 @@ static void bios_init(void)
     }
 #endif
 
-    /*
-     * Initialize the screen mode
-     * Must be done before calling linea_init().
-     */
+    /* Initialize the screen mode
+     * Must be done before calling linea_init(). */
     KDEBUG(("screen_init_mode()\n"));
     screen_init_mode(); /* detect monitor type, ... */
 
-    /* Set up the BIOS console output */
+    /* Set up the video system */
     KDEBUG(("linea_init()\n"));
     linea_init();       /* initialize screen related line-a variables */
 
-    /*
-     * Initialize the screen address
-     * Must be done after calling linea_init().
-     */
+    /* Initialize the screen address
+     * Must be done after calling linea_init(). */
     KDEBUG(("screen_init_address()\n"));
     screen_init_address();
 
@@ -346,13 +337,14 @@ static void bios_init(void)
     KDEBUG(("font_init()\n"));
     font_init();
 
+    /* Initialize the vt52 console */
     KDEBUG(("vt52_init()\n"));
-    vt52_init();        /* initialize the vt52 console */
+    vt52_init();
 
     /* Now kcprintf() will also send debug info to the screen */
     KDEBUG(("after vt52_init()\n"));
 
-    /* now we have output, let the user know we're alive */
+    /* Now we have output, let the user know we're alive */
     display_startup_msg();
 
 #if DETECT_NATIVE_FEATURES
@@ -373,7 +365,7 @@ static void bios_init(void)
     KDEBUG(("VBL queue\n"));
     vbl_init();
 
-   /* Initialize the RS-232 port(s) */
+   /* Initialize the character devices, RS-232 port(s) */
     KDEBUG(("chardev_init()\n"));
     chardev_init();     /* Initialize low-memory bios vectors */
     boot_status |= CHARDEV_AVAILABLE;   /* track progress */

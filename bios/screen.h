@@ -16,25 +16,7 @@
 
 #include "emutos.h"
 
-#define ST_VRAM_SIZE        32000UL
-#define FALCON_VRAM_SIZE    368640UL    /* 768x480x256 (including overscan) */
-
-#if CONF_WITH_ATARI_VIDEO
-
-#define VIDEOBASE_ADDR_HI   0xffff8201L
-#define VIDEOBASE_ADDR_MID  0xffff8203L
-#define VIDEOBASE_ADDR_LOW  0xffff820dL
-
-#define SYNCMODE            0xffff820aL
-
-#define ST_SHIFTER          0xffff8260L
-
-#define SPSHIFT             0xffff8266L
-
-
-#define FALCON_PALETTE_REGS 0xffff9800L
-
-/* palette color definitions */
+/* Standard palette colors (RGB 4 bits each) */
 
 #define RGB_BLACK     0x0000            /* ST(e) palette */
 #define RGB_BLUE      0x000f
@@ -53,10 +35,7 @@
 #define RGB_LTYELLOW  0x0ff3
 #define RGB_WHITE     0x0fff
 
-#endif /* CONF_WITH_ATARI_VIDEO */
 
-/* 16 color palette 0x0RGB format (4 bits per component) */
-extern const UWORD default_palette[];
 
 /* Called when we detect that a different monitor is plugged */
 void detect_monitor_change(void);

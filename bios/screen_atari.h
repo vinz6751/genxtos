@@ -5,10 +5,28 @@
 
 #if CONF_WITH_ATARI_VIDEO
 
+#define ST_VRAM_SIZE        32000UL
+#define FALCON_VRAM_SIZE    368640UL    /* 768x480x256 (including overscan) */
+
 #define STE_LINE_OFFSET     0xffff820fL /* additional registers in STe */
 #define STE_HORZ_SCROLL     0xffff8265L
 
 #define ST_PALETTE_REGS     0xffff8240L
+
+#define VIDEOBASE_ADDR_HI   0xffff8201L
+#define VIDEOBASE_ADDR_MID  0xffff8203L
+#define VIDEOBASE_ADDR_LOW  0xffff820dL
+
+#define SYNCMODE            0xffff820aL
+
+#define ST_SHIFTER          0xffff8260L
+
+#define SPSHIFT             0xffff8266L
+
+#define FALCON_PALETTE_REGS 0xffff9800L
+
+/* 16 color palette 0x0RGB format (4 bits per component) */
+extern const UWORD default_palette[];
 
 void screen_atari_init_mode(void);
 
