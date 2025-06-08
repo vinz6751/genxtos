@@ -2,7 +2,7 @@
  *  bios.c - C portion of BIOS initialization and front end
  *
  * Copyright (C) 2001 Lineo, Inc.
- * Copyright (C) 2001-2024 The EmuTOS development team
+ * Copyright (C) 2001-2025 The EmuTOS development team
  *
  * Authors:
  *  SCC     Steve C. Cavender
@@ -150,7 +150,6 @@ void vecs_init(void)
         do {
             *m68k_exception_vectors++ = (PFVOID)src++;
         } while (--i >= 0);
-
     }
 
     /* Initialize the 192 user exception vectors */
@@ -373,6 +372,10 @@ static void bios_init(void)
     KDEBUG(("init_serport()\n"));
     init_serport();
     boot_status |= RS232_AVAILABLE;     /* track progress */
+#if CONF_WITH_SCC
+    if (has_scc)
+        boot_status |= SCC_AVAILABLE;   /* track progress */
+#endif
 
     /*
      * Initialize the system 200 Hz timer (timer C on Atari hardware).
@@ -406,9 +409,30 @@ static void bios_init(void)
 
 #endif
 
-#if CONF_WITH_SCC
-    if (has_scc)
-        boot_status |= SCC_AVAILABLE;   /* track progress */
+#if defined(MACHINE_ARANYM) || defined(TARGET_1024)
+    /* ARAnyM 1.1.0 loads only the first half of 1024k ROMs.
+     * Detect this situation and warn the user.
+     * This method is ugly, but safe for releases as they are thoroughly tested.
+     */
+    if (IS_ARANYM && ULONG_AT(0x00e80000) == 0)
+    {
+        kcprintf(
+            "\r\n"
+            "ERROR: This 1024k ROM isn't supported by your ARAnyM version.\r\n"
+            "Please use etos512*.img instead, until next ARAnyM release.\r\n"
+        );
+
+        /* Don't use halt() on ARAnyM, as it causes an infinite loop
+           with the message: "STOPed with interrupts disabled, exiting;".
+           FIXME: Fix halt() instead.
+        */
+        for(;;)
+        {
+#if USE_STOP_INSN_TO_FREE_HOST_CPU
+            stop_until_interrupt();
+#endif
+        }
+    }
 #endif
 
     /*

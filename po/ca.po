@@ -1,50 +1,36 @@
-# Greek translation
-# George Nakos, ggn@atari.org, 2003.
-# Revision on 29-04-2005. After reading again what I did
-# in 2003, I would like to add the following disclaimer:
-# "I, George Nakos, don't use this translation at all, even
-# though I author it and support it (not so frequently). My
-# personal opinion is that most of the messages below translate
-# very poorly to Greek, even though they are gramatically and
-# syntax sound (typos excluded). My personal involvement with
-# the EMUTOS team is the inclusion of the Greek language on it,
-# with the hope of (EMUTOS) being used on a future computer, so
-# it'll have Greek support out of the box. This was done just
-# for completeness, so if another Greek user finds some of the
-# following strings incorrect or not to his liking, he should
-# feel free to modify them and correct any typos."
+# -*-C-*- I hate emacs po mode.
 #
-# Note that the CLI is deliberately left untranslated
+# ca.po: the catalan translations.
 #
 msgid ""
 msgstr ""
-"Last-Translator: Christos Tziotzis <ctziotzis@gmail.com>\n"
-"Language-Team: Greek\n"
+"Last-Translator: Dragan Rosu <midyex201@outlook.com>\n"
+"Language-Team: Catalan\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=cp737\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: bios/bios.c
 msgid "Memory test"
-msgstr " â¢œš®¦ª £¤ã£ª"
+msgstr "Prova de memòria"
 
 #: bios/bios.c
 msgid "complete"
-msgstr "¦¢¦¡¢¨éŸ¡œ"
+msgstr "completat"
 
 #: bios/bios.c
 msgid "aborted"
-msgstr "˜¡¬¨éŸ¡œ"
+msgstr "aturat"
 
 #: bios/bios.c
 msgid ""
 "System halted!\n"
 msgstr ""
-"’¦ ©ç©«£˜ §ášà©œ!\n"
+"Sistema aturat!\n"
 
 #: bios/initinfo.c
 msgid "GEMDOS drives"
-msgstr "Drives «¦¬ GEMDOS"
+msgstr "Unitats GEMDOS"
 
 #: bios/initinfo.c
 msgid "MB"
@@ -56,39 +42,39 @@ msgstr "KB"
 
 #: bios/initinfo.c
 msgid "EmuTOS Version"
-msgstr "ë¡›¦© EmuTOS"
+msgstr "Versió EmuTOS"
 
 #: bios/initinfo.c
 msgid "CPU type"
-msgstr "’ç§¦ª CPU"
+msgstr "Tipus CPU"
 
 #: bios/initinfo.c
 msgid "Machine"
-msgstr "“§¦¢¦š ©«ãª"
+msgstr "Màquina"
 
 #: bios/initinfo.c
 msgid "Boot time"
-msgstr "ğ¨˜ œ¡¡å¤©ª"
+msgstr "Temps d'arrencada"
 
 #: bios/initinfo.c
 msgid "Hold <Control> to skip AUTO/ACC"
-msgstr " â©«œ <Ctrl> š ˜ §˜¨á¡˜£¯ AUTO/ACC"
+msgstr "Sostén <Ctrl>: ometre AUTO/ACC"
 
 #: bios/initinfo.c
 msgid "Hold <Alternate> to skip HDD boot"
-msgstr " â©«œ <Alt> š ˜ §˜¨á¡˜£¯ HDD"
+msgstr "Sostén <Alt>: ometre arrencada disc dur"
 
 #: bios/initinfo.c
 msgid "Press key 'X' to boot from X:"
-msgstr " â©«œ X š ˜ œ¡¡å¤© ˜§æ X:"
+msgstr "'X' per arrencar des X:"
 
 #: bios/initinfo.c
 msgid "Press <Esc> to run an early console"
-msgstr " â©«œ <Esc> š ˜ ­æ¨«à© ¡¦¤©æ¢˜ª"
+msgstr "<Esc> per executar una consola"
 
 #: bios/initinfo.c
 msgid "Hold <Shift> to pause this screen"
-msgstr "˜«ã©«œ «¦ <Shift> š ˜ §˜ç©"
+msgstr "<Shift> per pausar aquesta pantalla"
 
 #: bios/kprint.c
 msgid ""
@@ -96,7 +82,7 @@ msgid ""
 "*** Press any key to continue ***"
 msgstr ""
 "\n"
-"***˜«ã©«œ â¤˜ §¢ã¡«¨¦ š ˜ ¤˜ ©¬¤œ®å©œ«œ***"
+"* Premeu qualsevol tecla per continuar *"
 
 #: bdos/osmem.c
 msgid ""
@@ -104,29 +90,29 @@ msgid ""
 "Use FOLDR100.PRG to get more.\n"
 "System halted!\n"
 msgstr ""
-"\033E ‚œ£á« £¤ã£.\n"
-"•¨© £¦§¦ ã©«œ «¦ FOLDR100.PRG š ˜ §œ¨ ©©æ«œ¨.\n"
-"ƒ ˜¡¦§ã ©¬©«ã£˜«¦ª\n"
+"\033ESense memòria interna.\n"
+"Utilitzeu FOLDR100.PRG per\n"
+"obtenir més. Sistema aturat!\n"
 
 #: aes/gem_rsc.c
 msgid "Selection: ________.___"
-msgstr "„§ ¢¦šã: ________.___"
+msgstr "Selecció: ________.___"
 
 #: aes/gem_rsc.c
 msgid "Directory:"
-msgstr "‰˜«á¢¦š¦ª:"
+msgstr "Directori:"
 
 #: aes/gem_rsc.c desk/desk_rsc.c
 msgid "Drive:"
-msgstr "ƒå©¡¦ª:"
+msgstr "Unitat:"
 
 #: aes/gem_rsc.c desk/desk_rsc.c
 msgid "OK"
-msgstr "‰"
+msgstr "D'acord"
 
 #: aes/gem_rsc.c desk/desk_rsc.c
 msgid "Cancel"
-msgstr "ê¡¬¨¦"
+msgstr "Cancel·la"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -134,9 +120,9 @@ msgid "[1]["
 "physically write-protected.]"
 "[Cancel|Retry]"
 msgstr "[1]["
-"† › ©¡â«˜ ©«¦¤ ›å©¡¦ %c:|"
-"œå¤˜  §¨¦©«˜«œ¬£â¤.]"
-"[ê¡¬¨¦|„§˜¤á¢¯]"
+"El disc d'unitat %c: està|"
+"físicament protegit.]"
+"[Cancel·la|Reintenta]"
 
 #: aes/gem_rsc.c
 msgid "[2]["
@@ -145,10 +131,9 @@ msgid "[2]["
 "or insert a disk.]"
 "[Cancel|Retry]"
 msgstr "[2]["
-" ›å©¡¦ª %c ›œ¤ ˜§¦¡¨å¤œ«˜ .|"
-"˜¨˜¡˜¢é œ¢âš¥«â «¦¤ ¦›šæ ã|"
-"œ ©ášœ«œ £ ˜ › ©¡â«˜.]"
-"[ê¡¬¨¦|„§˜¤á¢¯]"
+"Unitat %c: no respon. Comproveu|"
+"l'unitat de disc o inseriu disc.]"
+"[Cancel·la|Reintenta]"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -156,9 +141,9 @@ msgid "[1]["
 "may be damaged.]"
 "[Cancel|Retry]"
 msgstr "[1]["
-"’˜ ›œ›¦£â¤˜ ©«¦ ›å©¡¦ %c:|"
-"£§¦¨œå ¤˜ œå¤˜  ¡˜«œ©«¨˜££â¤˜.]"
-"[ê¡¬¨¦|„§˜¤á¢¯]"
+"Dades de disc d'unitat %c:|"
+"poden estar danyades.]"
+"[Cancel·la|Reintenta]"
 
 #: aes/gem_rsc.c
 msgid "[2]["
@@ -166,10 +151,9 @@ msgid "[2]["
 "data on the disk in drive %c:.]"
 "[Cancel|Retry]"
 msgstr "[2]["
-"† œ­˜¨£¦šã ›œ¤ £§¦¨œå ¤˜|"
-"› ˜™á©œ  «˜ ›œ›¦£â¤˜ ©«¦|"
-"›å©¡¦ %c:.]"
-"[ê¡¬¨¦|„§˜¤á¢¯]"
+"Aquesta aplicació no pot llegir|"
+"dades al disc d'unitat %c:.]"
+"[Cancel·la|Reintenta]"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -177,9 +161,9 @@ msgid "[1]["
 "receiving data.]"
 "[Cancel|Retry]"
 msgstr "[1]["
-"† ©¬©¡œ¬ã œ¥æ›¦¬ ©˜ª ›œ¤|"
-"¢˜£™á¤œ  ›œ›¦£â¤˜]"
-"[ê¡¬¨¦|„§˜¤á¢¯]"
+"Teu dispositiu de sortida|"
+"no rep dades.]"
+"[Cancel·la|Reintenta]"
 
 #: aes/gem_rsc.c
 msgid "[3]["
@@ -188,10 +172,10 @@ msgid "[3]["
 "Development Team.]"
 "[Cancel]"
 msgstr "[3]["
-"˜¨¦¬© á©«¡œ ©­á¢£˜ ©«¦ GEM.|"
-"˜¨˜¡˜¢¦ç£œ œ§ ¡¦ ¤à¤ã©«œ £œ|"
-"«¤ ¦£á›˜ ˜¤á§«¬¥ª «¦¬ EmuTOS.]"
-"[ê¡¬¨¦]"
+"S'ha produït un error a GEM.|"
+"Contacta amb l'equip de|"
+"desenvolupament d'EmuTOS.]"
+"[Cancel·la]"
 
 #: aes/gem_rsc.c
 msgid "[2]["
@@ -200,10 +184,11 @@ msgid "[2]["
 "you just tried to access.]"
 "[  OK  ]"
 msgstr "[2]["
-"† œ­˜¨£¦šã ›œ¤ ™¨ã¡œ|"
-"«¦ ­á¡œ¢¦ ã «¦ ˜¨®œå¦ §¦¬|"
-"§¨¦©§˜Ÿã©˜«œ ¤˜ ˜¤¦å¥œ«œ]"
-"[  ‰  ]"
+"Aquesta aplicació no pot|"
+"trobar la carpeta o fitxer|"
+"a qual acabes d'intentar|"
+"accedir.]"
+"[D'acord]"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -214,11 +199,11 @@ msgid "[1]["
 "you do not need.]"
 "[  OK  ]"
 msgstr "[1]["
-"€¬«ã  œ­˜¨£¦šã ›œ¤ â®œ |"
-"˜¨¡œ«æ ®é¨¦ š ˜ á¢¢¦ âšš¨˜­¦.|"
-"¡¢œå©«œ æ§¦ ¦ âšš¨˜­¦ ›œ¤|"
-"®¨œ áœ©«œ.]"
-"[‰]"
+"Aquesta aplicació no té espai|"
+"per obrir altre document. Per|"
+"fer espai, tanca qualsevol|"
+"document que no necessita.]"
+"[D'acord]"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -228,11 +213,11 @@ msgid "[1]["
 "is set to Read Only status.]"
 "[  OK  ]"
 msgstr "[1]["
-"“§á¨®œ  ã› ˜¤« ¡œå£œ¤¦|"
-"£œ ˜¬«æ «¦ æ¤¦£˜ ©«¦¤ ¡˜«á¢¦š¦|"
-"ã â®œ  ¦¨ ©«œå ©œ ¡˜«á©«˜©|"
-"£æ¤¦ š ˜ ˜¤áš¤à©]"
-"[‰]"
+"Un element amb aquest nom|"
+"ja existeix al directori o|"
+"aquest element està configurat|"
+"en estat de Només lectura.]"
+"[D'acord]"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -240,9 +225,9 @@ msgid "[1]["
 "does not exist.]"
 "[Cancel]"
 msgstr "[1]["
-" ›å©¡¦ª §¦¬ ¦¨å©˜«œ|"
-"›œ¤ ¬§á¨®œ .]"
-"[ê¡¬¨¦]"
+"L'unitat que heu|"
+"especificat no existeix.]"
+"[Cancel·la]"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -252,26 +237,26 @@ msgid "[1]["
 "to run.]"
 "[  OK  ]"
 msgstr "[1]["
-"ƒœ¤ â®œ«œ ˜¨¡œ«ã £¤ã£ š ˜|"
-"¤˜ œ¡«œ¢â©œ«œ «¤ œ­˜¨£¦šã.]"
-"[‰]"
+"No hi ha prou memòria|"
+"a ordinador per a l'aplicació|"
+"que acaba d'intentar executar.]"
+"[D'acord]"
 
 #: aes/gem_rsc.c
 msgid "[3]["
 "TOS error #%u.]"
 "[Cancel]"
 msgstr "[3]["
-"TOS error #%u.]"
-"[ê¡¬¨¦]"
+"Error TOS #%u.]"
+"[Cancel·la]"
 
 #: aes/gem_rsc.c
 msgid "[3]["
 "Unsupported AES function #%d.]"
 "[Cancel]"
 msgstr "[3]["
-"‹ ¬§¦©«¨ æ£œ¤|"
-"¢œ «¦¬¨šå˜ AES #%d.]"
-"[ê¡¬¨¦]"
+"Funció AES no compatible #%d.]"
+"[Cancel·la]"
 
 #: aes/gem_rsc.c
 msgid "[1]["
@@ -279,265 +264,265 @@ msgid "[1]["
 "this directory]"
 "[  OK  ]"
 msgstr "[1]["
-"ƒœ¤ œ§˜¨¡œå  £¤ã£ š ˜|"
-"˜¬«æ¤ «¦¤ ¡˜«á¢¦š¦]"
-"[  ‰  ]"
+"No hi ha prou memòria|"
+"per a  aquest directori]"
+"[D'acord]"
 
 #: aes/gem_rsc.c
 msgid "ITEM SELECTOR"
-msgstr "„ˆŠ‚„€‘ €•„ˆ—Œ"
+msgstr "SELECTOR D'ELEMENTS"
 
 #: desk/desk_rsc.c
 msgid "Name: ________.___"
-msgstr "î¤¦£˜: ________.___"
+msgstr "Nom: ________.___"
 
 #: desk/desk_rsc.c
 msgid "Number of folders:         _____"
-msgstr "€¨ Ÿ£æª ­˜¡â¢à¤:         _____"
+msgstr " Nombre de carpetes:       _____"
 
 #: desk/desk_rsc.c
 msgid "Number of files:         _____"
-msgstr "€¨ Ÿ£æª ˜¨®œåà¤:         _____"
+msgstr "Nombre de fitxers:       _____"
 
 #: desk/desk_rsc.c
 msgid "Skip"
-msgstr "˜¨á™¢œ¯"
+msgstr "Salta"
 
 #: desk/desk_rsc.c
 msgid "Install"
-msgstr "„š¡˜«á©«˜©"
+msgstr "Instal·la"
 
 #: desk/desk_rsc.c
 msgid "Remove"
-msgstr "€­˜å¨œ©"
+msgstr "Elimina"
 
 #: desk/desk_rsc.c
 msgid "Yes"
-msgstr "Œ˜ "
+msgstr "Sí"
 
 #: desk/desk_rsc.c
 msgid "No"
-msgstr "î® "
+msgstr "No"
 
 #: desk/desk_rsc.c
 msgid "Size:   __________"
-msgstr "‹âšœŸ¦ª:   __________"
+msgstr "Mida:   __________"
 
 #: desk/desk_rsc.c
 msgid "Date:   __________"
-msgstr "†£/¤å˜:   __________"
+msgstr "Data:   __________"
 
 #: desk/desk_rsc.c
 msgid "Time:   __:__ __  "
-msgstr "ğ¨˜:   __:__ __  "
+msgstr "Hora:   __:__ __  "
 
 #: desk/desk_rsc.c
 msgid "Drive identifier:  _           "
-msgstr "’˜¬«æ««˜ ›å©¡¦¬:  _           "
+msgstr " Identif. d'unitat: _          "
 
 #: desk/desk_rsc.c
 msgid "Disk label:  ________.___"
-msgstr "„« ¡â«˜ ›å©¡¦¬:  ________.___"
+msgstr "Etiqueta de disc:________.___"
 
 #: desk/desk_rsc.c
 msgid "Bytes used:    __________"
-msgstr "Bytes ©œ ®¨ã©:    __________"
+msgstr "Bytes utilitzats:  __________"
 
 #: desk/desk_rsc.c
 msgid "Bytes available:    __________"
-msgstr "ƒ ˜Ÿâ© £˜ bytes:    __________"
+msgstr "Bytes disponibiles:  __________"
 
 #: desk/desk_rsc.c
 msgid "Identifier: _:"
-msgstr "€¤˜š¤à¨ ©« ¡æ: _:"
+msgstr "Identificador: _:"
 
 #: desk/desk_rsc.c
 msgid "Label: ____________"
-msgstr "„« ¡â«˜: ____________"
+msgstr "Etiqueta: ____________"
 
 #: desk/desk_rsc.c
 msgid "Application name: ________.___"
-msgstr "î¤¦£˜ œ­˜¨£¦šãª: ________.___"
+msgstr "Nom d'aplicació: ________.___"
 
 #: desk/desk_rsc.c
 msgid "Arguments: ___________"
-msgstr "˜¨á£œ«¨¦ : ___________"
+msgstr "Arguments: ___________"
 
 #: desk/desk_rsc.c
 msgid "Document type: ___"
-msgstr "’ç§¦ª œšš¨á­¦¬: ___"
+msgstr "Tipus de document: ___"
 
 #: desk/desk_rsc.c
 msgid "Install as: F__"
-msgstr "„š¡˜«á©«˜© àª: F__"
+msgstr "Instal·la com: F__"
 
 #: desk/desk_rsc.c
 msgid "Current name: ________.___"
-msgstr "’à¨ ¤æ æ¤¦£˜: ________.___"
+msgstr "Nom actual:   ________.___"
 
 #: desk/desk_rsc.c
 msgid "Copy's name: ________.___"
-msgstr "î¤¦£˜ ˜¤« š¨á­¦¬: ________.___"
+msgstr "Nom de còpia: ________.___"
 
 #: desk/desk_rsc.c
 msgid "Key: ^_"
-msgstr "‰¢œ ›å: ^_"
+msgstr "Tecla: ^_"
 
 #: desk/desk_rsc.c
 msgid "Free RAM: _____________________"
-msgstr "„¢œçŸœ¨ RAM _____________________"
+msgstr "RAM lliure: _____________________"
 
 #: desk/desk_rsc.c
 msgid "Label: ________.___"
-msgstr "„« ¡â«˜: ________.___"
+msgstr "Etiqueta: ________.___"
 
 #: desk/desk_rsc.c
 msgid " Desk "
-msgstr " Desk "
+msgstr " Escriptori "
 
 #: desk/desk_rsc.c
 msgid " File "
-msgstr " €¨®œå¦ "
+msgstr " Fitxer "
 
 #: desk/desk_rsc.c
 msgid " View "
-msgstr " ¨¦™¦¢ã "
+msgstr " Vista "
 
 #: desk/desk_rsc.c
 msgid " Options "
-msgstr " „§ ¢¦šâª "
+msgstr " Opcions "
 
 #: desk/desk_rsc.c
 msgid "  Desktop info..."
-msgstr "  ¢¨¦­¦¨åœª Desktop..."
+msgstr "  Info d'esciptori..."
 
 #: desk/desk_rsc.c
 msgid "  Open"
-msgstr "  ê¤¦ š£˜"
+msgstr "  Obre"
 
 #: desk/desk_rsc.c
 msgid "  Info/Rename..."
-msgstr "  ¢¨¦­¦¨åœª/‹œ«¦¤¦£˜©å˜..."
+msgstr "  Info/Canvia nom..."
 
 #: desk/desk_rsc.c
 msgid "  Search..."
-msgstr "  €¤˜ã«©..."
+msgstr "  Cerca..."
 
 #: desk/desk_rsc.c
 msgid "  New folder..."
-msgstr "  Œâ¦ª ­á¡œ¢¦ª..."
+msgstr "  Carpeta nova..."
 
 #: desk/desk_rsc.c
 msgid "  Close folder"
-msgstr "  ‰¢œå© £¦ ­˜¡â¢¦¬"
+msgstr "  Tanca carpeta"
 
 #: desk/desk_rsc.c
 msgid "  Close top window"
-msgstr "  ‰¢œå© £¦ §˜¨˜Ÿç¨¦¬"
+msgstr "  Tanca finestra superior"
 
 #: desk/desk_rsc.c
 msgid "  Cycle windows"
-msgstr "  „§æ£œ¤¦ §˜¨áŸ¬¨¦"
+msgstr "  Cicla finestres"
 
 #: desk/desk_rsc.c
 msgid "  Select all items"
-msgstr "  „§ ¢¦šã æ¢à¤"
+msgstr "  Selecciona tots elements"
 
 #: desk/desk_rsc.c
 msgid "  Set file mask..."
-msgstr "  ¨ ©£æª £á©¡˜ª ˜¨®œå¦¬..."
+msgstr "  Màscara de fitxer..."
 
 #: desk/desk_rsc.c
 msgid "  Delete..."
-msgstr "  ƒ ˜š¨˜­ã..."
+msgstr "  Suprimeix..."
 
 #: desk/desk_rsc.c
 msgid "  Format floppy..."
-msgstr "  ƒ ˜£æ¨­à© › ©¡â«˜ª.."
+msgstr "  Formata disquet..."
 
 #: desk/desk_rsc.c
 msgid "  Eject floppy"
-msgstr "  „¥˜šàšã › ©¡â«˜ª"
+msgstr "  Expulsa disquet"
 
 #: desk/desk_rsc.c
 msgid "  Execute EmuCON"
-msgstr "  „¡«â¢œ© EmuCON"
+msgstr "  Executa EmuCON"
 
 #: desk/desk_rsc.c
 msgid "  Shutdown"
-msgstr "  ’œ¨£˜« ©£æª"
+msgstr "  Apaga"
 
 #: desk/desk_rsc.c
 msgid "  Show as icons"
-msgstr "  „£­á¤ © àª œ ¡¦¤å› ˜"
+msgstr "  Mostra com a icones"
 
 #: desk/desk_rsc.c
 msgid "  Show as text"
-msgstr "  „£­á¤ © àª ¡œå£œ¤¦"
+msgstr "  Mostra com a text"
 
 #: desk/desk_rsc.c
 msgid "  Sort by name"
-msgstr "  ’˜¥ ¤æ£© ¡˜«á æ¤¦£˜"
+msgstr "  Ordena per nom"
 
 #: desk/desk_rsc.c
 msgid "  Sort by type"
-msgstr "  ’˜¥ ¤æ£© ¡˜«á «ç§¦"
+msgstr "  Ordena per tipus"
 
 #: desk/desk_rsc.c
 msgid "  Sort by size"
-msgstr "  ’˜¥ ¤æ£© ¡˜«á £âšœŸ¦ª"
+msgstr "  Ordena per mida"
 
 #: desk/desk_rsc.c
 msgid "  Sort by date"
-msgstr "  ’˜¥ ¤æ£© ¡˜«á £œ¨¦£¤å˜"
+msgstr "  Ordena per data"
 
 #: desk/desk_rsc.c
 msgid "  No sort"
-msgstr "  •à¨åª «˜¥ ¤æ£©"
+msgstr "  No ordena"
 
 #: desk/desk_rsc.c
 msgid "  Size to fit"
-msgstr "  €¬«æ£˜«¦ £âšœŸ¦ª"
+msgstr "  Adapta mida"
 
 #: desk/desk_rsc.c
 msgid "  Set background..."
-msgstr "  ¨ ©£æª ­æ¤«¦¬..."
+msgstr "  Estableix fons..."
 
 #: desk/desk_rsc.c
 msgid "  Install icon..."
-msgstr "  „š¡˜«á©«˜© œ ¡¦¤ ›å¦¬..."
+msgstr "  Instal·la icona..."
 
 #: desk/desk_rsc.c
 msgid "  Install application..."
-msgstr "  „š¡˜«á©«˜© œ­˜¨£¦šãª..."
+msgstr "  Instal·la aplicació..."
 
 #: desk/desk_rsc.c
 msgid "  Install devices"
-msgstr "  „š¡˜«á©«˜© ©¬©¡œ¬é¤"
+msgstr "  Instal·la dispositius"
 
 #: desk/desk_rsc.c
 msgid "  Remove desktop icon"
-msgstr "  ƒ ˜š¨˜­ã œ ¡¦¤ ›å¦¬"
+msgstr "  Elimina icona d'escriptori"
 
 #: desk/desk_rsc.c
 msgid "  Set preferences..."
-msgstr "  ¨¦« £ã©œ ª..."
+msgstr "  Estableix preferències..."
 
 #: desk/desk_rsc.c
 msgid "  Desktop configuration..."
-msgstr "  ƒ ˜£æ¨­à© Desktop..."
+msgstr "  Configuració d'escriptori..."
 
 #: desk/desk_rsc.c
 msgid "  Change resolution..."
-msgstr "  €¢¢˜šã ˜¤á¢¬©ª..."
+msgstr "  Canvia resolució..."
 
 #: desk/desk_rsc.c
 msgid "  Read .INF file..."
-msgstr "  €¤áš¤à© ˜¨®œå¦¬ .INF..."
+msgstr "  Llegeix fitxer .INF..."
 
 #: desk/desk_rsc.c
 msgid "  Save desktop..."
-msgstr "  €§¦Ÿã¡œ¬© desktop..."
+msgstr "  Desa escriptori..."
 
 #: desk/desk_rsc.c
 msgid "  Blitter"
@@ -545,400 +530,400 @@ msgstr "  Blitter"
 
 #: desk/desk_rsc.c
 msgid "  Cache"
-msgstr "  ‹¤ã£ Cache"
+msgstr "  Memòria cau"
 
 #: desk/desk_rsc.c
 msgid "Read/Write"
-msgstr "Read/Write"
+msgstr "Lectura/escriptura"
 
 #: desk/desk_rsc.c
 msgid "Read-Only"
-msgstr "Read-Only"
+msgstr "Numés lectura"
 
 #: desk/desk_rsc.c
 msgid "DISK INFORMATION"
-msgstr "Š†”ˆ„‘ ƒˆ‘‰“"
+msgstr "INFORMACIó DE DISC"
 
 #: desk/desk_rsc.c
 msgid "Version"
-msgstr "ë¡›¦©"
+msgstr "Versió"
 
 #: desk/desk_rsc.c
 msgid "Copyright \275 2001-"
-msgstr "Copyright ½ 2001-"
+msgstr "Copyright © 2001-"
 
 #: desk/desk_rsc.c
 msgid "The EmuTOS development team"
-msgstr "† ¦£á›˜ ˜¤á§«¬¥ª «¦¬ EmuTOS"
+msgstr "L'equip de desenvolupament d'EmuTOS"
 
 #: desk/desk_rsc.c
 msgid "Based on 'GPLed' sources"
-msgstr "˜© ©£â¤¦ ©œ GPL source"
+msgstr "Basat en fonts de GPLades"
 
 #: desk/desk_rsc.c
 msgid "\275 1987 Digital Research, Inc."
-msgstr "½ 1987 Digital Research, Inc."
+msgstr "© 1987 Digital Research, Inc."
 
 #: desk/desk_rsc.c
 msgid "\275 1999 Caldera Thin Clients, Inc."
-msgstr "½ 1999 Caldera Thin Clients, Inc."
+msgstr "© 1999 Caldera Thin Clients, Inc."
 
 #: desk/desk_rsc.c
 msgid "\275 2001 Lineo, Inc."
-msgstr "½ 2001 Lineo, Inc."
+msgstr "© 2001 Lineo, Inc."
 
 #: desk/desk_rsc.c
 msgid "EmuTOS is distributed under the GPL"
-msgstr "’¦ EmuTOS › ˜¤â£œ«˜  ¬§æ « GPL"
+msgstr "EmuTOS es distribueix sota la GPL"
 
 #: desk/desk_rsc.c
 msgid "See doc\\license.txt for details"
-msgstr "ƒœå«œ «¦ doc\\licence.txt"
+msgstr "doc\\license.txt per més informació"
 
 #: desk/desk_rsc.c
 msgid "OPEN APPLICATION"
-msgstr "€Œˆ‚‹€ „”€‹‚†‘"
+msgstr "OBRE APLICACIó"
 
 #: desk/desk_rsc.c
 msgid "Parameters:"
-msgstr "˜¨á£œ«¨¦ :"
+msgstr "Paràmetres:"
 
 #: desk/desk_rsc.c
 msgid "INSTALL DESKTOP ICON"
-msgstr "„‚‰€’€‘’€‘† „ˆ‰Œˆƒˆ“"
+msgstr "INSTAL·LA ICONA D'ESCRIPTORI"
 
 #: desk/desk_rsc.c
 msgid "Item type:"
-msgstr "’ç§¦ª:"
+msgstr "Tipus d'element:"
 
 #: desk/desk_rsc.c
 msgid "Drive"
-msgstr "ƒå©¡¦ª"
+msgstr "Unitat"
 
 #: desk/desk_rsc.c
 msgid "Trash can"
-msgstr "‰á›¦ª"
+msgstr "Paperera"
 
 #: desk/desk_rsc.c
 msgid "Printer"
-msgstr "„¡«¬§à«ãª"
+msgstr "Impressora"
 
 #: desk/desk_rsc.c
 msgid "Icon:"
-msgstr "„ ¡¦¤å› ¦:"
+msgstr "Icona:"
 
 #: desk/desk_rsc.c
 msgid "INSTALL APPLICATION"
-msgstr "„‚‰€’€‘’€‘† „”€‹‚†‘"
+msgstr "INSTAL·LA APLICACIó"
 
 #: desk/desk_rsc.c
 msgid "Boot status:"
-msgstr "„¡¡å¤©:"
+msgstr "Estat d'arrenc.:"
 
 #: desk/desk_rsc.c
 msgid "Auto"
-msgstr "€¬«æ£˜«"
+msgstr "Auto"
 
 #: desk/desk_rsc.c
 msgid "Normal"
-msgstr "‰˜¤¦¤ ¡ã"
+msgstr "Normal"
 
 #: desk/desk_rsc.c
 msgid "Application type:"
-msgstr "’ç§¦ª œ­˜¨£¦šãª:"
+msgstr "Tipus d'aplicació:"
 
 #: desk/desk_rsc.c
 msgid "Default dir:"
-msgstr "‰˜«á¢¦š¦ª:"
+msgstr "Dir predeterm.:"
 
 #: desk/desk_rsc.c
 msgid "Application"
-msgstr "„­˜¨£¦šã"
+msgstr "Aplicació"
 
 #: desk/desk_rsc.c
 msgid "Window"
-msgstr "˜¨áŸ¬¨¦"
+msgstr "Finestra"
 
 #: desk/desk_rsc.c
 msgid "Parameter:"
-msgstr "˜¨á£œ«¨¦ª:"
+msgstr "Paràmetre:"
 
 #: desk/desk_rsc.c
 msgid "Full path"
-msgstr "ƒ ˜›¨¦£ã"
+msgstr "Camí compl."
 
 #: desk/desk_rsc.c
 msgid "File name"
-msgstr "€¨®œå¦"
+msgstr "Nom fitxer"
 
 #: desk/desk_rsc.c
 msgid "NAME CONFLICT DURING COPY"
-msgstr "‹ˆ Œ‹€ ‰€’€ ’†Œ €Œ’ˆ‚€”†"
+msgstr "CONFLICTE DE NOM DURANT CòPIA"
 
 #: desk/desk_rsc.c
 msgid "Stop"
-msgstr "‘«¦§"
+msgstr "Atura"
 
 #: desk/desk_rsc.c
 msgid "NEW FOLDER"
-msgstr "Œ„‘ ”€‰„Š‘"
+msgstr "CARPETA NOVA"
 
 #: desk/desk_rsc.c
 msgid "SEARCH FILE"
-msgstr "€Œ€…†’†‘† €•„ˆ“"
+msgstr "CERCA FITXER"
 
 #: desk/desk_rsc.c
 msgid "PRINT FILE"
-msgstr "„‰’“—‘† €•„ˆ“"
+msgstr "IMPRIMEIX FITXER"
 
 #: desk/desk_rsc.c
 msgid "SET PREFERENCES"
-msgstr "’ˆ‹†‘„ˆ‘"
+msgstr "ESTABLEIX PREFERENCIES"
 
 #: desk/desk_rsc.c
 msgid "Confirm deletes:"
-msgstr "„§ ™œ™˜åà© › ˜š¨˜­é¤:"
+msgstr "Confirma supressions:"
 
 #: desk/desk_rsc.c
 msgid "Confirm copies:"
-msgstr "„§ ™œ™˜åà© ˜¤« š¨˜­é¤:"
+msgstr "Confirma còpies:"
 
 #: desk/desk_rsc.c
 msgid "Confirm overwrites:"
-msgstr "„§ ™œ™˜åà© ˜¤« ¡˜«á©«˜©:"
+msgstr "Confirma sobreescritures:"
 
 #: desk/desk_rsc.c
 msgid "Double-click speed:"
-msgstr "’˜®ç««˜ › §¢¦ç ¡¢å¡:"
+msgstr "Velocitat de doble clic:"
 
 #: desk/desk_rsc.c
 msgid "Time format:"
-msgstr "‹¦¨­ã é¨˜ª:"
+msgstr "Format horari:"
 
 #: desk/desk_rsc.c
 msgid "Default"
-msgstr "¨¦œ§ ¢¦šã"
+msgstr "Predeterminat"
 
 #: desk/desk_rsc.c
 msgid "12H"
-msgstr "12—"
+msgstr "12 hores"
 
 #: desk/desk_rsc.c
 msgid "24H"
-msgstr "24—"
+msgstr "24 hores"
 
 #: desk/desk_rsc.c
 msgid "Date format:"
-msgstr "‹¦¨­ã £œ¨¦£¤å˜ª:"
+msgstr "Format de data:"
 
 #: desk/desk_rsc.c
 msgid "MDY"
-msgstr "‹†„"
+msgstr "MDA"
 
 #: desk/desk_rsc.c
 msgid "DMY"
-msgstr "†‹„"
+msgstr "DMA"
 
 #: desk/desk_rsc.c
 msgid "SET FILE MASK"
-msgstr "ˆ‘‹‘ ‹€‘‰€‘ €•„ˆ“"
+msgstr "ESTABLEIX MÀSCARA DE FITXER"
 
 #: desk/desk_rsc.c
 msgid "DESKTOP CONFIGURATION"
-msgstr "ƒˆ€‹”—‘† DESKTOP"
+msgstr "CONFIGURACIó D'ESCRIPTORI"
 
 #: desk/desk_rsc.c
 msgid "Function keys:"
-msgstr "¦Ÿ« ¡á §¢ã¡«¨˜:"
+msgstr "Tecles de funció:"
 
 #: desk/desk_rsc.c
 msgid "Menu shortcut keys:"
-msgstr "‘¬¤«¦£œç©œ ª £œ¤¦ç"
+msgstr "Tecles de drecera de menú:"
 
 #: desk/desk_rsc.c
 msgid "Clear all"
-msgstr "„¡¡˜Ÿá¨ © æ¢à¤"
+msgstr "Esborra tot"
 
 #: desk/desk_rsc.c
 msgid "SET SCREEN RESOLUTION"
-msgstr "€Œ€Š“‘† ‡Œ†‘"
+msgstr "ESTABLEIX RESOLUCIó DE PANTALLA"
 
 #: desk/desk_rsc.c
 msgid "ST Low"
-msgstr "ST Low"
+msgstr "ST baixa"
 
 #: desk/desk_rsc.c
 msgid "ST Medium"
-msgstr "ST Medium"
+msgstr "ST mitjà"
 
 #: desk/desk_rsc.c
 msgid "ST High"
-msgstr "ST High"
+msgstr "ST alta"
 
 #: desk/desk_rsc.c
 msgid "TT Low"
-msgstr "TT Low"
+msgstr "TT baixa"
 
 #: desk/desk_rsc.c
 msgid "TT Medium"
-msgstr "TT Medium"
+msgstr "TT mitjà"
 
 #: desk/desk_rsc.c
 msgid "High"
-msgstr "“¯¢ã"
+msgstr "Alta"
 
 #: desk/desk_rsc.c
 msgid "Medium"
-msgstr "‹œ©˜å˜"
+msgstr "Mitjà"
 
 #: desk/desk_rsc.c
 msgid "Low"
-msgstr "•˜£¢ã"
+msgstr "Baixa"
 
 #: desk/desk_rsc.c
 msgid "ST Compatible"
-msgstr "‘¬£™˜«ã £œ ST"
+msgstr "Compat. amb ST"
 
 #: desk/desk_rsc.c
 msgid "INSTALL WINDOW ICON"
-msgstr "„‚‰€’€‘’€‘† „ˆ‰Œˆƒˆ“ €€‡““"
+msgstr "INSTAL·LA ICONA DE FINESTRA"
 
 #: desk/desk_rsc.c
 msgid "Folder"
-msgstr "”á¡œ¢¦ª"
+msgstr "Carpeta"
 
 #: desk/desk_rsc.c
 msgid "File"
-msgstr "€¨®œå¦"
+msgstr "Fitxer"
 
 #: desk/desk_rsc.c
 msgid "Monochrome only"
-msgstr "‹¦¤æ®¨à£¦ £æ¤¦"
+msgstr "Només monocrom"
 
 #: desk/desk_rsc.c
 msgid "FORMAT FLOPPY DISKETTE"
-msgstr "ƒˆ€‹”—‘† ƒˆ‘‰„’€‘"
+msgstr "FORMATA DISQUET"
 
 #: desk/desk_rsc.c
 msgid "SS 360 K"
-msgstr "SS 360 KB"
+msgstr "Sola cara 360KB"
 
 #: desk/desk_rsc.c
 msgid "DS 720 K"
-msgstr "DS 720 KB"
+msgstr "Doble cara 720KB"
 
 #: desk/desk_rsc.c
 msgid "DS 800 K"
-msgstr "DS 800 KB"
+msgstr "Sola cara 880KB"
 
 #: desk/desk_rsc.c
 msgid "HD 1.44 M"
-msgstr "HD 1.44 MB"
+msgstr "Alta dens. 1.44MB"
 
 #: desk/desk_rsc.c
 msgid "SET BACKGROUND"
-msgstr "ˆ‘‹‘ ”Œ’“"
+msgstr "ESTABLEIX FONS"
 
 #: desk/desk_rsc.c
 msgid "Select:"
-msgstr "„§ ¢¦šã:"
+msgstr "Selecciona:"
 
 #: desk/desk_rsc.c
 msgid "Desktop"
-msgstr "Desktop"
+msgstr "Escriptori"
 
 #: desk/desk_rsc.c
 msgid "Style:"
-msgstr "‘«¬¢:"
+msgstr "Estil:"
 
 #: desk/desk_rsc.c
 msgid "Color:"
-msgstr "•¨é£˜"
+msgstr "Color:"
 
 #: desk/desk_rsc.c
 msgid " %ld bytes used in %d items."
-msgstr " %ld bytes ®¨© £¦§¦ ¦ç¤«˜  ©œ %d ˜¨®œå˜."
+msgstr " %ld bytes utilitzats en %d elements."
 
 #: desk/desk_rsc.c
 msgid " %ld bytes used in %d selected items."
-msgstr " %ld bytes ®¨© £¦§¦ ¦ç¤«˜  ˜§æ %d œ§ ¢œš£â¤˜ ˜¤« ¡œå£œ¤˜."
+msgstr " %ld bytes utilitzats en %d elements seleccionats."
 
 #: desk/desk_rsc.c
 msgid "FILE INFORMATION"
-msgstr "Š†”ˆ„‘ €•„ˆ“"
+msgstr "INFORMACIó DE FITXER"
 
 #: desk/desk_rsc.c
 msgid "FOLDER INFORMATION"
-msgstr "Š†”ˆ„‘ ”€‰„Š“"
+msgstr "INFORMACIó DE CARPETA"
 
 #: desk/desk_rsc.c
 msgid "COPY FILE(S)"
-msgstr "€Œ’ˆ‚€”† €•„ˆ“(—Œ)"
+msgstr "COPIA FITXER(S)"
 
 #: desk/desk_rsc.c
 msgid "MOVE FILE(S)"
-msgstr "‹„’€‰ˆŒ†‘† €•„ˆ“(—Œ)"
+msgstr "MOU FITXER(S)"
 
 #: desk/desk_rsc.c
 msgid "DELETE FILE(S)"
-msgstr "ƒˆ€‚€”† €•„ˆ“(—Œ)"
+msgstr "SUPRIMEIX FITXER(S)"
 
 #: desk/desk_rsc.c
 msgid "DISK"
-msgstr "ƒˆ‘‰‘"
+msgstr "DISC"
 
 #: desk/desk_rsc.c
 msgid "TRASH"
-msgstr "€ˆ‹€’€"
+msgstr "PAPERERA"
 
 #: desk/desk_rsc.c
 msgid "PRINTER"
-msgstr "„‰’“—’†‘"
+msgstr "IMPRESSORA"
 
 #: desk/desk_rsc.c
 msgid "-More-"
-msgstr "-œ¨ ©©æ«œ¨˜-"
+msgstr "-Més-"
 
 #: desk/desk_rsc.c
 msgid "-End of file-"
-msgstr "-’â¢¦ª €¨®œå¦¬-"
+msgstr "-Final de fitxer-"
 
 #: desk/desk_rsc.c
 msgid "-File read error-"
-msgstr "-‘­á¢£˜ ˜¤áš¤à©ª ˜¨®œå¦¬-"
+msgstr "-Error de lectura de fitxer-"
 
 #: desk/desk_rsc.c
 msgid "Locate item"
-msgstr "„¤«¦§ ©£æª ˜¤« ¡œ £â¤¦¬"
+msgstr "Localitza element"
 
 #: desk/desk_rsc.c
 msgid "Select .INF file"
-msgstr "„§ ¢â¥«œ â¤˜ ˜¨®œå¦ .INF"
+msgstr "Selecciona fitxer .INF"
 
 #: desk/desk_rsc.c
 msgid "[2]["
 "Switch resolution?]"
 "[ Yes | No ]"
 msgstr "[2]["
-"€¢¢˜šã ˜¤á¢¬©ª;]"
-"[ Œ˜ | î® ]"
+"Canvia resolució?]"
+"[ Sí | No ]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
 "Show or print this document?]"
 "[Show|Print|Cancel]"
 msgstr "[2]["
-"¨¦™¦¢ã ã œ¡«ç§à© ˜¬«¦ç|"
-"«¦¬ âšš¨˜­¦¬;]"
-"[¨¦™¦¢ã|„¡«ç§à©|ê¡¬¨¦]"
+"Mostra o imprimeix|"
+"aquest document?]"
+"[Mostra|Imprimeix|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Print error!]"
 "[ Retry | Cancel ]"
 msgstr "[1]["
-"‘­á¢£˜ œ¡«ç§à©ª!]"
-"[„§˜¤á¢¯| ê¡¬¨¦ ]"
+"Error d'impressió!]"
+"[Reintenta|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -946,9 +931,9 @@ msgid "[1]["
 "associated application.]"
 "[  OK  ]"
 msgstr "[1]["
-"€¬«æª ¦ «ç§¦ª ˜¨®œå¦¬ ›œ¤ â®œ |"
-"©¬©®œ« ©£â¤ œ­˜¨£¦šã]"
-"[  ‰  ]"
+"Aquest tipus de document no|"
+"té cap aplicació associada.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -958,35 +943,34 @@ msgid "[1]["
 "using.]"
 "[  OK  ]"
 msgstr "[1]["
-"’¦ GEM ›œ¤ £§¦¨œå ¤˜ ˜¤¦å¥œ |"
-"á¢¢˜ §˜¨áŸ¬¨˜. ˜¨˜¡˜¢é|"
-"¡¢œå©«œ â¤˜ §˜¨áŸ¬¨¦ §¦¬ ›œ¤|"
-"®¨© £¦§¦ œå«œ.]"
-"[  ‰  ]"
+"L'Escriptori GEM no té més|"
+"finestres. Tanca una|"
+"finestra que no fes servir.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Illegal directory operation!]"
 "[ Skip | Abort ]"
 msgstr "[1]["
-"‹ âš¡¬¨ ¢œ «¦¬¨šå˜ ¡˜«˜¢æš¦¬!]"
-"[˜¨á¢œ ¯| ê¡¬¨¦ ]"
+"Operació de directori il·legal!]"
+"[ Salta | Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Illegal operation!]"
 "[  OK  ]"
 msgstr "[1]["
-"‹ âš¡¬¨ ¢œ «¦¬¨šå˜!]"
-"[  ‰  ]"
+"Operació il·legal!]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
 "Abort this operation?]"
 "[ Yes | No ]"
 msgstr "[2]["
-"€¤˜å¨œ© ¢œ «¦¬¨šå˜ª;]"
-"[ Œ˜ | î® ]"
+"Aturar aquesta operació?]"
+"[ Sí | No ]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
@@ -994,9 +978,9 @@ msgid "[2]["
 "the files on drive %c: ?]"
 "[Yes| No ]"
 msgstr "[2]["
-"‡â¢œ«œ ¤˜ › ˜š¨á¯œ«œ æ¢˜|"
-"«˜ ˜¨®œå˜ «¦¬ ›å©¡¦¬ %c: ;]"
-"[Œ˜ | î®  ]"
+"Suprimir tots els fitxers|"
+"d'unitat %c:?]"
+"[ Sí | No ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1005,10 +989,10 @@ msgid "[1]["
 "or applications.]"
 "[  OK  ]"
 msgstr "[1]["
-"Š¬§¦ç£˜©«œ, «¦ desktop ›œ¤|"
-"£§¦¨œå ¤˜ œš¡˜«˜©«ã©œ  á¢¢˜|"
-"œ ¡¦¤å› ˜ ã œ­˜¨£¦šâª.]"
-"[  ‰  ]"
+"Perdó, l'escriptori no pot|"
+"instal·lar més icones|"
+"o aplicacions.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
@@ -1017,10 +1001,10 @@ msgid "[2]["
 "with a new name, or cancel.]"
 "[Cancel|Retry]"
 msgstr "[2]["
-"ƒœ¤ £§¦¨œå«œ ¤˜ ›£ ¦¬¨šã©œ«œ|"
-"â¤˜¤ ­á¡œ¢¦ £œ ˜¬«æ «¦ æ¤¦£˜.|"
-"ƒ¦¡ £á©«œ ¥˜¤á ã ˜¡¬¨é©«œ.]"
-"[ê¡¬¨¦|„§˜¤á¢¯]"
+"No puda crear una carpeta|"
+"amb aquest nom. Reintenta|"
+"amb nom nou o cancel·la.]"
+"[Cancel·la|Reintenta]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1029,10 +1013,10 @@ msgid "[1]["
 "operation.]"
 "[  OK  ]"
 msgstr "[1]["
-" ›å©¡¦ª %c: ›œ¤ â®œ |"
-"˜¨¡œ«æ ®é¨¦ š ˜ ˜¬«ã|"
-"« ¢œ «¦¬¨šå˜]"
-"[  ‰  ]"
+"Unitat %c: no té prou|"
+"espai per a aquesta|"
+"operació.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[3]["
@@ -1041,10 +1025,10 @@ msgid "[3]["
 "down the directory path.]"
 "[  OK  ]"
 msgstr "[3]["
-"ƒœ¤ £§¦¨œå«œ ¤˜ ›£ ¦¬¨šã©œ«œ|"
-"­á¡œ¢¦ ã ¤˜ â®œ«œ §¨æ©™˜© «¦©¦|"
-"®˜£¢á ©« › ˜›¨¦£ã ¡˜«˜¢æš¦¬.]"
-"[  ‰  ]"
+"No pots crear ni accedir|"
+"a una carpeta tan lluny|"
+"del camí del directori.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[3]["
@@ -1054,12 +1038,11 @@ msgid "[3]["
 "is too long.]"
 "[  OK  ]"
 msgstr "[3]["
-"ƒœ¤ £§¦¨œå«œ ¤˜ ›£ ¦¬¨šã©œ«œ|"
-"ã ¤˜ â®œ«œ §¨æ©™˜© ©«¦ ˜¨®œå¦|"
-"ã «¦ ­á¡œ¢¦ £œ ˜¬«æ «¦ æ¤¦£˜|"
-"š ˜«å  › ˜›¨¦£ã œå¤˜  §¦¢ç|"
-"£œšá¢.]"
-"[  ‰  ]"
+"No pots crear ni accedir|"
+"a un fitxer o carpeta amb|"
+"aquest nom, perquè el nom|"
+"de camí és massa llarg.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1068,10 +1051,10 @@ msgid "[1]["
 "or folders.]"
 "[  OK  ]"
 msgstr "[1]["
-"%s ®¨© £¦§¦ œå«˜  š ˜|"
-"£æ¤ £ › ˜š¨˜­ã ˜¨®œåà¤|"
-"ã ­˜¡â¢à¤.]"
-"[  ‰  ]"
+"%s s'utilitza per suprimir|"
+"fitxers o carpetes|"
+"permanentment.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1079,9 +1062,9 @@ msgid "[1]["
 "is a printer.]"
 "[  OK  ]"
 msgstr "[1]["
-"† ©¬©¡œ¬ã %s|"
-"œå¤˜  œ¡«¬§à«ãª.]"
-"[  ‰  ]"
+"%s|"
+"és una impressora.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1090,18 +1073,18 @@ msgid "[1]["
 "Desktop.]"
 "[  OK  ]"
 msgstr "[1]["
-"ƒœ¤ £§¦¨œå«œ ¤˜ ©ç¨œ«œ|"
-"œ­˜¨£¦šâª, ˜¨®œå˜ ã ­˜¡â¢¦¬ª|"
-"©«¤ œ§ ­á¤œ ˜ œ¨š˜©å˜ª.]"
-"[  ‰  ]"
+"No pots arrossegar aplicacions,|"
+"fitxers o carpetes|"
+"a l'Escriptori.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
 "Save Desktop?]"
 "[  OK  |Cancel]"
 msgstr "[2]["
-"€§¦Ÿã¡œ¬© Desktop;]"
-"[  ‰  |ê¡¬¨¦]"
+"Desa l'Escriptori?]"
+"[D'acord|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
@@ -1109,17 +1092,18 @@ msgid "[2]["
 "or delete files?]"
 "[Icons|Files|Cancel]"
 msgstr "[2]["
-"‡â¢œ«œ ¤˜ ˜­˜ ¨â©œ«œ œ ¡¦¤ › ˜|"
-"ã ¤˜ › ˜š¨á¯œ«œ ˜¨®œå˜;]"
-"[„ ¡¦¤å› ˜|€¨®œå˜|ê¡¬¨¦]"
+"Elimina icones o|"
+"suprimi fitxers?]"
+"[Icones|Fitxers|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Invalid function key value.]"
 "[  OK  ]"
 msgstr "[1]["
-"ê¡¬¨ « £ã function key.]"
-"[  ‰  ]"
+"Valor de tecla de funció|"
+"no vàlid.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
@@ -1127,10 +1111,9 @@ msgid "[2]["
 "Do you want to reassign it?]"
 "[  OK  |Cancel]"
 msgstr "[2]["
-"’¦ Function key â®œ  ã›|"
-"˜¤˜«œŸœå. ‡â¢œ«œ ¤˜ «¦|"
-"œ§˜¤˜Ÿâ©œ«œ;]"
-"[  ‰  |ê¡¬¨¦]"
+"Tecla de funció ja assignada.|"
+"Reassignar-la?]"
+"[D'acord|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[3]["
@@ -1139,10 +1122,10 @@ msgid "[3]["
 "You must reboot.]"
 "[  OK  ]"
 msgstr "[3]["
-"€¤œ§˜¨¡ãª £¤ã£ š ˜|"
-"«¤ â¤˜¨¥ «¦¬ Emudesk.|"
-"¨â§œ  ¤˜ šå¤œ  œ§˜¤œ¡¡å¤©.]"
-"[  ‰  ]"
+"No hi ha prou memòria per|"
+"inicialitzar EmuDesk.|"
+"Heu de reiniciar.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
@@ -1151,28 +1134,27 @@ msgid "[2]["
 "icon or locate the item?]"
 "[Remove|Locate|Cancel]"
 msgstr "[2]["
-"’¦ %s ›œ¤ ™¨âŸ¡œ.|"
-"‡â¢œ«œ ¤˜ ˜­˜ ¨â©œ«œ «¦|"
-"œ ¡¦¤å› ¦ ã ¤˜ œ¤«¦§å©œ«œ «¦|"
-"˜¤« ¡œå£œ¤¦;]"
-"[€­˜å¨œ©|„¤«¦§ ©£æª|ê¡¬¨¦]"
+"%s no s'ha trobat.|"
+"Elimina l'icona o|"
+"localitza l'element?]"
+"[Elimina|Localitza|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Please select icon type.]"
 "[Desktop|Window|Cancel]"
 msgstr "[1]["
-"˜¨˜¡˜¢é œ§ ¢â¥«œ «ç§¦|"
-"œ ¡¦¤ ›å¦¬.]"
-"[Desktop|˜¨áŸ¬¨¦|ê¡¬¨¦]"
+"Selecciona tipus d'icona.]"
+"[Escriptori|Finestra|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "No matching file type.]"
 "[  OK  ]"
 msgstr "[1]["
-"‹ «˜ ¨ ˜©«æª «ç§¦ª ˜¨®œå¦¬.]"
-"[  ‰  ]"
+"No hi ha cap coincident|"
+"tipus de fitxer.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[3]["
@@ -1181,10 +1163,11 @@ msgid "[3]["
 "or unusable.]"
 "[ Retry | Abort ]"
 msgstr "[3]["
-"‘­á¢£˜ › ˜£æ¨­à©ª.  ›å©¡¦ª|"
-"£§¦¨œå ¤˜ œå¤˜  §¨¦©«˜«œ¬£â¤¦ª|"
-"ã ¡˜«œ©«¨˜££â¤¦ª.]"
-"[„§˜¤á¢¯| ê¡¬¨¦ ]"
+"Error de format. El disc|"
+"del destinació pot estar|"
+"protegit contra escriptura|"
+"o inutilitzable.]"
+"[Reintenta| Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1192,25 +1175,26 @@ msgid "[1]["
 "available to the user.]"
 "[ Continue | Quit ]"
 msgstr "[1]["
-" ›å©¡¦ª â®œ  %ld bytes|"
-"› ˜Ÿâ© £˜ ©«¦¤ ®¨ã©«.]"
-"[ ‘¬¤â®œ ˜ | ë¥¦›¦ª ]"
+"Aquest disc té %ld bytes|"
+"disponibles per a l'usuari.]"
+"[Continua| Surt ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Drive %s: does not exist.]"
 "[ Cancel ]"
 msgstr "[1]["
-" ›å©¡¦ª %s: ›œ¤ ¬§á¨®œ .]"
-"[ ê¡¬¨¦ ]"
+"Unitat %s: no existeix.]"
+"[Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "No drive identifier.]"
 "[ Retry ]"
 msgstr "[1]["
-"•à¨åª ˜¤˜š¤à¨ ©« ¡æ ›å©¡¦¬.]"
-"[„§˜¤á¢¯]"
+"No hi ha identificador|"
+"d'unitat.]"
+"[Reintenta]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1218,9 +1202,9 @@ msgid "[1]["
 "%s]"
 "[ Skip | Retry | Abort ]"
 msgstr "[1]["
-"€›¬¤˜£å˜ › ˜š¨˜­ãª «¦¬ ˜¨®œå¦¬|"
+"No es pot suprimir fitxer|"
 "%s]"
-"[˜¨á¢œ ¯|„§˜¤á¢¯| ê¡¬¨¦ ]"
+"[ Salta |Reintenta| Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1228,25 +1212,25 @@ msgid "[1]["
 "%s]"
 "[ Skip | Retry | Abort ]"
 msgstr "[1]["
-"€›¬¤˜£å˜ › ˜š¨˜­ãª «¦¬ ­˜¡â¢¦¬ |"
+"No es pot suprimir directori|"
 "%s]"
-"[˜¨á¢œ ¯|„§˜¤á¢¯| ê¡¬¨¦ ]"
+"[ Salta |Reintenta| Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Not enough memory.]"
 "[  OK  ]"
 msgstr "[1]["
-"ƒœ¤ œ§˜¨¡œå  £¤ã£.]"
-"[  ‰  ]"
+"No hi ha prou memòria.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "%s not found.]"
 "[  OK  ]"
 msgstr "[1]["
-"’¦ %s ›œ¤ ™¨âŸ¡œ.]"
-"[  ‰  ]"
+"%s no s'ha trobat.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1254,9 +1238,9 @@ msgid "[1]["
 "%s]"
 "[ Skip | Retry | Abort ]"
 msgstr "[1]["
-"€›¬¤˜£å˜ ­æ¨«à©ª «¦¬ ˜¨®œå¦¬ |"
+"No es pot obrir fitxer|"
 "%s]"
-"[˜¨á¢œ ¯|„§˜¤á¢¯| ê¡¬¨¦ ]"
+"[ Salta|Reintenta| Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1264,9 +1248,9 @@ msgid "[1]["
 "%s]"
 "[ Skip | Retry | Abort ]"
 msgstr "[1]["
-"€›¬¤˜£å˜ ›£ ¦¬¨šå˜ª «¦¬ ˜¨®œå¦¬|"
+"No es pot crear fitxer|"
 "%s]"
-"[˜¨á¢œ ¯|„§˜¤á¢¯| ê¡¬¨¦ ]"
+"[ Salta |Reintenta| Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1274,9 +1258,9 @@ msgid "[1]["
 "%s]"
 "[ Skip | Abort ]"
 msgstr "[1]["
-"€›¬¤˜£å˜ ˜¤áš¤à©ª «¦¬ ˜¨®œå¦¬|"
+"No es pot llegir fitxer|"
 "%s]"
-"[˜¨á¢œ ¯| ê¡¬¨¦ ]"
+"[ Salta | Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1284,17 +1268,17 @@ msgid "[1]["
 "%s]"
 "[ Skip | Abort ]"
 msgstr "[1]["
-"€›¬¤˜£å˜ œšš¨˜­ãª «¦¬ ˜¨®œå¦¬|"
+"No es pot escriure fitxer|"
 "%s]"
-"[˜¨á¢œ ¯| ê¡¬¨¦ ]"
+"[ Salta | Atura ]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Rename error!]"
 "[ Retry | Cancel ]"
 msgstr "[1]["
-"‘­á¢£˜ £œ«¦¤¦£˜©å˜ª!]"
-"[„§˜¤á¢¯| ê¡¬¨¦ ]"
+"Error de canvi de nom!]"
+"[Reintenta|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
@@ -1302,33 +1286,33 @@ msgid "[1]["
 "directory.]"
 "[  OK  ]"
 msgstr "[1]["
-"€§¦«¬®å˜ ¦¨ ©£¦ç §¨¦œ§ ¢œš£â¤¦¬ |"
-"¡˜«˜¢æš¦¬.]"
-"[  ‰  ]"
+"No s'ha pogut establir|"
+"directori predeterminat.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "Illegal .INF file format.]"
 "[  OK  ]"
 msgstr "[1]["
-"‹ âš¡¬¨¦ ˜¨®œå¦ .INF.]"
-"[  ‰  ]"
+"Format de fitxer .INF il·legal.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
 "Continue to search?]"
 "[  OK  |Cancel]"
 msgstr "[2]["
-"‘¬¤â®œ ˜ ˜¤˜ã«©ª]"
-"[  ‰  |ê¡¬¨¦]"
+"Continuar cercant?]"
+"[D'acord|Cancel·la]"
 
 #: desk/desk_rsc.c
 msgid "[1]["
 "No more files.]"
 "[  OK  ]"
 msgstr "[1]["
-"ƒœ¤ ¬§á¨®¦¬¤ á¢¢˜ ˜¨®œå˜.]"
-"[  ‰  ]"
+"No hi ha més fitxers.]"
+"[D'acord]"
 
 #: desk/desk_rsc.c
 msgid "[2]["
@@ -1336,359 +1320,359 @@ msgid "[2]["
 "Do you want to reassign it?]"
 "[  OK  |Cancel]"
 msgstr "[2]["
-"’¦ ¡¢œ ›å â®œ  ã› ˜¤˜«œŸœå.|"
-"‡â¢œ«œ ¤˜ ˜¤˜«œŸœå ¥˜¤á;]"
-"[  ‰  |ê¡¬¨¦]"
+"última tecla ja està assignada.|"
+"Reassignar-la?]"
+"[D'acord|Cancel·la]"
 
 #: cli/cmdint.c
 msgid "Copy <filespec> ... to standard output"
-msgstr "Copy <filespec> ... to standard output"
+msgstr "Copia <especfitx> ... a sortida estàndard"
 
 #: cli/cmdint.c
 msgid "Change current directory to <dir>"
-msgstr "Change current directory to <dir>"
+msgstr "Canvia directori actual a <dir>"
 
 #: cli/cmdint.c
 msgid "or display current directory"
-msgstr "or display current directory"
+msgstr "o mostra directori actual"
 
 #: cli/cmdint.c
 msgid "Change attributes for <filename>"
-msgstr "Change attributes for <filename>"
+msgstr "Canvia atributs de <nomedelfitxer>"
 
 #: cli/cmdint.c
 msgid "<mode> specifies the new attribute(s):"
-msgstr "<mode> specifies the new attribute(s):"
+msgstr "<mode> especifica nou(s) atribut(s)"
 
 #: cli/cmdint.c
 msgid "r=read-only  h=hidden  s=system  -=none"
-msgstr "r=read-only  h=hidden  s=system  -=none"
+msgstr "r=només lectura  h=ocult  s=sistema  -=cap"
 
 #: cli/cmdint.c
 msgid "Clear screen"
-msgstr "Clear screen"
+msgstr "Esborra pantalla"
 
 #: cli/cmdint.c
 msgid "Copy files matching <filespec> to <dest>"
-msgstr "Copy files matching <filespec> to <dest>"
+msgstr "Copia fitxers que coincideixin amb <especfitx> a <dest>"
 
 #: cli/cmdint.c
 msgid "If <filespec> matches multiple files,"
-msgstr "If <filespec> matches multiple files,"
+msgstr "Si <especfitx> coincideixin amb diversos fitxers,"
 
 #: cli/cmdint.c
 msgid "<dest> must be a directory"
-msgstr "<dest> must be a directory"
+msgstr "<dest> ha de ser un directori"
 
 #: cli/cmdint.c
 msgid "Copy <string> ... to standard output"
-msgstr "Copy <string> ... to standard output"
+msgstr "Copia <cadena> ... a sortida estàndard"
 
 #: cli/cmdint.c
 msgid "Strings may be surrounded by \"\""
-msgstr "Strings may be surrounded by \"\""
+msgstr "Cadenes poden estar envoltades de \"\""
 
 #: cli/cmdint.c
 msgid "Exit EmuCON2"
-msgstr "Exit EmuCON2"
+msgstr "Surt EmuCON2"
 
 #: cli/cmdint.c
 msgid "Get help about <cmd> or list available commands"
-msgstr "Get help about <cmd> or list available commands"
+msgstr "Obteniu ajuda sobre <cmd> o llista ordres disponibles"
 
 #: cli/cmdint.c
 msgid "Use HELP ALL for help on all commands"
-msgstr "Use HELP ALL for help on all commands"
+msgstr "Utilitza HELP ALL per ajuda en totes ordres"
 
 #: cli/cmdint.c
 msgid "Use HELP EDIT for help on line editing"
-msgstr "Use HELP EDIT for help on line editing"
+msgstr "Utilitza HELP EDIT per ajuda en edició en línia"
 
 #: cli/cmdint.c
 msgid "List files (default terse, horizontal)"
-msgstr "List files (default terse, horizontal)"
+msgstr "Llista fitxers (predeterminat curt, horitzonal)"
 
 #: cli/cmdint.c
 msgid "Specify -l for detailed list"
-msgstr "Specify -l for detailed list"
+msgstr "Especifica -l per llista detallada"
 
 #: cli/cmdint.c
 msgid "Create directory <dir>"
-msgstr "Create directory <dir>"
+msgstr "Crea directori <dir>"
 
 #: cli/cmdint.c
 msgid "Set or display console settings:"
-msgstr "Set or display console settings:"
+msgstr "Estableix o mostra configuració de consola:"
 
 #: cli/cmdint.c
 msgid "res for screen resolution (0,1)[ST] (0,1,2,4,7)[TT];"
-msgstr "res for screen resolution (0,1)[ST] (0,1,2,4,7)[TT];"
+msgstr "res per resolució de pantalla (0,1)[ST] (0,1,2,4,7)[TT];"
 
 #: cli/cmdint.c
 msgid "delay/rate for the keyboard"
-msgstr "delay/rate for the keyboard"
+msgstr "delay/rate per la teclat"
 
 #: cli/cmdint.c
 msgid "Copy <filespec> to standard output,"
-msgstr "Copy <filespec> to standard output,"
+msgstr "Copia <especfitx> a sortida estàndard,"
 
 #: cli/cmdint.c
 msgid "pausing every screenful"
-msgstr "pausing every screenful"
+msgstr "pausand cada pantalla"
 
 #: cli/cmdint.c
 msgid "Copy files matching <filespec> to <dir>,"
-msgstr "Copy files matching <filespec> to <dir>,"
+msgstr "Copia fitxers que coincideixin amb <especfitx> a <dir>,"
 
 #: cli/cmdint.c
 msgid "then delete input files"
-msgstr "then delete input files"
+msgstr "després suprimeix fitxers d'entrada"
 
 #: cli/cmdint.c
 msgid "Set search path for external programs"
-msgstr "Set search path for external programs"
+msgstr "Estableix camí de cerca per programes externs"
 
 #: cli/cmdint.c
 msgid "or display current search path"
-msgstr "or display current search path"
+msgstr "o mostra camí de cerca actual"
 
 #: cli/cmdint.c
 msgid "Display current drive and directory"
-msgstr "Display current drive and directory"
+msgstr "Mostra unitat i directori actuals"
 
 #: cli/cmdint.c
 msgid "Rename <oldname> to <newname>"
-msgstr "Rename <oldname> to <newname>"
+msgstr "Canvia nom de <nomvell> a <nomnou>"
 
 #: cli/cmdint.c
 msgid "Delete files matching <filespec>"
-msgstr "Delete files matching <filespec>"
+msgstr "Suprimeix fitxers que coincideixin amb <specfiº>"
 
 #: cli/cmdint.c
 msgid "Specify -q to be prompted each time"
-msgstr "Specify -q to be prompted each time"
+msgstr "Especifica -q per demanar cada cop"
 
 #: cli/cmdint.c
 msgid "Delete directory <dir>"
-msgstr "Delete directory <dir>"
+msgstr "Suprimeix directori <dir>"
 
 #: cli/cmdint.c
 msgid "Show info for <drive> or current drive"
-msgstr "Show info for <drive> or current drive"
+msgstr "Mostra informació de unitat <unitate> o actual"
 
 #: cli/cmdint.c
 msgid "Display GEMDOS version"
-msgstr "Display GEMDOS version"
+msgstr "Mostra versió de GEMDOS"
 
 #: cli/cmdint.c
 msgid "Set line wrap or show current status"
-msgstr "Set line wrap or show current status"
+msgstr "Estableix ajustament de línia o mostra estat actual"
 
 #: cli/cmdint.c
 msgid "up/down arrow = previous/next line in history"
-msgstr "up/down arrow = previous/next line in history"
+msgstr "fletxa amunt/avall = línia anterior/següent de història"
 
 #: cli/cmdint.c
 msgid "left/right arrow = previous/next character"
-msgstr "left/right arrow = previous/next character"
+msgstr "fletxa esquerra/dreta = caràcter anterior/següent"
 
 #: cli/cmdint.c
 msgid "control-left/right arrow = previous/next word"
-msgstr "control-left/right arrow = previous/next word"
+msgstr "control-fletxa esquerra/dreta = paraula anterior/següent"
 
 #: cli/cmdint.c
 msgid "invalid mode argument"
-msgstr "invalid mode argument"
+msgstr "argument de mode no vàlid"
 
 #: cli/cmdint.c
 msgid "Builtin commands:"
-msgstr "Builtin commands:"
+msgstr "Ordres incorporades:"
 
 #: cli/cmdint.c
 msgid "Listing of "
-msgstr "Listing of "
+msgstr "Llista de "
 
 #: cli/cmdint.c
 msgid "Status for CON:"
-msgstr "Status for CON:"
+msgstr "Estat de CON:"
 
 #: cli/cmdint.c
 msgid "  Resolution:     "
-msgstr "  Resolution:     "
+msgstr "  Rezolució: "
 
 #: cli/cmdint.c
 msgid "  Keyboard delay: "
-msgstr "  Keyboard delay: "
+msgstr "  Retard del teclat: "
 
 #: cli/cmdint.c
 msgid "  Keyboard rate:  "
-msgstr "  Keyboard rate:  "
+msgstr "  Velocitat del teclat: "
 
 #: cli/cmdint.c
 msgid "(empty)"
-msgstr "(empty)"
+msgstr "(buit)"
 
 #: cli/cmdint.c
 msgid "Delete ALL matching files"
-msgstr "Delete ALL matching files"
+msgstr "Suprimeix TOTS fitxers coincideints"
 
 #: cli/cmdint.c
 msgid "Delete file "
-msgstr "Delete file "
+msgstr "Suprimeix fitxer "
 
 #: cli/cmdint.c
 msgid "Allocation info for drive "
-msgstr "Allocation info for drive "
+msgstr "Info d'assignació d'unitat "
 
 #: cli/cmdint.c
 msgid "  Size (bytes):   "
-msgstr "  Size (bytes):   "
+msgstr "  Mida (byte): "
 
 #: cli/cmdint.c
 msgid "  Bytes used:     "
-msgstr "  Bytes used:     "
+msgstr "  Bytes utilitzats: "
 
 #: cli/cmdint.c
 msgid "  Bytes free:     "
-msgstr "  Bytes free:     "
+msgstr "  Bytes lliures: "
 
 #: cli/cmdint.c
 msgid "  Total clusters: "
-msgstr "  Total clusters: "
+msgstr "  Clústers totals: "
 
 #: cli/cmdint.c
 msgid "  Free clusters:  "
-msgstr "  Free clusters:  "
+msgstr "  Clústers lliures: "
 
 #: cli/cmdint.c
 msgid "  Sectors/cluster:"
-msgstr "  Sectors/cluster:"
+msgstr "  Sectors/clúster: "
 
 #: cli/cmdint.c
 msgid "  Bytes/sector:   "
-msgstr "  Bytes/sector:   "
+msgstr "  Bytes/sector: "
 
 #: cli/cmdint.c
 msgid " is not a directory"
-msgstr " is not a directory"
+msgstr " no és un directori"
 
 #: cli/cmdint.c
 msgid " and "
-msgstr " and "
+msgstr " i "
 
 #: cli/cmdint.c
 msgid "Copying "
-msgstr "Copying "
+msgstr "Copiant "
 
 #: cli/cmdint.c
 msgid " to "
-msgstr " to "
+msgstr " a "
 
 #: cli/cmdint.c
 msgid " ... deleting "
-msgstr " ... deleting "
+msgstr " ... suprimint "
 
 #: cli/cmdint.c
 msgid " ... done"
-msgstr " ... done"
+msgstr " ... fat"
 
 #: cli/cmdint.c
 msgid " or "
-msgstr " or "
+msgstr " o "
 
 #: cli/cmdint.c
 msgid "CR to continue ..."
-msgstr "CR to continue ..."
+msgstr "Enter per continuar..."
 
 #: cli/cmdint.c
 msgid "--More--"
-msgstr "--More--"
+msgstr "--Més--"
 
 #: cli/cmdmain.c
 msgid "Welcome to EmuCON2 version "
-msgstr "Welcome to EmuCON2 version "
+msgstr "Benvingut a EmuCON2 versió "
 
 #: cli/cmdmain.c
 msgid "Type HELP for builtin commands"
-msgstr "Type HELP for builtin commands"
+msgstr "Escriu HELP per ordres incorporades"
 
 #: cli/cmdmain.c
 msgid "warning: no history buffers"
-msgstr "warning: no history buffers"
+msgstr "advertència: no hi ha buffers d'historial"
 
 #: cli/cmdparse.c
 msgid "more than one redirection"
-msgstr "more than one redirection"
+msgstr "més d'una redirecció"
 
 #: cli/cmdparse.c
 msgid "no filename for redirection"
-msgstr "no filename for redirection"
+msgstr "cap nom de fitxer per la redirecció"
 
 #: cli/cmdparse.c
 msgid "error in quoted field"
-msgstr "error in quoted field"
+msgstr "error al camp citat"
 
 #: cli/cmdparse.c
 msgid "error parsing line"
-msgstr "error parsing line"
+msgstr "error en anàlisi de línia"
 
 #: cli/cmdutil.c
 msgid "file not found"
-msgstr "file not found"
+msgstr "fitxer no trobat"
 
 #: cli/cmdutil.c
 msgid "path not found"
-msgstr "path not found"
+msgstr "camí no trobat"
 
 #: cli/cmdutil.c
 msgid "no more file handles"
-msgstr "no more file handles"
+msgstr "no hi ha més manetes de fitxers"
 
 #: cli/cmdutil.c
 msgid "can't create file"
-msgstr "can't create file"
+msgstr "no es pot crear fitxer"
 
 #: cli/cmdutil.c
 msgid "not enough memory"
-msgstr "not enough memory"
+msgstr "no hi ha prou memòria"
 
 #: cli/cmdutil.c
 msgid "invalid drive"
-msgstr "invalid drive"
+msgstr "unitat no vàlid"
 
 #: cli/cmdutil.c
 msgid "interrupted"
-msgstr "interrupted"
+msgstr "interromput"
 
 #: cli/cmdutil.c
 msgid "invalid path"
-msgstr "invalid path"
+msgstr "camí no valid"
 
 #: cli/cmdutil.c
 msgid "can't write to disk (full?)"
-msgstr "can't write to disk (full?)"
+msgstr "nu es pot escriure al disc (plet?)"
 
 #: cli/cmdutil.c
 msgid "cmdline too long"
-msgstr "cmdline too long"
+msgstr "línia d'ordres massa llarga"
 
 #: cli/cmdutil.c
 msgid "directory not empty"
-msgstr "directory not empty"
+msgstr "directori no buit"
 
 #: cli/cmdutil.c
 msgid "can't delete file (read-only?)"
-msgstr "can't delete file (read-only?)"
+msgstr "no es pot suprimir fitxer (només de lectura?)"
 
 #: cli/cmdutil.c
 msgid "invalid parameter"
-msgstr "invalid parameter"
+msgstr "paràmetre no vàlid"
 
 #: cli/cmdutil.c
 msgid "wrong number of arguments"
-msgstr "wrong number of arguments"
+msgstr "nombre incorrecte d'arguments"
 
 #: cli/cmdutil.c
 msgid "error code %ld"
-msgstr "error code %ld"
+msgstr "codi d'error %ld"
 

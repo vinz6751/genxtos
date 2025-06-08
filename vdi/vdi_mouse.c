@@ -3,7 +3,7 @@
  *
  * Copyright 1982 by Digital Research Inc.  All rights reserved.
  * Copyright 1999 by Caldera, Inc. and Authors:
- * Copyright 2002-2022 by The EmuTOS development team
+ * Copyright 2002-2025 by The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -27,10 +27,13 @@
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
 # include "../foenix/vicky2.h"
 #endif
+#include "vdi_inline.h"
 #if WITH_AES
 #include "../aes/aesstub.h"
 #endif
 
+#define MOUSE_WIDTH     16      /* in pixels */
+#define MOUSE_HEIGHT    16
 
 /* Mouse / sprite structure */
 typedef struct Mcdb_ Mcdb;
