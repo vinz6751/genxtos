@@ -151,6 +151,7 @@ void vdimouse_init(void)
     /* Move in the default mouse form (presently the arrow) */    
     mform_color_validator((const MFORM*)default_mform(), &mouse_cdb); /* FIXME CHEAT, not sure how to inject an implementation-specific validator... */
     linea_mouse_set_form(default_mform());
+    linea_mouse_init();
 
 #if CONF_WITH_EXTENDED_MOUSE
     {
@@ -161,7 +162,6 @@ void vdimouse_init(void)
     }
 #endif
 }
-
 
 
 /*
@@ -175,8 +175,6 @@ void vdimouse_exit(void)
 #if CONF_WITH_EXTENDED_MOUSE
     user_wheel = just_rts;
 #endif
-
-
 
 #if CONF_WITH_EXTENDED_MOUSE
     {
