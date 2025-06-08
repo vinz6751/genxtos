@@ -235,17 +235,6 @@ typedef struct {
 } Line;
 
 
-/*
- * the following line-A variables contain the VDI color palette entries.
- * REQ_COL contains the first 16 entries; req_col2 contains entries
- * 16-255 (only applicable for 8-plane resolutions).  Note that the
- * location of req_col2 is not documented by Atari, but is derived from
- * disassembly of TOS ROMs, and source code for MagiC's VDI.
- */
-extern WORD REQ_COL[16][3];     /* defined in lineavars.S */
-extern WORD req_col2[240][3];   /* defined in lineavars.S */
-
-
 /* External definitions for internal use */
 extern WORD flip_y;             /* True if magnitudes being returned */
 extern WORD line_cw;            /* Linewidth for current circle */

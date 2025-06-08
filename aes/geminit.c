@@ -105,7 +105,6 @@ typedef struct {                     /* used by count_accs()/ldaccs() */
 } ACC;
 
 static ACC      acc[NUM_ACCS];
-static char    *accpath;                /* used to read the ACCPATH env var, empty string if var is not present */
 
 /* Some global variables: */
 
@@ -673,8 +672,6 @@ void run_accs_and_desktop(void)
 }
 
 
-
-
 /*
  * Returns true if resolution was changed indeed.
  */
@@ -682,25 +679,14 @@ static BOOL handle_resolution_change(void)
 {
     BOOL res_was_changed;
 
-    /*
-     * turn off the text cursor now to prevent an irritating blinking
-     * cursor on a blank screen during resolution change.  this is most
-     * noticeable on a floppy-only system with no diskettes loaded.
-     */
-    dos_conws("\033f\033E");    /* cursor off, clear screen */
-
-    /* read in first part of emudesk.inf */
-    if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
-        n = 0;
-    else
-        n = readfile(INF_FILE_NAME, INF_SIZE, infbuf);
-
-    if (n < 0L)
-        n = 0L;
-    infbuf[n] = '\0';           /* terminate input data */
-
-    if (gl_changerez == NO_RES_CHANGE)          /* can't be here because of rez change,       */
-        process_inf_res_change();         /*  so see if .inf says we need to change rez */
+    if (gl_changerez == NO_RES_CHANGE) {
+        /* This must mean we didn't get here because of sh_write(SHW_RESCHNG, ...), i.e. it's not a deliberate
+         * resolution change initiated by the user. That must mean we're booting and we need to figure out the
+         * desired resolution from the desktop's config file.
+         * The following will update gl_changerez/gl_nextrez based on the desktop config file's content.
+         */
+        process_inf_res_change();
+    }
 
     if ((res_was_changed = (gl_changerez != NO_RES_CHANGE))) {
         switch(gl_changerez) {
@@ -723,9 +709,12 @@ static BOOL handle_resolution_change(void)
         }
     }
     
+    /* We've handled the change, doesn't need to be done again. */
     gl_changerez = NO_RES_CHANGE;
+
     return res_was_changed;
 }
+
 
 void gem_main(void)
 {
@@ -738,8 +727,10 @@ void gem_main(void)
      */
     dos_conws("\033f\033E");    /* cursor off, clear screen */
 
-    /* Read config */
-    aescfg_read();
+    if (!(bootflags & BOOTFLAG_SKIP_AUTO_ACC)) {
+        /* Read config */
+        aescfg_read();
+    }
 
     /* Handle any resolution change */
     if (handle_resolution_change()) {

@@ -23,9 +23,6 @@
 struct aes_configuration_t aes_configuration;
 
 
-#define INF_SIZE 300 + 1        /*  for start of EMUDESK.INF file    */
-
-
 /*
  * Read the AES's configuration file. On ATARI TOS, this is the same as the desktop app's
  * config file, but here we only care about AES-relevant settings

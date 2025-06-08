@@ -12,6 +12,8 @@
 
 #include "emutos.h"
 
+#define INF_SIZE 300 + 1        /*  for start of EMUDESK.INF file    */
+
 #define AES_CFG_PROVIDES_RESOLUTION   1<<0
 #define AES_CFG_PROVIDES_BACKGROUND   1<<1
 #define AES_CFG_PROVIDES_DCLICK_SPEED 1<<2
