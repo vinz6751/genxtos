@@ -62,7 +62,7 @@ extern WORD *PTSOUT; /* +20  ptr to the PTSOUT array */
 
 /* Mouse management variables */
 extern UBYTE vbl_must_draw_mouse;    /* non-zero means draw mouse form on vblank */
-extern UBYTE mouse_flag;             /* non-zero while mouse cursor is being modified */
+extern UBYTE mouse_shape_semaphore;  /* non-zero while mouse cursor is being modified */
 extern MCS   mouse_cursor_save;      /* in linea variable area */
 extern MCS   ext_mouse_cursor_save;  /* use for v_planes > 4 */
 extern WORD  HIDE_CNT;               /* number of levels the mouse is hidden */
@@ -71,11 +71,13 @@ extern WORD  GCURX;                  /* mouse X position */
 extern WORD  GCURY;                  /* mouse Y position */
 extern WORD  MOUSE_BT;               /* mouse button state */
 extern UBYTE cur_ms_stat;            /* current mouse status */
-extern WORD  newx;                   /* new mouse x position when setting the mouse position manually */
-extern WORD  newy;                   /* new mouse y position when setting the mouse position manually */
+extern WORD  vbl_new_mouse_x;        /* new mouse x position when setting the mouse position manually */
+extern WORD  vbl_new_mouse_y;        /* new mouse y position when setting the mouse position manually */
+/* These are called from the IKBD mousevec handler, and are called in the sequence they appear here. They can clobber all registers. */
 extern void  (*user_but)(void);      /* user button vector */
-extern void  (*user_cur)(void);      /* user cursor vector, called when the mouse has moved */
-extern void  (*user_mot)(void);      /* user motion vector */
+extern void  (*user_mot)(void);      /* user motion vector, called when mouse has moved. It's an opportunity to hack x and y passed in d0.w and d1.w respectively */
+extern void  (*user_cur)(void);      /* user cursor vector, called when the mouse has moved and display needs to be updated. d0.w: new X, d1.w: new Y */
+
 
 extern WORD TERM_CH;  /* pressed key, ASCII + scancode */
 

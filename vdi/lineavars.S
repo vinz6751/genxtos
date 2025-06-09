@@ -33,9 +33,9 @@
                 .globl  _m_cdb_fg
                 .globl  _mask_form
 
-                .globl  _mouse_flag
-                .globl  _newx
-                .globl  _newy
+                .globl  _mouse_shape_semaphore
+                .globl  _vbl_new_mouse_x // formerly _newx
+                .globl  _vbl_new_mouse_y // formerly _newy
                 .globl  retsav
                 .globl  _sav_cur_x
                 .globl  _sav_cur_y
@@ -148,10 +148,10 @@ _val_mode:      .ds.w   1       // -350 input mode, valuator
 _cur_ms_stat:   .ds.b   1       // -348 current mouse status
                 .ds.b   1
 _disab_cnt:     .ds.w   1       // -346 disable depth count. (>0 => disabled)
-_newx:          .ds.w   1       // -344 new mouse x&y position
-_newy:          .ds.w   1
+_vbl_new_mouse_x: .ds.w     1   // -344 new mouse x&y position (formerly _newx, _newy) to where the VBL handler
+_vbl_new_mouse_y: .ds.w     1   // should move the mouse cursor if not hidden.
 _vbl_must_draw_mouse: .ds.b 1   // -340 (_draw_flag) non-zero means draw mouse form on vblank
-_mouse_flag:    .ds.b   1       // -339 non-zero while mouse cursor is being modified
+_mouse_shape_semaphore:  .ds.b   1   // -339 (_mouse_flag) non-zero while mouse cursor is being modified
 
 _sav_cur_x:     .ds.w   1       // -338 save area for cursor cell coords.
 _sav_cur_y:     .ds.w   1       // -336 save area for cursor cell coords.

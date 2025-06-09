@@ -23,8 +23,8 @@
 
 /* In .S file */
 void linea_ikbd_mousevec(UBYTE *);  /* IKBD mousevec vector, gets mouse packet in a0 */
-void linea_mouse_moved_handler(void); /* Code to call by the mouse packet reception interrupt 
-    * when mouse has moved. Redraw should not be done from there because it's could be too slow.
+void linea_user_cur(void); /* user_cur handler, called when when mouse has moved.
+    * receives x=d0.w and y=d1.w. Redraw should not be done from there because it's could be too slow.
     * The Atari only raises a flag "vbl_must_draw_mouse" that signals to a routine in the VBL
     * queue that the mouse needs to be moved to new coordinates. The mouse paintaing is actually
     * done from the the VBL handler. */
@@ -43,22 +43,22 @@ static const struct {
 
 #if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
 /* VBL queue item, called upon each VBL to move the mouse cursor 
- * to newx/newy (Line A variables) if necessary. */
+ * to vbl_new_mouse_x/vbl_new_mouse_y (Line A variables) if necessary. */
 static void vbl_draw(void)
 {
     WORD old_sr, x, y;
 
     /* If the cursor is being modified, or is hidden, just exit */
-    if (mouse_flag || HIDE_CNT)
+    if (mouse_shape_semaphore || HIDE_CNT)
         return;
 
     old_sr = set_sr(0x2700);        /* Disable interrupts */
     if (vbl_must_draw_mouse)
-    {            
+    {
         vbl_must_draw_mouse = FALSE;
-        x = newx;                   /* Get x/y atomically for vbl_draw() */
-        y = newy;
-        set_sr(old_sr);        
+        x = vbl_new_mouse_x;        /* Get x/y atomically for vbl_draw() */
+        y = vbl_new_mouse_y;
+        set_sr(old_sr);
         mouse_display_driver.mouse_move_to(x,y);
     }
     else
@@ -76,11 +76,11 @@ void linea_mouse_init(void)
     GCURY = V_REZ_VT / 2;
     MOUSE_BT = 0;               /* clear the mouse button state */
     cur_ms_stat = 0;            /* clear the mouse status */
-    mouse_flag = 0;             /* clear the mouse flag */
+    mouse_shape_semaphore = 0;             /* clear the mouse flag */
     linea_mouse_set_form(&arrow_mform);
 
     /* Mouse event handlers */
-    user_cur = linea_mouse_moved_handler;
+    user_cur = linea_user_cur;
     user_but = just_rts;
     user_mot = just_rts;
 #if CONF_WITH_EXTENDED_MOUSE
@@ -192,9 +192,9 @@ void linea_mouse_transform(void)
  */
 void linea_mouse_set_form(const MFORM *src)
 {
-    mouse_flag += 1;            /* disable updates while redefining cursor */
+    mouse_shape_semaphore += 1;            /* disable updates while redefining cursor */
 
     mouse_display_driver.set_mouse_cursor(src);
 
-    mouse_flag -= 1;                    /* re-enable mouse drawing */
+    mouse_shape_semaphore -= 1;                    /* re-enable mouse drawing */
 }
