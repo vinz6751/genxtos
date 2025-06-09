@@ -27,7 +27,7 @@
         .extern _old_statvec    // previous IKBD status packet vector
 #endif
         /* Exports */
-        .globl  _linea_mouse_packet_received_handler      // mouse interrupt routine, has IKBD mouse packet in a0
+        .globl  _linea_ikbd_mousevec      // mouse interrupt routine, has IKBD mouse packet in a0
 #if CONF_WITH_EXTENDED_MOUSE
         .globl  _wheel_int      // wheel interrupt routine
         .globl  _call_user_but  // call the _user_but vector from C
@@ -36,13 +36,13 @@
 
 
 /*
- * _linea_mouse_packet_received_handler - Interrupt routine called when a mouse packet has been received
+ * _linea_ikbd_mousevec - Interrupt routine called when a mouse packet has been received
  * Formerly known as "mousevec" handler
  * entry:       a0 = address of IKBD mouse packet
  * exit:        none
  * destroys:    nothing
  */
-_linea_mouse_packet_received_handler:
+_linea_ikbd_mousevec:
         movem.l d0-d7/a0-a6, -(sp)      // save registers used
 
         move.b  (a0), d0        // see if we have a mouse packet

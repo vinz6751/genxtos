@@ -22,14 +22,17 @@
 #include "vdiext.h"
 
 /* In .S file */
-void linea_mouse_packet_received_handler(void);  /* Responds to incoming mouse packet */
+void linea_ikbd_mousevec(UBYTE *);  /* IKBD mousevec vector, gets mouse packet in a0 */
 void linea_mouse_moved_handler(void); /* Code to call by the mouse packet reception interrupt 
     * when mouse has moved. Redraw should not be done from there because it's could be too slow.
     * The Atari only raises a flag "vbl_must_draw_mouse" that signals to a routine in the VBL
     * queue that the mouse needs to be moved to new coordinates. The mouse paintaing is actually
     * done from the the VBL handler. */
 
-/* Initialize mouse via XBIOS in relative mode */
+/* Initialize mouse via XBIOS, reporting relative position changes */
+
+/* This is the beginning of a initmous_parameter_block, we don't provide a full one to save ROM space
+ * (is it really worth it ??) */
 static const struct {
     UBYTE topmode;
     UBYTE buttons;
@@ -73,7 +76,7 @@ void linea_mouse_init(void)
     GCURY = V_REZ_VT / 2;
     MOUSE_BT = 0;               /* clear the mouse button state */
     cur_ms_stat = 0;            /* clear the mouse status */
-    mouse_flag = 0;             /* clear the mouse flag */    
+    mouse_flag = 0;             /* clear the mouse flag */
     linea_mouse_set_form(&arrow_mform);
 
     /* Mouse event handlers */
@@ -93,7 +96,7 @@ void linea_mouse_init(void)
 #endif
 
     /* Program the IKBD so it starts sending mouse packets */
-    Initmous(1, (LONG)&mouse_params, (LONG)linea_mouse_packet_received_handler);
+    Initmous(RELATIVE_MOUSE, (struct initmous_parameter_block*)&mouse_params, linea_ikbd_mousevec);
 
     linea_mouse_inited = TRUE;
 }
@@ -109,7 +112,7 @@ void linea_mouse_deinit(void)
 #else    
     vblqueue[0] = 0L;
 #endif    
-    Initmous(0, 0, 0);
+    Initmous(DISABLE_MOUSE, NULL, NULL);
     linea_mouse_inited = FALSE;
 }
 

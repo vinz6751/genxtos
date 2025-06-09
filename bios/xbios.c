@@ -50,7 +50,7 @@
  */
 
 #if DBG_XBIOS
-static void xbios_0(WORD type, struct param * param, PFVOID vec)
+static void xbios_0(WORD type, struct initmous_parameter_block * param, PFVOID vec)
 {
     kprintf("XBIOS: Initmous\n");
     Initmous(type, param, vec);
