@@ -67,9 +67,9 @@ extern MCS   mouse_cursor_save;      /* in linea variable area */
 extern MCS   ext_mouse_cursor_save;  /* use for v_planes > 4 */
 extern WORD  HIDE_CNT;               /* number of levels the mouse is hidden */
 extern MCDB  mouse_cdb;              /* storage for mouse sprite */
-extern WORD  GCURX;                  /* mouse X position */
-extern WORD  GCURY;                  /* mouse Y position */
-extern WORD  MOUSE_BT;               /* mouse button state */
+extern WORD  GCURX;                  /* current mouse X position */
+extern WORD  GCURY;                  /* current mouse Y position */
+extern WORD  MOUSE_BT;               /* mouse button state, 1 bit per button. Left = 1, Right = 2, Middle = 4 etc. */
 extern UBYTE cur_ms_stat;            /* current mouse status */
 extern WORD  vbl_new_mouse_x;        /* new mouse x position when setting the mouse position manually */
 extern WORD  vbl_new_mouse_y;        /* new mouse y position when setting the mouse position manually */
