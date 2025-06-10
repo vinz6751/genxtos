@@ -246,8 +246,8 @@ void ikbdraw(UBYTE byte) {
 // Calls a KBDVECS vector depending on the received IKBD packet type
 void callKbdvecs(void) {
     switch (kbdbuf[0]) {
-        case 0xf5: call_kbdvecs_bp(kbdvec, kbdbuf[1], &ikbdiorec); break; // 0xf5 is a made up value for key events
-        case 0xf6: call_kbdvecs_p(kbdvecs.statvec, &kbdbuf[1]); break;    // Should be in a0
+        case 0xf5: call_kbdvecs_bp(kbdvec, kbdbuf[1], &ikbdiorec); break; // 0xf5 is a made up value by ikbdraw for single byte key events
+        case 0xf6: call_kbdvecs_p(kbdvecs.statvec, &kbdbuf[1]); break;    // Multi-byte packet
         case 0xf7: call_kbdvecs_p(kbdvecs.mousevec, &kbdbuf[1]); break;   // Absolute mouse position
         case 0xf8: // Fall through                                        // Relative mouse position
         case 0xf9: // Fall through                                        // Relative mouse position, button 1
