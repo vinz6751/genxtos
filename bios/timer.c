@@ -22,6 +22,7 @@
 #endif
 
 #include "ikbd.h"
+#include "keyboard.h" /* for key_repeat_tick */
 #include "sound.h"
 #include "timer.h"
 
@@ -46,7 +47,7 @@ void timer_20ms_routine(void);
 // this is a layering breakage.
 void timer_20ms_routine(void) {
     // Repeat keys
-    kb_timerc_int();
+    key_repeat_tick();
 
 #if CONF_WITH_YM2149
     // Play Dosound() if appropriate

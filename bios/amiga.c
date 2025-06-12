@@ -14,6 +14,7 @@
 
 #include "emutos.h"
 #include "amiga.h"
+#include "aciavecs.h"
 #include "vectors.h"
 #include "tosvars.h"
 #include "bios.h"

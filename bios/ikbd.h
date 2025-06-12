@@ -15,6 +15,8 @@
 
 #include "biosdefs.h"
 
+void ikbd_reset(void);
+
 /*
  * These bit flags are set in the "shifty" byte based on the state
  * of control keys on the keyboard, like:
@@ -31,9 +33,6 @@
 #define MOUSE_REL_POS_REPORT    0xf8    /* values for mouse_packet[0] */
 #define RIGHT_BUTTON_DOWN       0x01    /* these values are OR'ed in */
 #define LEFT_BUTTON_DOWN        0x02
-
-
-extern UBYTE shifty;
 
 /*
  * dead key support: i.e. hitting ^ then a yields â.
@@ -60,36 +59,6 @@ extern UBYTE shifty;
  */
 #define DUAL_KEYBOARD   0x0001
 
-struct keytbl {
-  /*
-   * pointers to arrays with 128 entries each.
-   * entry[n] contains the ascii code for scancode n
-   */
-  const UBYTE *norm;
-  const UBYTE *shft;
-  const UBYTE *caps;
-  /*
-   * the following arrays are of two types, depending on the setting
-   * of the DUAL_KEYBOARD bit in 'features':
-   * 1) DUAL_KEYBOARD is not set (backwards compatibility)
-   *    arrays consist of (scan code, char code) pairs, terminated by
-   *    a zero byte.  see the French keyboard table as an example.
-   * 2) DUAL_KEYBOARD is set (new, for Greek/Russian language support)
-   *    arrays contain 128 entries, just like the arrays above
-   */
-  const UBYTE *altnorm;
-  const UBYTE *altshft;
-  const UBYTE *altcaps;
-  /*
-   * pointer to a variable-length array of 1-7 entries, for dead key support.
-   * each entry is a pointer to a dead key translation table, consisting
-   * of (scan code, char code) pairs, terminated by a zero byte.  see
-   * the French keyboard table for a good example.
-   */
-  const UBYTE * const *dead;
-  /* features supported for this keyboard (see above for #defines) */
-  WORD features;
-};
 
 /* Baud rate used by Atari keyboards */
 #define IKBD_BAUD 7812
@@ -100,27 +69,6 @@ struct keytbl {
  */
 #define DEFAULT_DATETIME MAKE_ULONG(os_header.os_dosdate, 0)
 
-/* initialise the ikbd */
-void kbd_init(void);
-
-/* called by ikbdvec to handle key events */
-void kbd_int(UBYTE scancode);
-
-/* called by timer C int to handle key repeat */
-void kb_timerc_int(void);
-
-/* some bios functions */
-LONG bconstat2(void);
-LONG bconin2(void);
-LONG bcostat4(void);
-LONG bconout4(WORD dev, WORD c);
-LONG kbshift(WORD flag);
-
-/* some xbios functions */
-LONG keytbl(const UBYTE* norm, const UBYTE* shft, const UBYTE* caps);
-WORD kbrate(WORD initial, WORD repeat);
-void bioskeys(void);
-
 void ikbdws(WORD cnt, const UBYTE *ptr);
 void ikbd_writeb(UBYTE b);
 void ikbd_writew(WORD w);
@@ -129,10 +77,6 @@ void ikbd_writew(WORD w);
 void push_ascii_ikbdiorec(UBYTE ascii);
 #endif
 
-/* the following is in aciavecs.S */
-#ifdef MACHINE_AMIGA
-void call_joyvec(UBYTE *packet);
-#endif
 #if CONF_WITH_FLEXCAN || CONF_SERIAL_IKBD || defined(MACHINE_LISA)
 #define call_ikbdraw(b) ikbdraw(b)
 #endif

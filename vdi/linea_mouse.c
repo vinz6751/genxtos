@@ -42,6 +42,12 @@ static const struct {
 
 static BOOL linea_mouse_inited;
 
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+    // On the Foenix, VICKY draws the mouse
+#else
+static void vbl_draw(void);
+#endif
+
 
 void linea_mouse_init(void)
 {    
