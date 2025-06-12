@@ -61,9 +61,6 @@
 
         // Exports
         .globl _kbdlength
-#if CONF_WITH_IKBD_ACIA || CONF_WITH_MIDI_ACIA
-        .globl  _int_acia
-#endif
 
 #if CONF_WITH_EXTENDED_MOUSE
         .globl  _mousexvec
@@ -71,7 +68,8 @@
         .globl  _kbdvec
         .globl  _kbdvecs
         .globl  _call_mousevec
-        .globl _call_kbdint
+        .globl  _call_kbdint
+        .globl  _callKbdvecs_wrapper
 
         .bss
 
@@ -102,8 +100,8 @@ _kbdlength:     .ds.b   1       // number of bytes remaining in current packet
 #if CONF_WITH_IKBD_ACIA || CONF_WITH_MIDI_ACIA
 
 // ==== Int 0x118 - midi/kbd interrupt routine ================
-//
-
+        .globl  _int_acia
+        .extern _int_acia_c
 _int_acia:
         // save scratch regs
         /* LVL: Strictly speaking there is no specification telling what
@@ -132,11 +130,8 @@ _int_acia:
 #endif /* CONF_WITH_IKBD_ACIA || CONF_WITH_MIDI_ACIA */
 
 
-        .text
-
-_call_kbdint:
+_call_kbdint: // call the C routine in ikbd.c to do the work.
         move.w  d0,-(sp)
-        // call the C routine in ikbd.c to do the work.
         jsr     _kbd_int
         addq.l  #2,sp
         rts
@@ -198,7 +193,7 @@ _callKbdvecs_wrapper:
         movem.l (sp)+,d2-d7/a2-a6
 #endif
         rts
-#endif
+
 
 #ifdef MACHINE_AMIGA
 
