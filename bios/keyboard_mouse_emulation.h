@@ -30,7 +30,6 @@ void mouse_emulation_repeat(void);
 void mouse_emulation_handle_key_pressed(WORD scancode);
 void mouse_emulation_handle_key_released(WORD scancode);
 BOOL handle_mouse_mode(WORD newkey);
-BOOL is_mouse_action_key(WORD scancode);
 BOOL mouse_emulation_is_active(void);
 
 #endif

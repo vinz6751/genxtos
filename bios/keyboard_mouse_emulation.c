@@ -41,13 +41,18 @@ static SBYTE mouse_packet[3];         /* the emulated mouse packet, passed to mo
  */
 static WORD mouse_action_key_pressed_count;
 
+
+static BOOL is_mouse_action_key(WORD scancode);
+
+
+
 void mouse_emulation_init(void) {
     MOUSE_EMULATION_MODE = FALSE;    /* not doing mouse emulation */
     mouse_action_key_pressed_count = 0;  /* no arrow keys pressed initially */
 }
 
 BOOL mouse_emulation_is_active(void) {
-    return MOUSE_EMULATION_MODE ? TRUE : FALSE;
+    return MOUSE_EMULATION_MODE;
 }
 
 void mouse_emulation_handle_key_pressed(WORD scancode) {
@@ -81,7 +86,7 @@ void mouse_emulation_repeat(void) {
 }
 
 /* Return true if the scancode corresponds to a key used to simulate mouse action (movement or click) */
-BOOL is_mouse_action_key(WORD scancode) {
+static BOOL is_mouse_action_key(WORD scancode) {
     switch (scancode) {
         case KEY_UPARROW:
         case KEY_DNARROW:

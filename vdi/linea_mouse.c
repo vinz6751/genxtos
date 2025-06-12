@@ -179,7 +179,7 @@ void linea_mouse_set_form(const MFORM *src)
 
     mouse_display_driver.set_mouse_cursor(src);
 
-    mouse_shape_semaphore -= 1;                    /* re-enable mouse drawing */
+    mouse_shape_semaphore -= 1;            /* re-enable mouse drawing */
 }
 
 

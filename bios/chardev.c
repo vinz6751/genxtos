@@ -16,6 +16,7 @@
 #include "tosvars.h"
 #include "chardev.h"
 #include "conout.h"
+#include "keyboard.h"
 #include "vt52.h"
 #include "bios.h"
 #include "asm.h"

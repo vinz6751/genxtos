@@ -103,8 +103,6 @@ void key_repeat_tick(void);
 /* some bios functions */
 LONG bconstat2(void);
 LONG bconin2(void);
-LONG bcostat4(void);
-LONG bconout4(WORD dev, WORD c);
 LONG kbshift(WORD flag);
 
 /* some xbios functions */

@@ -16,6 +16,7 @@
 #include "biosext.h"
 #include <stdarg.h>
 #include "doprintf.h"
+#include "keyboard.h"
 #include "nls.h"
 #include "lineavars.h"
 #include "vt52.h"
@@ -30,7 +31,6 @@
 #include "vectors.h"
 #include "super.h"      /* for Super() and SuperToUser() */
 #include "../bdos/bdosstub.h"
-#include "ikbd.h"
 #include "midi.h"
 #include "amiga.h"
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)

@@ -27,6 +27,7 @@
 #include "../vdi/vdistub.h"
 #include "bdosbind.h"
 #include "gemerror.h"
+#include "keyboard.h"
 #include "lineavars.h"
 #include "vt52.h"
 #include "processor.h"

@@ -447,48 +447,6 @@ LONG bconin2(void)
 }
 
 
-/* can we send a byte to the ikbd ? */
-LONG bcostat4(void)
-{
-#if CONF_WITH_IKBD_ACIA
-    if (ikbd_acia.ctrl & ACIA_TDRE) {
-        return -1;              /* OK */
-    } else {
-        /* Data register not empty */
-        return 0;               /* not OK */
-    }
-#elif CONF_WITH_FLEXCAN
-    return -1; /* Always OK */
-#else
-    return -1; /* OK (but output will be ignored) */
-#endif
-}
-
-/* send a byte to the IKBD */
-LONG bconout4(WORD dev, WORD c)
-{
-    ikbd_writeb((UBYTE)c);
-    return 1L;
-}
-
-/* cnt = number of bytes to send less one
- *
- * Note: this effectively treats the cnt argument as unsigned, just like
- * Atari TOS does.
- *
- * Workaround: New Beat's 4kB Falcon demo "Blue" calls Ikbdws() with a
- * ridiculously small stack (sp == 0x22), so keep stack usage as small as
- * possible here.
- */
-void ikbdws(WORD cnt, const UBYTE *ptr)
-{
-    do
-    {
-        ikbd_writeb(*ptr++);
-    } while (cnt--);
-}
-
-
 /*
  * convert a scancode to an ascii character
  *

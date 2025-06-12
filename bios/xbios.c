@@ -17,6 +17,7 @@
 #include "tosvars.h"
 #include "bios.h"
 #include "lineavars.h"
+#include "keyboard.h"
 #include "vt52.h"
 #include "ikbd.h"
 #include "midi.h"
