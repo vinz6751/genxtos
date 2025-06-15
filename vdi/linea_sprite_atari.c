@@ -15,6 +15,24 @@
 #include "lineavars.h"
 
 
+#if CONF_WITH_VDI_16BIT
+/*
+ * cur_display16() - blits mouse "cursor" to 16-bit screen
+ *
+ * see cur_display() for more info
+ */
+static void cur_display16(Mcdb *sprite, MCS *mcs, WORD x, WORD y)
+
+/*
+ * cur_replace16 - replace cursor with saved data (for 16-bit screens)
+ *
+ * see cur_replace for more details
+ */
+static void cur_replace16(MCS *mcs)
+
+#endif
+
+
 static void paint_clipped_sprite(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_start, UWORD shft);
 
 
@@ -41,6 +59,16 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
     UWORD shft, cdb_fg, cdb_bg;
     UWORD cdb_mask;             /* for checking cdb_bg/cdb_fg */
     ULONG *save;
+
+#if CONF_WITH_VDI_16BIT
+    /*
+     * handle 16-bit VDI in separate function
+     */
+    if (TRUECOLOR_MODE) {
+        cur_display16(sprite, mcs, x, y);
+        return;
+    }
+#endif
 
     x -= sprite->xhot;          /* x = left side of destination block */
     y -= sprite->yhot;          /* y = top of destination block */
@@ -258,6 +286,90 @@ static void paint_clipped_sprite(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_st
 }
 
 
+#if CONF_WITH_VDI_16BIT
+/*
+ * cur_display16() - blits mouse "cursor" to 16-bit screen
+ *
+ * see cur_display() for more info
+ */
+static void cur_display16(Mcdb *sprite, MCS *mcs, WORD x, WORD y)
+{
+    UWORD *mask_start, *dst, *save, *palette;
+    UWORD bgcol, fgcol, bgmask, fgmask;
+    WORD dst_inc, i, rows, shift, width;
+
+    /*
+     * get adjusted coordinates of mouse destination
+     */
+    x -= sprite->xhot;
+    y -= sprite->yhot;
+
+    /*
+     * figure out height, width, and where to start in mask
+     */
+    mask_start = sprite->maskdata;
+    if (y < 0) {
+        rows = y + MOUSE_HEIGHT;
+        mask_start -= y * sizeof(UWORD);
+        y = 0;
+    } else if (y > (yres + 1 - MOUSE_HEIGHT)) {
+        rows = yres + 1 - y;
+    } else {
+        rows = MOUSE_HEIGHT;
+    }
+
+    shift = 0;
+    if (x < 0) {
+        width = x + MOUSE_WIDTH;
+        shift = -x;
+        x = 0;
+    } else if (x > (xres + 1 - MOUSE_WIDTH)) {
+        width = xres + 1 - x;
+    } else {
+        width = MOUSE_WIDTH;
+    }
+
+    /*
+     * get destination pointer & increment
+     */
+    dst = get_start_addr16(x, y);
+    dst_inc = v_lin_wr/sizeof(UWORD) - width;
+
+    save = (UWORD *)mcs->area;
+
+    /*
+     *  Store values required by cur_replace()
+     */
+    mcs->len = rows;            /* number of cursor rows */
+    mcs->addr = dst;            /* save area: origin of material */
+    mcs->stat |= MCS_VALID;     /* flag the buffer as being loaded */
+    mcs->width = width;         /* number of cursor columns */
+
+    /*
+     * update screen, saving old contents
+     */
+    palette = CUR_WORK->ext->palette;
+    bgcol = palette[sprite->bg_col];
+    fgcol = palette[sprite->fg_col];
+    while (rows-- > 0) {
+        bgmask = *mask_start++;     /* set up bg mask */
+        bgmask <<= shift;
+        fgmask = *mask_start++;     /* set up fg mask */
+        fgmask <<= shift;
+        for (i = 0; i < width; i++, dst++, bgmask<<=1, fgmask<<=1) {
+            *save++ = *dst;
+            if (fgmask & 0x8000)
+                *dst = fgcol;
+            else if (bgmask & 0x8000)
+                *dst = bgcol;
+        }
+        dst += dst_inc;
+    }
+}
+#endif
+
+
+
 /*
  * linea_sprite_hide_atari - replace cursor with data in save area
  *
@@ -274,6 +386,16 @@ void linea_sprite_hide_atari(MCS *mcs)
     UWORD *addr, *src, *dst;
     const WORD inc = v_planes;      /* # words to next word in same plane */
     const WORD dst_inc = v_lin_wr >> 1; /* # words in a scan line */
+
+#if CONF_WITH_VDI_16BIT
+    /*
+     * handle 16-bit VDI in separate function
+     */
+    if (TRUECOLOR_MODE) {
+        cur_replace16(mcs);
+        return;
+    }
+#endif
 
     if (!(mcs->stat & MCS_VALID))   /* does save area contain valid data ? */
         return;
@@ -313,3 +435,31 @@ void linea_sprite_hide_atari(MCS *mcs)
         }
     }
 }
+
+
+#if CONF_WITH_VDI_16BIT
+/*
+ * cur_replace16 - replace cursor with saved data (for 16-bit screens)
+ *
+ * see cur_replace for more details
+ */
+static void cur_replace16(MCS *mcs)
+{
+    UWORD *addr, *dst, *src;
+    UWORD row, col;
+
+    if (!(mcs->stat & MCS_VALID))   /* does save area contain valid data ? */
+        return;
+    mcs->stat &= ~MCS_VALID;        /* yes but (like TOS) don't allow reuse */
+
+    addr = mcs->addr;               /* starting screen address */
+    src = (UWORD *)mcs->area;
+
+    for (row = mcs->len, dst = addr; row > 0; row--, dst = addr) {
+        for (col = mcs->width; col > 0; col--) {
+            *dst++ = *src++;
+        }
+        addr += v_lin_wr >> 1;
+    }
+}
+#endif

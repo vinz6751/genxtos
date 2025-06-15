@@ -16,17 +16,17 @@
 #define MOUSE_H
 
 /* Defines for mouse configuration in IKBD */
-                    /* the following values apply to 'topmode' in 'struct param' */
+                    /* the following values apply to 'topmode' in 'struct initmous_parameter_block' */
 #define IN_YTOP 0   /* Y=0 means top of screen */
 #define IN_YBOT 1   /* Y=0 means bottom of screen */
-                    /* the following values apply to 'buttons' in 'struct param'; */
+                    /* the following values apply to 'buttons' in 'struct initmous_parameter_block'; */
                     /* they are for documentation only, and are not used in EmuTOS */
 #define IN_PACKETS 3    /* absolute mouse position reported on button press */
 #define IN_KEYS 4       /* mouse buttons generate keycodes */
 
 
 /*
- * struct param - Used for parameter passing to Initmous() function:
+ * struct initmous_parameter_block - Used for parameter passing to Initmous() function:
  *
  * topmode - indicates if Y=0 is at the top or bottom of screen.
  * buttons - bit array, which affects the way mouse clicks are handled.
@@ -41,7 +41,7 @@
  * yinitial - The mouse's initial y location.
  */
 
-struct param
+struct initmous_parameter_block
 {
     UBYTE    topmode;
     UBYTE    buttons;
@@ -63,6 +63,13 @@ struct mouse_data {
 
 
 /* External declarations */
-void Initmous(WORD , struct param *, PFVOID);
+
+/* mouse_mode for Initmous, these are copied to xbiosbind.h for convenience */
+#define DISABLE_MOUSE 0
+#define RELATIVE_MOUSE 1
+#define ABSOLUTE_MOUSE 2
+#define KEYCODE_MOUSE 4
+
+void Initmous(WORD , struct initmous_parameter_block *, void (*)(UBYTE*));
 
 #endif /* MOUSE_H */

@@ -18,37 +18,38 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
-#include "tosvars.h"
+#include "asm.h"
 #include "bios.h"
 #include "lineavars.h"
 #include "ikbd.h"
 #include "mouse.h"
+#include "tosvars.h"
 #include "vectors.h"
-#include "asm.h"
 
 
 /*
- * mouse initialization
- *
+ * mouse initialization. Programs the IKBD to report mouse events
+ * (or disable), and set handling vector for IKBD mouse packets.
+ * new_mousevec is a handler for the IKBD mousevec vectors, it receives the IKBD packet in a0
  */
 
-void Initmous(WORD type, struct param *param, PFVOID newvec)
+void Initmous(WORD mouse_mode, struct initmous_parameter_block *p, void(*new_mousevec)(UBYTE*))
 {
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
-    kbdvecs.mousevec = (newvec != NULL) ? newvec : just_rts;
-#else    
-    long retval = -1;           /* ok, if it stays so... */
-    struct param *p = param;   /* pointer to parameter block */
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+    // These machines have no IKBD
+    kbdvecs.mousevec = (new_mousevec != NULL) ? new_mousevec : just_rts;
+#else
+    BOOL error = 0;
 
-    switch (type) {
+    switch (mouse_mode) {
 
-    case 0:
+    case DISABLE_MOUSE:
         ikbd_writeb(0x12);      /* disable mouse */
         break;
 
-    case 1:
+    case RELATIVE_MOUSE:
         /* Parameters for relative mouse movement */
-        if (param != NULL) {
+        if (p != NULL) {
             ikbd_writeb(0x08);          /* set relative mouse mode */
 
             ikbd_writeb(0x0b);          /* set relative threshold */
@@ -57,9 +58,9 @@ void Initmous(WORD type, struct param *param, PFVOID newvec)
         }
         break;
 
-    case 2:
+    case ABSOLUTE_MOUSE:
         /* Parameters for absolute mouse movement */
-        if (param != NULL) {
+        if (p != NULL) {
             ikbd_writeb(0x09);          /* set absolute position */
             ikbd_writew(p->xmax);
             ikbd_writew(p->ymax);
@@ -75,7 +76,7 @@ void Initmous(WORD type, struct param *param, PFVOID newvec)
         }
         break;
 
-    case 4:
+    case KEYCODE_MOUSE:
         /*
          * mouse_kbd_mode - Set mouse keycode mode
          *
@@ -90,32 +91,33 @@ void Initmous(WORD type, struct param *param, PFVOID newvec)
          * deltay - distance in Y clicks to return (UP) or (DOWN)
          */
 
-        if (param != NULL) {
+        if (p != NULL) {
             ikbd_writeb(0x0a);          /* set keyboard mode */
             ikbd_writeb(p->xparam);
             ikbd_writeb(p->yparam);
         }
         break;
     default:
-        retval = 0;             /* means error */
+        error = TRUE;
     }
 
-    if (retval != 0 && type != 0) {         /* if no error */
-
-        if (param != NULL) {
-            if (p->topmode == IN_YBOT)
-                ikbd_writeb(0x0f);      /* set bottom to y=0 */
-            if (p->topmode == IN_YTOP)
-                ikbd_writeb(0x10);      /* set top to y=0 */
-
-            ikbd_writeb(0x07);          /* set mouse button reaction */
-            ikbd_writeb(p->buttons);
-        }
-        if (newvec != NULL)
-            kbdvecs.mousevec = newvec;  /* set mouse vector */
-
-    } else {                    /* if error */
-        kbdvecs.mousevec = just_rts;    /* set dummy vector */
+    if (error || mouse_mode == DISABLE_MOUSE) {
+        kbdvecs.mousevec = (void(*)(UBYTE*))just_rts;    /* set dummy vector */
+        return;
     }
-#endif    
+
+
+    /* we're setting the mouse to some mode, so we need to passe in some parameters */
+    if (p != NULL) {
+        if (p->topmode == IN_YBOT)
+            ikbd_writeb(0x0f);      /* set bottom to y=0 */
+        if (p->topmode == IN_YTOP)
+            ikbd_writeb(0x10);      /* set top to y=0 */
+
+        ikbd_writeb(0x07);          /* set mouse button reaction */
+        ikbd_writeb(p->buttons);
+    }
+    if (new_mousevec != NULL)
+        kbdvecs.mousevec = new_mousevec;  /* set mouse vector */
+#endif
 }

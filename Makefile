@@ -1,7 +1,7 @@
 #
 # Makefile - the EmuTOS overbloated Makefile
 #
-# Copyright (C) 2001-2024 The EmuTOS development team.
+# Copyright (C) 2001-2025 The EmuTOS development team.
 #
 # This file is distributed under the GPL, version 2 or at your
 # option any later version.  See doc/license.txt for details.
@@ -309,12 +309,12 @@ bios_src = startup.S
 bios_src += lowstram.c
 
 # Other BIOS sources can be put in any order
-bios_src +=  memory.S processor.S vectors.S aciavecs.S bios.c xbios.c xbios_tt.c acsi.c \
+bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c bios.c xbios.c xbios_tt.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
              conout.c conout_atarifb.c \
              cartridge_atari.S country.c \
-             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c \
-             kprint.c kprintasm.S machine.c \
+             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c iorec.c \
+             keyboard.c keyboard_mouse_emulation.c kprint.c kprintasm.S machine.c \
              mfp.c mfp68901.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c screen_atari.c screen_tt.c serport.c sound.c videl.c vt52.c xhdi.c \
              pmmu030.c 68040_pmmu.S \

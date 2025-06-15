@@ -70,7 +70,7 @@
  * 6. Instruction cache: if enabled, it is invalidated in Pexec() after
  *    a program is loaded. For TOS compatibility, it is also invalidated
  *    after Rwabs() or DMAread().
- * 7. The processor speed is undefined. The routine calibrate_delay() is
+ * 7. The processor speed is undefined. The routine delay_calibrate() is
  *    used to derive a value that is used for timing short delays via a
  *    small instruction-looping routine.  See delay.c.
  *
@@ -95,6 +95,9 @@ extern WORD longframe;
 
 #if CONF_WITH_APOLLO_68080
 extern BOOL is_apollo_68080;
+  #define IS_APOLLO_68080 is_apollo_68080
+#else
+  #define IS_APOLLO_68080 0
 #endif
 
 #endif /* PROCESSOR_H */

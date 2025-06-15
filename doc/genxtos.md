@@ -58,7 +58,7 @@ The Foenix has support for hardware mouse cursor. And if we want the mouse to wo
 
 The module controlling all this is linea_mouse.c.
 
-Likewise, the way to update mouse coordinates is different in the Foenix and the Atari ST. On the ST, there is a packet generated from the IKBD keyboard controller, and once received it calls linea_mouse_packet_received_handler which updates internal flags to let the VBL interrupt handler move the mouse at next screen refresh (using the mouse_display_driver LINEA_MOUSE_RENDERER)
+Likewise, the way to update mouse coordinates is different in the Foenix and the Atari ST. On the ST, there is a packet generated from the IKBD keyboard controller, and once received it calls linea_ikbd_mousevec which updates internal flags to let the VBL interrupt handler move the mouse at next screen refresh (using the mouse_display_driver LINEA_MOUSE_RENDERER)
 On the Foenix, the mouse is moved automatically when writting PS/2 packets bytes in the appropriate GAVIN registers. So it could be really quick to just write PS/2 packets and let the mouse be moved. But in this case, the TOS (the VDI/AES in particular) monitoring mouse movement to trigger UI events (e.g. drop down a menu) would not be aware of the mouse movement. For this reason, we do both things:
 * Write the PS/2 bytes to GAVIN so the mouse cursor is moved (that's the only way to move the mouse as the mouse position registers are read-only, unfortunately).
 * Create a fake mouse packet (like the IKBD would do) and call the normal TOS handling routine for it.

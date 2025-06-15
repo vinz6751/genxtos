@@ -86,7 +86,7 @@ _drvbits        = 0x4c2;        /* bit allocation for physical drives */
 _dskbufp        = 0x4c6;        /* pointer to disk buffer */
 _autopath       = 0x4ca;        /* pointer to auto-execute path */
 _vbl_list       = 0x4ce;        /* pointers to 8 VBL routines */
-_dumpflg        = 0x4ee;        /* flag for screen dump */
+_dumpflg        = 0x4ee;        /* flag for screen dump. 0 = dump requested, -1: do nothing */
 _prtabt         = 0x4f0;        /* printer abort flag */
 _sysbase        = 0x4f2;        /* pointer to start of OS */
 _shell_p        = 0x4f6;        /* pointer to shell */

@@ -1,7 +1,7 @@
 /*
  * vectors.h - exception vectors, interrupt routines and system hooks
  *
- * Copyright (C) 2001-2022 The EmuTOS development team
+ * Copyright (C) 2001-2025 The EmuTOS development team
  *
  * Authors:
  *  LVL     Laurent Vogel
@@ -16,10 +16,6 @@
 /* Data to initialise default CPU vectors */
 void user_vec(void);
 extern UWORD deflt_vec_table[];
-
-/* initialise acia vectors */
-
-void init_acia_vecs(void);
 
 /* some exception vectors */
 

@@ -1,7 +1,7 @@
 /*
  * vectors.S - exception vectors
  *
- * Copyright (C) 2001-2022 The EmuTOS development team
+ * Copyright (C) 2001-2025 The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -74,14 +74,6 @@
         .extern _proc_stk
 
         .extern _vblsem
-        .extern _colorptr
-        .extern _screenpt
-        .extern _has_videl
-        .extern _has_tt_shifter
-        .extern _has_ste_shifter
-        .extern _flopvbl
-        .extern _nvbls
-        .extern _kb_timerc_int
         .extern _etv_critic
         .extern _mcpu
         .extern _bios_ent
@@ -91,6 +83,7 @@
         .extern _savptr
         .extern _xbios_do_unimpl
         .extern _kcl_hook
+        .extern _vbl_handler
 
         .text
 
@@ -306,7 +299,6 @@ _int_vbl:
         movem.l d0-d7/a0-a6, -(sp)      // save registers
 #endif
 
-        .global _vbl_handler
         jbsr    _vbl_handler
 
 #ifdef __mcoldfire__

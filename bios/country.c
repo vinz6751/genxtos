@@ -17,6 +17,7 @@
 #include "emutos.h"
 #include "biosdefs.h"
 #include "country.h"
+#include "keyboard.h"
 #include "nvram.h"
 #include "../obj/header.h"
 #include "bios.h"

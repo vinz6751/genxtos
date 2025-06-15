@@ -49,7 +49,7 @@ void dopanic(const char *fmt, ...) PRINTF_STYLE NORETURN;
 
 /* misc BIOS variables */
 extern const OSHEADER os_header;
-extern struct kbdvecs kbdvecs;
+extern KBDVECS kbdvecs;
 
 /* Font offsets */
 extern const UWORD off_6x6_table[];

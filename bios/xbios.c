@@ -17,6 +17,7 @@
 #include "tosvars.h"
 #include "bios.h"
 #include "lineavars.h"
+#include "keyboard.h"
 #include "vt52.h"
 #include "ikbd.h"
 #include "midi.h"
@@ -50,7 +51,7 @@
  */
 
 #if DBG_XBIOS
-static void xbios_0(WORD type, struct param * param, PFVOID vec)
+static void xbios_0(WORD type, struct initmous_parameter_block * param, PFVOID vec)
 {
     kprintf("XBIOS: Initmous\n");
     Initmous(type, param, vec);

@@ -1,7 +1,7 @@
 /*
  * machine.c - detection of machine type
  *
- * Copyright (C) 2001-2024 The EmuTOS development team
+ * Copyright (C) 2001-2025 The EmuTOS development team
  *
  * Authors:
  *  LVL     Laurent Vogel
@@ -644,30 +644,25 @@ void machine_init(void)
     /* There is an early setup of the UART so we can use KDEBUG earlier. */
     //TODOboot_status |= RS232_AVAILABLE;
 #endif
+
+    /* Initialize the MFP, this ensures their IRQs are disabled */
+#if CONF_WITH_MFP
+    KDEBUG(("mfp_init()\n"));
+    mfp_init();
+#endif
+#if CONF_WITH_TT_MFP
+    if (has_tt_mfp)
+    {
+        KDEBUG(("mfptt_init()\n"));
+        mfptt_init();
+    }
+#endif
+
 #if !CONF_WITH_RESET
 /*
  * we must disable interrupts here, because the reset instruction hasn't
  * been run during startup
  */
- #if CONF_WITH_MFP
-    {
-        MFP *mfp = MFP_BASE;  /* set base address of MFP */
-
-        mfp->iera = 0x00;     /* disable MFP interrupts */
-        mfp->ierb = 0x00;
-    }
- #endif
-
- #if CONF_WITH_TT_MFP
-    if (has_tt_mfp)
-    {
-        MFP *mfp = TT_MFP_BASE; /* set base address of TT MFP */
-
-        mfp->iera = 0x00;       /* disable MFP interrupts */
-        mfp->ierb = 0x00;
-    }
- #endif
-
  #if CONF_WITH_SCC
     if (has_scc)
     {

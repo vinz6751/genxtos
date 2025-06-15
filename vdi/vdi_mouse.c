@@ -3,7 +3,7 @@
  *
  * Copyright 1982 by Digital Research Inc.  All rights reserved.
  * Copyright 1999 by Caldera, Inc. and Authors:
- * Copyright 2002-2022 by The EmuTOS development team
+ * Copyright 2002-2025 by The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -27,10 +27,13 @@
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)  || defined(MACHINE_A2560M)
 # include "../foenix/vicky2.h"
 #endif
+#include "vdi_inline.h"
 #if WITH_AES
 #include "../aes/aesstub.h"
 #endif
 
+#define MOUSE_WIDTH     16      /* in pixels */
+#define MOUSE_HEIGHT    16
 
 /* Mouse / sprite structure */
 typedef struct Mcdb_ Mcdb;
@@ -44,7 +47,7 @@ struct Mcdb_ {
 };
 
 /* prototypes */
-static void mform_color_validator(const MFORM *src, MCDB *dst);
+static void mform_color_fixup(const MFORM *src, MCDB *dst);
 
 /* prototypes for functions in vdi_asm.S */
 
@@ -54,6 +57,8 @@ static void mform_color_validator(const MFORM *src, MCDB *dst);
 void wheel_int(void);           /* wheel interrupt routine */
 void call_user_but(WORD status);/* call user_but from C */
 void call_user_wheel(WORD wheel_number, WORD wheel_amount); /* call user_wheel from C */
+static void vdi_mousex_handler (WORD scancode);
+void vdi_vex_wheelv(Vwk * vwk);
 
 /* pointers to callbacks called from vdi_asm.S */
 PFVOID user_wheel;  /* user mouse wheel vector provided by vdi_vex_wheelv() */
@@ -70,6 +75,71 @@ PFVOID old_statvec; /* original IKBD status packet routine */
 #define default_mform() &arrow_mform
 #endif
 
+
+/*
+ * vdimouse_init - Initializes the mouse (VDI part)
+ *
+ * entry:          none
+ * exit:           none
+ */
+void vdimouse_init(void)
+{
+    /* Input must be initialized here and not in init_wk */
+    loc_mode = 0;               /* default is request mode  */
+    val_mode = 0;               /* default is request mode  */
+    chc_mode = 0;               /* default is request mode  */
+    str_mode = 0;               /* default is request mode  */
+
+    /* Move in the default mouse form (presently the arrow) */    
+    mform_color_fixup((const MFORM*)default_mform(), &mouse_cdb); /* FIXME CHEAT, not sure how to inject an implementation-specific validator... */
+    linea_mouse_set_form(default_mform());
+    linea_mouse_init();
+
+#if CONF_WITH_EXTENDED_MOUSE
+    {
+        KBDVECS *kbd_vectors = (KBDVECS *)Kbdvbase();
+        old_statvec = kbd_vectors->statvec;
+        kbd_vectors->statvec = wheel_int;
+        mousexvec = vdi_mousex_handler;
+    }
+#endif
+}
+
+
+/*
+ * vdimouse_exit - deinitialize/disable mouse
+ */
+void vdimouse_exit(void)
+{
+    user_but = just_rts;
+    user_mot = just_rts;
+    user_cur = just_rts;
+#if CONF_WITH_EXTENDED_MOUSE
+    user_wheel = just_rts;
+#endif
+
+#if CONF_WITH_EXTENDED_MOUSE
+    {
+        KBDVECS *kbd_vectors = (KBDVECS *)Kbdvbase();
+        kbd_vectors->statvec = old_statvec;
+    }
+#endif
+}
+
+
+/* Check/fix colors used by a Mouse Form so they're compatible with the number of colors of the workstation */
+static void mform_color_fixup(const MFORM *src, MCDB *dst)
+{
+    WORD col;
+
+    /* check/fix background color index */
+    col = validate_color_index(src->mf_bg);
+    dst->bg_col = MAP_COL[col];
+
+    /* check/fix foreground color index */
+    col = validate_color_index(src->mf_fg);
+    dst->fg_col = MAP_COL[col];
+}
 
 #if CONF_WITH_EXTENDED_MOUSE
 
@@ -106,9 +176,6 @@ static void vdi_mousex_handler (WORD scancode)
         call_user_wheel(1, 1);
 }
 
-#endif /* CONF_WITH_EXTENDED_MOUSE */
-
-#if CONF_WITH_EXTENDED_MOUSE
 /*
  * vdi_vex_wheelv: a Milan VDI extension
  *
@@ -130,68 +197,3 @@ void vdi_vex_wheelv(Vwk * vwk)
     user_wheel = (PFVOID) ULONG_AT(&CONTRL[7]);
 }
 #endif
-
-/*
- * vdimouse_init - Initializes the mouse (VDI part)
- *
- * entry:          none
- * exit:           none
- */
-void vdimouse_init(void)
-{
-    /* Input must be initialized here and not in init_wk */
-    loc_mode = 0;               /* default is request mode  */
-    val_mode = 0;               /* default is request mode  */
-    chc_mode = 0;               /* default is request mode  */
-    str_mode = 0;               /* default is request mode  */
-
-    /* Move in the default mouse form (presently the arrow) */    
-    mform_color_validator((const MFORM*)default_mform(), &mouse_cdb); /* FIXME CHEAT, not sure how to inject an implementation-specific validator... */
-    linea_mouse_set_form(default_mform());
-
-#if CONF_WITH_EXTENDED_MOUSE
-    {
-        struct kbdvecs *kbd_vectors = (struct kbdvecs *)Kbdvbase();
-        old_statvec = kbd_vectors->statvec;
-        kbd_vectors->statvec = wheel_int;
-        mousexvec = vdi_mousex_handler;
-    }
-#endif
-}
-
-
-
-/*
- * vdimouse_exit - deinitialize/disable mouse
- */
-void vdimouse_exit(void)
-{
-    user_but = just_rts;
-    user_mot = just_rts;
-    user_cur = just_rts;
-#if CONF_WITH_EXTENDED_MOUSE
-    user_wheel = just_rts;
-#endif
-
-
-
-#if CONF_WITH_EXTENDED_MOUSE
-    {
-        struct kbdvecs *kbd_vectors = (struct kbdvecs *)Kbdvbase();
-        kbd_vectors->statvec = old_statvec;
-    }
-#endif
-}
-
-static void mform_color_validator(const MFORM *src, MCDB *dst)
-{
-    WORD col;
-
-    /* check/fix background color index */
-    col = validate_color_index(src->mf_bg);
-    dst->bg_col = MAP_COL[col];
-
-    /* check/fix foreground color index */
-    col = validate_color_index(src->mf_fg);
-    dst->fg_col = MAP_COL[col];
-}

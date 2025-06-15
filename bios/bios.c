@@ -2,7 +2,7 @@
  *  bios.c - C portion of BIOS initialization and front end
  *
  * Copyright (C) 2001 Lineo, Inc.
- * Copyright (C) 2001-2024 The EmuTOS development team
+ * Copyright (C) 2001-2025 The EmuTOS development team
  *
  * Authors:
  *  SCC     Steve C. Cavender
@@ -20,12 +20,14 @@
 // #define ENABLE_KDEBUG 1
 
 #include "emutos.h"
+#include "aciavecs.h"
 #include "biosext.h"
 #include "bios.h"
 #include "../bdos/bdosstub.h"
 #include "../vdi/vdistub.h"
 #include "bdosbind.h"
 #include "gemerror.h"
+#include "keyboard.h"
 #include "lineavars.h"
 #include "vt52.h"
 #include "processor.h"
@@ -61,6 +63,7 @@
 #include "nova.h"
 #include "timer.h"
 #include "tosvars.h"
+#include "vbl.h"
 #include "amiga.h"
 #include "lisa.h"
 #include "coldfire.h"
@@ -148,7 +151,6 @@ void vecs_init(void)
         do {
             *m68k_exception_vectors++ = (PFVOID)src++;
         } while (--i >= 0);
-
     }
 
     /* Initialize the 192 user exception vectors */
@@ -215,7 +217,6 @@ void vecs_init(void)
 #endif
 }
 
-extern PFVOID vbl_list[8]; /* Default array for vblqueue */
 
 /*
  * Initialize the BIOS
@@ -250,16 +251,21 @@ static void bios_init(void)
 #endif
     KDEBUG(("Address Bus width is %d-bit\n", IS_BUS32 ? 32 : 24));
 
+    /* Setup all CPU exception vectors */
     KDEBUG(("vecs_init()\n"));
-    vecs_init();        /* setup all exception vectors (above) */
-    KDEBUG(("init_delay()\n"));
-    init_delay();       /* set 'reasonable' default values for delay */
+    vecs_init();
+
+    /* Set 'reasonable' default values for delay */
+    KDEBUG(("delay_init()\n"));
+    delay_init();
 
     /* Detect optional hardware (video, sound, etc.) */
     KDEBUG(("machine_detect()\n"));
-    machine_detect();   /* detect hardware */
+    machine_detect();
+    
+    /* Initialise machine-specific stuff */
     KDEBUG(("machine_init()\n"));
-    machine_init();     /* initialise machine-specific stuff */
+    machine_init();
 
     /* Initialize the BIOS memory management */
     KDEBUG(("bmem_init()\n"));
@@ -286,13 +292,11 @@ static void bios_init(void)
     }
 #endif /* CONF_WITH_68040_PMMU */
 
+    /* Setup and fill the cookie jar */
     KDEBUG(("cookie_init()\n"));
-    cookie_init();      /* sets a cookie jar */
+    cookie_init();
     KDEBUG(("fill_cookie_jar()\n"));
-    fill_cookie_jar();  /* detect hardware features and fill the cookie jar */
-
-    KDEBUG(("font_init()\n"));
-    font_init();        /* initialize font ring (requires cookie_akp) */
+    fill_cookie_jar();
 
 #if CONF_WITH_BLITTER
     /*
@@ -306,24 +310,7 @@ static void bios_init(void)
         has_blitter = 0;
 #endif
 
-    /*
-     * Initialize MFP and SCC: among other things this ensures that the
-     * respective interrupts are disabled.
-     */
-
-#if CONF_WITH_MFP
-    KDEBUG(("mfp_init()\n"));
-    mfp_init();
-#endif
-
-#if CONF_WITH_TT_MFP
-    if (has_tt_mfp)
-    {
-        KDEBUG(("mfptt_init()\n"));
-        mfptt_init();
-    }
-#endif
-
+    /* Initialize SCC: among other things this ensures that the interrupts are disabled. */
 #if CONF_WITH_SCC
     if (has_scc)
     {
@@ -332,37 +319,36 @@ static void bios_init(void)
     }
 #endif
 
-    /*
-     * Initialize the screen mode
-     * Must be done before calling linea_init().
-     */
+    /* Initialize the screen mode
+     * Must be done before calling linea_init(). */
     KDEBUG(("screen_init_mode()\n"));
     screen_init_mode(); /* detect monitor type, ... */
 
-    /* Set up the BIOS console output */
+    /* Set up the video system */
     KDEBUG(("linea_init()\n"));
     linea_init();       /* initialize screen related line-a variables */
 
-    /*
-     * Initialize the screen address
-     * Must be done after calling linea_init().
-     */
+    /* Initialize the screen address
+     * Must be done after calling linea_init(). */
     KDEBUG(("screen_init_address()\n"));
     screen_init_address();
 
+    /* Initialise the font list (requires cookie jar to be ready as it uses _AKP) */
+    KDEBUG(("font_init()\n"));
+    font_init();
+
+    /* Initialize the vt52 console */
     KDEBUG(("vt52_init()\n"));
-    vt52_init();        /* initialize the vt52 console */
+    vt52_init();
 
     /* Now kcprintf() will also send debug info to the screen */
     KDEBUG(("after vt52_init()\n"));
 
-    /* now we have output, let the user know we're alive */
+    /* Now we have output, let the user know we're alive */
     display_startup_msg();
 
 #if DETECT_NATIVE_FEATURES
-    /*
-     * Tell ARAnyM where the LineA variables are
-     */
+    /* Tell ARAnyM where the LineA variables are */
     nf_setlinea();
 #endif
 
@@ -375,24 +361,22 @@ static void bios_init(void)
     etv_term = just_rts;
     swv_vec = just_rts;
 
-    /* setup default VBL queue with vbl_list[] */
+    /* Setup VBL queue */
     KDEBUG(("VBL queue\n"));
-    nvbls = ARRAY_SIZE(vbl_list);
-    vblqueue = vbl_list;
-    {
-        int i;
-        for(i = 0 ; i < nvbls ; i++) {
-            vbl_list[i] = NULL;
-        }
-    }
+    vbl_init();
 
-   /* Initialize the RS-232 port(s) */
+   /* Initialize the character devices, RS-232 port(s) */
     KDEBUG(("chardev_init()\n"));
     chardev_init();     /* Initialize low-memory bios vectors */
     boot_status |= CHARDEV_AVAILABLE;   /* track progress */
+
     KDEBUG(("init_serport()\n"));
     init_serport();
     boot_status |= RS232_AVAILABLE;     /* track progress */
+#if CONF_WITH_SCC
+    if (has_scc)
+        boot_status |= SCC_AVAILABLE;   /* track progress */
+#endif
 
     /*
      * Initialize the system 200 Hz timer (timer C on Atari hardware).
@@ -426,9 +410,30 @@ static void bios_init(void)
 
 #endif
 
-#if CONF_WITH_SCC
-    if (has_scc)
-        boot_status |= SCC_AVAILABLE;   /* track progress */
+#if defined(MACHINE_ARANYM) || defined(TARGET_1024)
+    /* ARAnyM 1.1.0 loads only the first half of 1024k ROMs.
+     * Detect this situation and warn the user.
+     * This method is ugly, but safe for releases as they are thoroughly tested.
+     */
+    if (IS_ARANYM && ULONG_AT(0x00e80000) == 0)
+    {
+        kcprintf(
+            "\r\n"
+            "ERROR: This 1024k ROM isn't supported by your ARAnyM version.\r\n"
+            "Please use etos512*.img instead, until next ARAnyM release.\r\n"
+        );
+
+        /* Don't use halt() on ARAnyM, as it causes an infinite loop
+           with the message: "STOPed with interrupts disabled, exiting;".
+           FIXME: Fix halt() instead.
+        */
+        for(;;)
+        {
+#if USE_STOP_INSN_TO_FREE_HOST_CPU
+            stop_until_interrupt();
+#endif
+        }
+    }
 #endif
 
     /*
@@ -460,8 +465,8 @@ static void bios_init(void)
     /* Enable 50 Hz processing */
     timer_start_20ms_routine();
 
-    KDEBUG(("calibrate_delay()\n"));
-    calibrate_delay();  /* determine values for delay() function */
+    KDEBUG(("delay_calibrate()\n"));
+    delay_calibrate();  /* determine values for delay() function */
                         /*  - requires interrupts to be enabled  */
 
     /* Initialize the DSP.  Since we currently use the system timer

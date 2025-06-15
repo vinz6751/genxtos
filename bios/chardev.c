@@ -13,10 +13,10 @@
  */
 
 #include "emutos.h"
-#include "gemerror.h"
 #include "tosvars.h"
 #include "chardev.h"
 #include "conout.h"
+#include "keyboard.h"
 #include "vt52.h"
 #include "bios.h"
 #include "asm.h"
@@ -52,6 +52,7 @@ LONG char_dummy(void)
     return 0L;
 }
 
+
 LONG charout_dummy(WORD dev,WORD b)
 {
     return 0L;
@@ -62,17 +63,16 @@ LONG charout_dummy(WORD dev,WORD b)
 
 void chardev_init(void)
 {
-int i;
+    int i;
 
     /* initialise bios device vectors */
     for (i = 0; i < NUM_CHAR_VECS; i++)
+    {
         bconstat_vec[i] = bconstat_init[i];
-    for (i = 0; i < NUM_CHAR_VECS; i++)
         bconin_vec[i] = bconin_init[i];
-    for (i = 0; i < NUM_CHAR_VECS; i++)
         bcostat_vec[i] = bcostat_init[i];
-    for (i = 0; i < NUM_CHAR_VECS; i++)
         bconout_vec[i] = bconout_init[i];
+    }
 
     /* setup serial output functions */
     aux_stat = just_rts;
@@ -85,7 +85,6 @@ int i;
 }
 
 
-
 /* BIOS devices - bconout functions */
 
 LONG bconout2(WORD dev, WORD b)
@@ -93,6 +92,7 @@ LONG bconout2(WORD dev, WORD b)
     cputc(b);
     return 1L;
 }
+
 
 /* bconout5 - raw console output. */
 LONG bconout5(WORD dev, WORD ch)
@@ -104,7 +104,6 @@ LONG bconout5(WORD dev, WORD ch)
     conout_ascii_out(LOBYTE(ch));
     return 1L;
 }
-
 
 
 /* BIOS devices - bcostat functions */

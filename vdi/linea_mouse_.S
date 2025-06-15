@@ -27,7 +27,7 @@
         .extern _old_statvec    // previous IKBD status packet vector
 #endif
         /* Exports */
-        .globl  _linea_mouse_packet_received_handler      // mouse interrupt routine, has IKBD mouse packet in a0
+        .globl  _linea_ikbd_mousevec      // mouse interrupt routine, has IKBD mouse packet in a0
 #if CONF_WITH_EXTENDED_MOUSE
         .globl  _wheel_int      // wheel interrupt routine
         .globl  _call_user_but  // call the _user_but vector from C
@@ -36,13 +36,13 @@
 
 
 /*
- * _linea_mouse_packet_received_handler - Interrupt routine called when a mouse packet has been received
+ * _linea_ikbd_mousevec - Interrupt routine called when a mouse packet has been received
  * Formerly known as "mousevec" handler
  * entry:       a0 = address of IKBD mouse packet
  * exit:        none
  * destroys:    nothing
  */
-_linea_mouse_packet_received_handler:
+_linea_ikbd_mousevec:
         movem.l d0-d7/a0-a6, -(sp)      // save registers used
 
         move.b  (a0), d0        // see if we have a mouse packet
@@ -111,7 +111,7 @@ new_coord:
         move.w  d1,_GCURY        // save new y location
 
         // Call user routine in charge of updating the display (d0:x, d1:y)
-        move.l  _user_cur,a1     // get user routine address (normally linea_mouse_moved_handler)
+        move.l  _user_cur,a1     // get drawing routine address (normally linea_user_cur)
         jsr     (a1)             // call user to draw cursor
 
                                  // d0 contains new x position
@@ -150,15 +150,15 @@ cl_done:
 
 
 /* We are notified that the mouse moved and need to request redrawing.
- * We signal this using vbl_must_draw_mouse and new coordinates are newx, newy.
+ * We signal this using vbl_must_draw_mouse and new coordinates are vbl_new_mouse_x, vbl_new_mouse_y.
  * The VBL handler can pick this up.
  * Inputs: d0.w: new X, d1.w: new Y
  * Outputs: None
  * Clobbered: None */
-         .globl  _linea_mouse_moved_handler
-        .extern _newx           // new mouse x position for the VBL handler
-        .extern _newy           // new mouse y position for the VBL handler
-_linea_mouse_moved_handler:
+         .globl  _linea_user_cur
+        .extern _vbl_new_mouse_x // new mouse x position for the VBL handler
+        .extern _vbl_new_mouse_y // new mouse y position for the VBL handler
+_linea_user_cur:
         tst.w   _HIDE_CNT       // is the mouse cursor hidden?
         bne.s    done           // yes - don't draw it now
 
@@ -170,8 +170,8 @@ _linea_mouse_moved_handler:
         move.w  sr,-(sp)        // save current value of status register
         ori.w   #0x0700,sr      // mask off all interrupts
 
-        move.w  d0,_newx        // save new cursor x-coordinate
-        move.w  d1,_newy        // save new cursor y-coordinate
+        move.w  d0,_vbl_new_mouse_x        // save new cursor x-coordinate
+        move.w  d1,_vbl_new_mouse_y        // save new cursor y-coordinate
 
         move.b  #-1,_vbl_must_draw_mouse   // set the 'draw cursor' flag to signal to the VBL handler to redraw
         move.w  (sp)+,sr        // restore the value of the status register

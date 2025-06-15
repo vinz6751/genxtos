@@ -27,6 +27,7 @@
 #include "blkdev.h"     /* for BLKDEVNUM */
 #include "font.h"
 #include "tosvars.h"
+#include "keyboard.h"
 #include "machine.h"
 #include "processor.h"
 #include "xbiosbind.h"

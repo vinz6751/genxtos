@@ -949,7 +949,6 @@ static void nsetdt(ULONG dt)
 #if CONF_WITH_IKBD_CLOCK
 
 /*==== IKBD clock section =================================================*/
-
 static struct ikbdregs
 {
     UBYTE cmd;
@@ -966,12 +965,13 @@ static volatile WORD iclk_ready;
 #define IKBD_CLOCK_TIMEOUT  (2*CLOCKS_PER_SEC)  /* 2 seconds */
 
 /* called by the ACIA interrupt */
-/* EmuTOS's ikbdsys also puts the buffer on the stack */
-void clockvec(char *buf)
+/* EmuTOS's ikbdsys also puts the buffer (containing ymdhms) on the stack */
+void clockvec(UBYTE *buf)
 {
-    char *b = 1 + ((char *)&iclkbuf);
+    
+    UBYTE *b = 1 + ((UBYTE *)&iclkbuf);
 
-    memmove(b, buf, 6);
+    memmove((char*)b, buf, 6);
     iclk_ready = 1;
 }
 

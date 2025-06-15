@@ -6,7 +6,7 @@
 
 /*
 *       Copyright 1999, Caldera Thin Clients, Inc.
-*                 2002-2024 The EmuTOS development team
+*                 2002-2025 The EmuTOS development team
 *
 *       This software is licenced under the GNU Public License.
 *       Please see LICENSE.TXT for further information.
@@ -105,7 +105,6 @@ typedef struct {                     /* used by count_accs()/ldaccs() */
 } ACC;
 
 static ACC      acc[NUM_ACCS];
-static char    *accpath;                /* used to read the ACCPATH env var, empty string if var is not present */
 
 /* Some global variables: */
 
@@ -672,32 +671,6 @@ void run_accs_and_desktop(void)
     gsx_wsclose();
 }
 
-#if CONF_WITH_ATARI_VIDEO || defined(MACHINE_AMIGA)
-/*
- * change resolution & reinitialise the palette registers
- *
- * note: passing a screen address of 0L to Setscreen() means reallocate
- * screen memory.  on non-Falcon systems (where the size of screen memory
- * is fixed), this is effectively the same as passing an address of -1L,
- * and our implementation of Setscreen() handles this without problems.
- *
- * however, if someone has hooked Setscreen() and does not understand
- * this, passing a screen address of 0L will set the screen address to
- * NULL, and the system will crash.  this happens, for example, when
- * running NVDI 4.11 on a Mega ST.
- *
- * therefore, for safety, we only use 0L on explicitly Falcon resolutions.
- */
-static void new_resolution(WORD rez, WORD videlmode)
-{
-    LONG addr = (rez==FALCON_REZ) ? 0L : -1L;
-
-    Setscreen(addr, addr, rez, videlmode);      /* change resolution */
-    initialise_palette_registers(rez, videlmode);
-}
-#endif
-
-
 
 /*
  * Returns true if resolution was changed indeed.
@@ -706,20 +679,28 @@ static BOOL handle_resolution_change(void)
 {
     BOOL res_was_changed;
 
-    /* If we're not processing a user-initiated resolution change,
-     * find out the resolution to set from the config file. */
-    if (gl_changerez == NO_RES_CHANGE)
+    if (gl_changerez == NO_RES_CHANGE) {
+        /* This must mean we didn't get here because of sh_write(SHW_RESCHNG, ...), i.e. it's not a deliberate
+         * resolution change initiated by the user. That must mean we're booting and we need to figure out the
+         * desired resolution from the desktop's config file.
+         * The following will update gl_changerez/gl_nextrez based on the desktop config file's content.
+         */
         process_inf_res_change();
+    }
+
     if ((res_was_changed = (gl_changerez != NO_RES_CHANGE))) {
         switch(gl_changerez) {
 #if CONF_WITH_ATARI_VIDEO
         case 1:                     /* ST(e) or TT display */
-            new_resolution(gl_nextrez-2, 0);
+            Setscreen(-1L, -1L, gl_nextrez-2, 0);
+            initialise_palette_registers(gl_nextrez-2, 0);
             break;
 #endif
 #if CONF_WITH_VIDEL || defined(MACHINE_AMIGA)
         case 2:                     /* Falcon display */
-            new_resolution(FALCON_REZ, gl_nextrez);
+            Setscreen(0L, 0L, FALCON_REZ, gl_nextrez);
+            /* note: no need to initialise the palette regs
+             * because Setscreen() has already done that */
             break;
 #endif
         default:
@@ -728,9 +709,12 @@ static BOOL handle_resolution_change(void)
         }
     }
     
+    /* We've handled the change, doesn't need to be done again. */
     gl_changerez = NO_RES_CHANGE;
+
     return res_was_changed;
 }
+
 
 void gem_main(void)
 {
@@ -743,8 +727,10 @@ void gem_main(void)
      */
     dos_conws("\033f\033E");    /* cursor off, clear screen */
 
-    /* Read config */
-    aescfg_read();
+    if (!(bootflags & BOOTFLAG_SKIP_AUTO_ACC)) {
+        /* Read config */
+        aescfg_read();
+    }
 
     /* Handle any resolution change */
     if (handle_resolution_change()) {

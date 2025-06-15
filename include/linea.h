@@ -38,7 +38,6 @@ void linea_mouse_force_show(void);
 void linea_mouse_show(void);
 void linea_mouse_hide(void);
 void linea_mouse_transform(void);
-void linea_set_screen_shift(void);    /* Set shift amount for screen address calcs */
 void linea_mouse_set_form(const MFORM *src);
 UWORD *get_start_addr(const WORD x, const WORD y);
 WORD linea_validate_color_index(WORD colnum);

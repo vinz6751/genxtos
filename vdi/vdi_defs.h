@@ -2,7 +2,7 @@
  * vdi_defs.h - Definitions for virtual workstations
  *
  * Copyright 1999 by Caldera, Inc.
- * Copyright 2005-2022 The EmuTOS development team.
+ * Copyright 2005-2025 The EmuTOS development team.
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -17,6 +17,9 @@
 #include "vdiext.h"
 
 #define HAVE_BEZIER 0           /* switch on bezier capability - entirely untested */
+
+#define TRUECOLOR_MODE  (v_planes > 8)
+
 
 #define TRUECOLOR_MODE  (v_planes > 8)
 
@@ -271,7 +274,6 @@ void st_fl_ptr(Vwk *);
 void gdp_justified(Vwk *);
 WORD validate_color_index(WORD colnum);
 void set_color16(Vwk *vwk, WORD colnum, WORD *rgb);
-
 
 /* drawing primitives */
 void draw_pline(Vwk *vwk);

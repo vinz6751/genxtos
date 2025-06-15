@@ -47,9 +47,6 @@ static void set_mouse_cursor(const MFORM *src)
     MCDB *dst = &mouse_cdb;
     const UWORD * mask;
     const UWORD * data;
-    
-
-    mouse_flag += 1;            /* disable updates while redefining cursor */
 
     /* save x-offset of mouse hot spot */
     dst->xhot = src->mf_xhot & 0x000f;
@@ -82,8 +79,6 @@ static void set_mouse_cursor(const MFORM *src)
         *gmdt++ = *mask++;              /* get next word of mask */
         *gmdt++ = *data++;              /* get next word of data */
     }
-
-    mouse_flag -= 1;                    /* re-enable mouse drawing */
 }
 
 

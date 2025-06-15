@@ -15,6 +15,7 @@
 #if CONF_WITH_PRINTER_PORT
 #include "asm.h"
 #include "delay.h"
+#include "keyboard.h"
 #include "sound.h"
 #include "mfp.h"
 #include "psg.h"
