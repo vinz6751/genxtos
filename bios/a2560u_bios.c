@@ -18,7 +18,7 @@
 
 #include "emutos.h"
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)  || defined(MACHINE_A2560M)
 
 #include "portab.h"
 #include "vectors.h"
@@ -617,4 +617,4 @@ void a2560_bios_bconout3(uint8_t byte)
 
 #endif // CONF_WITH_MPU401
 
-#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */
+#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M) */

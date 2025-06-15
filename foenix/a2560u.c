@@ -86,8 +86,10 @@ void a2560u_irq_bq4802ly(void);
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
 void a2560u_irq_vicky_a(void); // VICKY autovector A interrupt handler
 void a2560u_irq_vicky_b(void); // VICKY autovector B interrupt handler
-#else
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
 void a2560u_irq_vicky(void); // Only channel, or channel B on the A2560K/X/GenX
+#else
+ #error "Define Foenix machine"
 #endif
 
 void a2560u_irq_ps2kbd(void);
@@ -335,7 +337,7 @@ static void irq_init(void)
     set_vector(INT_VICKYII_B, (uint32_t)a2560u_irq_vicky_b);
 #else
     set_vector(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
-#endif    
+#endif
 }
 
 
@@ -599,7 +601,7 @@ void a2560_system_info(struct foenix_system_info_t *result)
     revision = R16(VICKY+0x36);
     result->pcb_revision_name[2] = HIBYTE(revision);
 
-#elif defined (MACHINE_A2560X)
+#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560M)
     result->fpga_date = R32(VICKY+0x14);
     result->fpga_major = (uint16_t)(R32(VICKY+0x10) >> 16);
     result->fpga_major = (uint16_t)(R32(VICKY+0x10) & 0xffff);

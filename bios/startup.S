@@ -62,7 +62,7 @@ amiga_main:
     // fall through os_entry
 #endif
 
-#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) && !EMUTOS_LIVES_IN_RAM
+#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)) && !EMUTOS_LIVES_IN_RAM
 #if 1
     // This is disabled because running EmuTOS from flash bank0 (0xe00000) can lead to problems because the A2560U
     // crashes if we try to run user code from there. This is an issue e.g. for running EmuCON from flash.

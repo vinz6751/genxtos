@@ -25,15 +25,23 @@
   #define BEATRIX         0x00B20000
   #define VICKY           0x00B40000
   #define VICKY_TEXT      0x00B60000
-  #define VICKY_TEXT_MEM  0x00B60000
+  #define VICKY_TEXT_MEM  (VICKY+0x0000)
   #define VICKY_FONT      (VICKY+0x8000)      /* Font memory (-> 0xbff) */  
 
   #define VRAM_Bank0      0x00C00000
   #define VRAM0_SIZE      0x00200000 /* 2MB */
-#elif defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
   #define CPU_FREQ        33333333 /* 33Mhz : TODO get rid of this and use cpu_freq */
   #define GAVIN           0xFEC00000
   #define BEATRIX         0xFEC20000
+  // I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
+  #define VRAM_Bank0      0x00800000
+  #define VRAM0_SIZE      0x00400000 /* 4MB */
+  #define VRAM_Bank1      0x00C00000
+  #define VRAM1_SIZE      0x00400000 /* 4MB */
+
+  // Video
+  #if defined(MACHINE_A2560X) || defined(MACHINE_GENX)
   #define VICKY_A         0xFEC40000
   #define VICKY_A_MOUSE   0xFEC40000
   #define VICKY_FONT_A    0xFEC48000
@@ -44,18 +52,19 @@
   // Convenience, we treat the most feature-full screen as main screen (so to share code with the U which only has 1 screen)
   #define VICKY VICKY_B
   #define VICKY_TEXT VICKY_TEXT_B
-  // I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
-  #define VRAM_Bank0      0x00800000
-  #define VRAM0_SIZE      0x00400000 /* 4MB */
-  #define VRAM_Bank1      0x00C00000
-  #define VRAM1_SIZE      0x00400000 /* 4MB */
+  #elif defined(MACHINE_A2560M)
+  #define VICKY3          0xFC000000
+  #define VICKY3_LUT      0xFC002000
+  #else
+    #error "Define the Foenix machine"
+  #endif
 #endif
 
 /* Chipset addresses */
 #define BQ4802LY_BASE  (GAVIN+0x80)
 #ifdef MACHINE_A2560U
 #define PS2_BASE       (GAVIN+0x2800)
-#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 #define PS2_BASE       0xFEC02060 // TODO: improve this with base address of SUPERIO
 #endif
 #define SDC_BASE       (GAVIN+0x300)
@@ -73,11 +82,25 @@
 /* Serial port speed codes for a2560u_serial_set_bps */
 #define UART1       (UART16550*)(GAVIN+0x28F8)
 /* For speed codes, checkout uart16550.h */
-#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K)
+#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M)
 #define UART16550_CLOCK 1843200L
 #define UART1       (UART16550*)0xFEC023F8  /* Base address for UART 1 (COM1) */
 #define UART2       (UART16550*)0xFEC022F8  /* Base address for UART 2 (COM2), the doc is wrong! */
 #endif
+#ifdef MACHINE_2560M
+/* UART3 is in the FPGA and is emulated through the serial port,
+ * it's the last of the 4 serial ports that the Foenix exposes through USB 
+ * (first = JTAG, second: debug port, third: USB OTG, fourth: UART)
+ * It doesn't need to be initialised, and is 8N1 115200bps by default.
+ */
+#define UART3_CTRL (uint8_t*)0xFEC00B00 /* Control */
+/* Bits:
+  * 0: speed 0:115200 1: 921600 bps
+  * 1: RX register empty
+  * 2: TX register empty
+ */
+#define UART3_DATA (uint8_t*)0xFEC00B01 /* Data */
+
 
 /* PS2 */
 #define PS2_DATA       PS2_BASE
@@ -112,7 +135,7 @@
 #endif
     #define INT_MOUSE           0x12    /* PS/2 Mouse */
     #define INT_COM1            0x13    /* COM1 */
-#if defined (MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M)
     #define INT_COM2            0x14    /* COM2 */
     #define INT_LPT             0x15    /* Parallel port */
     #define INT_FDC             0x16    /* Floppy controller */
@@ -136,11 +159,13 @@
 #define IRQ_MASK_GRP2 	 (GAVIN+0x11C)
 
 /* 68000 Interrupt vector numbers (not address!)  */
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 #define INT_VICKYII_A     0x1D
 #define INT_VICKYII_B     0x1E
-#else
+#elif defined(MACHINE_A2560U)
 #define INT_VICKYII       0x1E
+#elif defined(MACHINE_A2560M)
+#define INT_VICKYIII      0x1E // vraiment ?
 #endif
 #define INT_PS2KBD_VECN   0x40
 #define INT_MAURICE_VECN  0x41

@@ -2,7 +2,7 @@
  * This file is copied from FoenixMCP
  */
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 
 #include "a2560u_debug.h"
 #include "superio.h"
@@ -180,4 +180,4 @@ static void configure_zones(void) {
     *LED1_REG = 0x01;           // This is to replace the FPGA behavior when it did the config in hardware.
 }
 
-#endif
+#endif // defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)

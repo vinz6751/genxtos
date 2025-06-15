@@ -31,13 +31,11 @@ OUTPUT_FORMAT(binary)
     # define ROM_ORIGIN 0x00100000
     // Use the below instead, if building EmuTOS for going to the flash1 bank
     //# define ROM_ORIGIN 0x00f00000
-#elif defined(MACHINE_A2560X)
-    // Use this for debug purposes (load OS to user ram)
-    # define ROM_ORIGIN 0x00100000
+#elif defined(MACHINE_A2560X) || define (MACHINE_A2560M)
     // Use this for debug purposes (load OS to user ram)
     //# define ROM_ORIGIN 0x00100000
     // Use the below instead, if building EmuTOS for going to the flash
-    //# define ROM_ORIGIN 0xffc00000 // FLASH0
+    # define ROM_ORIGIN 0xffc00000 // FLASH0
 #else
 # define ROM_ORIGIN 0x00e00000
 #endif
@@ -48,7 +46,7 @@ OUTPUT_FORMAT(binary)
  */
 #if defined(MACHINE_A2560U)
 # define ROM_LENGTH 2M
-#elif defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
 # define ROM_LENGTH 4M
 #else
 # define ROM_LENGTH 1M /* Maximum size before I/O area */

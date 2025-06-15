@@ -8,11 +8,13 @@
 
 
 | Exports ---------------------------------------------------------------------
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(GENX)
     .GLOBAL _a2560u_irq_vicky_a
     .GLOBAL _a2560u_irq_vicky_b
-#else
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
     .GLOBAL _a2560u_irq_vicky
+#else
+ #error "Need to specify Foenix model"
 #endif    
     .GLOBAL _a2560u_irq_bq4802ly
     .GLOBAL _a2560u_irq_ps2kbd
@@ -49,7 +51,7 @@ _a2560u_rte:
 
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
 _a2560u_irq_vicky_a: // VICKY autovector A interrupt handler
-#else
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
 _a2560u_irq_vicky: // VICKY (only channel's) autovector interrupt handler
 #endif
     // Handlers can use d0 and a0 without saving them.
@@ -74,7 +76,7 @@ vicky_irq_done:
     rte
 
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
 _a2560u_irq_vicky_b: // VICKY channel B autovector interrupt handler
     // Handlers can use d0 and a0 without saving them.
     movem.l d0-d1/a0-a1,-(sp)

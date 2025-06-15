@@ -33,7 +33,7 @@
 #include "ikbd.h"
 #include "midi.h"
 #include "amiga.h"
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 # include "../foenix/vicky2_txt_a_logger.h"
 #endif
 

@@ -7,19 +7,24 @@
 .EQU BEATRIX,           0xB20000
 .EQU VICKYII,           0xB40000 | VICKYII base address
 .EQU VRAM_Bank0,        0xC00000 | 2MB (until 0xDFFFFF)
-#elif defined (MACHINE_A2560X)
+#elif defined (MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 #define CONF_WITH_MPU401 1
 .EQU SRAM_TOP,          0x00400000
-// I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
-.EQU VRAM_Bank1,        0x00800000 | 4MB (until 0xBFFFFF)
-.EQU VRAM_Bank0,        0x00C00000 | 4MB (until 0xDFFFFF)
 .EQU SDRAM,             0x02000000 | 64MB (until 0x04FFFFFF)
 .EQU GAVIN,             0xFEC00000
 .EQU SUPERIO_BASE,      0xFEC02000
 .EQU BEATRIX,           0xFEC20000
+.EQU FLASH0,            0xFFC00000
+#endif
+
+#if defined (MACHINE_A2560X) || defined(MACHINE_GENX)
+// I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
+.EQU VRAM_Bank1,        0x00800000 | 4MB (until 0xBFFFFF)
+.EQU VRAM_Bank0,        0x00C00000 | 4MB (until 0xDFFFFF)
 .EQU VICKY_A,           0xFEC40000
 .EQU VICKY_B,           0xFEC80000
-.EQU FLASH0,            0xFFC00000
+#elif defined(MACHINE_A2560M)
+.EQU VICKY3,            0xFC000000 | VICKYIII base address
 #endif
 
 | VICKY -----------------------------------------------------------------------

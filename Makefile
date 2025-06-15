@@ -868,6 +868,26 @@ a2560x:
 $(ROM_MACHINE_A2560X): emutos.img mkrom
 	./mkrom pad 512k $< $(ROM_MACHINE_A2560X)
 
+
+ROM_MACHINE_A2560M = emutos-a2560m.rom
+A2560X_DEFS =
+
+.PHONY: a2560m
+NODEP += a2560m
+a2560m: UNIQUE = $(COUNTRY)
+a2560m: OPTFLAGS = $(SMALL_OPTFLAGS)
+a2560m: CPUFLAGS = -m68060
+a2560m: override DEF += -DTARGET_A2560X_ROM -DMACHINE_A2560M $(A2560X_DEFS)
+a2560m:
+	@echo "# Building A2560M Foenix EmuTOS into $(ROM_MACHINE_A2560M)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560M=$(ROM_MACHINE_A2560M) $(ROM_MACHINE_A2560M)
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT))"
+	@printf "$(LOCALCONFINFO)"
+
+$(ROM_MACHINE_A2560M): emutos.img mkrom
+	./mkrom pad 512k $< $(ROM_MACHINE_A2560M)
+
 #
 # Special variants of EmuTOS running in RAM instead of ROM.
 # In this case, emutos.img needs to be loaded into RAM by some loader.

@@ -146,13 +146,13 @@ static LONG sd_write(UWORD drv,ULONG sector,UWORD count,UBYTE *buf);
  */
 void sd_init(void)
 {
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_disk_led(true);
 #endif
 
     sd_check(0);    /* just drive 0 to check */
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_disk_led(false);
 #endif
 
@@ -173,7 +173,7 @@ int i;
     if (count == 0)
         return 0;
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_disk_led(true);
 #endif
 
@@ -218,7 +218,7 @@ int i;
     if (ret < 0)
         KDEBUG(("sd_rw(%d,%ld,%d,%p,%d) rc=%ld\n",rw,sector,count,p,dev,ret));
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_disk_led(false);
 #endif    
 
@@ -243,7 +243,7 @@ UBYTE cardreg[16];
     if (drv)
         return EUNDEV;
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_disk_led(true);
 #endif
 
@@ -290,7 +290,7 @@ UBYTE cardreg[16];
         rc = ERR;
     }
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_disk_led(true);
 #endif
 

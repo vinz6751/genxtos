@@ -379,6 +379,8 @@ static void setvalue_vdo(void)
     cookie_vdo = MCH_A2560U;
 #elif defined(MACHINE_A2560X)
     cookie_vdo = MCH_A2560X;
+#elif defined(MACHINE_A2560M)
+    cookie_vdo = MCH_A2560M;
 #else
     cookie_vdo = VDO_NOHARD;
 #endif /* CONF_ATARI_HARDWARE */
@@ -409,6 +411,8 @@ static void setvalue_mch(void)
     cookie_mch = MCH_A2560U;
 #elif defined(MACHINE_A2560X)
     cookie_mch = MCH_A2560X;
+#elif defined(MACHINE_A2560M)
+    cookie_mch = MCH_A2560M;
 #else
     cookie_mch = MCH_NOHARD;
 #endif /* CONF_ATARI_HARDWARE */
@@ -635,7 +639,7 @@ void machine_detect(void)
  */
 void machine_init(void)
 {
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_bios_init();
     /* There is an early setup of the UART so we can use KDEBUG earlier. */
     //TODOboot_status |= RS232_AVAILABLE;
@@ -851,7 +855,7 @@ const char * machine_name(void)
     return "Apple Lisa";
 #elif defined(MACHINE_M548X)
     return m548x_machine_name();
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     struct foenix_system_info_t info;
 
     a2560_system_info(&info);

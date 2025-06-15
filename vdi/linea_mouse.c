@@ -38,7 +38,7 @@ static const struct {
 } mouse_params = {0, 0, 1, 1};
 
 
-#if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
+#if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X) && !defined(MACHINE_A2560M)
 /* VBL queue item, called upon each VBL to move the mouse cursor 
  * to newx/newy (Line A variables) if necessary. */
 static void vbl_draw(void)
@@ -86,7 +86,7 @@ void linea_mouse_init(void)
 
     /* VBL mouse redraw setup */
     vbl_must_draw_mouse = 0;    /* VBL handler doesn't need to draw mouse */
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     // On the Foenix, VICKY moves the mouse automatically as part of processing PS/2 packets.
 #else
     vblqueue[0] = vbl_draw;
@@ -104,7 +104,7 @@ void linea_mouse_deinit(void)
     if (!linea_mouse_inited)
         return;
     
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     // On the Foenix, VICKY moves the mouse automatically as part of processing PS/2 packets.
 #else    
     vblqueue[0] = 0L;

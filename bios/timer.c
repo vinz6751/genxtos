@@ -17,7 +17,7 @@
 #if CONF_WITH_MFP
 # include "biosdefs.h"
 # include "mfp.h"
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
 # include "a2560u_bios.h"
 #endif
 
@@ -77,7 +77,7 @@ void init_system_timer(void)
 #elif CONF_WITH_MFP
     /* Timer C: ctrl = divide 64, data = 192 */
     xbtimer(2, 0x50, 192, (LONG)int_timerc);
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_set_timer(HZ200_TIMER_NUMBER, 200, true, int_timerc);
 #endif
 
@@ -104,7 +104,7 @@ void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
 #if CONF_WITH_MFP
     mfp_setup_timer(MFP_BASE,timer, control, data);
     mfpint(timer_num[timer], vector);
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_bios_xbtimer(timer, control, data, (void*)vector);
 #endif
 }

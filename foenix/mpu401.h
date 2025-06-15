@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 
 int16_t mpu401_init(void);
 void mpu401_set_timeout(uint32_t (*timer)(void),uint16_t timeout);

@@ -1,7 +1,7 @@
 // TOS Assembler routines for the Foenix Retro Systems A2560U
 
 #include "config.h"
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)  || defined(MACHINE_A2560M)
 
 #include "../foenix/foenix.i"
 
@@ -44,4 +44,4 @@ _a2560_bios_irq_calibration: // Timer 0 handler used for calibration loop, equiv
     addq.l #1,_calibration_interrupt_count
     rte
 
-#endif // defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#endif // defined(MACHINE_A2560U) || defined(MACHINE_A2560X)  || defined(MACHINE_A2560M)

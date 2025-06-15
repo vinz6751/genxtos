@@ -11,14 +11,17 @@ void outchar(int c) {
 #ifdef MACHINE_A2560U
     uart16550_put(UART1,(uint8_t*)&ch,1);
 #elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
-    uart16550_put(UART2,(uint8_t*)&ch, 1);
  #if FOENIX_CHANNEL_A_DEBUG_PRINT
     // Channel A
     char buf[2];
     buf[0] = (char)c;
     buf[1] = '\0';
     channel_A_write(buf);
+ #else
+    uart16550_put(UART2,(uint8_t*)&ch, 1);
  #endif
+#elif defined(MACHINE_A2560M)
+    *UART3_DATA = c;
 #else
 #error "Foenix machine not specified"
 #endif

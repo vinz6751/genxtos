@@ -13,7 +13,7 @@
 #include "asm.h"
 
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
 
 #include "linea.h"
 #include "a2560u_bios.h"

@@ -273,7 +273,7 @@ LONG bcostat1(void)
 {
 #if CONF_WITH_COLDFIRE_RS232
     return coldfire_rs232_can_write() ? -1 : 0;
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     return a2560_bios_bcostat1();
 #elif CONF_WITH_MFP_RS232
 # if RS232_DEBUG_PRINT
@@ -302,7 +302,7 @@ LONG bconout1(WORD dev, WORD b)
 #if CONF_WITH_COLDFIRE_RS232
     coldfire_rs232_write_byte(b);
     return 1;
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_bios_bconout1(b);
     return 1;
 #elif CONF_WITH_MFP_RS232
@@ -393,7 +393,7 @@ ULONG rsconf1(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr)
 {
 #if CONF_WITH_MFP_RS232
     return rsconf_mfp(MFP_BASE,&iorec1,baud,ctrl,ucr,rsr,tsr,scr);
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     return a2560u_bios_rsconf1(baud, &iorec1, ctrl, ucr, rsr, tsr, scr);
 #else
     return 0UL;
@@ -1082,7 +1082,7 @@ void init_serport(void)
 # endif
 #endif
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_bios_rs232_init();
 #endif
 

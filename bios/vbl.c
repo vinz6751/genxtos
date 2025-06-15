@@ -5,12 +5,13 @@
 # include "floppy.h"
 #endif
 #include "portab.h"
-#if CONF_WITH_ATARI_VIDEO
+//#if CONF_WITH_ATARI_VIDEO // Some of the stuff is probably Atari specific
 # include "screen.h"
-#endif
+//#endif
 #include "tosvars.h"
 #include "videl.h"
-
+#include "a2560u_bios.h"
+#include "../foenix/shadow_fb.h"
 
 // These are separate functions for clarity, but GCC will inline them.
 static void dump_screen(void);
@@ -29,7 +30,7 @@ void vbl_handler(void) {
     detect_monitor_change();
 #endif
 
-#if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
+#if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
     // blink cursor
     conout_blink_cursor();
 #endif
@@ -57,7 +58,7 @@ void vbl_handler(void) {
 static void copy_palette(void) {
     // Support of Setpalette
     if (colorptr) {
-#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X)) && 0
+#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)) && 0
         WORD i;
         *VICKY_B_BG_COLOR = colorptr[0];
         for (i=0; i<16; i++) {

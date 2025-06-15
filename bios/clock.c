@@ -1158,12 +1158,12 @@ void clock_init(void)
         return amiga_clock_init();
     }
 #endif /* MACHINE_AMIGA */
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     else if (TRUE)
     {
         a2560_clock_init();
     }
-#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */
+#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M) */
 #if CONF_WITH_NVRAM
     else if (has_nvram)
     {
@@ -1232,12 +1232,12 @@ void settime(LONG time)
     {
         /* Dummy case for conditional compilation */
     }
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     else if (TRUE)
     {
         a2560_setdt(time);
     }
-#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */
+#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M) */
 #if CONF_WITH_NVRAM
     else if (has_nvram)
     {
@@ -1294,12 +1294,12 @@ LONG gettime(void)
         return lisa_getdt();
     }
 #endif /* MACHINE_LISA */
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     else if (TRUE)
     {
         return a2560_getdt();
     }
-#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) */
+#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M) */
 #if CONF_WITH_NVRAM
     else if (has_nvram)
     {

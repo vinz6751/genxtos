@@ -32,7 +32,7 @@
 /* Driver in use for outputing text */
 static CONOUT_DRIVER * conout;
 
-#if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X)
+#if !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X) && defined(MACHINE_A2560M)
 extern const CONOUT_DRIVER conout_atarifb;
 #endif
 
@@ -41,7 +41,7 @@ void conout_init(const Fonthead *font)
 {
     KDEBUG(("conout_init: v_cel_mx: %d v_cel_my:%d\n", v_cel_mx, v_cel_my));
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
     conout = a2560_bios_get_conout();
 #else
     conout = (CONOUT_DRIVER *)&conout_atarifb;

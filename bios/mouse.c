@@ -34,7 +34,7 @@
 
 void Initmous(WORD type, struct param *param, PFVOID newvec)
 {
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     kbdvecs.mousevec = (newvec != NULL) ? newvec : just_rts;
 #else    
     long retval = -1;           /* ok, if it stays so... */
