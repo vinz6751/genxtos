@@ -13,6 +13,8 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+// #define ENABLE_KDEBUG
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "ps2.h"
@@ -342,12 +344,14 @@ static bool setup_driver_api(struct ps2_device_t *dev)
 
 void ps2_channel1_irq_handler(void)
 {
+	//a2560_debugnl("ps2_channel1_irq_handler");
 	L.dev1.driver->process(&L.dev1.api, get_data_no_wait());
 }
 
 
 void ps2_channel2_irq_handler(void)
 {
+	//a2560_debugnl("ps2_channel2_irq_handler");
 	L.dev2.driver->process(&L.dev2.api, get_data_no_wait());
 }
 

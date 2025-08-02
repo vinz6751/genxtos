@@ -12,6 +12,7 @@
  */
 
 #include "emutos.h"
+#include "asm.h" /* just_rts */
 #include "spi.h"
 
 #if CONF_WITH_VAMPIRE_SPI
@@ -28,22 +29,22 @@
 /*
  *  initialise spi for memory card
  */
-void spi_initialise(void)
+static void spi_initialise(void)
 {
     spi_cs_unassert();
 }
 
-void spi_clock_sd(void)
+static void spi_clock_sd(void)
 {
     SAGA_SDCARD_CLK = SAGA_SDCARD_CLKDIV_SD;
 }
 
-void spi_clock_mmc(void)
+static void spi_clock_mmc(void)
 {
     SAGA_SDCARD_CLK = SAGA_SDCARD_CLKDIV_MMC;
 }
 
-void spi_clock_ident(void)
+static void spi_clock_ident(void)
 {
     SAGA_SDCARD_CLK = SAGA_SDCARD_CLKDIV_IDENT;
 }
@@ -51,30 +52,45 @@ void spi_clock_ident(void)
 /* when we assert or unassert, we send a dummy byte to
  * force a write to the register
  */
-void spi_cs_assert(void)
+static void spi_cs_assert(void)
 {
     SAGA_SDCARD_CTL = 0;
     spi_send_byte(0xff);
 }
 
-void spi_cs_unassert(void)
+static void spi_cs_unassert(void)
 {
     SAGA_SDCARD_CTL = 1;
     spi_send_byte(0xff);
 }
 
-void spi_send_byte(UBYTE c)
+static void spi_send_byte(UBYTE c)
 {
     SAGA_SDCARD_DATA = c;
     /* reading will stall until transmission is complete */
     FORCE_READ(SAGA_SDCARD_DATA);
 }
 
-UBYTE spi_recv_byte(void)
+static UBYTE spi_recv_byte(void)
 {
     /* send a byte to get one */
     SAGA_SDCARD_DATA = 0xFF;
     /* reading will stall until transmission is complete */
     return SAGA_SDCARD_DATA;
 }
+
+
+const SPI_DRIVER spi_vamp_driver = {
+    spi_initialise,
+    spi_clock_sd,
+    spi_clock_mmc,
+    spi_clock_ident,
+    spi_cs_assert,
+    spi_cs_unassert,
+    spi_send_byte,
+    spi_recv_byte,
+    just_rts,
+    just_rts
+};
+
 #endif /* CONF_WITH_VAMPIRE_SPI */

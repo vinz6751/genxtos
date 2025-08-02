@@ -12,13 +12,31 @@
 #ifndef _SPI_H
 #define _SPI_H
 
-void spi_clock_ident(void);
-void spi_clock_mmc(void);
-void spi_clock_sd(void);
-void spi_cs_assert(void);
-void spi_cs_unassert(void);
-void spi_initialise(void);
-UBYTE spi_recv_byte(void);
-void spi_send_byte(UBYTE input);
+#include "emutos.h"
+
+typedef struct {
+    void (*initialise)(void);   /* Initialise for reading a card */
+    void (*clock_sd)(void);     /* Configure clock for SD */
+    void (*clock_mmc)(void);    /* Configure clock for MMC */
+    void (*clock_ident)(void);
+    void (*cs_assert)(void);    /* Assert chip select*/
+    void (*cs_unassert)(void);  /* Unassert chip select*/
+    void (*send_byte)(UBYTE c);
+    UBYTE (*recv_byte)(void);
+    void (*led_on)(void);       /* Turn on the led of the associated slot */
+    void (*led_off)(void);      /* Turn off the led of the associated slot */
+    ULONG data;                 /* Free for the driver's use */
+} SPI_DRIVER;
+
+#if CONF_WITH_VAMPIRE_SPI
+extern const SPI_DRIVER spi_vamp_driver;
+#elif defined(__mcoldfire__)
+extern const SPI_DRIVER spi_coldfire_driver;
+#elif defined(MACHINE_A2560U)
+extern const SPI_DRIVER spi_gavin_driver;
+#elif defined(MACHINE_A2560M)
+extern const SPI_DRIVER spi_a2560m_sd0;
+extern const SPI_DRIVER spi_a2560m_sd1;
+#endif
 
 #endif /* _SPI_H */

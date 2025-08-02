@@ -159,7 +159,6 @@ _call_mousevec:
 #endif
         rts
 
-# if 0
 
 #if CONF_WITH_FLEXCAN || CONF_SERIAL_IKBD || defined(MACHINE_LISA)
 

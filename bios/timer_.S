@@ -14,6 +14,9 @@
 
 
 #include "asmdefs.h"
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
+#include "../foenix/foenix.h"
+#endif
 
         // Export
         .globl  _int_timerc
@@ -29,9 +32,12 @@
 _int_timerc:
         addq.l  #1, _hz_200.w           // increment 200 Hz counter
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560M)
+        move.w  #0x0800,IRQ_PENDING_GRP1  // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
         move.w  #0x0400,IRQ_PENDING_GRP1  // adjust this for HZ200_TIMER_NUMBER to acknowledge the correct GAVIN Timer interrupt
 #endif
+
 
 #ifdef __mcoldfire__
         // Save early ColdFire registers

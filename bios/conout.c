@@ -273,8 +273,10 @@ void conout_ascii_out(int ch)
     CHAR_ADDR dst;
     BOOL visible;                       /* was the cursor visible? */
 
-    if (!conout->get_char_source(ch, &src))
+    if (!conout->get_char_source(ch, &src)) {
+        KDEBUG(("conout_ascii_out: no char source"));
         return;
+    }
 
     dst = v_cur_ad;                     /* a1 -> get destination */
 
@@ -282,7 +284,7 @@ void conout_ascii_out(int ch)
     if (visible)
         CURSOR_DISABLE;            /* start of critical section */
 
-    /* put the cell out (this covers the cursor) */    
+    /* put the cell out (this covers the cursor) */
     conout->cell_xfer(src, dst);
 
     /* advance the cursor and update cursor address and coordinates */

@@ -16,6 +16,13 @@
 
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 
+#define MPU401_DATA           ((volatile uint8_t *)SUPERIO_BASE+0x330)
+#define MPU401_STAT           ((volatile uint8_t *)SUPERIO_BASE+0x331)
+#define MPU401_CMD            ((volatile uint8_t *)SUPERIO_BASE+0x331)
+
+#define MPU401_STAT_TX_BUSY   0x40
+#define MPU401_STAT_RX_EMPTY  0x80
+
 int16_t mpu401_init(void);
 void mpu401_set_timeout(uint32_t (*timer)(void),uint16_t timeout);
 bool mpu401_wait_can_read(void);

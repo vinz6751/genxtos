@@ -33,6 +33,8 @@
 #ifndef ASM_H
 #define ASM_H
 
+#include "portab.h"
+
 /* External function doing nothing */
 extern void just_rts(void);
 

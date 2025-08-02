@@ -10,11 +10,12 @@
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
  */
+#include <stdint.h>
+#include <stdarg.h>
 
 #include "emutos.h"
 #include "bios.h"
 #include "biosext.h"
-#include <stdarg.h>
 #include "doprintf.h"
 #include "keyboard.h"
 #include "nls.h"
@@ -34,7 +35,7 @@
 #include "midi.h"
 #include "amiga.h"
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
-# include "../foenix/vicky2_txt_a_logger.h"
+# include "../foenix/foenix.h"
 #endif
 
 #define DISPLAY_INSTRUCTION_AT_PC   0   /* set to 1 for extra info from dopanic() */
@@ -155,6 +156,18 @@ static void kprintf_outc_foenix_channel_a(int c)
 }
 #endif
 
+#if FOENIX_COM3_DEBUG_PRINT
+static void kprintf_outc_foenix_com3(int c)
+{
+    if ((c&0xff) == '\n') {
+        while ((*UART3_CTRL & UART3_TX_EMPTY) == 0);
+        *UART3_DATA = '\r';
+    }
+    while ((*UART3_CTRL & UART3_TX_EMPTY) == 0);
+    *UART3_DATA = c;
+}
+#endif
+
 #if COLDFIRE_DEBUG_PRINT
 static void kprintf_outc_coldfire_rs232(int c)
 {
@@ -257,6 +270,10 @@ static int vkprintf(const char *fmt, va_list ap)
 
 #if FOENIX_CHANNEL_A_DEBUG_PRINT
     return doprintf(kprintf_outc_foenix_channel_a, fmt, ap);
+#endif
+
+#if FOENIX_COM3_DEBUG_PRINT
+    return doprintf(kprintf_outc_foenix_com3, fmt, ap);
 #endif
 
     /* let us hope nobody is doing 'pretty-print' with kprintf by

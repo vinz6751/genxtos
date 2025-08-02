@@ -18,7 +18,9 @@
 
 
 static const uint8_t* psgs_ports[] = {
-    SN76489_L, SN76489_R, SN76489_BOTH
+    (uint8_t*const)SN76489_L,
+    (uint8_t*const)SN76489_R,
+    (uint8_t*const)SN76489_BOTH
 };
 
 static uint8_t *sn76489_current;

@@ -37,6 +37,7 @@ typedef struct
 #define PUN_IDE         0x10    /* Falcon IDE */
 #define PUN_REMOVABLE   0x40    /* Removable media */
 #define PUN_VALID       0x80    /* zero if valid */
+#define PUN_NOT_USED    0xff    /* this pun entry is not used */
 
 extern PUN_INFO *pun_ptr;
 

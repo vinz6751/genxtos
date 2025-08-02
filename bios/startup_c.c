@@ -10,6 +10,11 @@
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
  */
+/* This is called from startup.S, and functions here are ALWAYS_INLINE because we're not sure
+ * about the stack setup
+ */
+
+/* #define ENABLE_KDEBUG 1 */
 
 #include "emutos.h"
 #include "amiga.h"
@@ -19,7 +24,6 @@
 #include "m68k.h"
 #include "memory.h"
 #include "videl.h"
-
 
 void startup(void);        // The purpose of this file
 void startup_stage2(void); // After memory has been configured
@@ -39,7 +43,6 @@ static void return_to_a6(void);
 // called from startup.S
 // This a macro function for clarity, individual functions called here only take the actions if applicable.
 void startup(void) {
-
     asap();
 
     ensure_minimum_ram_setup();
@@ -69,13 +72,12 @@ void startup(void) {
     // IE DONT PUT ANYTHING HERE BECAUSE IT WILL NEVER BE CALLED !
 }
 
-
-
 // This is run first thing, and can be used to initialize stuff that must be as very top priority.
 // If these can be done later, they doesn't belong here.
 // At this point the stack / memory may not be functiononal yet !
 // So functions must jump back to the address provided in a6
 static ALWAYS_INLINE void asap(void) {
+    KDEBUG(("asap()\n"));
 #if defined(MACHINE_A2560X) && 0 // For debugging
     *((LONG*)0xfec00000) = 19; // Buzzer + all leds
     *((LONG*)0xfec80008) = 0;  // Black border
@@ -91,6 +93,7 @@ static ALWAYS_INLINE void asap(void) {
 
 /* Ensure we have a minimal RAM setup so the RAM can be used for exception vectors and stack */
 void ALWAYS_INLINE ensure_minimum_ram_setup(void) {
+    KDEBUG(("ensure_minimum_ram_setup()\n"));
 #if (!EMUTOS_LIVES_IN_RAM) && (CONF_WITH_ST_MMU)
     // Some ST MMUs power up with an invalid memory bank configuration,
     // inhibiting any RAM access. However, EmuTOS needs at least a
@@ -119,6 +122,7 @@ void ALWAYS_INLINE ensure_minimum_ram_setup(void) {
 
 
 static void run_diagnostics_cartridge(void) {
+    KDEBUG(("run_diagnostics_cartridge()\n"));
 #if CONF_WITH_CARTRIDGE
     if (*((ULONG*)ATARI_CARTRIDGE_BASE) == 0xfa52235fL) {
 #if EMUTOS_LIVES_IN_RAM
@@ -144,6 +148,7 @@ static void falcon_reset(void) {
 
 /* Tell the CPU to send a RESET signal to the peripherals */
 static void reset_cpu_peripherals(void) {
+    KDEBUG(("reset_cpu_peripherals()\n"));
 #if CONF_WITH_TT_MMU
     // TT TOS does the following even before reset; it is apparently required for correct floppy functioning
     // when EmuTOS is ROM-resident (report by Ingo Uhlemann).
@@ -159,13 +164,16 @@ static void reset_cpu_peripherals(void) {
         // If got a bus error, it's not a Falcon
         m68k_reset();
     }
-#elif !defined(MACHINE_AMIGA)
+#elif !defined(MACHINE_AMIGA) && !defined(MACHINE_A2560M)
+    KDEBUG(("m68k_reset()\n"));
     m68k_reset();
+    KDEBUG(("m68k_reset done()\n"));
 #endif
 }
 
 
 static void initialize_cpu(void) {
+    KDEBUG(("initialize_cpu()\n"));
 #if !defined(__mcoldfire__) && !defined(MACHINE_LISA)
     m68k_do_ignoring_exceptions(m68k_disable_caches);
     m68k_disable_mmu();
@@ -178,6 +186,7 @@ static void initialize_cpu(void) {
 extern ULONG resvalid;
 extern PFVOID resvector;
 static void run_user_reset_code(void) {
+    KDEBUG(("run_user_reset_code()\n"));
     for (;;) {
         if (resvalid != 0x31415926)
             return;

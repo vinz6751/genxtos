@@ -4,11 +4,10 @@
 // so if somebody hooks in, they may expect these to be saved too. If we call
 // TOS stuff from here that can be hooked, we need to save d2 as well.
 
-#include "foenix.i"
-
+#include "foenix.h"
 
 | Exports ---------------------------------------------------------------------
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(GENX)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
     .GLOBAL _a2560u_irq_vicky_a
     .GLOBAL _a2560u_irq_vicky_b
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
@@ -21,6 +20,7 @@
     .GLOBAL _a2560u_irq_ps2mouse
     .GLOBAL _a2560u_irq_com1
 #if CONF_WITH_MPU401
+    .GLOBAL _a2560u_irq_com2
     .GLOBAL _a2560u_irq_mpu401
 #endif
     .GLOBAL _a2560u_rte
@@ -49,7 +49,7 @@ _a2560u_rte:
     rte
 
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
 _a2560u_irq_vicky_a: // VICKY autovector A interrupt handler
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
 _a2560u_irq_vicky: // VICKY (only channel's) autovector interrupt handler
@@ -70,13 +70,17 @@ vicky_irq_loop:
 vicky_irq_next:    
     // Prepare next iteration
     lsl.b   #1,d0               // .b deliberate here as well
+#if defined(MACHINE_A2560M)
+    // A2560M only supports VBL/HBL for now (2 other bits I'm not sure if it's an error ?)
+    cmp.b #0b10000,d0
+#endif
     bne.s   vicky_irq_loop
 vicky_irq_done:
     movem.l (sp)+,d0-d1/a0-a1
     rte
 
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 _a2560u_irq_vicky_b: // VICKY channel B autovector interrupt handler
     // Handlers can use d0 and a0 without saving them.
     movem.l d0-d1/a0-a1,-(sp)
@@ -102,8 +106,8 @@ vicky_irq_b_done:
 
 
 _a2560u_irq_bq4802ly: // Real time clock interrupt handler
-    tst.b   RTC_FLAGS  // Acknowledge interrupt on the bq4802LY by reading the flags
-    move.w  #RTC_INT,IRQ_PENDING_GRP1 // Acknowledge GAVIN interrupt
+    tst.b   BQ4802LY_BASE+0x26  // Acknowledge interrupt on the bq4802LY by reading the flags
+    move.w  #(1<<INT_RTC),INT_GRP(INT_RTC) // Acknowledge GAVIN interrupt
     addq.l  #1,_bq4802ly_ticks
     move.l  _bq4802ly_tick_handler,-(sp)
     rts     // The handler must save register and terminate with rte
@@ -113,9 +117,10 @@ _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
     // higher priority, we could be loosing data due to overruns. So when this handler is caller,
     // we don't want it to be interrupted.
+    move.l  #0xff0000,0xfec00010
     move.w  sr,-(sp)
     move.w  #0x2700,sr
-    move.w  #PS2KEYB_INT,IRQ_PENDING_GRP1
+    move.w  #(1<<INT_KBD_PS2),INT_GRP(INT_KBD_PS2)
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel1_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
@@ -127,9 +132,10 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
     // higher priority, we could be loosing data due to overruns. So when this handler is caller,
     // we don't want it to be interrupted.
+    move.l  #0xffff,0xfec00010
     move.w  sr,-(sp)
     move.w  #0x2700,sr
-    move.w  #PS2MOUSE_INT,IRQ_PENDING_GRP1
+    move.w  #(1<<INT_MOUSE),INT_GRP(INT_MOUSE)
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel2_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
@@ -144,12 +150,13 @@ _a2560u_irq_com1: // UART COM1 interrupt handler
     // So instead of checking interrupts we examine the Line Status Register to find out the cause of the interrupt.
     movem.l d0-d1/a0-a2,-(sp)
 com1_do:
-    move.w  #COM1_INT,IRQ_PENDING_GRP1  // Acknowledge GAVIN interrupt (if any)
-    move.b  UART0+UART16750_LSR,d1 // That "should" acknowledge the interrupt (but doesn't)
+    move.w  #(1<<INT_COM1),INT_GRP(INT_COM1)
+    lea     UART1,a0
+    move.b  5(a0),d1 // 5 is the Line Status Register. That "should" acknowledge the interrupt (but doesn't on the U)
     btst    #0,d1
     beq.s   com1_done // No data received
     // Data received
-    move.b  UART0,d0
+    move.b  0(a0),d0
     move.w  d0,-(sp)
     movea.l _uart16550_rx_handler,a0
     jbsr    (a0)
@@ -160,14 +167,36 @@ com1_done:
     rte
 
 #if CONF_WITH_MPU401
+
+/* That must mean we have a SuperIO therefore a 2nd serial port */
+_a2560u_irq_com2: // UART COM2 interrupt handler
+    movem.l d0-d1/a0-a2,-(sp)
+com2_do:
+    move.w  #(1<<INT_COM2),INT_GRP(INT_COM2)
+    lea     UART2,a0
+    move.b  5(a0),d1 // 5 is the Line Status Register
+    btst    #0,d1
+    beq.s   com1_done // No data received
+    // Data received
+    move.b  0(a0),d0
+    move.w  d0,-(sp)
+    movea.l _uart16550_rx_handler,a0
+    jbsr    (a0)
+    addq.l  #2,sp
+    bra.s   com2_do
+com2_done:
+    movem.l (sp)+,d0-d1/a0-a2
+    rte
+
+
 _a2560u_irq_mpu401:
     | Handle MIDI interrupts. Note that there is no overrun or frame error
     | detection supported by the SuperIO's MPU-401 implementation (contrary to the
     | Atari ST's 6850 ACIA)
     move.w  #0x2700,sr
-    move.w  #MIDI_INT,IRQ_PENDING_GRP1
+    move.w  #(1<<INT_MIDI),INT_GRP(INT_MIDI)
     movem.l d0-d2/a0-a2,-(sp)   // Save GCC scratch registers
-    move.b  SUPERIO_BASE+0x330,d0
+    move.b  MPU401_BASE,d0
     move.b  d0,-(sp) // we pass the byte both in d0 (convenience for EmuTOS's midivec) and on the stack
     move.l  _mpu401_rx_handler,a0
     addq.l  #2,sp // sp is always even

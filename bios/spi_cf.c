@@ -15,6 +15,7 @@
 #endif
 
 #include "emutos.h"
+#include "asm.h" /* just_rts */
 #include "coldfire.h"
 #include "coldpriv.h"
 #include "spi.h"
@@ -104,7 +105,7 @@ static ULONG fifo_out;
 /*
  *  initialise spi for memory card
  */
-void spi_initialise(void)
+static void spi_initialise(void)
 {
     if (cf_spi_chip_select == MCF_VALUE_UNKNOWN) return;
     /*
@@ -137,7 +138,7 @@ void spi_initialise(void)
     fifo_out = 0UL;
 }
 
-void spi_clock_sd(void)
+static void spi_clock_sd(void)
 {
     fifo_out &= ~MCF_DSPI_DTFR_CTAS(7L);    /* remove old DCTARn selection */
     fifo_out |= MCF_DSPI_DTFR_CTAS(0L);     /* use DCTAR0 */
@@ -149,7 +150,7 @@ void spi_clock_mmc(void)
     fifo_out |= MCF_DSPI_DTFR_CTAS(1L);     /* use DCTAR1 */
 }
 
-void spi_clock_ident(void)
+static void spi_clock_ident(void)
 {
     fifo_out &= ~MCF_DSPI_DTFR_CTAS(7L);    /* remove old DCTARn selection */
     fifo_out |= MCF_DSPI_DTFR_CTAS(2L);     /* use DCTAR2 */
@@ -158,19 +159,19 @@ void spi_clock_ident(void)
 /* when we assert or unassert, we send a dummy byte to
  * force a write to the register
  */
-void spi_cs_assert(void)
+static void spi_cs_assert(void)
 {
     fifo_out |= cf_spi_chip_select;
     spi_send_byte(0xff);
 }
 
-void spi_cs_unassert(void)
+static void spi_cs_unassert(void)
 {
     fifo_out &= ~cf_spi_chip_select;
     spi_send_byte(0xff);
 }
 
-void spi_send_byte(UBYTE c)
+static void spi_send_byte(UBYTE c)
 {
     MCF_DSPI_DTFR = fifo_out | c;
     while(!(MCF_DSPI_DSR & MCF_DSPI_DSR_TCF))   /* wait for transfer complete */
@@ -180,7 +181,7 @@ void spi_send_byte(UBYTE c)
     MCF_DSPI_DSR = 0xffffffffL;                 /* clear status register */
 }
 
-UBYTE spi_recv_byte(void)
+static UBYTE spi_recv_byte(void)
 {
 ULONG temp;
 
@@ -193,3 +194,16 @@ ULONG temp;
 
     return LOBYTE(temp);
 }
+
+const SPI_DRIVER spi_coldfire_driver = {
+    spi_initialise,
+    spi_clock_sd,
+    spi_clock_mmc,
+    spi_clock_ident,
+    spi_cs_assert,
+    spi_cs_unassert,
+    spi_send_byte,
+    spi_recv_byte,
+    just_rts,
+    just_rts
+};

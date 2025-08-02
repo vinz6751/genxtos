@@ -18,9 +18,10 @@
 
 #include "emutos.h"
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)  || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 
 #include "portab.h"
+#include "aciavecs.h"
 #include "vectors.h"
 #include "tosvars.h"
 #include "bios.h"
@@ -29,6 +30,7 @@
 #include "biosext.h"            /* for cache control routines */
 #include "gemerror.h"
 #include "ikbd.h"               /* for call_mousevec() */
+#include "keyboard.h"
 #include "screen.h"
 #include "delay.h"
 #include "asm.h"
@@ -50,6 +52,7 @@
 #include "../foenix/a2560u.h"
 #include "../foenix/mpu401.h"
 #include "../foenix/shadow_fb.h"
+#include "../foenix/vicky2.h"
 #include "a2560u_bios.h"
 #include "../foenix/regutils.h"
 
@@ -71,7 +74,7 @@ void a2560u_irq_ps2mouse(void);
 
 void a2560_bios_init(void)
 {
-	a2560u_init();
+	a2560u_init(warm_magic != WARM_MAGIC);
 }
 
 
@@ -113,9 +116,10 @@ void a2560_bios_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16
     FOENIX_VIDEO_MODE mode;
 
     vicky2_read_video_mode(vicky, &mode);
-    *planes = 8; /* We have 8bits per pixel */
+    *planes = mode.bpp; /* We have 8bits per pixel */
     *hz_rez = mode.w;
     *vt_rez = mode.h;
+    KDEBUG(("a2560_bios_get_current_mode_info setting hz_rez:%d vt_rez:%d from mode %d\n", *hz_rez, *vt_rez, mode.id));
 }
 
 
@@ -219,12 +223,12 @@ void a2560_bios_vgetrgb(int16_t index,int16_t count,uint32_t *rgb) {
 
 uint32_t a2560_bios_bcostat1(void)
 {
-    return uart16550_can_put(UART1);
+    return uart16550_can_put((UART16550*)UART1);
 }
 
 void a2560_bios_bconout1(uint8_t byte)
 {
-    uart16550_put(UART1,&byte, 1);
+    uart16550_put((UART16550*)UART1,&byte, 1);
 }
 
 void a2560u_irq_com1(void); // Event handler in a2560u_s.S
@@ -235,7 +239,7 @@ void a2560_bios_rs232_init(void) {
     uart16550_rx_handler = push_serial_iorec;
     setexc(INT_COM1_VECN, (uint32_t)a2560u_irq_com1);
     a2560_irq_enable(INT_COM1);
-    uart16550_rx_irq_enable(UART1, true);
+    uart16550_rx_irq_enable((UART16550*)UART1, true);
 }
 
 /* This does not perfectly emulate the MFP but may enough */
@@ -266,7 +270,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
         }
         else {
             KDEBUG(("[DISABLED] a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", bauds[baud], baud));
-            //uart16550_set_bps(UART1, bauds[baud]);
+            //uart16550_set_bps((UART16550*)UART1, bauds[baud]);
             //iorec->baudrate = baud;
         }
     }
@@ -291,7 +295,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
         else if (data_format == 2/* 1 start 1.5 stop */)
                 flags |= UART16550_1_5S;
 
-        uart16550_set_line(UART1, flags);
+        uart16550_set_line((UART16550*)UART1, flags);
         KDEBUG(("a2560u_bios_rsconf1 setting flags %x\n", flags));
     }
     
@@ -401,46 +405,7 @@ void a2560_bios_kbd_init(void)
     a2560u_kbd_init();
 }
 
-
-/* SD card *******************************************************************/
-
-#include "spi.h"
-
-
-/* Nothing needed there, it's all handled by GAVIN */
-void spi_clock_sd(void) { }
-void spi_clock_mmc(void) { }
-void spi_clock_ident(void) { }
-void spi_cs_assert(void) { }
-void spi_cs_unassert(void) { }
-
-void spi_initialise(void)
-{
-    /* We use plain SPI and EmuTOS's SD layer on top of it */
-    sdc_controller->transfer_type = SDC_TRANS_DIRECT;
-}
-
-
-static uint8_t clock_byte(uint8_t value)
-{
-    sdc_controller->data = value;
-    sdc_controller->transfer_control = SDC_TRANS_START;
-    while (sdc_controller->transfer_status & SDC_TRANS_BUSY)
-        ;
-    return sdc_controller->data;
-}
-
-
-void spi_send_byte(uint8_t c)
-{
-    (void)clock_byte(c);
-}
-
-
-uint8_t spi_recv_byte(void)
-{
-    return clock_byte(0xff);
-}
+/* SD Card: the driver is in spi_gavin */
 
 
 /* Text mode support *********************************************************/
@@ -505,7 +470,7 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
 
     if (v_cel_ht == 8 && CONF_WITH_A2560_TEXT_MODE)
     {
-        a2560_debugnl("a2560_bios_get_conout selected the text driver");
+        a2560_debugnl("a2560_bios_get_conout selected the TEXT mode driver");
         /* VICKY helps us with the 8x8 font and cursor blinking */
         a2560u_bios_sfb_is_active = false;
         driver =  (CONOUT_DRIVER*)&a2560u_conout_text;
@@ -513,7 +478,7 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
 # if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
     else
     {
-        a2560_debugnl("a2560_bios_get_conout selected the bitmap driver %p", v_bas_ad);
+        a2560_debugnl("a2560_bios_get_conout selected the BITMAP driver %p", v_bas_ad);
         /* Use the shadow framebuffer */
         driver = (CONOUT_DRIVER*)&a2560u_conout_bmp;
         a2560u_sfb_setup(v_bas_ad, v_cel_ht);
@@ -525,10 +490,16 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
     return driver;
 }
 
+/** Perform initialisation for the screen to be ready to support text mode (vs bitmap text)
+ * This should setup a font, the cursor, the colors of the text mode.
+ * It doesn't need to clear the screen.
+ * I'm not sure if it should set the video mode, as this may compete with screen_init_mode()
+ */
 void a2560_bios_text_init(void)
 {
     a2560_debugnl("a2560_bios_text_init(%p)", vicky);
     a2560u_bios_load_font();
+
     a2560_debugnl("a2560_bios_text_init: vicky2_set_text_lut");
     vicky2_set_text_lut(vicky, text_palette, text_palette);
 
@@ -539,11 +510,13 @@ void a2560_bios_text_init(void)
 
     a2560_debugnl("color_mem:%p text_mem:%p",c,t);
 
+    #if 0 // that shouldn't be necessary. The terminal will be cleared later */
     for (i = 0 ; i < VICKY_TEXT_SIZE ; i++)
     {
          *c++ = color;
          *t++ = ' ';
     }
+    #endif
 
     /* Set cursor */
     vicky->ctrl->cursor_control = 0;

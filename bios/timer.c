@@ -12,7 +12,9 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#include "config.h"
+/* #define ENABLE_KDEBUG */
+
+ #include "config.h"
 
 #if CONF_WITH_MFP
 # include "biosdefs.h"
@@ -41,11 +43,11 @@ WORD timer_c_sieve;
 // Called from timer_S.s 200Hz timer irq handler
 void timer_20ms_routine(void);
 
-
 // TODO: have a list like the VBL list so users can hook into without having to
 // hook the full timer C vector, so here wouldn't have to depend on the GEM etv_timer as
 // this is a layering breakage.
-void timer_20ms_routine(void) {
+void timer_20ms_routine(void)
+{
     // Repeat keys
     key_repeat_tick();
 
@@ -78,7 +80,7 @@ void init_system_timer(void)
 #elif CONF_WITH_MFP
     /* Timer C: ctrl = divide 64, data = 192 */
     xbtimer(2, 0x50, 192, (LONG)int_timerc);
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GEN_X) || defined(MACHINE_A2560M)
     a2560_set_timer(HZ200_TIMER_NUMBER, 200, true, int_timerc);
 #endif
 
@@ -111,7 +113,8 @@ void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
 }
 
 // Returns FALSE is the predicate didn't return true before the timeout (in 200Hz ticks) */
-BOOL timer_test_with_timeout(BOOL (*predicate)(void), LONG delay) {
+BOOL timer_test_with_timeout(BOOL (*predicate)(void), LONG delay)
+{
     LONG next = hz_200 + delay;
 
     while (hz_200 < next) {

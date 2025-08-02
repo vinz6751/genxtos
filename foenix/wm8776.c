@@ -18,7 +18,7 @@
 static uint16_t wm8776_regs[23];
 
 /* Convenience */
-static volatile uint16_t * const wm8776 = WM8776_PORT;
+static volatile uint16_t * const wm8776 = (uint16_t*)WM8776_PORT;
 
 /* Initialisation data for the WM8776 CODEC */
 static uint16_t wm8776_init_data[] = {

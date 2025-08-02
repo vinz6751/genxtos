@@ -7,7 +7,7 @@
 .EQU BEATRIX,           0xB20000
 .EQU VICKYII,           0xB40000 | VICKYII base address
 .EQU VRAM_Bank0,        0xC00000 | 2MB (until 0xDFFFFF)
-#elif defined (MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
+#elif defined (MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560M) || defined(MACHINE_A2560K)
 #define CONF_WITH_MPU401 1
 .EQU SRAM_TOP,          0x00400000
 .EQU SDRAM,             0x02000000 | 64MB (until 0x04FFFFFF)

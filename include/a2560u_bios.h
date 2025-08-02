@@ -1,7 +1,7 @@
 /*
- * a2560u - Foenix Retro Systems A2560U specific functions
+ * a2560u - Foenix Retro Systems A2560 specific functions
  *
- * Copyright (C) 2013-2023 The EmuTOS development team
+ * Copyright (C) 2013-2025 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot

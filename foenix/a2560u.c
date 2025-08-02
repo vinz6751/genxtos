@@ -68,6 +68,24 @@ __extension__                             \
   _r;                                     \
 })
 
+
+/*
+ * WORD get_sr(void);
+ *   returns the current value of sr.
+ */
+
+#define get_sr()                          \
+__extension__                             \
+({short _r;                               \
+  __asm__ volatile                        \
+  ("move.w sr,%0"                         \
+  : "=dm"(_r)        /* outputs */        \
+  :                  /* inputs  */        \
+  : "cc", "memory"   /* clobbered */      \
+  );                                      \
+  _r;                                     \
+})
+
 /* Local variables ***********************************************************/
 static uint32_t cpu_freq; /* CPU frequency */
 
@@ -97,19 +115,24 @@ void a2560u_irq_ps2mouse(void);
 
 /* Implementation ************************************************************/
 
-void a2560u_init(void)
+void a2560u_init(bool cold_boot)
 {
+    a2560_debugnl("a2560u_init()");
+
+#if !defined(MACHINE_A2560M)
     a2560_beeper(true);
+#endif
     //*((unsigned long * volatile)0xB40008) = 0x00ff000; /* Black border */
 
     cpu_freq = CPU_FREQ; /* TODO read that from GAVIN's Machine ID */
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
+    a2560_debugnl("superio_init()");
     superio_init();
 
-    uart16550_init(UART2); /* So we can debug to serial port early */
-    //uart16550_put(UART2, (uint8_t*)"TEST\n", 4);
-    channel_A_logger_init();
+    a2560_debugnl("uart16550_init()");
+    uart16550_init((UART16550*)UART1);
+    uart16550_init((UART16550*)UART2);
 #endif
 
 #if defined(MACHINE_A2560U)
@@ -123,6 +146,7 @@ void a2560u_init(void)
     a2560_debugnl("timer_init");
     timer_init();
 
+#if !defined(MACHINE_A2560M) // Not supported yet
     a2560_debugnl("wm8776_init");
     wm8776_init();
     
@@ -131,10 +155,14 @@ void a2560u_init(void)
     
     a2560_debugnl("sn76489_mute_all");
     sn76489_mute_all();
+#endif
 
     /* Clear screen and home */
     a2560_debugnl("a2560u_init() done");
+
+#if !defined(MACHINE_A2560M)
     a2560_beeper(false);
+#endif
 }
 
 
@@ -185,10 +213,10 @@ static const struct a2560u_timer_t {
     #define TIMER_RESET TIMER_CTRL_LOAD
 #endif
     /* TODO 1L as "start" is really TIMER_CTRL_ENABLE but I get a "left shift count >= width of type" warning I can't get rid of */
-    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  0x0100, INT_TIMER0_VECN },
-    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, TIMER_RESET << 8,  TIMER_PROG << 8,  TIMER_CTRL_ENABLE << 8,  0x0200, INT_TIMER1_VECN },
-    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, TIMER_RESET << 16, TIMER_PROG << 16, TIMER_CTRL_ENABLE << 16, 0x0400, INT_TIMER2_VECN },
-    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  0x0800, INT_TIMER3_VECN }
+    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  1 << (INT_TIMER0&0xf), INT_TIMER0_VECN },
+    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, TIMER_RESET << 8,  TIMER_PROG << 8,  TIMER_CTRL_ENABLE << 8,  1 << (INT_TIMER1&0xf), INT_TIMER1_VECN },
+    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, TIMER_RESET << 16, TIMER_PROG << 16, TIMER_CTRL_ENABLE << 16, 1 << (INT_TIMER2&0xf), INT_TIMER2_VECN },
+    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  1 << (INT_TIMER3&0xf), INT_TIMER3_VECN }
 };
 
 
@@ -219,8 +247,8 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     if (timer > 3)
         return;
 
-    //a2560_debugnl("Set timer %d, freq:%ldHz, repeat:%s, handler:%p\n",timer,frequency,repeat?"ON":"OFF",handler);
-
+    a2560_debugnl("Set timer %d, freq:%ldHz, repeat:%s, handler:%p",timer,frequency,repeat?"ON":"OFF",handler);
+    
     /* Identify timer control register to use */
     t = (struct a2560u_timer_t *)&a2560u_timers[timer];
 
@@ -239,16 +267,16 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     /* Set timer period */
 #if TIMER_COUNT_UP
     R32(t->compare) = cpu_freq / frequency;
-# define TIMER_USE_OFFICIAL_WAY 0
+# define TIMER_USE_OFFICIAL_WAY 1
 # if TIMER_USE_OFFICIAL_WAY
-    R32(t->control) |= t->reset;
-    R32(t->control) &= ~t->reset;
+    R32(t->control) |= t->reset; /* Force value counter to 0 */
+    R32(t->control) &= ~t->reset; /* Stop forcing it */
 # else
     /* This works just as well and is a quicker */
     R32(t->value) = 0L;
 # endif
 
-#else
+#else // TIMER_COUNT_DOWN
     R32(t->value) = cpu_freq / frequency;
     R32(t->compare) = 0L;
 #endif
@@ -258,25 +286,27 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
 
     R32(t->control) |= t->prog;
 
-    /* Set handler */    
+    /* Set handler */
     set_vector(t->vector, (uint32_t)handler);
 
     /* Before starting the timer, ignore any previous pending interrupt from it */
     if (R16(IRQ_PENDING_GRP1) & t->irq_mask)
-        R16(IRQ_PENDING_GRP1) = t->irq_mask; /* Yes it's an assignment, no a OR. That's how interrupts are acknowledged */
+        R16(IRQ_PENDING_GRP1) = t->irq_mask;
 
     /* Unmask interrupts for that timer */
     R16(IRQ_MASK_GRP1) &= ~t->irq_mask;
 
     set_sr(sr);
 #if 0
-    a2560_debugnl("AFTER SETTING TIMER %d\n", timer);
-    a2560_debugnl("CPU          sr=%04x\n", get_sr());
-    a2560_debugnl("vector       0x%02x=%p\n",t->vector,(void*)set_vector(t->vector, -1L));
-    a2560_debugnl("value        %p=%08lx\n",(void*)t->value,R32(t->value));
-    a2560_debugnl("irq_pending  %p=%04x\n", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1));
-    a2560_debugnl("irq_mask     %p=%04x\n", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1));
-    a2560_debugnl("control      %p=%08lx\n",(void*)t->control,R32(t->control));
+    a2560_debugnl("AFTER SETTING TIMER %d", timer);
+    a2560_debugnl("CPU freq     %ld", cpu_freq);
+    a2560_debugnl("CPU          sr=%04x", get_sr());
+    a2560_debugnl("vector       0x%02x=%p",t->vector,(void*)set_vector(t->vector, -1L));
+    a2560_debugnl("value        %p=%p",(void*)t->value,R32(t->value));
+    a2560_debugnl("compare      %p=%p",(void*)t->compare,R32(t->compare));
+    a2560_debugnl("irq_pending  %p=%04x", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1));
+    a2560_debugnl("irq_mask     %p=%04x", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1));
+    a2560_debugnl("control      %p=%p",(void*)t->control,R32(t->control));
 #endif
 }
 
@@ -288,17 +318,19 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
 void a2560_timer_enable(uint16_t timer, bool enable)
 {
     struct a2560u_timer_t *t = (struct a2560u_timer_t *)&a2560u_timers[timer];
-
+    a2560_debugnl("a2560_timer_enable(%d,%d)", timer, enable);
     if (enable)
         R32(t->control) |= t->start;
     else
         R32(t->control) &= ~t->start;
 
-// a2560_debugnl("After %s  > control %p=0x%08lx\n",enable?"Enable":"Disable", (void*)t->control,R32(t->control));
-//     if (R32(t->value) != R32(t->value))
-//         a2560_debugnl("Timer is running: 0x%08lx 0x%08lx 0x%08lx...\n",R32(t->value), R32(t->value), R32(t->value));
-//     else
-//         a2560_debugnl("Timer is not running\n");
+#if 0
+    a2560_debugnl("After %s  > control %p=0x%08lx",enable?"Enable":"Disable", (void*)t->control,R32(t->control));
+    if (R32(t->value) != R32(t->value))
+        a2560_debugnl("Timer is running: 0x%08lx 0x%08lx 0x%08lx...",R32(t->value), R32(t->value), R32(t->value));
+    else
+        a2560_debugnl("Timer is not running");
+#endif
 }
 
 
@@ -376,7 +408,7 @@ static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)I
 /* Enable an interruption. First byte is group, second byte is bit */
 void a2560_irq_enable(uint16_t irq_id)
 {
-    a2560_debugnl("a2560_irq_enable(0x%04x)", irq_id);
+    a2560_debugnl("a2560_irq_enable(0x%02x)", irq_id);
     a2560u_irq_acknowledge(irq_id);
     R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
     a2560_debugnl("a2560_irq_enable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
@@ -386,7 +418,7 @@ void a2560_irq_enable(uint16_t irq_id)
 /* Disable an interruption. First byte is group, second byte is bit */
 void a2560u_irq_disable(uint16_t irq_id)
 {
-    a2560_debugnl("a2560_irq_disable(0x%04x)", irq_id);
+    a2560_debugnl("a2560_irq_disable(0x%02x)", irq_id);
     R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
     a2560_debugnl("a2560_irq_disable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
 }
@@ -492,6 +524,12 @@ void a2560u_kbd_init(void)
     ps2_config.port_cmd     = (uint8_t*)PS2_CMD;
     ps2_config.n_drivers    = sizeof(drivers)/sizeof(struct ps2_driver_t*);
     ps2_config.drivers      = drivers;
+
+#if 0
+    a2560_debugnl("port_data: %p", ps2_config.port_data);
+    a2560_debugnl("port_status: %p", ps2_config.port_status);
+    a2560_debugnl("port_cmd: %p", ps2_config.port_cmd);
+#endif
 
     ps2_init();
 
@@ -642,6 +680,12 @@ void a2560_system_info(struct foenix_system_info_t *result)
         // CPU speed not correctly reported ?
         result->cpu_speed_hz = foenix_cpu_speed_hz[1];
     }
+
+#if 0 // To produce EmuTOS "advertisement builds" while FPGA is not finished
+    result->cpu_name = "MC68LC060";
+    result->cpu_speed_hz = 33333333;
+    result->model_name = "A2560M FOENIX";
+#endif
 }
 
 
@@ -653,7 +697,22 @@ void a2560_beeper(bool on)
         GAVIN_R(GAVIN_CTRL) &= ~GAVIN_CTRL_BEEPER;
 }
 
-
+#if defined(MACHINE_A2560M)
+void a2560_sdc1_led(bool on)
+{
+    if (on)
+        GAVIN_R(GAVIN_CTRL) |= GAVIN_CTRL_SDC1_LED;
+    else
+        GAVIN_R(GAVIN_CTRL) &= ~GAVIN_CTRL_SDC1_LED;
+}
+void a2560_sdc2_led(bool on)
+{
+    if (on)
+        GAVIN_R(GAVIN_CTRL) |= GAVIN_CTRL_SDC2_LED;
+    else
+        GAVIN_R(GAVIN_CTRL) &= ~GAVIN_CTRL_SDC2_LED;
+}
+#else
 void a2560_disk_led(bool on)
 {
     if (on)
@@ -661,7 +720,7 @@ void a2560_disk_led(bool on)
     else
         GAVIN_R(GAVIN_CTRL) &= ~GAVIN_CTRL_DISKLED;
 }
-
+#endif
 
 /* Utility functions *********************************************************/
 
@@ -670,6 +729,8 @@ static uint32_t set_vector(uint16_t num, uint32_t vector)
     uint32_t oldvector;
     uint32_t *addr = (uint32_t *) (4L * num);
     oldvector = *addr;
+
+    a2560_debugnl("set_vector 0x%x %d (%p) to %p", num, num, addr, vector);
 
     if (vector != -1) {
         *addr = vector;

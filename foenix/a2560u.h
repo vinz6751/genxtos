@@ -8,7 +8,9 @@
 #include "vicky_mouse.h"
 #include "foenix.h"
 
+
 /* IDE support */
+#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560U)
 struct IDE
 {   
     uint16_t data;
@@ -29,35 +31,7 @@ struct IDE
     uint8_t control;  /* Read: Alternate status */
 };
 #define ide_interface ((volatile struct IDE* const)IDE_BASE)
-
-
-/* SD card support */
-struct sdc_controller_t 
-{
-    uint8_t version;
-    uint8_t control;
-    uint8_t transfer_type;
-    uint8_t transfer_control;
-    uint8_t transfer_status;
-    uint8_t transfer_error;
-    uint8_t data;
-    uint8_t sd_xxxa;
-    uint8_t sd_xxax;
-    uint8_t sd_xaxx;
-    uint8_t sd_axxx;
-    uint8_t spi_clock;
-    uint8_t dummy0c[4];
-    uint8_t rx_fifo_data;
-    uint8_t dummy11[1];
-    uint8_t rx_fifo_h;
-    uint8_t rx_fifo_l;
-    uint8_t rx_fifo_control;
-    uint8_t dummy15[11];
-    uint8_t tx_fifo;
-    uint8_t dummy21[3];
-    uint8_t tx_fifo_control;
-};
-#define sdc_controller ((volatile struct sdc_controller_t* const)SDC_BASE)
+#endif
 
 
 /* System info from GAVIN and VICKY */
@@ -76,10 +50,17 @@ struct foenix_system_info_t
 };
 
 
-void a2560u_init(void);
+void a2560u_init(bool cold_boot);
 
 void a2560_beeper(bool on);
+
+#if defined(MACHINE_A2560M)
+void a2560_sdc1_led(bool on);
+void a2560_sdc2_led(bool on);
+#else
 void a2560_disk_led(bool on);
+#endif
+
 void a2560_system_info(struct foenix_system_info_t *result);
 
 /* Video */

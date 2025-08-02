@@ -43,10 +43,14 @@ static struct {
 
 static void init(const Fonthead *font)
 {
+#if defined(MACHINE_A2560M)
+    // The configured text window is directly what we need to interpret, there
+    // are no borders like on the U,X,K etc.
+    uint32_t text_window_size = vicky->ctrl->text_window_size;
+    L.max_width = L.text_width = (text_window_size & 0x000000ff);
+    L.max_height = L.text_height = (text_window_size & 0x0000ff00) >> 8;
+#else
     int border_width_chars, border_height_chars;
-
-    L.max_width = V_REZ_HZ / font->max_cell_width;
-    L.max_height = V_REZ_VT / font->form_height;
 
     if (vicky->ctrl->border_control & VICKY_BORDER_ENABLE) {
         border_width_chars = ((vicky->ctrl->border_control & VICKY_BORDER_WIDTH) >> 8) / font->max_cell_width;
@@ -56,13 +60,16 @@ static void init(const Fonthead *font)
         border_width_chars = border_height_chars = 0;
     }
 
-    L.text_width = (V_REZ_HZ / font->max_cell_width) - 2 * border_width_chars;
-    L.text_height = (V_REZ_VT / font->form_height) - 2 * border_height_chars;
+    L.max_width = V_REZ_HZ / font->max_cell_width;
+    L.max_height = V_REZ_VT / font->form_height;
+    L.text_width = L.max_width - 2 * border_width_chars;
+    L.text_height = L.max_height - 2 * border_height_chars;
+#endif
 
-    a2560_debugnl("v_cel_mx=%d v_cel_my=%d v_cel_wr=%d", v_cel_mx, v_cel_my, v_cel_wr);
     v_cel_mx = L.text_width - 1;
     v_cel_my = L.text_height - 1;
     v_cel_wr = L.max_width;
+    a2560_debugnl("v_cel_mx=%d v_cel_my=%d v_cel_wr=%d", v_cel_mx, v_cel_my, v_cel_wr);
 
     v_cur_ad.cellno = 0; /* First cell in text memory */
     a2560_bios_text_init();
@@ -85,10 +92,10 @@ static int get_char_source(unsigned char c, CHAR_ADDR *src)
 
 
 static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
-{    
+{
     R8(VICKY_TEXT+dst.cellno) = src.cellno;
     
-    if (v_stat_0 & M_REVID)  
+    if (v_stat_0 & M_REVID)
         vicky->text_memory->color[dst.cellno] = v_col_bg << 4 | v_col_fg;
     else
         vicky->text_memory->color[dst.cellno] = v_col_fg << 4 | v_col_bg;
@@ -123,7 +130,7 @@ static void blank_out(int topx, int topy, int botx, int boty)
     uint16_t cell;
     uint8_t cell_colour;
 
-    a2560_debugnl("blank_out(%d,%d,%d,%d)",topx,topy,botx,boty);
+    //a2560_debugnl("blank_out(%d,%d,%d,%d)",topx,topy,botx,boty);
 
     next_line = v_cel_wr;
     nrows = boty - topy + 1;

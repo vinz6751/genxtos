@@ -106,7 +106,7 @@ void delay_init(void)
  */
 void delay_calibrate(void)
 {
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     a2560_bios_delay_calibrate(CALIBRATION_TIME * loopcount_1_msec);
 #elif CONF_WITH_MFP
     ULONG loopcount, intcount;

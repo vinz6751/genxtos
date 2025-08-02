@@ -3,7 +3,7 @@
 #include "config.h"
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)  || defined(MACHINE_A2560M)
 
-#include "../foenix/foenix.i"
+#include "../foenix/foenix.h"
 
 | Exports ---------------------------------------------------------------------
     .GLOBAL a2560_memconf
@@ -16,6 +16,12 @@ a2560_memconf: // Called from memory.S to detect memory setup
     moveq   #0,d6          // fake memctrl
     jmp     (a6)           // Return
 
+
+#if defined(MACHINE_A2560M)
+#define TIMER0_INT 0x0200
+#else
+#define TIMER0_INT 0x0100
+#endif
 
 _a2560_run_calibration: // Calibration loop
     // We should ideally be using a2560_timer_enable in this function but we don't because we

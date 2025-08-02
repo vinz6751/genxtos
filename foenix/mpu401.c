@@ -19,8 +19,8 @@
 
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 
+#include "foenix.h"
 #include "a2560u_debug.h"
-#include "superio.h"
 #include "mpu401.h"
 
 /** Timeout for waiting on the MIDI interface */

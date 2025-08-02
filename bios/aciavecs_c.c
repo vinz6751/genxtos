@@ -23,17 +23,21 @@ static void call_kbdvecs_p(void (*vector)(UBYTE*), UBYTE*); // Call the given ve
 static void call_kbdvecs_bp(void *vector, UBYTE byte, void *ptr); // Call the given vector with the given byte in d0 and given pointer in a0
 
 // MIDI stuff
+#if CONF_WITH_MIDI_ACIA
 #define MIDI_ACIA_CTRL 0xfffffc04
 #define MIDI_ACIA_DATA 0xfffffc06
+#endif
 #define MIDI_BUFSIZE 128
 UBYTE midiibufbuf[MIDI_BUFSIZE];
 IOREC midiiorec;
 static void midisys_handler(void);
 static void midivec(UBYTE data);
 
-// Keyboard stuff
+// Keyboard stuff*
+#if CONF_WITH_IKBD_ACIA
 #define IKBD_ACIA_CTRL 0xfffffc00
 #define IKBD_ACIA_DATA 0xfffffc02
+#endif
 #define IKBD_BUFSIZE 256
 IOREC ikbdiorec;                 // Circular buffer information
 UBYTE ikbdibufbuf[IKBD_BUFSIZE]; // Buffer to store data 
@@ -88,14 +92,8 @@ void init_acia_vecs(void) {
 #endif
 
     kbdvecs.joyvec = (void(*)(UBYTE*))just_rts;
-
-#if CONF_WITH_MIDI_ACIA
     kbdvecs.midisys = midisys_handler;
-#endif
-
-#if CONF_WITH_IKBD_ACIA
     kbdvecs.ikbdsys = ikbdsys_handler;
-#endif
 
     // Initialize the IOREC circular buffers that store incoming data from the IKBD and MIDI
     // FIXME: this initialization should be done by the data segment if EmuTOS had a functional one
@@ -105,7 +103,9 @@ void init_acia_vecs(void) {
     in_packet = FALSE;
 
     // Flush input data
+#if CONF_WITH_MIDI_ACIA
     *((volatile UBYTE* const)IKBD_ACIA_DATA);
+#endif
 
     // Install the interrupt handler and enable the interrupt
 #if CONF_WITH_IKBD_ACIA || CONF_WITH_MIDI_ACIA
@@ -119,6 +119,7 @@ void init_acia_vecs(void) {
 
 // Interrupt handler called from int_acia
 void int_acia_c(void) {
+#if CONF_WITH_MFP
     do {
 
 #if CONF_WITH_MIDI_ACIA
@@ -134,13 +135,15 @@ void int_acia_c(void) {
     
     // Software end of interrupt
     MFP_BASE->isrb = ~0b01000000; // Bit 4 of the GPIP (ACIA IRQs)
+#endif
 }
 
 
-#if CONF_WITH_MIDI_ACIA
 
-// Handle MIDI ACIA interrupt
+
+// Handle MIDI interrupt
 static void midisys_handler(void) {
+#if CONF_WITH_MIDI_ACIA
     SBYTE status = *((UBYTE*)MIDI_ACIA_CTRL);
 
     if (!(status & ACIA_IRQ) || !(status & ACIA_RDRF))
@@ -152,11 +155,13 @@ static void midisys_handler(void) {
         // Overrun
         call_kbdvecs_b(kbdvecs.vmiderr, *((UBYTE*)MIDI_ACIA_DATA));
     }
+#endif /* CONF_WITH_MIDI_ACIA */
 }
-
 
 // Store the data in the circular buffer, if not full
 static void midivec(UBYTE data) {
+// FIXME this is not correct to condition this to CONF_WITH_MIDI_ACIA
+// because we don't have an ACIA that we don't have MIDI.
     UWORD tail;
     IOREC *iorec = &midiiorec;
  
@@ -172,12 +177,9 @@ static void midivec(UBYTE data) {
     iorec->tail = tail;
 }
 
-#endif /* CONF_WITH_MIDI_ACIA */
-
-
-#if CONF_WITH_IKBD_ACIA
-
+// Handle keyboard/mouse interrupt
 static void ikbdsys_handler(void) {
+#if CONF_WITH_IKBD_ACIA
     SBYTE status = *((UBYTE*)IKBD_ACIA_CTRL);
 
     if (!(status & ACIA_IRQ) || !(status & ACIA_RDRF))
@@ -189,9 +191,8 @@ static void ikbdsys_handler(void) {
         // Overrun
         call_kbdvecs_b(kbdvecs.vkbderr, *((UBYTE*)IKBD_ACIA_DATA));
     }
-}
-
 #endif /* CONF_WITH_IKBD_ACIA */
+}
 
 
 // Packets received from the IKBD are accumulated into the kbdbuf buffer.
