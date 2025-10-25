@@ -1,5 +1,5 @@
 /*
- * a2560u - Foenix Retro Systems A2560U specific functions
+ * a2560 - Foenix Retro Systems A2560U specific functions
  *
  * Copyright (C) 2013-2023 The EmuTOS development team
  *
@@ -16,8 +16,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include "a2560u_debug.h"
-#include "foenix.h"
-#include "regutils.h"
+
 #include "vicky2_txt_a_logger.h"
 
 // FIXME: this is an EmuTOS dependency
@@ -39,76 +38,38 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #define LOBYTE(x) ((UBYTE)(UWORD)(x))
 #define HIBYTE(x) ((UBYTE)((UWORD)(x) >> 8))
 
-
 #include "foenix.h"
-#include "uart16550.h" /* Serial port */
-#include "sn76489.h"   /* Programmable Sound Generator */
-#include "ym262.h"     /* YM262 OPL3 FM synthesizer */
-#include "wm8776.h"    /* Audio codec */
+#include "a2560u_debug.h"
+#include "a2560u.h"
 #include "bq4802ly.h"  /* Real time clock */
+#include "cpu.h"
+#include "interrupts.h"
 #include "mpu401.h"    /* MIDI interface */
 #include "ps2.h"
 #include "ps2_keyboard.h"
 #include "ps2_mouse_a2560u.h"
+#include "regutils.h"
+#include "sn76489.h"   /* Programmable Sound Generator */
 #include "superio.h"
+#include "timer.h"
+#include "uart16550.h" /* Serial port */
 #include "vicky2.h"    /* VICKY II graphics controller */
-#include "a2560u_debug.h"
-#include "a2560u.h"
+#include "wm8776.h"    /* Audio codec */
+#include "ym262.h"     /* YM262 OPL3 FM synthesizer */
 
-#define set_sr(a)                         \
-__extension__                             \
-({short _r, _a = (a);                     \
-  __asm__ volatile                        \
-  ("move.w sr,%0\n\t"                     \
-   "move.w %1,sr"                         \
-  : "=&d"(_r)        /* outputs */        \
-  : "nd"(_a)         /* inputs  */        \
-  : "cc", "memory"   /* clobbered */      \
-  );                                      \
-  _r;                                     \
-})
-
-
-/*
- * WORD get_sr(void);
- *   returns the current value of sr.
- */
-
-#define get_sr()                          \
-__extension__                             \
-({short _r;                               \
-  __asm__ volatile                        \
-  ("move.w sr,%0"                         \
-  : "=dm"(_r)        /* outputs */        \
-  :                  /* inputs  */        \
-  : "cc", "memory"   /* clobbered */      \
-  );                                      \
-  _r;                                     \
-})
 
 /* Local variables ***********************************************************/
-static uint32_t cpu_freq; /* CPU frequency */
+uint32_t cpu_freq; /* CPU frequency */
 
 
 /* Prototypes ****************************************************************/
 
 void a2560u_init_lut0(void);
-static void timer_init(void);
-static uint32_t set_vector(uint16_t num, uint32_t vector);
-/* Interrupt */
-static void irq_init(void);
-void irq_mask_all(uint16_t *save);
-void irq_add_handler(int id, void *handler);
+
+
 void a2560u_irq_bq4802ly(void);
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
-void a2560u_irq_vicky_a(void); // VICKY autovector A interrupt handler
-void a2560u_irq_vicky_b(void); // VICKY autovector B interrupt handler
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
-void a2560u_irq_vicky(void); // Only channel, or channel B on the A2560K/X/GenX
-#else
- #error "Define Foenix machine"
-#endif
+
 
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
@@ -140,22 +101,26 @@ void a2560u_init(bool cold_boot)
     //uart16550_put(UART1, (uint8_t*)"DEBUG TEST\n", 4);
 #endif
 
-    a2560_debugnl("irq_init()");
-    irq_init();
+    a2560_debugnl("a2560u_irq_init()");
+    a2560u_irq_init();
 
-    a2560_debugnl("timer_init");
-    timer_init();
+    a2560_debugnl("uart16550_init()");
+    uart16550_init((UART16550*)UART1);
+    uart16550_init((UART16550*)UART2);
 
-#if !defined(MACHINE_A2560M) // Not supported yet
+    a2560_debugnl("a2560_timer_init");
+    a2560_timer_init();
+
     a2560_debugnl("wm8776_init");
     wm8776_init();
-    
+
+#if !defined(MACHINE_A2560M) // Not supported yet
     a2560_debugnl("ym262_reset");
     ym262_reset();
-    
+#endif
+
     a2560_debugnl("sn76489_mute_all");
     sn76489_mute_all();
-#endif
 
     /* Clear screen and home */
     a2560_debugnl("a2560u_init() done");
@@ -181,264 +146,6 @@ void a2560u_setphys(const uint8_t *address)
 /* Serial port support *******************************************************/
 
 void a2560u_irq_com1(void); // Event handler in a2560u_s.S
-
-
-/* Timers ********************************************************************/
-
-/* This holds all readily usable details of timers per timer number,
- * so we don't have to compute anything when setting a timer.
- * It's done so timers can be reprogrammed quickly without having to do
- * computation, so to get the best timing possible. */
-/* Timers */
-static const struct a2560u_timer_t {
-    uint32_t control;  /* Control register */
-    uint32_t value;    /* Value register   */
-    uint32_t compare;  /* Compare register */
-    uint32_t deprog;   /* AND the control register with this to clear all settings */
-    uint32_t reset;    /* OR the control register with this to reset value/compare */
-    uint32_t prog;     /* OR the control register with this to program the timer in countdown mode */
-    uint32_t start;    /* OR the control register with this to start the timer in countdown mode */
-    uint16_t irq_mask; /* OR this to the irq_pending_group to acknowledge the interrupt */
-    uint16_t vector;   /* Exception vector number (not address !) */
-    uint32_t dummy;    /* Useless but having the structure 32-byte larges makes it quicker to generate an offset with lsl #5 */
-} a2560u_timers[] =
-{
-/* Whether to count up or count down. Both work, it really doesn't make a difference */
-#define TIMER_COUNT_UP 1
-#if TIMER_COUNT_UP
-    #define TIMER_PROG  (TIMER_CTRL_IRQ|TIMER_CTRL_RECLEAR|TIMER_CTRL_UPDOWN)
-    #define TIMER_RESET TIMER_CTRL_CLEAR
-#else
-    #define TIMER_PROG (TIMER_CTRL_IRQ|TIMER_CTRL_RELOAD)
-    #define TIMER_RESET TIMER_CTRL_LOAD
-#endif
-    /* TODO 1L as "start" is really TIMER_CTRL_ENABLE but I get a "left shift count >= width of type" warning I can't get rid of */
-    { TIMER_CTRL0, TIMER0_VALUE, TIMER0_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  1 << (INT_TIMER0&0xf), INT_TIMER0_VECN },
-    { TIMER_CTRL0, TIMER1_VALUE, TIMER1_COMPARE, 0xffff00ff, TIMER_RESET << 8,  TIMER_PROG << 8,  TIMER_CTRL_ENABLE << 8,  1 << (INT_TIMER1&0xf), INT_TIMER1_VECN },
-    { TIMER_CTRL0, TIMER2_VALUE, TIMER2_COMPARE, 0xff00ffff, TIMER_RESET << 16, TIMER_PROG << 16, TIMER_CTRL_ENABLE << 16, 1 << (INT_TIMER2&0xf), INT_TIMER2_VECN },
-    { TIMER_CTRL1, TIMER3_VALUE, TIMER3_COMPARE, 0xffffff00, TIMER_RESET << 0,  TIMER_PROG << 0,  TIMER_CTRL_ENABLE << 0,  1 << (INT_TIMER3&0xf), INT_TIMER3_VECN }
-};
-
-
-/*
- * Initialise the timers.
- */
-static void timer_init(void)
-{
-    int i;
-
-    /* Disable all timers */
-    for (i = 0; i < sizeof(a2560u_timers)/sizeof(struct a2560u_timer_t); i++)
-        a2560_timer_enable(i, false);
-}
-
-/*
- * Program a timer but don't start it. This causes the timer to stop.
- * timer: timer number
- * frequency: desired frequency
- * repeat: whether the timer should reload after firing interrupt
- * handler: routine to execute when timer fires
- */
-void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler)
-{
-    struct a2560u_timer_t *t;
-    uint16_t sr;
-
-    if (timer > 3)
-        return;
-
-    a2560_debugnl("Set timer %d, freq:%ldHz, repeat:%s, handler:%p",timer,frequency,repeat?"ON":"OFF",handler);
-    
-    /* Identify timer control register to use */
-    t = (struct a2560u_timer_t *)&a2560u_timers[timer];
-
-    /* We don't want interrupts while we reprogramming */
-    sr = set_sr(0x2700);
-
-    /* Stop the timer while we configure */
-    a2560_timer_enable(timer, false);
-
-    /* Stop and reprogram the timer, but don't start. */
-    /* TODO: In case of control register 0, we write the config of 3 timers at once because
-     * the timers control register has to be addressed as long word.
-     * Can that have nasty effects on any other running timers ? */
-    R32(t->control) = R32(t->control) & t->deprog;
-
-    /* Set timer period */
-#if TIMER_COUNT_UP
-    R32(t->compare) = cpu_freq / frequency;
-# define TIMER_USE_OFFICIAL_WAY 1
-# if TIMER_USE_OFFICIAL_WAY
-    R32(t->control) |= t->reset; /* Force value counter to 0 */
-    R32(t->control) &= ~t->reset; /* Stop forcing it */
-# else
-    /* This works just as well and is a quicker */
-    R32(t->value) = 0L;
-# endif
-
-#else // TIMER_COUNT_DOWN
-    R32(t->value) = cpu_freq / frequency;
-    R32(t->compare) = 0L;
-#endif
-
-    /* When counting up, the Value register is cleared whenever CLEAR **OR** RECLEAR is set.
-     * Likewise when counting down, Value register is loaded whenever LOAD **OR** RELOAD is set. */
-
-    R32(t->control) |= t->prog;
-
-    /* Set handler */
-    set_vector(t->vector, (uint32_t)handler);
-
-    /* Before starting the timer, ignore any previous pending interrupt from it */
-    if (R16(IRQ_PENDING_GRP1) & t->irq_mask)
-        R16(IRQ_PENDING_GRP1) = t->irq_mask;
-
-    /* Unmask interrupts for that timer */
-    R16(IRQ_MASK_GRP1) &= ~t->irq_mask;
-
-    set_sr(sr);
-#if 0
-    a2560_debugnl("AFTER SETTING TIMER %d", timer);
-    a2560_debugnl("CPU freq     %ld", cpu_freq);
-    a2560_debugnl("CPU          sr=%04x", get_sr());
-    a2560_debugnl("vector       0x%02x=%p",t->vector,(void*)set_vector(t->vector, -1L));
-    a2560_debugnl("value        %p=%p",(void*)t->value,R32(t->value));
-    a2560_debugnl("compare      %p=%p",(void*)t->compare,R32(t->compare));
-    a2560_debugnl("irq_pending  %p=%04x", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1));
-    a2560_debugnl("irq_mask     %p=%04x", (void*)IRQ_MASK_GRP1,R16(IRQ_MASK_GRP1));
-    a2560_debugnl("control      %p=%p",(void*)t->control,R32(t->control));
-#endif
-}
-
-/*
- * Enable or disable a timer.
- * timer: timer number
- * enable: 0 to disable, anything to enable
- */
-void a2560_timer_enable(uint16_t timer, bool enable)
-{
-    struct a2560u_timer_t *t = (struct a2560u_timer_t *)&a2560u_timers[timer];
-    a2560_debugnl("a2560_timer_enable(%d,%d)", timer, enable);
-    if (enable)
-        R32(t->control) |= t->start;
-    else
-        R32(t->control) &= ~t->start;
-
-#if 0
-    a2560_debugnl("After %s  > control %p=0x%08lx",enable?"Enable":"Disable", (void*)t->control,R32(t->control));
-    if (R32(t->value) != R32(t->value))
-        a2560_debugnl("Timer is running: 0x%08lx 0x%08lx 0x%08lx...",R32(t->value), R32(t->value), R32(t->value));
-    else
-        a2560_debugnl("Timer is not running");
-#endif
-}
-
-
-
-
-/* Interrupts management *****************************************************/
-
-/* Interrupt handlers for each of the IRQ groups */
-void *a2560_irq_vectors[IRQ_GROUPS][16];
-
-static void irq_init(void)
-{
-    int i, j;
-
-    volatile uint16_t *pending = (uint16_t*)IRQ_PENDING_GRP0;
-    volatile uint16_t *polarity = (uint16_t*)IRQ_POL_GRP0;
-    volatile uint16_t *edge = (uint16_t*)IRQ_EDGE_GRP0;
-    volatile uint16_t *mask = (uint16_t*)IRQ_MASK_GRP0;
-
-    for (i = 0; i < IRQ_GROUPS; i++)
-    {
-        mask[i] = edge[i] = 0xffff;
-        pending[i] = 0xffff; /* Acknowledge any pending interrupt */
-        polarity[i] = 0;
-
-        for (j=0; j<16; j++)
-            a2560_irq_vectors[i][j] = a2560u_rts;
-    }
-
-    for (i=0x40; i<0x60; i++)
-        set_vector(i,(uint32_t)a2560u_rte); /* That's not even correct because it doesn't acknowledge interrupts */
-
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
-    // Channel A VBL
-    set_vector(INT_VICKYII_A, (uint32_t)a2560u_irq_vicky_a);
-    set_vector(INT_VICKYII_B, (uint32_t)a2560u_irq_vicky_b);
-#else
-    set_vector(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
-#endif
-}
-
-
-void a2560u_irq_mask_all(uint16_t *save)
-{
-    int i;
-    uint16_t sr = set_sr(0x2700);
-
-    for (i = 0; i < IRQ_GROUPS; i++)
-    {
-        save[i] = ((volatile uint16_t*)IRQ_MASK_GRP0)[i];
-        ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = 0xffff;
-    }
-
-    set_sr(sr);
-}
-
-
-void a2560u_irq_restore(const uint16_t *save)
-{
-    int i;
-
-    for (i = 0; i < IRQ_GROUPS; i++)
-        ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = save[i];
-}
-
-/* Utility functions, don't use directly */
-static inline uint16_t irq_group(uint16_t irq_id) { return irq_id >> 4; }
-static inline uint16_t irq_number(uint16_t irq_id) { return irq_id & 0xf; }
-static inline uint16_t irq_mask(uint16_t irq_id) { return 1 << irq_number(irq_id); }
-static inline uint16_t *irq_mask_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_MASK_GRP0)[irq_group(irq_id)]; }
-static inline uint16_t *irq_pending_reg(uint16_t irq_id) { return &((uint16_t*)IRQ_PENDING_GRP0)[irq_group(irq_id)]; }
-#define irq_handler(irqid) (a2560_irq_vectors[irq_group(irqid)][irq_number(irqid)])
-
-
-/* Enable an interruption. First byte is group, second byte is bit */
-void a2560_irq_enable(uint16_t irq_id)
-{
-    a2560_debugnl("a2560_irq_enable(0x%02x)", irq_id);
-    a2560u_irq_acknowledge(irq_id);
-    R16(irq_mask_reg(irq_id)) &= ~irq_mask(irq_id);
-    a2560_debugnl("a2560_irq_enable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
-}
-
-
-/* Disable an interruption. First byte is group, second byte is bit */
-void a2560u_irq_disable(uint16_t irq_id)
-{
-    a2560_debugnl("a2560_irq_disable(0x%02x)", irq_id);
-    R16(irq_mask_reg(irq_id)) |= irq_mask(irq_id);
-    a2560_debugnl("a2560_irq_disable: Mask %p=%04x", irq_mask_reg(irq_id), R16(irq_mask_reg(irq_id)));
-}
-
-
-void a2560u_irq_acknowledge(uint8_t irq_id)
-{
-    R16(irq_pending_reg(irq_id)) = irq_mask(irq_id);
-}
-
-
-/* Set an interrupt handler for IRQ managed through GAVIN interrupt registers */
-void *a2560u_irq_set_handler(uint16_t irq_id, void *handler)
-{
-    void *old_handler = irq_handler(irq_id);
-    irq_handler(irq_id) = (void*)handler;
-
-    a2560_debugnl("a2560u_irq_set_handler(%04x,%p)", irq_id, handler);
-    return old_handler;
-}
 
 
 /* Real Time Clock  **********************************************************/
@@ -722,18 +429,3 @@ void a2560_disk_led(bool on)
 }
 #endif
 
-/* Utility functions *********************************************************/
-
-static uint32_t set_vector(uint16_t num, uint32_t vector)
-{
-    uint32_t oldvector;
-    uint32_t *addr = (uint32_t *) (4L * num);
-    oldvector = *addr;
-
-    a2560_debugnl("set_vector 0x%x %d (%p) to %p", num, num, addr, vector);
-
-    if (vector != -1) {
-        *addr = vector;
-    }
-    return oldvector;
-}

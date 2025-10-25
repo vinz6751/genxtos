@@ -12,11 +12,11 @@ LDFLAGS=-L$(LIBCMINI)/build -lcmini -lgcc
 
 LIB=libfoenix.a
 
-SRC_C=a2560u.c a2560u_debug.c bq4802ly.c mpu401.c \
+SRC_C=a2560u.c a2560u_debug.c bq4802ly.c cpu.c interrupts.c mpu401.c \
 	ps2_keyboard.c ps2_mouse_a2560u.c ps2.c \
-	sn76489.c superio.c ym2612.c uart16550.c vicky2.c vicky_mouse.c wm8776.c \
+	sn76489.c superio.c timer.c ym2612.c uart16550.c vicky2.c vicky_mouse.c wm8776.c \
 	shadow_fb.c ym262.c
-SRC_S=a2560u_s.S shadow_fb_s.S
+SRC_S=a2560u_s.S shadow_fb_s.S timer_s.S
 SRC=$(SRC_C) $(SRC_S)
 OBJ_C=$(SRC_C:.c=.o)
 OBJ_S=$(SRC_S:.S=.o)

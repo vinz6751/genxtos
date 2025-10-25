@@ -2,6 +2,10 @@ This is a hacked EmuTOS with some goodies to make it cooler.
 It is specifically targetted for the stock Atari ST/STe.
 
 Changelog:
+    Dark theme for EmuCON
+    Make medium resolution the default on colour screens.
+
+
 2024-11-24 VB:
 	* Merged current EmuTOS. But I'm not happy that linea_validate_color_index has to be
 	  used within the VDI, that should be refactored or done differently.

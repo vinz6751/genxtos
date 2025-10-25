@@ -178,7 +178,12 @@ LONG disk_drvrem(void)
  */
 void disk_init_all(void)
 {
-    /* scan disk majors in the following order */
+    /* scan disk majors in the following order, struct _blkdev.uni in blkdev.h
+     * but here they are arranged so if you divide them by 8 (GET_BUS() macro)
+     * it returns the bus number.
+     * So they are actually what they should be, - NUMFLOPPIES.
+     * Each bus must have DEVICES_PER_BUS so the
+     */
     static const int majors[] =
     {
 #if CONF_WITH_IDE
@@ -208,12 +213,14 @@ void disk_init_all(void)
      * initialise bitmap of available devices
      * (A and B are already assigned to floppy disks)
      */
-    for (i = 2, bitmask = 0x04L; i < BLKDEVNUM; i++, bitmask <<= 1)
+    for (i = NUMFLOPPIES, bitmask = 1L<<NUMFLOPPIES; i < BLKDEVNUM; i++, bitmask <<= 1)
         devices_available |= bitmask;
 
-    /* scan for attached harddrives and their partitions */
+    /*
+     * scan for attached harddrives and their partitions
+     */
     for(i = 0; i < ARRAY_SIZE(majors); i++) {
-        UWORD unit = NUMFLOPPIES + majors[i];
+        UWORD unit = MAJOR_TO_UNIT(majors[i]);
         disk_init_one(unit,&devices_available);
         if (!devices_available) {
             KDEBUG(("disk_init_all(): maximum number of partitions reached!\n"));
@@ -792,7 +799,7 @@ static LONG natfeats_inquire(UWORD unit, ULONG *blocksize, ULONG *deviceflags, c
 /* Get unit information, using our internal drivers only. */
 static LONG internal_inquire(UWORD unit, ULONG *blocksize, ULONG *deviceflags, char *productname, UWORD stringlen)
 {
-    UWORD major = unit - NUMFLOPPIES;
+    UWORD major;
     LONG ret;
     WORD bus, reldev;
     char name[40] = "Disk";
@@ -800,8 +807,12 @@ static LONG internal_inquire(UWORD unit, ULONG *blocksize, ULONG *deviceflags, c
     MAYBE_UNUSED(reldev);
     MAYBE_UNUSED(ret);
 
+    major = UNIT_TO_MAJOR(unit);
     bus = GET_BUS(major);
-    reldev = major - bus * DEVICES_PER_BUS;
+    /* Number (0, 1 etc.) of the device in the bus */
+    reldev = UNIT_TO_BUS_DEVICE_NUMBER(unit);
+
+    KDEBUG(("internal_inquire(%d) bus:%d major:%d reldev:%d\n",unit,bus,major,reldev));
 
     /*
      * hardware access to device
@@ -835,8 +846,8 @@ static LONG internal_inquire(UWORD unit, ULONG *blocksize, ULONG *deviceflags, c
         ret = EUNDEV;
     }
 
-    /* if device doesn't exist, we're done */
-    if (ret == EUNDEV)
+    /* if we couldn't get info about the device, we're done */
+    if (ret != 0)
         return ret;
 
     /* return values as requested */
@@ -867,7 +878,7 @@ LONG disk_inquire(UWORD unit, ULONG *blocksize, ULONG *deviceflags, char *produc
 /* Get unit capacity */
 LONG disk_get_capacity(UWORD unit, ULONG *blocks, ULONG *blocksize)
 {
-    UWORD major = unit - NUMFLOPPIES;
+    UWORD major = UNIT_TO_MAJOR(unit);
     LONG ret;
     ULONG info[2] = { 0UL, 512UL }; /* #sectors, sectorsize */
     WORD bus, reldev;
@@ -881,7 +892,7 @@ LONG disk_get_capacity(UWORD unit, ULONG *blocks, ULONG *blocksize)
 #endif
 
     bus = GET_BUS(major);
-    reldev = major - bus * DEVICES_PER_BUS;
+    reldev = UNIT_TO_BUS_DEVICE_NUMBER(unit);
 
     /* hardware access to device */
     switch(bus) {

@@ -21,6 +21,13 @@
 
 #define UNITSNUM            (NUMFLOPPIES+(DEVICES_PER_BUS*(MAX_BUS+1)))
 
+/* Converts a unit number to major disk number */
+#define UNIT_TO_MAJOR(unit)          (unit - NUMFLOPPIES)
+/* Converts a major disk unit number to unit*/
+#define MAJOR_TO_UNIT(major)         (major + NUMFLOPPIES)
+/* Gives the numbers of the device on the bus. Previous code did "major - bus * DEVICES_PER_BUS" */
+#define UNIT_TO_BUS_DEVICE_NUMBER(unit) (UNIT_TO_MAJOR(unit) % DEVICES_PER_BUS)
+
 #define GET_BUS(major)          ((major)/DEVICES_PER_BUS)
 #define IS_ACSI_DEVICE(major)   (GET_BUS(major) == ACSI_BUS)
 #define IS_SCSI_DEVICE(major)   (GET_BUS(major) == SCSI_BUS)
@@ -52,11 +59,11 @@
 /* read/write flags */
 #define RW_READ             0
 #define RW_WRITE            1
-/* bit masks */
-#define RW_RW               1
-#define RW_NOMEDIACH        2
-#define RW_NORETRIES        4
-#define RW_NOTRANSLATE      8
+/* Rwabs rwflag bit masks */
+#define RW_RW               1 /* 0: read, 1: write */
+#define RW_NOMEDIACH        2 /* ignore media changed status */
+#define RW_NORETRIES        4 /* in case of error, do not retry*/
+#define RW_NOTRANSLATE      8 /* */
 /* EmuTOS extension: Rwabs without byteswap on IDE */
 #define RW_NOBYTESWAP     128
 

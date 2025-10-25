@@ -225,7 +225,7 @@ ARFLAGS = rc
 
 # Linker with relocation information and binary output (image)
 LD = $(CC) $(MULTILIBFLAGS) -nostartfiles -nostdlib
-LIBS = -lgcc
+LIBS = -lgcc foenix/libfoenix.a
 LDFLAGS = -Wl,-T,obj/emutospp.ld
 PCREL_LDFLAGS = -Wl,--oformat=binary,-Ttext=0,--entry=0
 
@@ -292,12 +292,6 @@ OBJCOPY = $(TOOLCHAIN_PREFIX)objcopy
 # the native C compiler, for tools
 NATIVECC = gcc -ansi -pedantic $(WARNFLAGS) -Wextra $(BUILD_TOOLS_OPTFLAGS)
 
-foenix_src = a2560u_s.S a2560u.c a2560u_debug.c \
-	ps2_mouse_a2560u.c ps2.c ps2_keyboard.c \
-	uart16550.c sn76489.c superio.c mpu401.c ym262.c wm8776.c bq4802ly.c vicky2.c vicky_mouse.c \
-	shadow_fb.c shadow_fb_s.S \
-	vicky2_txt_a_logger.c
-
 #
 # source code in bios/
 #
@@ -323,7 +317,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c bios.c xbios
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c timer.c timer_.S memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S scsidriv.c vbl.c \
-             a2560u_bios.c a2560u_bios_s.S a2560u_conout_text.c a2560u_conout_bmp.c
+             a2560u_bios.c a2560u_bios_s.S a2560u_conout_text.c a2560u_conout_bmp.c spi_a2560m.c spi_gavin.c
 
 
 ifeq (1,$(COLDFIRE))
@@ -870,14 +864,22 @@ $(ROM_MACHINE_A2560X): emutos.img mkrom
 
 
 ROM_MACHINE_A2560M = emutos-a2560m.rom
-A2560X_DEFS =
+A2560M_DEFS =
+
+.PHONY: foenix/libfoenix.a
+foenix/libfoenix.a:
+	cd foenix
+	$(MAKE) libfoenix.a
 
 .PHONY: a2560m
 NODEP += a2560m
 a2560m: UNIQUE = $(COUNTRY)
 a2560m: OPTFLAGS = $(SMALL_OPTFLAGS)
 a2560m: CPUFLAGS = -m68060
-a2560m: override DEF += -DTARGET_A2560X_ROM -DMACHINE_A2560M $(A2560X_DEFS)
+a2560m: override DEF += -DTARGET_A2560M_ROM -DMACHINE_A2560M $(A2560M_DEFS)
+#a2560m: OPTIONAL_OBJ += foenix/libfoenix.a
+#a2560m: LIBS += foenix/libfoenix.a
+
 a2560m:
 	@echo "# Building A2560M Foenix EmuTOS into $(ROM_MACHINE_A2560M)"
 	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560M=$(ROM_MACHINE_A2560M) $(ROM_MACHINE_A2560M)

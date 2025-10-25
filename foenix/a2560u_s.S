@@ -42,7 +42,7 @@
 #endif
 
 _a2560u_rts:
-    rts
+    rts  
 
 
 _a2560u_rte:
@@ -117,7 +117,6 @@ _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
     // higher priority, we could be loosing data due to overruns. So when this handler is caller,
     // we don't want it to be interrupted.
-    move.l  #0xff0000,0xfec00010
     move.w  sr,-(sp)
     move.w  #0x2700,sr
     move.w  #(1<<INT_KBD_PS2),INT_GRP(INT_KBD_PS2)
@@ -132,7 +131,7 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
     // higher priority, we could be loosing data due to overruns. So when this handler is caller,
     // we don't want it to be interrupted.
-    move.l  #0xffff,0xfec00010
+
     move.w  sr,-(sp)
     move.w  #0x2700,sr
     move.w  #(1<<INT_MOUSE),INT_GRP(INT_MOUSE)
@@ -144,17 +143,17 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
 
 
 _a2560u_irq_com1: // UART COM1 interrupt handler
-    // This is not completely working as it should because it seems the interrupts don't get acknowledged correctly
+    // On the A2560U this is not completely working as it should because it seems the interrupts don't get acknowledged correctly
     // when we read the Interrupt Status Register (UART0+UART16750_ISR). As a result we can't acknowledge the
     // interrupts so we always get the highest priority one masking the others.
     // So instead of checking interrupts we examine the Line Status Register to find out the cause of the interrupt.
-    movem.l d0-d1/a0-a2,-(sp)
+    movem.l d0-d2/a0-a2,-(sp)
 com1_do:
     move.w  #(1<<INT_COM1),INT_GRP(INT_COM1)
     lea     UART1,a0
     move.b  5(a0),d1 // 5 is the Line Status Register. That "should" acknowledge the interrupt (but doesn't on the U)
-    btst    #0,d1
-    beq.s   com1_done // No data received
+    btst    #0,d1    // Receive register full ?
+    beq.s   com_done // No data received
     // Data received
     move.b  0(a0),d0
     move.w  d0,-(sp)
@@ -162,21 +161,21 @@ com1_do:
     jbsr    (a0)
     addq.l  #2,sp
     bra.s   com1_do
-com1_done:
-    movem.l (sp)+,d0-d1/a0-a2
+com_done:
+    movem.l (sp)+,d0-d2/a0-a2
     rte
 
 #if CONF_WITH_MPU401
 
 /* That must mean we have a SuperIO therefore a 2nd serial port */
 _a2560u_irq_com2: // UART COM2 interrupt handler
-    movem.l d0-d1/a0-a2,-(sp)
+    movem.l d0-d2/a0-a2,-(sp)
 com2_do:
     move.w  #(1<<INT_COM2),INT_GRP(INT_COM2)
     lea     UART2,a0
     move.b  5(a0),d1 // 5 is the Line Status Register
     btst    #0,d1
-    beq.s   com1_done // No data received
+    beq.s   com_done // No data received
     // Data received
     move.b  0(a0),d0
     move.w  d0,-(sp)
@@ -184,9 +183,6 @@ com2_do:
     jbsr    (a0)
     addq.l  #2,sp
     bra.s   com2_do
-com2_done:
-    movem.l (sp)+,d0-d1/a0-a2
-    rte
 
 
 _a2560u_irq_mpu401:

@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-// #define ENABLE_KDEBUG 1
+/**/ #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "aciavecs.h"
@@ -362,7 +362,7 @@ static void bios_init(void)
     swv_vec = just_rts;
 
     /* Setup VBL queue */
-    KDEBUG(("VBL queue\n"));
+    KDEBUG(("vbl_init\n"));
     vbl_init();
 
    /* Initialize the character devices, RS-232 port(s) */
@@ -401,13 +401,11 @@ static void bios_init(void)
     /* Keep the HBL disabled */
     set_sr(0x2300);
 #else
-    set_sr(0x2000);
-# if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     KDEBUG(("bios enabling interrupts()\n"));
-    a2560_timer_enable(HZ200_TIMER_NUMBER,true);
-    a2560_irq_enable(INT_SOF_A);
+    set_sr(0x2000);
+# if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
+    a2560_bios_enable_irqs();
 # endif
-
 #endif
 
 #if defined(MACHINE_ARANYM) || defined(TARGET_1024)
@@ -469,6 +467,16 @@ static void bios_init(void)
     delay_calibrate();  /* determine values for delay() function */
                         /*  - requires interrupts to be enabled  */
 
+#if 0
+    // To test if the delay is correct, send some indication every second
+    for(;;) {
+        int i;
+        for (i=0;i<1000;i++)
+            delay_loop(loopcount_1_msec);
+        *((volatile unsigned char * const)0xfec00b01) = '.';
+    }
+#endif
+
     /* Initialize the DSP.  Since we currently use the system timer
      * in dsp_execboot(), which is called from dsp_init(), the latter
      * must be called *after* system timer interrupts are enabled.
@@ -511,9 +519,12 @@ static void bios_init(void)
 
     KDEBUG(("parport_init()\n"));
     parport_init();     /* parallel port */
+
+#if 1
     KDEBUG(("clock_init()\n"));
     clock_init();       /* init clock */
     KDEBUG(("after clock_init()\n"));
+#endif
 
 #if CONF_WITH_NOVA
     /* Detect and initialize a Nova card, skip if Ctrl is pressed */
@@ -701,6 +712,8 @@ static void autoexec(void)
     DTA dta;
     WORD err;
 
+    KDEBUG(("autoexec\n"));
+
     /* check if the user does not want to run AUTO programs */
     if (bootflags & BOOTFLAG_SKIP_AUTO_ACC)
         return;
@@ -713,7 +726,9 @@ static void autoexec(void)
         return;
 
     Fsetdta(&dta);
+    KDEBUG(("autoexec Fsfirst starting --------------\n"));
     err = Fsfirst("\\AUTO\\*.PRG", 7);
+    KDEBUG(("autoexec Fsfirst: %d--------------------\n",err));
     while(err == 0) {
 #ifdef TARGET_PRG
         if (!strncmp(dta.d_fname, "EMUTOS", 6))
@@ -732,6 +747,8 @@ static void autoexec(void)
 
         err = Fsnext();
     }
+
+    KDEBUG(("autoexec exiting\n"));
 }
 
 #if CONF_WITH_SHUTDOWN
@@ -1068,10 +1085,10 @@ static LONG bios_4(WORD r_w, UBYTE *adr, WORD numb, WORD first, WORD drive, LONG
 {
     LONG ret;
     KDEBUG(("BIOS rwabs(rw = %d, addr = %p, count = 0x%04x, "
-            "sect = 0x%04x, dev = 0x%04x, lsect = 0x%08lx)",
+            "sect = 0x%04x, dev = 0x%04x, lsect = 0x%08lx)\n",
             r_w, adr, numb, first, drive, lfirst));
     ret = lrwabs(r_w, adr, numb, first, drive, lfirst);
-    KDEBUG((" = 0x%08lx\n", ret));
+    KDEBUG(("rwabs returns 0x%08lx\n", ret));
     return ret;
 }
 #endif
@@ -1205,6 +1222,7 @@ LONG mediach(WORD drv)
 #if DBGBIOS
 static LONG bios_9(WORD drv)
 {
+	KDEBUG(("BIOS 9: Mediach()\n"));
     return mediach(drv);
 }
 #endif

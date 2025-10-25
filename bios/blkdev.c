@@ -111,7 +111,7 @@ void blkdev_init(void)
 
     /* setting drvbits */
     blkdev_hdv_init();
-    KDEBUG(("blkdev_init exiting"));
+    KDEBUG(("blkdev_init exiting\n"));
 }
 
 /*
@@ -130,7 +130,7 @@ static void pun_info_setup(void)
     pun_info.max_sect_siz = MAX_LOGSEC_SIZE;    /* temporarily, for blkdev_getbpb() */
     for (i = 0; i < PUN_MAXUNITS; i++)
     {
-        pun_info.pun[i] = 0xff;
+        pun_info.pun[i] = PUN_NOT_USED;
         pun_info.partition_start[i] = 0;
         pun_info.reserved[i] = 0;
     }
@@ -216,18 +216,22 @@ static void blkdev_hdv_init(void)
 static void bus_init(void)
 {
 #if CONF_WITH_ACSI
+    KDEBUG(("acsi_init\n"));
     acsi_init();
 #endif
 
 #if CONF_WITH_SCSI
+    KDEBUG(("scsi_init\n"));
     scsi_init();
 #endif
 
 #if CONF_WITH_IDE
+    KDEBUG(("ide_init\n"));
     ide_init();
 #endif
 
 #if CONF_WITH_SDMMC
+    KDEBUG(("sd_init\n"));
     sd_init();
 #endif
 }
@@ -425,7 +429,7 @@ static LONG blkdev_rwabs(WORD rw, UBYTE *buf, WORD cnt, WORD recnr, WORD dev, LO
     UBYTE *bufstart = buf;
     GEOMETRY *geo;
 
-    KDEBUG(("rwabs(rw=%d, buf=%p, count=%ld, recnr=%u, dev=%d, lrecnr=%ld)\n",
+    KDEBUG(("blkdev_rwabs(rw=%d, buf=%p, count=%ld, recnr=%u, dev=%d, lrecnr=%ld)\n",
             rw,buf,lcount,recnr,dev,lrecnr));
 
     /*
@@ -634,6 +638,7 @@ LONG blkdev_getbpb(WORD dev)
      */
     n = (unit < NUMFLOPPIES) ? CHKSUM_SECTORS : 1;
     do {
+        KDEBUG(("Reading boot sector\n"));
         ret = blkdev_rwabs(RW_READ | RW_NOMEDIACH | RW_NOTRANSLATE,
                            dskbufp, n, -1, unit, bdev->start);
         if (ret < 0L)
@@ -798,6 +803,8 @@ static LONG blkdev_mediach(WORD dev)
     UWORD unit;
     LONG ret;
 
+    KDEBUG(("blkdev_mediach\n"));
+
     if ((dev < 0 ) || (dev >= BLKDEVNUM) || !(b->flags&DEVICE_VALID))
         return EUNDEV;  /* unknown device */
 
@@ -811,23 +818,28 @@ static LONG blkdev_mediach(WORD dev)
      * if a mediachange has been forced, we return the same status
      * until Gepbpb() is called
      */
-    if (blkdev[dev].forcechange)
+    if (blkdev[dev].forcechange) {
+        KDEBUG(("force changed\n"));
         return MEDIACHANGE;
+    }
 
     do {
         ret = (dev<NUMFLOPPIES) ? flop_mediach(dev) : disk_mediach(unit);
         if (ret < 0L)
             ret = call_etv_critic((WORD)ret,dev);
     } while(ret == CRITIC_RETRY_REQUEST);
-    if (ret < 0L)
+    if (ret < 0L) {
         return ret;
+    }
 
     /* if media (may have) changed, mark physical unit */
     if (ret != MEDIANOCHANGE) {
+        KDEBUG(("blkdev_mediach thinks media has changed\n"));
         units[unit].status |= UNIT_CHANGED;
         b->mediachange = ret;
     }
 
+    KDEBUG(("blkdev_mediach returning %d\n",b->mediachange));
     return b->mediachange;
 }
 

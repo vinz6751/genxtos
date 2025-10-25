@@ -219,9 +219,9 @@
   #define INT_SOL_A           0x01    /* Vicky Channel A Start of Line */
   #define INT_KBD_PS2         0x08    /* PS/2 Keyboard */
   #define INT_MOUSE           0x09    /* PS/2 Mouse */
-  #define INT_FDC             0x0A    /* Floppy controller */
+  #define INT_COM1            0x0A    /* COM1 */
   #define INT_COM2            0x0B    /* COM2 */
-  #define INT_COM1            0x0C    /* COM1 */
+  #define INT_FDC             0x0C    /* Floppy controller */
   #define INT_LPT             0x0D    /* Parallel port */
   #define INT_MIDI            0x0E    /* MPU-401 / MIDI */
   #define INT_RTC             0x0F    /* Real Time Clock */
@@ -259,7 +259,7 @@
   #endif
   #define INT_MOUSE           0x12    /* PS/2 Mouse */
   #define INT_COM1            0x13    /* COM1 */
-  #if defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
+  #if defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
     #define INT_COM2          0x14    /* COM2 */
     #define INT_LPT           0x15    /* Parallel port */
     #define INT_FDC           0x16    /* Floppy controller */
@@ -285,10 +285,10 @@
   // See FoenixMCP/src/m68k/startup_m68k.s
   #define INT_PS2KBD_VECN   0x40
   #define INT_PS2MOUSE_VECN 0x41
-  #define INT_FDC_VECN      0x42
+  #define INT_COM1_VECN     0x42
   #define INT_COM2_VECN     0x43
-  #define INT_COM1_VECN     0x44
-  #define INT_LPT_VECN      0x45
+  #define INT_LPT_VECN      0x44
+  #define INT_FDC_VECN      0x45
   #define INT_MIDI_VECN     0x46
   #define INT_BQ4802LY_VECN 0x47
 

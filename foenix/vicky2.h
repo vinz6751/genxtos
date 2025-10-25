@@ -1,7 +1,7 @@
 /*
- * VICKY2 - Functions for VICKY II, the graphics controller of the Foenix A2560U
+ * VICKY2 - Functions for VICKY II, the graphics controller of the Foenix
  *
- * Copyright (C) 2021-2022 The EmuTOS development team
+ * Copyright (C) 2021-2025 The EmuTOS development team
  *
  * Authors:
  *  VB   Vincent Barrilliot
@@ -22,12 +22,17 @@
     #define VICKY_CTRL_TEXT       0x00000001
     #define VICKY_CTRL_TXTOVERLAY 0x00000002
     #define VICKY_CTRL_GFX        0x00000004
+    // Beware VICKY II mode of the A2560M doesn't have bitmap
     #define VICKY_CTRL_BITMAP     0x00000008
+#if defined(MACHINE_A2560M)
+    #define VICKY_CTRL_SLEEP      0x00000010
+#else
     #define VICKY_CTRL_TILE       0x00000010
     #define VICKY_CTRL_SPRITE     0x00000020
     #define VICKY_CTRL_DISABLE    0x00000080
     #define VICKY_CTRL_HIGH_RES   0x40000000  /* See MCP txt_a2560k_b.c */
     #define VICKY_CTRL_CLK40      0x80000000  /**< Indicate if PLL is 25MHz (0) or 40MHz (1) */
+#endif
     #define VICKY_BORDER_HEIGHT   0x003f0000L
 
 /* Channel A (first screen), VICKY II has only one anyway */
@@ -56,8 +61,8 @@
 #define VICKY_NLUTS           8      /* Number of luts */
 
 /* Mouse */
-#define VICKY_MOUSE_MEM         (VICKY+0x0400)
-#define VICKY_MOUSE_CTRL        (VICKY+0x0C00)
+#define VICKY_MOUSE_MEM         (VICKY+VICKY_MOUSE_MEM_OFFSET)
+#define VICKY_MOUSE_CTRL        (VICKY+VICKY_MOUSE_CTRL_OFFSET)
     #define VICKY_MOUSE_ENABLE  1
     #define VICKY_MOUSE_CHOICE  2
 #define VICKY_MOUSE_SUPPORT   (VICKY+0x0C02)
@@ -69,11 +74,11 @@
 #define VICKY_TEXT_COLOR      (VICKY_FONT) /* Font memory (-> 0xbfff) */
 #define VICKY_TEXT_COLOR_FG   (VICKY_TEXT+0xC400) /* Text foreground colours 16x 32bit colors (-> 0x43f) */
 #define VICKY_TEXT_COLOR_BG   (VICKY_TEXT+0xC440) /* Text foreground colours 16x 32bit colors (-> 0x47f) */
-#define VICKY_TEXT_COLOR_SIZE 32                  /* Size of text palette */
 
-#define VICKY_MODE_MASK       0x00000700L
+
 /* Normal pixels */
 #ifdef MACHINE_A2560U
+#define VICKY_MODE_MASK       0x00000700L
 #define VICKY_MODE_640x480_60 0x00
 #define VICKY_MODE_800x600_60 0x01
 #define VICKY_MODE_RESERVED2  0x02
@@ -83,7 +88,11 @@
 #define VICKY_MODE_400x300_60 0x05
 #define VICKY_MODE_RESERVED6  0x06
 #define VICKY_MODE_320x200_70 0x07
+
+#define VICKY_TEXT_COLOR_SIZE 32  /* 16 colors of 2 words each */
+
 #elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#define VICKY_MODE_MASK       0x00000700L
 /* Channel A (text only) */
 #define VICKY_A_MODE_800x600_60  0x00
 #define VICKY_A_MODE_1024x768_60 0x01
@@ -97,6 +106,12 @@
 #define VICKY_B_MODE_400x300_60  0x05
 #define VICKY_B_MODE_RESERVED6   0x06
 #define VICKY_B_MODE_320x200_70  0x07
+
+#define VICKY_TEXT_COLOR_SIZE 16  /* 16 colors of 1 (32bit) words each */
+
+#elif defined(MACHINE_A2560M)
+#define VICKY_MODE_MASK       0x0000000EL
+#define VICKY_TEXT_COLOR_SIZE 16  /* 16 colors of 1 (32bit) words each */
 #endif
 
 
@@ -104,7 +119,7 @@ typedef struct {
     uint16_t id;
     uint16_t w;
     uint16_t h;
-    uint16_t colors;
+    uint16_t bpp; /* Bits per plane */
     uint8_t  fps;
 } FOENIX_VIDEO_MODE;
 
@@ -121,7 +136,7 @@ union vicky2_color_t {
         uint8_t alpha;
     };
 };
-#elif defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 union vicky2_color_t {
     uint32_t code;
     struct __attribute__((__packed__)) {
@@ -201,7 +216,7 @@ struct vicky2_channel_t {
 
 extern const struct vicky2_channel_t * const vicky;
 
-#elif defined(MACHINE_A2560X) || defined (MACHINE_A2560K)
+#elif defined(MACHINE_A2560X) || defined (MACHINE_A2560K) || defined (MACHINE_A2560M)
 struct vicky2_mouse_control_t {
     uint16_t control; // READ AS 32BITS !
     uint16_t reserved02;
@@ -211,16 +226,31 @@ struct vicky2_mouse_control_t {
 
 struct vicky2_t {
     uint32_t control;
+#if defined(MACHINE_A2560M)
+    uint8_t *bitmap_address;
+    COLOR32  mono_color;
+    uint32_t unused_0c;
+#else
     uint32_t border_control;
     uint32_t border_color;
     uint32_t background_color;
+#endif
     uint32_t cursor_control;
     uint32_t cursor_position;
     uint32_t line_interrupt_01;
     uint32_t line_interrupt_23;
     uint32_t font_size_control;
+#if defined(MACHINE_A2560M)
+    uint32_t text_window_size;
+    uint32_t window_pos_x;
+    uint32_t window_size_x;
+    uint32_t window_prefetch;
+    uint32_t reserved_0028[3];
+#else
     uint32_t font_count_control;
     uint32_t reserved_0028[6];
+#endif
+    
     uint32_t mouse_graphics[16*16*2];
     uint16_t mouse_control; // Must write as 32bits !
     uint16_t reserved_c02;
@@ -276,9 +306,12 @@ extern uint32_t vicky_vbl_freq; /* VBL frequency */
 void vicky2_init(void);
 void vicky2_init_channel(const struct vicky2_channel_t * const vicky);
 
+#if !defined(MACHINE_A2560M)
 /* Color management */
 void vicky2_set_background_color(const struct vicky2_channel_t * const vicky, uint32_t color);
 void vicky2_set_border_color(const struct vicky2_channel_t * const vicky, uint32_t color);
+#endif
+
 void vicky2_set_lut_color(const struct vicky2_channel_t * const vicky, uint16_t lut, uint16_t number, uint32_t color);
 void vicky2_get_lut_color(const struct vicky2_channel_t * const vicky, uint16_t lut, uint16_t number, COLOR32 *result);
 

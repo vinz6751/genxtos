@@ -32,7 +32,7 @@ void channel_A_write(const char *c);
 char buffer[110]; // this is in the BSS so not a stack space problem
 
 void do_nothing() {
-    *((uint32_t*)0xfec40008) = 0x00770077; // Purple color indicates an exception
+    //*((uint32_t*)0xfec40008) = 0x00770077; // Purple color indicates an exception
     for(;;);
 }
 
@@ -86,7 +86,6 @@ void channel_A_logger_init(void)
         }
     
     *((uint32_t*)0xfec40008) = 0x00FFFFFF; // White border indicates we got here
-    for(;;);
 }
 
 void channel_A_cls(void)

@@ -50,8 +50,10 @@
 #include "../foenix/foenix.h"
 #include "../foenix/uart16550.h" /* Serial port */
 #include "../foenix/a2560u.h"
+#include "../foenix/interrupts.h"
 #include "../foenix/mpu401.h"
 #include "../foenix/shadow_fb.h"
+#include "../foenix/timer.h"
 #include "../foenix/vicky2.h"
 #include "a2560u_bios.h"
 #include "../foenix/regutils.h"
@@ -63,8 +65,6 @@ bool a2560u_bios_sfb_is_active;
 void a2560u_init_lut0(void);
 
 /* Interrupt */
-void irq_mask_all(uint16_t *save);
-void irq_add_handler(int id, void *handler);
 void a2560u_irq_bq4802ly(void);
 void a2560u_irq_ps2kbd(void);
 void a2560u_irq_ps2mouse(void);
@@ -77,6 +77,12 @@ void a2560_bios_init(void)
 	a2560u_init(warm_magic != WARM_MAGIC);
 }
 
+
+void a2560_bios_enable_irqs(void)
+{
+    a2560_timer_enable(HZ200_TIMER_NUMBER,true);
+    a2560_irq_enable(INT_SOF_A);
+}
 
 /* Video  ********************************************************************/
 #define VICKY_VIDEO_MODE_FLAG (1<<13) /* In the TOS video mode, indicates this is a VICKY mode */
@@ -243,9 +249,9 @@ void a2560_bios_rs232_init(void) {
 }
 
 /* This does not perfectly emulate the MFP but may enough */
-uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
+uint32_t a2560u_bios_rsconf1(int16_t baud_code, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
 {
-    static const int16_t bauds[] = {
+    static const int16_t baud_codes[] = {
         UART16550_19200BPS, UART16550_9600BPS, UART16550_4800BPS, UART16550_3600BPS,
         UART16550_2400BPS, UART16550_2000BPS, UART16550_1800BPS, UART16550_1200BPS,
         UART16550_600BPS, UART16550_300BPS, UART16550_200BPS, UART16550_150BPS,
@@ -253,6 +259,9 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
         // 12               13                  14                   15
         UART16550_38400BPS, UART16550_57600BPS, UART16550_115200BPS, UART16550_230400BPS
     };
+    // Note that 230400bps is not currently supported because it requires setting the "High Speed"
+    // bit of the SuperIO and I'm not sure how to do that
+
     static const uint8_t dsize[] = {
         UART16550_8D, UART16550_7D, UART16550_6D, UART16550_5D
     };
@@ -260,18 +269,18 @@ uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16
     uint8_t data_size;
     uint8_t data_format;
 
-    if (baud == -2)
+    if (baud_code == -2)
     {
         return iorec->baudrate;
     }
-    else if (baud >= 0) {
-        if (baud > (sizeof(bauds)/sizeof(uint16_t))) {
-            KDEBUG(("a2560u_bios_rsconf1 setting invalid baud specification %d\n", baud));
+    else if (baud_code >= 0) {
+        if (baud_code > ARRAY_SIZE(baud_codes)) {
+            KDEBUG(("a2560u_bios_rsconf1 setting invalid baud specification %d\n", baud_code));
         }
         else {
-            KDEBUG(("[DISABLED] a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", bauds[baud], baud));
-            //uart16550_set_bps((UART16550*)UART1, bauds[baud]);
-            //iorec->baudrate = baud;
+            KDEBUG(("[DISABLED] a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", baud_codes[baud_code], baud_code));
+            uart16550_set_bps((UART16550*)UART1, baud_codes[baud_code]);
+            iorec->baudrate = baud_code;
         }
     }
 
@@ -340,50 +349,6 @@ void a2560_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *v
 
     a2560_set_timer(timer, frequency, false, vector);
 }
-
-
-/* Calibration ***************************************************************/
-
-uint32_t calibration_interrupt_count;
-uint32_t calibration_loop_count;
-void a2560_bios_irq_calibration(void);
-void a2560_run_calibration(void);
-
-void a2560_bios_delay_calibrate(uint32_t calibration_time)
-{
-    uint16_t masks[IRQ_GROUPS];
-    uint32_t old_timer_vector;
-
-    calibration_interrupt_count = 0;
-    calibration_loop_count = calibration_time;
-
-    a2560_debugnl("a2560_bios_delay_calibrate(0x%ld)", calibration_time);
-    /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
-
-    /* Backup all interrupts masks because a2560_run_calibration will mask everything. We'll need to restore */
-    a2560u_irq_mask_all(masks);
-
-    /* Setup timer for 960Hz, same as what EmuTOS for ST does with using MFP Timer D (UART clock baud rate generator) for 9600 bauds */
-    old_timer_vector = setexc(INT_TIMER0_VECN, -1L);
-    a2560_set_timer(0, 960, true, a2560_bios_irq_calibration);
-
-    /* This counts the number of wait loops we can do in about 100ms */
-    a2560_run_calibration();
-
-    /* Restore previous timer vector */
-    setexc(INT_TIMER0_VECN, old_timer_vector);
-
-    /* Restore interrupt masks */
-    a2560u_irq_restore(masks);
-
-    a2560_debugnl("loopcount_1_msec (old)= 0x%08lx, calibration_interrupt_count = %ld", loopcount_1_msec, calibration_interrupt_count);
-    /* See delay.c for explaination */
-    if (calibration_interrupt_count)
-        loopcount_1_msec = (calibration_time * 24) / (calibration_interrupt_count * 25);
-
-    a2560_debugnl("loopcount_1_msec (new)= 0x%08lx", loopcount_1_msec);
-}
-
 
 /* PS/2 setup  ***************************************************************/
 #include "../foenix/ps2.h"

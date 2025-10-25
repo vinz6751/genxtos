@@ -21,12 +21,13 @@
 # include "mfp.h"
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
 # include "a2560u_bios.h"
+# include "timer.h"
 #endif
 
 #include "ikbd.h"
 #include "keyboard.h" /* for key_repeat_tick */
 #include "sound.h"
-#include "timer.h"
+#include "../foenix/timer.h"
 
 /* Non-Atari hardware vectors */
 #if !CONF_WITH_MFP

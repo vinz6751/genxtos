@@ -1082,7 +1082,7 @@ void init_serport(void)
 # endif
 #endif
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     a2560_bios_rs232_init();
 #endif
 

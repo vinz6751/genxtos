@@ -256,7 +256,7 @@ void kbd_int(UBYTE scancode)
             }
             shifty &= ~MODE_CAPS;       /* clear bit */
             break;
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
         case KEY_RCTRL:
             shifty &= ~MODE_CTRL;       /* clear bit */
             break;
@@ -310,7 +310,7 @@ void kbd_int(UBYTE scancode)
         shifty ^= MODE_CAPS;    /* toggle bit */
 #endif
         break;
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
         case KEY_RCTRL:
             shifty |= MODE_CTRL;  /* set bit */
             break;

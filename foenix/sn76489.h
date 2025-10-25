@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-/* Select the PSG (depends on the machine. On A2560U: 0:left, 1:right, 2:both) */
+/* Select the PSG (0:left, 1:right, 2:both) */
 void sn76489_select(int number);
 
 void sn76489_mute_all(void);

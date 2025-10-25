@@ -71,6 +71,9 @@ void delay_init(void)
 #elif defined(MACHINE_A2560X)
     /* The A2560X's 68040V is running at 33MHz while LOOPS_68030 is for 32MHz*/
     loopcount_1_msec = LOOPS_68030 * 33 / 32;
+#elif defined(MACHINE_A2560M)
+    /* The A2560M 68LC060 is running at 33MHz, LOOPS_68060 assumes 110Mhz */
+    loopcount_1_msec = LOOPS_68060 * 33 / 110;
 #else
 # if CONF_WITH_APOLLO_68080
     if (is_apollo_68080)
@@ -107,7 +110,7 @@ void delay_init(void)
 void delay_calibrate(void)
 {
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
-    a2560_bios_delay_calibrate(CALIBRATION_TIME * loopcount_1_msec);
+    loopcount_1_msec = a2560_delay_calibrate(CALIBRATION_TIME * loopcount_1_msec);
 #elif CONF_WITH_MFP
     ULONG loopcount, intcount;
 
