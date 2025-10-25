@@ -1,36 +1,20 @@
-(English below)
+This is a fork of the EmuTOS operating system, aiming at providing an OS to the Foenix Retro Systems computers' A2560 and Genx with m68k CPU. It has some refinements in compared to the official EmuTOS, which where introduced to make it cooler on the STe, and also easier to port on other platforms.
+It's build using Vincent Rivière's GCC 4.6.4 m68k-atari-mint compiler: http://vincent.riviere.free.fr/soft/m68k-atari-mint/
 
-Ceci est un système d'exploitation en développement pour l'ordinateur A2560U. Il sera plus tard adapté pour le C256 Foenix GenX équippé de carte processeur 68000.
-Ce projet est au départ un fork d'EmuTOS, le système d'exploitation libre pour ordinateurs Atari ST.
+There is a "compile.sh" script that you can try to build.
+You'll need FoenixMgr to either load to flash or load to memory (easier when developping the OS but not recommended for normal use). To switch one or the other, update emutos.ld then rebuild.
+Consider this a hobby project with no guarantee that anything works :)
 
-Pour le construire il faut le cross compilateur GCC 4.6.4 produit par Vincent Rivière:
-http://vincent.riviere.free.fr/soft/m68k-atari-mint/
-```
-git clone https://github.com/vinz6751/genxtos.git
-cd genxtos
-make a2560u UNIQUE=fr
-make -f Makefile.ld
-make a2560u UNIQUE=fr
-```
-Notes:
-1. Vous pouvez utiliser utilise UNIQUE=de, UNIQUE=us, UNIQUE=es etc. pour avoir une autre langue, voir doc d'EmuTOS)
-2. Il y a un problème avec les makefiles c'est pour ça qu'il faut lancer plusieurs commandes.
+There is no graphics support because the TOS's VDI's implementation is very intricated to the way the Atari framebuffer works. Also, the Foenix can write to graphics memory but cannot read, as the VDI expect. We'd have to use a "shadow" framebuffer and write there (which can then be read back) as well as the "real" framebuffer, but I haven't tackled that yet.
+The port was initially done for the A2560U then the A2560X (not completed)/GenX, then A2560M. You can expect to work:
+- Storage (IDE/SD, at least one SD port)
+- PS/2 keyboard and mouse. The keyboard mapping is in French because that's the keyboard I have. You can create your own mapping table 
+- RTC
+- Text output
+- Serial ports (up to 115200 for machines supporting it)
 
-L'image emutos-a2560u.rom produite est une image de debuggage située en 0x100000 , vous pouvez la charger dans le A2560U en faisant:
-poke32 4 0x100000
-Puis l'uploader à cette adresse à l'aide de [C256Mgr](https://github.com/pweingar/C256Mgr) ou [GenX uploader](https://github.com/Trinity-11/GenXUploader)
+EmuTOS expects storage to use a Atari-partitioned media, and only supports FAT12/FAT16. So I suggest your prepare a media with the excellent "hatari" emulator, then dump it to your flash card.
 
-Voilà grossièrement l'état du projet:
-L'OS démarre vers EmuCON (petit shell) et des utilitaires en mode texte peuvent être exécutés.
-* Le curseur et l'affichage en mode texte 8x8 fonctionne.
-* Il est possible d'utiliser une police 8x16 mais il y a quelques bugs d'affichage à corriger.
-* Le clavier français est correctement mappé.
-* L'IDE fonctionne (avec un seul périphérique)
-* Le lecteur de carte SD fonctionne.
-* Le timer système 200Hz fonctionne (il utilise le timer 1)
-* RTC presque fonctionnelle
-* Souris, son, GEM etc sont à faire.
+I haven't build it for the U in a while and have no U at hand at the moment so I'm not even sure it works there at present.
 
-*English*
-This is a fork of the EmuTOS operating system, aiming at providing an OS to the Foenix Retro Systems computers' A2560U and C256 GenX retrocomputer with 68000 CPU module board.
-This is very early, look at the ChangeLog.txt to see history.
+Any question or will to contribute, please get in touch with me. This is a hobby project for me, you can find me on the Discord challen of the Foenix community.

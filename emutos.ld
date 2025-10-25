@@ -33,9 +33,9 @@ OUTPUT_FORMAT(binary)
     //# define ROM_ORIGIN 0x00f00000
 #elif defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
     // Use this for debug purposes (load OS to user ram)
-    # define ROM_ORIGIN 0x00100000
+    //# define ROM_ORIGIN 0x00100000
     // Use the below instead, if building EmuTOS for going to the flash
-    //# define ROM_ORIGIN 0xffc00000 // FLASH0
+    # define ROM_ORIGIN 0xffc00000 // FLASH0
 #else
 # define ROM_ORIGIN 0x00e00000
 #endif
