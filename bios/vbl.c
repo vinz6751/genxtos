@@ -51,7 +51,7 @@ void vbl_handler(void) {
     detect_monitor_change();
 #endif
 
-#if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
+#if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
     // blink cursor
     conout_blink_cursor();
 #endif
@@ -79,7 +79,7 @@ void vbl_handler(void) {
 static void copy_palette(void) {
     // Support of Setpalette
     if (colorptr) {
-#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)) && 0
+#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) && 0
         WORD i;
         *VICKY_B_BG_COLOR = colorptr[0];
         for (i=0; i<16; i++) {

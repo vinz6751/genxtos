@@ -1,7 +1,7 @@
 // TOS Assembler routines for the Foenix Retro Systems A2560U
 
 #include "config.h"
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)  || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include "../foenix/foenix.h"
 
@@ -15,4 +15,4 @@ a2560_memconf: // Called from memory.S to detect memory setup
     jmp     (a6)           // Return
 
 
-#endif // defined(MACHINE_A2560U) || defined(MACHINE_A2560X)  || defined(MACHINE_A2560M)
+#endif

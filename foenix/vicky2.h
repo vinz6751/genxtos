@@ -91,7 +91,7 @@
 
 #define VICKY_TEXT_COLOR_SIZE 32  /* 16 colors of 2 words each */
 
-#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 #define VICKY_MODE_MASK       0x00000700L
 /* Channel A (text only) */
 #define VICKY_A_MODE_800x600_60  0x00
@@ -136,7 +136,7 @@ union vicky2_color_t {
         uint8_t alpha;
     };
 };
-#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 union vicky2_color_t {
     uint32_t code;
     struct __attribute__((__packed__)) {
@@ -216,7 +216,7 @@ struct vicky2_channel_t {
 
 extern const struct vicky2_channel_t * const vicky;
 
-#elif defined(MACHINE_A2560X) || defined (MACHINE_A2560K) || defined (MACHINE_A2560M)
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 struct vicky2_mouse_control_t {
     uint16_t control; // READ AS 32BITS !
     uint16_t reserved02;

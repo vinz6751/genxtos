@@ -155,7 +155,7 @@ void kbd_init(void)
     lisa_kbd_init();
 #endif
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     a2560_bios_kbd_init();
 #endif
 
@@ -475,7 +475,7 @@ static WORD convert_scancode(UBYTE *scancodeptr)
     case KEY_ESCAPE:
     case KEY_BACKSPACE:
     case KEY_TAB:
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 #else    
     case KEY_UNDO:
 #endif    

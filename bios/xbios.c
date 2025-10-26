@@ -1279,7 +1279,7 @@ LONG supexec(PFLONG);       /* defined in vectors.S */
 # define LAST_ENTRY 0x8d
 #elif CONF_WITH_DSP
 # define LAST_ENTRY 0x7f
-#elif CONF_WITH_VIDEL || defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#elif CONF_WITH_VIDEL || defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 # define LAST_ENTRY 0x5f
 #elif CONF_WITH_TT_SHIFTER
 # define LAST_ENTRY 0x57

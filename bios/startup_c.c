@@ -78,10 +78,6 @@ void startup(void) {
 // So functions must jump back to the address provided in a6
 static ALWAYS_INLINE void asap(void) {
     KDEBUG(("asap()\n"));
-#if defined(MACHINE_A2560X) && 0 // For debugging
-    *((LONG*)0xfec00000) = 19; // Buzzer + all leds
-    *((LONG*)0xfec80008) = 0;  // Black border
-#endif
 
 #ifdef MACHINE_AMIGA
     // It is *mandatory* to call this as soon as possible, to do early initialization of the Amiga hardware.

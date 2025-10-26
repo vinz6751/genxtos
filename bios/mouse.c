@@ -35,7 +35,7 @@
 
 void Initmous(WORD mouse_mode, struct initmous_parameter_block *p, void(*new_mousevec)(UBYTE*))
 {
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     // These machines have no IKBD
     kbdvecs.mousevec = (new_mousevec != NULL) ? new_mousevec : just_rts;
 #else

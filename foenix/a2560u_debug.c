@@ -11,7 +11,7 @@ void outchar(int c) {
     char ch = (char)c;
 #ifdef MACHINE_A2560U
     uart16550_put((UART16550*)UART1,(uint8_t*)&ch,1);
-#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
  #if FOENIX_CHANNEL_A_DEBUG_PRINT
     // Channel A
     char buf[2];

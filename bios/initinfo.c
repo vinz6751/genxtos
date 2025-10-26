@@ -325,7 +325,7 @@ WORD initinfo(ULONG *pshiftbits)
     pair_start(_("CPU type"));
 #ifdef __mcoldfire__
     cprintf("ColdFire V4e");
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     struct foenix_system_info_t info;
     a2560_system_info(&info);
     cprintf("%s @ %ldMHz", info.cpu_name, info.cpu_speed_hz / 1000000);
@@ -340,7 +340,7 @@ WORD initinfo(ULONG *pshiftbits)
     pair_end();
 
     
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     pair_start(_("Machine")); cprintf("%s rev.%s", info.model_name, info.pcb_revision_name); pair_end();
 #if defined(MACHINE_A2560U)
     pair_start(_("FPGA")); cprintf("FAT VICKY II v%x.%x",info.fpga_major,info.fpga_minor); pair_end();

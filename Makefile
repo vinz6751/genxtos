@@ -787,11 +787,13 @@ m548x-bas:
 	$(MAKE) COLDFIRE=1 CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' UNIQUE=$(UNIQUE) LMA=0xe0100000 SRECFILE=$(SREC_M548X_BAS) $(SREC_M548X_BAS) REF_OS=TOS404
 	@printf "$(LOCALCONFINFO)"
 
+
+TOCLEAN += *.rom
+
+
 #
 # C256 Foenix GenX with 68000 CPU module image
 #
-
-TOCLEAN += *.rom
 
 ROM_MACHINE_C256GENX = emutos-c256genx.rom
 C256GENX_DEFS =
@@ -814,10 +816,56 @@ $(ROM_MACHINE_C256GENX): emutos.img mkrom
 
 
 #
-# A2560U Foenix
+# A2560K
 #
 
-TOCLEAN += *.rom
+ROM_MACHINE_A2560K = emutos-a2560k.rom
+A2560K_DEFS =
+
+.PHONY: a2560k
+NODEP += a2560k
+a2560k: UNIQUE = $(COUNTRY)
+a2560k: OPTFLAGS = $(SMALL_OPTFLAGS)
+a2560k: CPUFLAGS = -m68060
+a2560k: override DEF += -DTARGET_A2560K_ROM -DMACHINE_A2560K $(A2560M_DEFS)
+a2560k: foenix/libfoenix-a2560k.a
+	@echo "# Building A2560K Foenix EmuTOS into $(ROM_MACHINE_A2560K)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTIONAL_LIB='foenix/libfoenix-a2560k.a' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560K=$(ROM_MACHINE_A2560K) $(ROM_MACHINE_A2560K)
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT))"
+	@printf "$(LOCALCONFINFO)"
+
+$(ROM_MACHINE_A2560K): emutos.img mkrom
+	./mkrom pad 512k $< $(ROM_MACHINE_A2560K)
+
+
+#
+# A2560M
+#
+
+ROM_MACHINE_A2560M = emutos-a2560m.rom
+A2560M_DEFS =
+
+.PHONY: a2560m
+NODEP += a2560m
+a2560m: UNIQUE = $(COUNTRY)
+a2560m: OPTFLAGS = $(SMALL_OPTFLAGS)
+a2560m: CPUFLAGS = -m68060
+a2560m: override DEF += -DTARGET_A2560M_ROM -DMACHINE_A2560M $(A2560M_DEFS)
+a2560m: foenix/libfoenix-a2560m.a
+	@echo "# Building A2560M Foenix EmuTOS into $(ROM_MACHINE_A2560M)"
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTIONAL_LIB='foenix/libfoenix-a2560m.a' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560M=$(ROM_MACHINE_A2560M) $(ROM_MACHINE_A2560M)
+	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
+	echo "# RAM used: $$(($$MEMBOT))"
+	@printf "$(LOCALCONFINFO)"
+
+$(ROM_MACHINE_A2560M): emutos.img mkrom
+	./mkrom pad 512k $< $(ROM_MACHINE_A2560M)
+
+
+#
+# A2560U Foenix
+#
 
 ROM_MACHINE_A2560U = emutos-a2560u.rom
 A2560U_DEFS =
@@ -836,7 +884,6 @@ a2560u: foenix/libfoenix-a2560u.a
 
 $(ROM_MACHINE_A2560U): emutos.img mkrom
 	./mkrom pad 512k $< $(ROM_MACHINE_A2560U)
-
 
 
 #
@@ -864,25 +911,6 @@ a2560x: foenix/libfoenix-a2560x.a
 $(ROM_MACHINE_A2560X): emutos.img mkrom
 	./mkrom pad 512k $< $(ROM_MACHINE_A2560X)
 
-
-ROM_MACHINE_A2560M = emutos-a2560m.rom
-A2560M_DEFS =
-
-.PHONY: a2560m
-NODEP += a2560m
-a2560m: UNIQUE = $(COUNTRY)
-a2560m: OPTFLAGS = $(SMALL_OPTFLAGS)
-a2560m: CPUFLAGS = -m68060
-a2560m: override DEF += -DTARGET_A2560M_ROM -DMACHINE_A2560M $(A2560M_DEFS)
-a2560m: foenix/libfoenix-a2560m.a
-	@echo "# Building A2560M Foenix EmuTOS into $(ROM_MACHINE_A2560M)"
-	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTIONAL_LIB='foenix/libfoenix-a2560m.a' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560M=$(ROM_MACHINE_A2560M) $(ROM_MACHINE_A2560M)
-	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
-	echo "# RAM used: $$(($$MEMBOT))"
-	@printf "$(LOCALCONFINFO)"
-
-$(ROM_MACHINE_A2560M): emutos.img mkrom
-	./mkrom pad 512k $< $(ROM_MACHINE_A2560M)
 
 #
 # Special variants of EmuTOS running in RAM instead of ROM.

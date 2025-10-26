@@ -62,7 +62,7 @@ amiga_main:
     // fall through os_entry
 #endif
 
-#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)) && !EMUTOS_LIVES_IN_RAM
+#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) && !EMUTOS_LIVES_IN_RAM
 #if 1
     // This is disabled because running EmuTOS from flash bank0 (0xe00000) can lead to problems because the A2560U
     // crashes if we try to run user code from there. This is an issue e.g. for running EmuCON from flash.
@@ -70,6 +70,7 @@ amiga_main:
     // different:
     // As Gavin copies the first 64k of flash (ie of flash bank 0), these 64Kb don't belong to the EmuTOS image,
     // and whatever is in flash bank 0, must take care of calling the EmuTOS startup.
+    // Currently, it's not possible to flash Bank 1 due to a problem in the FPGA. So we just flash to bank0 and leave this enabled.
         // 68000 reset vectors. Gavin will copy the first 64k of flash to the system ram then reset the proc.
         // All we need to do is to provide a reset vector that jumps to the flash.
         .dc.l 0x1000       // Stack: rubbish, should not be used anyway as the OS should setup its own stack

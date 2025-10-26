@@ -17,7 +17,7 @@
 #ifdef MACHINE_AMIGA
 #define KEY_EMULATE_LEFT_BUTTON     KEY_DELETE
 #define KEY_EMULATE_RIGHT_BUTTON    KEY_HELP
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX) // TODO: What about the K ?
 #define KEY_EMULATE_LEFT_BUTTON     KEY_INSERT
 #define KEY_EMULATE_RIGHT_BUTTON    KEY_PAGEUP
 #else

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 void channel_A_logger_init(void);
 void channel_A_cls(void);

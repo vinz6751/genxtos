@@ -178,7 +178,7 @@ void vecs_init(void)
      * an endless loop.
      * New ColdFire programs are supposed to be clean and avoid zero
      * divides. So we keep the default panic() behaviour in such case. */
-#elif !defined(MACHINE_A2560U) && !defined(MACHINE_A2560X) && !defined(MACHINE_A2560M)
+#elif !defined(MACHINE_A2560U) && !defined(MACHINE_A2560K) && !defined(MACHINE_A2560M) && !defined(MACHINE_A2560X) && !defined(MACHINE_GENX)
     /* Original TOS cowardly ignores integer divide by zero. */
     VEC_DIVNULL = just_rte;
 #endif
@@ -403,7 +403,7 @@ static void bios_init(void)
 #else
     KDEBUG(("bios enabling interrupts()\n"));
     set_sr(0x2000);
-# if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
+# if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     a2560_bios_enable_irqs();
 # endif
 #endif
@@ -882,7 +882,7 @@ void biosmain(void)
         pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
         pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
         // We don't have GEM/desktop yet.
         pd->p_tbase = (UBYTE *) coma_start;
 #else

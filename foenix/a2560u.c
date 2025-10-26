@@ -87,7 +87,7 @@ void a2560u_init(bool cold_boot)
     cpu_freq = CPU_FREQ; /* TODO read that from GAVIN's Machine ID */
 
 	/* Init SuperIO (if there) and serial ports so we can send debug output early */
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     a2560_debugnl("superio_init()");
     superio_init();
 
@@ -339,7 +339,7 @@ void a2560_system_info(struct foenix_system_info_t *result)
     revision = R16(VICKY+0x36);
     result->pcb_revision_name[2] = HIBYTE(revision);
 
-#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560M)
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     result->fpga_date = R32(VICKY+0x14);
     result->fpga_major = (uint16_t)(R32(VICKY+0x10) >> 16);
     result->fpga_major = (uint16_t)(R32(VICKY+0x10) & 0xffff);

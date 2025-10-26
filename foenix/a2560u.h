@@ -10,7 +10,8 @@
 
 
 /* IDE support */
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560U)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+
 struct IDE
 {   
     uint16_t data;

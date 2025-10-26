@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #define MPU401_DATA           ((volatile uint8_t *)SUPERIO_BASE+0x330)
 #define MPU401_STAT           ((volatile uint8_t *)SUPERIO_BASE+0x331)

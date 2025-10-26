@@ -58,6 +58,8 @@ struct cookie {
 #define MCH_A2560U  0x000F256UL /* Foenix A2560U */
 #define MCH_A2560X  0x000F257UL /* Foenix A2560X */
 #define MCH_A2560M  0x000F258UL /* Foenix A2560M */
+#define MCH_A2560K  0x000F259UL /* Foenix A2560K */
+
 /*
  * values of _VDO cookie
  */

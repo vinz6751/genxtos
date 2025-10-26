@@ -11,7 +11,7 @@
 
 #include "asmdefs.h"
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 #include "../foenix/foenix.i"
 #endif
 
@@ -293,7 +293,7 @@ _int_vbl:
 #ifdef __mcoldfire__
         lea     -56(sp), sp
         movem.l d1-d7/a0-a6, (sp)       // save registers
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
         movem.l d1-d7/a1-a6, -(sp)      // save registers (d0/a0 already saved by VICKY interrupt handler)
 #else
         movem.l d0-d7/a0-a6, -(sp)      // save registers
@@ -304,7 +304,7 @@ _int_vbl:
 #ifdef __mcoldfire__
         movem.l (sp), d1-d7/a0-a6       // restore registers
         lea     56(sp), sp
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
         movem.l (sp)+, d1-d7/a1-a6      // restore registers
 #else
         movem.l (sp)+, d0-d7/a0-a6      // restore registers

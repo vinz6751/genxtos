@@ -17,7 +17,7 @@
 .EQU FLASH0,            0xFFC00000
 #endif
 
-#if defined (MACHINE_A2560X) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560K) || defined (MACHINE_A2560X) || defined(MACHINE_GENX)
 // I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
 .EQU VRAM_Bank1,        0x00800000 | 4MB (until 0xBFFFFF)
 .EQU VRAM_Bank0,        0x00C00000 | 4MB (until 0xDFFFFF)

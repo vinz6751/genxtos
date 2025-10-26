@@ -34,7 +34,7 @@
 #include "../bdos/bdosstub.h"
 #include "midi.h"
 #include "amiga.h"
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 # include "../foenix/foenix.h"
 #endif
 

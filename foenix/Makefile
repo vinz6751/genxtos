@@ -7,8 +7,6 @@
 # (GenX, A2560M) can have different processors or flavors of it...
 CPUFLAGS=-m68060
 
-
-LIBCMINI=/home/vincent/Atari/Repos/libcmini
 TOOLCHAIN=m68k-atari-mint-
 CC=$(TOOLCHAIN)gcc
 AS=$(TOOLCHAIN)as
@@ -18,8 +16,6 @@ STRIP=$(TOOLCHAIN)strip
 #-mshort is really only for 68k targets, others have a 32bit data bus so there's no performance to gain from that
 # EmuTOS uses that so we're doing it too.
 CFLAGS=-mshort -fomit-frame-pointer -Os -std=c99 -D$(MACHINE_NAME) $(CPUFLAGS)
-#CFLAGS+=-I$(LIBCMINI)/include -DLIBCMINI
-#LDFLAGS=-L$(LIBCMINI)/build -lcmini -lgcc
 
 SRC_C=a2560u.c a2560u_debug.c bq4802ly.c cpu.c interrupts.c mpu401.c \
 	ps2_keyboard.c ps2_mouse_a2560u.c ps2.c \

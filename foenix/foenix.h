@@ -121,7 +121,7 @@
 #define SDC_BASE       (GAVIN+0x300)
 #elif defined(MACHINE_A2560M)
 #define SDC_BASE       (GAVIN+0x300) /* SD Card 0 (front panel) */
-#define SDC1_BASE       (GAVIN+0x380) /* SD Card 1 (main board) */
+#define SDC1_BASE      (GAVIN+0x380) /* SD Card 1 (main board) */
 //#define SDC_BASE       (GAVIN+0x300)
 //GAVIN 518 en R32
 #endif

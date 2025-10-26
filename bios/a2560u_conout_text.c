@@ -20,7 +20,7 @@
 
 #include "emutos.h"
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560X)  || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include "asm.h"
 #include "lineavars.h"
@@ -156,7 +156,7 @@ static void blank_out(int topx, int topy, int botx, int boty)
 
 static void scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
 {
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined (MACHINE_GENX) || defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     uint8_t *s,*d,*sc,*dc;
 
     d = &vicky->text_memory->text[dst.cellno];
@@ -247,4 +247,4 @@ const CONOUT_DRIVER a2560u_conout_text =
     blink_cursor
 };
 
-#endif /* defined(MACHINE_A2560U) || defined(MACHINE_A2560X)  || defined(MACHINE_A2560M) */
+#endif

@@ -54,7 +54,7 @@ void linea_resolution_changed(void)
 
 #if CONF_WITH_CHUNKY8
     BYTES_LIN = v_lin_wr = V_REZ_HZ; /* 1 byte per pixel makes it easy */
-# if (defined(MACHINE_A2560U) || defined (MACHINE_A2560X) || defined (MACHINE_A2560M)) && CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+# if (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) && CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
     a2560_bios_sfb_setup(v_bas_ad, v_cel_ht);
 # endif
 #else

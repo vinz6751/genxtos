@@ -106,7 +106,7 @@ const struct vicky2_channel_t vicky2_channel = {
 // Default screen
 const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * const)&vicky2_channel;
 
-#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#elif defined (MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 const FOENIX_VIDEO_MODE vicky2_a_video_modes[] = {
     { VICKY_A_MODE_800x600_60, 800, 600, 8, 60 }, /* VICKY_MODE_800x600_60 */
     { VICKY_A_MODE_1024x768_60, 1024, 768, 8, 60 }, /* VICKY_MODE_1024x768_60 */
@@ -188,7 +188,7 @@ const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * c
 #endif
 
 /* IRQ handlers */
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 void a2560u_irq_vicky_a(void); // VICKY autovector A interrupt handler
 void a2560u_irq_vicky_b(void); // VICKY autovector B interrupt handler
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
@@ -207,14 +207,14 @@ void vicky2_init(void)
 {
 #if defined(MACHINE_A2560U)
     vicky2_init_channel(&vicky2_channel);
-#elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX)
+#elif defined (MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     vicky2_init_channel(&vicky2_channel_a);
     vicky2_init_channel(&vicky2_channel_b);
 #elif defined(MACHINE_A2560M)
     vicky2_init_channel(vicky);
 #endif
 
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     // Channel A VBL
     set_vector(INT_VICKYII_A, (uint32_t)a2560u_irq_vicky_a);
     set_vector(INT_VICKYII_B, (uint32_t)a2560u_irq_vicky_b);
@@ -238,7 +238,7 @@ void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
     };
     a2560_debugnl("vicky2_init(%p)", vicky->ctrl);
 
-#ifdef MACHINE_A2560X
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     // Initialise text screen for logging
     vicky->ctrl->control = VICKY_CTRL_TEXT; // Default is 800x600
     vicky->ctrl->background_color = 0xff8888ff;
@@ -380,7 +380,7 @@ void vicky2_set_lut_color(const struct vicky2_channel_t * const vicky, uint16_t 
     c[1] = clr->green; // G
     c[2] = clr->red; // R
     c[3] = 0xff; // A
-#elif defined(MACHINE_A2560X)
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     vicky->lut->lut[lut].color[number] = *((COLOR32*)&color);
 #endif
 }
@@ -486,7 +486,7 @@ void vicky2_set_text_lut(const struct vicky2_channel_t * const vicky, const uint
         fglut[i] = fg[i];
         bglut[i] = bg[i];
     }    
-#elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M)
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     #define TLUTREGSIZE uint32_t
     volatile uint32_t * const fglut = (uint32_t*)vicky->text_memory->palette_fg;
     volatile uint32_t * const bglut = (uint32_t*)vicky->text_memory->palette_bg;
