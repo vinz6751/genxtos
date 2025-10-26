@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/**/ #define ENABLE_KDEBUG */
+/* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "aciavecs.h"
@@ -262,7 +262,7 @@ static void bios_init(void)
     /* Detect optional hardware (video, sound, etc.) */
     KDEBUG(("machine_detect()\n"));
     machine_detect();
-    
+
     /* Initialise machine-specific stuff */
     KDEBUG(("machine_init()\n"));
     machine_init();
@@ -385,7 +385,7 @@ static void bios_init(void)
      * enable interrupts earlier (so that the interrupt-driven serial port
      * routines work), even though we haven't yet initialised the sound &
      * keyboard repeat stuff.
-     */     
+     */
     KDEBUG(("init_system_timer()\n"));
     init_system_timer();
 
@@ -876,12 +876,12 @@ void biosmain(void)
          * like Atari TOS, it inherits an empty environment
          */
         Pexec(PE_LOADGO, "COMMAND.PRG", "", NULL);
-    } 
+    }
     else {
         PD *pd;
         pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
         pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
-        
+
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
         // We don't have GEM/desktop yet.
         pd->p_tbase = (UBYTE *) coma_start;
@@ -1222,7 +1222,7 @@ LONG mediach(WORD drv)
 #if DBGBIOS
 static LONG bios_9(WORD drv)
 {
-	KDEBUG(("BIOS 9: Mediach()\n"));
+    KDEBUG(("BIOS 9: Mediach()\n"));
     return mediach(drv);
 }
 #endif
