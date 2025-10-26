@@ -998,7 +998,7 @@ static const SPI_DRIVER *get_spi_driver_for_drive(UWORD drv)
         return EUNDEV;
 # endif
     return &spi_coldfire_driver;
-#elif defined(MACHINE_A2560U)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     return &spi_gavin_driver;
 #elif defined(MACHINE_A2560M)
     switch (drv) {
@@ -1009,8 +1009,8 @@ static const SPI_DRIVER *get_spi_driver_for_drive(UWORD drv)
         case 1: return &spi_a2560m_sd0;
         default: return NULL; /* Not supposed to happen */
     }
-#else
- #error Must provide a SD card driver
+#else	
+#error Must provide a SD card driver
 #endif
 }
 

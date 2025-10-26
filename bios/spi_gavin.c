@@ -5,10 +5,12 @@
 
 #include "../foenix/foenix.h"
 
-#if defined(MACHINE_A2560U)
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include <stdint.h>
-
+#include "spi.h"
+#include "../foenix/gavin_sdc.h"
+#include "../foenix/a2560u.h"
 
 /* Nothing needed there, it's all handled by GAVIN */
 static void spi_clock_sd(void) { }

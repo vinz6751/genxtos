@@ -428,4 +428,3 @@ void a2560_disk_led(bool on)
         GAVIN_R(GAVIN_CTRL) &= ~GAVIN_CTRL_DISKLED;
 }
 #endif
-

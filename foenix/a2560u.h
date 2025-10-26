@@ -76,7 +76,6 @@ void a2560u_rte(void); /* Actually, just the RTE instruction. Not a function */
 void a2560u_rts(void); /* Actually, just the RTS instruction. */
 
 void a2560u_kbd_init(void);
-
 void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout);
-extern void (*mpu401_rx_handler)(uint8_t byte);
+
 #endif

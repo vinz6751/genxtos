@@ -107,7 +107,7 @@ vicky_irq_b_done:
 
 _a2560u_irq_bq4802ly: // Real time clock interrupt handler
     tst.b   BQ4802LY_BASE+0x26  // Acknowledge interrupt on the bq4802LY by reading the flags
-    move.w  #(1<<INT_RTC),INT_GRP(INT_RTC) // Acknowledge GAVIN interrupt
+    move.w  #(1<<INT_BIT(INT_RTC)),INT_GRP(INT_RTC) // Acknowledge GAVIN interrupt
     addq.l  #1,_bq4802ly_ticks
     move.l  _bq4802ly_tick_handler,-(sp)
     rts     // The handler must save register and terminate with rte
@@ -119,7 +119,7 @@ _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
     // we don't want it to be interrupted.
     move.w  sr,-(sp)
     move.w  #0x2700,sr
-    move.w  #(1<<INT_KBD_PS2),INT_GRP(INT_KBD_PS2)
+    move.w  #(1<<INT_BIT(INT_KBD_PS2)),INT_GRP(INT_KBD_PS2)
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel1_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
@@ -134,7 +134,7 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
 
     move.w  sr,-(sp)
     move.w  #0x2700,sr
-    move.w  #(1<<INT_MOUSE),INT_GRP(INT_MOUSE)
+    move.w  #(1<<INT_BIT(INT_MOUSE)),INT_GRP(INT_MOUSE)
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel2_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
@@ -149,7 +149,7 @@ _a2560u_irq_com1: // UART COM1 interrupt handler
     // So instead of checking interrupts we examine the Line Status Register to find out the cause of the interrupt.
     movem.l d0-d2/a0-a2,-(sp)
 com1_do:
-    move.w  #(1<<INT_COM1),INT_GRP(INT_COM1)
+    move.w  #(1<<INT_BIT(INT_COM1)),INT_GRP(INT_COM1)
     lea     UART1,a0
     move.b  5(a0),d1 // 5 is the Line Status Register. Reading "should" acknowledge the interrupt (but doesn't on the U)
     btst    #0,d1    // Receive register full ?
@@ -171,7 +171,7 @@ com_done:
 _a2560u_irq_com2: // UART COM2 interrupt handler
     movem.l d0-d2/a0-a2,-(sp)
 com2_do:
-    move.w  #(1<<INT_COM2),INT_GRP(INT_COM2)
+    move.w  #(1<<INT_BIT(INT_COM2)),INT_GRP(INT_COM2)
     lea     UART2,a0
     move.b  5(a0),d1 // 5 is the Line Status Register
     btst    #0,d1
@@ -190,7 +190,7 @@ _a2560u_irq_mpu401:
     | detection supported by the SuperIO's MPU-401 implementation (contrary to the
     | Atari ST's 6850 ACIA)
     move.w  #0x2700,sr
-    move.w  #(1<<INT_MIDI),INT_GRP(INT_MIDI)
+    move.w  #(1<<INT_BIT(INT_MIDI)),INT_GRP(INT_MIDI)
     movem.l d0-d2/a0-a2,-(sp)   // Save GCC scratch registers
     move.b  MPU401_BASE,d0
     move.b  d0,-(sp) // we pass the byte both in d0 (convenience for EmuTOS's midivec) and on the stack

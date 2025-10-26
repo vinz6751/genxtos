@@ -2,7 +2,7 @@
 // It is meant to be standalone and pretty raw so to minimize chances of failing, as it is used for debugging.
 
 
-#if defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include <stdint.h>
 //#include "string.h"

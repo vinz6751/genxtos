@@ -1,5 +1,7 @@
 /* Controller of the A2560M's SD Card */
 
+#if defined(MACHINE_A2560M)
+
 #include <stdint.h>
 #include "asm.h" /* just_rts */
 #include "delay.h"
@@ -172,3 +174,5 @@ const SPI_DRIVER spi_a2560m_sd1 = {
     just_rts,
     just_rts
 };
+
+#endif

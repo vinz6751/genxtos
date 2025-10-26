@@ -116,7 +116,7 @@
 #endif
 
 // IDE and SDCard
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560U)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560U)
 #define IDE_BASE       (GAVIN+0x400)
 #define SDC_BASE       (GAVIN+0x300)
 #elif defined(MACHINE_A2560M)
@@ -140,7 +140,7 @@
 #endif
   #define GAVIN_CTRL_BEEPER     0x0010
   #define GAVIN_CTRL_LPC_RESET  0x0100 // Super IO Reset line
-#if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
   #define GAVIN_CTRL_RESET      0x80000000 // Write 0xDEAD---- to reset the machine
 #endif
 
@@ -210,6 +210,8 @@
 
 #define IRQ_GROUPS        3 /* Number of IRQ groups */
 
+/* Gives the bit number corresponding to the given INT_xxx interrupt */
+#define INT_BIT(irqn)       (irqn&0x0f)
 /* Gives the IRQ_PENDING_register corresponding to the INT_xxx interrupt */
 #define INT_GRP(irqn)       (IRQ_PENDING_GRP0 + 2*((irqn&0xf0)>>4))
 

@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "a2560u_debug.h"
 #include "ps2.h"
 #include "ps2_scancodes.h"
 

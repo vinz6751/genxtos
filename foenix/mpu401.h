@@ -23,6 +23,9 @@
 #define MPU401_STAT_TX_BUSY   0x40
 #define MPU401_STAT_RX_EMPTY  0x80
 
+/* Handles the incoming MIDI byte (both on the stack and in d0) */
+extern void (*mpu401_rx_handler)(uint8_t byte);
+
 int16_t mpu401_init(void);
 void mpu401_set_timeout(uint32_t (*timer)(void),uint16_t timeout);
 bool mpu401_wait_can_read(void);

@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include "bq4802ly.h"
 #include "a2560u.h"
+#include "interrupts.h"
 
 typedef void (*tick_handler_t)(void);
 
