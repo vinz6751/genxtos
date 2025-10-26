@@ -12,6 +12,7 @@
  */
 
 #include "emutos.h"
+#include "bios.h" /* kbdvecs */
 #include "acia.h"
 #include "iorec.h"
 #include "asm.h"
@@ -23,11 +24,16 @@
 #endif
 
 
+/* handle incomming MIDI byte */
+static void midivec(UBYTE data);
+
 
 /*==== midi_init - initialize the MIDI ==================*/
 
 void midi_init(void)
 {
+    kbdvecs.midivec = midivec;
+
 #if CONF_WITH_MIDI_ACIA
     /* initialize midi ACIA */
     midi_acia.ctrl = ACIA_RESET;    /* master reset */
@@ -41,6 +47,27 @@ void midi_init(void)
 #endif
 }
 
+
+/*==== midivec handles an incomming MIDI byte ==================*/
+static void midivec(UBYTE data)
+{
+    /* Store the data in the circular buffer, if not full */
+    //KDEBUG(("midivec called\n"));
+
+    UWORD tail;
+    IOREC *iorec = &midiiorec;
+
+    tail = iorec->tail + 1;
+
+    if (tail >= iorec->size)
+        tail = 0;
+
+    if (tail == iorec->head)
+        return; // buffer full
+
+    iorec->buf[tail] = data;
+    iorec->tail = tail;
+}
 
 /*==== MIDI bios functions =========================================*/
 

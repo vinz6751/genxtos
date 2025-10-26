@@ -11,6 +11,8 @@
 #include "midi.h"
 #include "string.h"
 
+/* #define ENABLE_KDEBUG */
+
 void just_rts(void);
 void int_acia(void);   // ACIA interrupt handler
 void int_acia_c(void); // C portion of the ACIA interrupt handler
@@ -31,7 +33,6 @@ static void call_kbdvecs_bp(void *vector, UBYTE byte, void *ptr); // Call the gi
 UBYTE midiibufbuf[MIDI_BUFSIZE];
 IOREC midiiorec;
 static void midisys_handler(void);
-static void midivec(UBYTE data);
 
 // Keyboard stuff*
 #if CONF_WITH_IKBD_ACIA
@@ -40,12 +41,12 @@ static void midivec(UBYTE data);
 #endif
 #define IKBD_BUFSIZE 256
 IOREC ikbdiorec;                 // Circular buffer information
-UBYTE ikbdibufbuf[IKBD_BUFSIZE]; // Buffer to store data 
+UBYTE ikbdibufbuf[IKBD_BUFSIZE]; // Buffer to store data
 
 extern UBYTE kbdlength; // Decounter for the length of IKBD packet being received
 WORD  kbdindex;  // Position of next byte in the kbdbuf buffer
 UBYTE kbdbuf[8]; // Buffer where IKBD packets are reconstructed
-// This kind of maps to the KBDVECS vector to call 
+// This kind of maps to the KBDVECS vector to call
 static BOOL in_packet;
 
 
@@ -74,7 +75,7 @@ void init_acia_vecs(void) {
 #endif
 
     kbdvec = (void (*)(UBYTE,IOREC*))call_kbdint;
-    kbdvecs.midivec = (void (*)(UBYTE))midivec;
+    kbdvecs.midivec = (void (*)(UBYTE))just_rts;
     kbdvecs.vkbderr = (void (*)(UBYTE))just_rts;
     kbdvecs.vmiderr = (void (*)(UBYTE))just_rts;
     kbdvecs.statvec = (void (*)(UBYTE*))just_rts;
@@ -98,7 +99,7 @@ void init_acia_vecs(void) {
     // Initialize the IOREC circular buffers that store incoming data from the IKBD and MIDI
     // FIXME: this initialization should be done by the data segment if EmuTOS had a functional one
     memmove(&ikbdiorec, iorec_templates, sizeof(iorec_templates));
-    
+
     // Initialise state machines
     in_packet = FALSE;
 
@@ -132,7 +133,7 @@ void int_acia_c(void) {
 
     // Repeat as long as ACIA interrupt pending
     } while (!(MFP_BASE->gpip & 0b000010000));
-    
+
     // Software end of interrupt
     MFP_BASE->isrb = ~0b01000000; // Bit 4 of the GPIP (ACIA IRQs)
 #endif
@@ -158,24 +159,7 @@ static void midisys_handler(void) {
 #endif /* CONF_WITH_MIDI_ACIA */
 }
 
-// Store the data in the circular buffer, if not full
-static void midivec(UBYTE data) {
-// FIXME this is not correct to condition this to CONF_WITH_MIDI_ACIA
-// because we don't have an ACIA that we don't have MIDI.
-    UWORD tail;
-    IOREC *iorec = &midiiorec;
- 
-    tail = iorec->tail + 1;
- 
-    if (tail >= iorec->size)
-        tail = 0;
 
-    if (tail == iorec->head)
-        return; // buffer full
-
-    iorec->buf[tail] = data;
-    iorec->tail = tail;
-}
 
 // Handle keyboard/mouse interrupt
 static void ikbdsys_handler(void) {
@@ -308,7 +292,7 @@ static ALWAYS_INLINE void call_kbdvecs_p(void (*vector)(UBYTE*),UBYTE *byte) {
     register const UBYTE *regbyte __asm__("a0") = byte;
     register void (*regvector)(UBYTE*)  __asm__("a1") = vector;
     __asm__ volatile (
-       "\n\tmove.l a0,-(sp)" 
+       "\n\tmove.l a0,-(sp)"
        "\n\tjsr (a1)"
        "\n\taddq.l #4,sp"
         : // No output

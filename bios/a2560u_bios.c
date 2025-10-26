@@ -179,7 +179,7 @@ uint16_t a2560_bios_vsetmode(int16_t mode)
 {
     FOENIX_VIDEO_MODE fm;
     KDEBUG(("a2560_bios_vsetmode(%d)\n",mode));
-    
+
     if (mode != -1 && (mode & VICKY_VIDEO_MODE_FLAG))
         vicky2_set_video_mode(vicky, mode);
 
@@ -307,7 +307,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud_code, EXT_IOREC *iorec, int16_t ctrl, 
         uart16550_set_line((UART16550*)UART1, flags);
         KDEBUG(("a2560u_bios_rsconf1 setting flags %x\n", flags));
     }
-    
+
 
     // RTS/CTS and XON/XOFF not supported ! A2560U doesn't have RTS/CTS pins connected anyway
     // TODO for machines having SuperIO
@@ -451,7 +451,7 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
 #endif
     if (driver == NULL)
         panic("Cannot select conout driver\n");
-    
+
     return driver;
 }
 
@@ -508,7 +508,7 @@ static void a2560u_bios_load_font(void)
 
     uint8_t *dst = vicky->font_memory->mem;
     a2560_debugnl("a2560u_bios_load_font loading found to %p", dst);
-    
+
     for (ascii = 0; ascii < 256; ascii++)
     {
         uint8_t *src = char_addr(ascii);
@@ -523,7 +523,7 @@ static void a2560u_bios_load_font(void)
             }
         }
         else
-        { 
+        {
             for (i = 0; i < v_cel_ht ; i++)
                 *dst++ = 0xff;
         }
@@ -539,7 +539,11 @@ static ULONG get_timeout_timer(void) {
 }
 
 void a2560_bios_midi_init(void) {
-    a2560u_midi_init(get_timeout_timer, 200/*1 second*/);
+    a2560u_midi_init(get_timeout_timer, 1000 / timer_ms/*1 second*/);
+#ifdef ENABLE_KDEBUG
+    if (!kbdvecs.midivec)
+        KDEBUG(("a2560_bios_midi_init: kbdvecs.midivec is NULL, expect crashes !\n"));
+#endif
     mpu401_rx_handler = kbdvecs.midivec;
 }
 

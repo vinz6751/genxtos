@@ -10,7 +10,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#define MACHINE_A2560_DEBUG 0
+#define MACHINE_A2560_DEBUG 1
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -275,10 +275,10 @@ void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
     a2560u_irq_disable(INT_MIDI);
     mpu401_set_timeout(timer, timeout);
     mpu401_rx_handler = (void(*)(uint8_t))a2560u_rts;
-    a2560_debugnl("mpu401_init returns %d",mpu401_init());
     set_vector(INT_MIDI_VECN, (uint32_t)a2560u_irq_mpu401);
     a2560u_irq_acknowledge(INT_MIDI);
     a2560_irq_enable(INT_MIDI);
+    a2560_debugnl("mpu401_init returns %d",mpu401_init());
 }
 
 #endif // CONF_WITH_MPU401

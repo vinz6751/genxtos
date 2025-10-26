@@ -14,7 +14,7 @@
     .GLOBAL _a2560u_irq_vicky
 #else
  #error "Need to specify Foenix model"
-#endif    
+#endif
     .GLOBAL _a2560u_irq_bq4802ly
     .GLOBAL _a2560u_irq_ps2kbd
     .GLOBAL _a2560u_irq_ps2mouse
@@ -42,7 +42,7 @@
 #endif
 
 _a2560u_rts:
-    rts  
+    rts
 
 
 _a2560u_rte:
@@ -67,7 +67,7 @@ vicky_irq_loop:
     movem.l d0/a0,-(sp)
     jsr     (a1)                // Call handler
     movem.l (sp)+,d0/a0
-vicky_irq_next:    
+vicky_irq_next:
     // Prepare next iteration
     lsl.b   #1,d0               // .b deliberate here as well
 #if defined(MACHINE_A2560M)
@@ -151,7 +151,7 @@ _a2560u_irq_com1: // UART COM1 interrupt handler
 com1_do:
     move.w  #(1<<INT_COM1),INT_GRP(INT_COM1)
     lea     UART1,a0
-    move.b  5(a0),d1 // 5 is the Line Status Register. That "should" acknowledge the interrupt (but doesn't on the U)
+    move.b  5(a0),d1 // 5 is the Line Status Register. Reading "should" acknowledge the interrupt (but doesn't on the U)
     btst    #0,d1    // Receive register full ?
     beq.s   com_done // No data received
     // Data received
@@ -197,7 +197,6 @@ _a2560u_irq_mpu401:
     move.l  _mpu401_rx_handler,a0
     addq.l  #2,sp // sp is always even
     jbsr    (a0)
-    // Should test if other byte received before returning ?
     movem.l (sp)+,d0-d2/a0-a2
     rte
 #endif
