@@ -83,10 +83,10 @@ void a2560u_init(bool cold_boot)
 #if !defined(MACHINE_A2560M)
     a2560_beeper(true);
 #endif
-    //*((unsigned long * volatile)0xB40008) = 0x00ff000; /* Black border */
 
     cpu_freq = CPU_FREQ; /* TODO read that from GAVIN's Machine ID */
 
+	/* Init SuperIO (if there) and serial ports so we can send debug output early */
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
     a2560_debugnl("superio_init()");
     superio_init();
@@ -94,20 +94,13 @@ void a2560u_init(bool cold_boot)
     a2560_debugnl("uart16550_init()");
     uart16550_init((UART16550*)UART1);
     uart16550_init((UART16550*)UART2);
-#endif
-
-#if defined(MACHINE_A2560U)
-    uart16550_init(UART1); /* So we can debug to serial port early */
-    //uart16550_put(UART1, (uint8_t*)"DEBUG TEST\n", 4);
+#elif defined(MACHINE_A2560U)
+    uart16550_init((UART16550*)UART1);
 #endif
 
     a2560_debugnl("a2560u_irq_init()");
     a2560u_irq_init();
-
-    a2560_debugnl("uart16550_init()");
-    uart16550_init((UART16550*)UART1);
-    uart16550_init((UART16550*)UART2);
-
+	
     a2560_debugnl("a2560_timer_init");
     a2560_timer_init();
 

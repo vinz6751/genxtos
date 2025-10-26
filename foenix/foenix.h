@@ -158,12 +158,12 @@
 
 /* Serial ports */
 #ifdef MACHINE_A2560U
-#define UART16550_CLOCK 20000000L /* 20Mhz, system clock */
+#define UART16550_CLOCK 20000000UL /* 20Mhz, system clock */
 /* Serial port speed codes for a2560u_serial_set_bps */
 #define UART1       (GAVIN+0x28F8)
 /* For speed codes, checkout uart16550.h */
 #elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)
-#define UART16550_CLOCK 1843200L
+#define UART16550_CLOCK 1843200UL
 #define UART1       (SUPERIO_BASE+0x3F8)  /* Base address for UART 1 (COM1) */
 #define UART2       (SUPERIO_BASE+0x2F8)  /* Base address for UART 2 (COM2), the doc is wrong! */
 #endif
@@ -346,7 +346,7 @@
 
 
 /* BEATRIX */
-#define SN76489_CLOCK 357954500
+#define SN76489_CLOCK 357954500UL
 #define SN76489_COUNT 2
 #define SN76489_L     (BEATRIX+0x0110) /* Left SN76489 */
 #define SN76489_R     (BEATRIX+0x0120) /* Right SN76489 */

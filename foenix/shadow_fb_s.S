@@ -5,7 +5,7 @@
 
     // Exports
     .GLOBAL _a2560u_sfb_mark_cell_dirty
-    .GLOBAL a2560u_sfb_copy_fb_to_vram
+    .GLOBAL _a2560u_sfb_copy_fb_to_vram
 
     // Imports
     .GLOBAL _a2560u_sfb_dirty_cells
@@ -16,7 +16,7 @@
 
 #define DISABLE_VIDEO_ENGINE_DURING_COPY 0// That doesn't seem to bring any visible performance, and may cause flicker
 
-a2560u_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
+_a2560u_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
 
 // Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
 // If it's not enough the dirty cells array may be too small and we loose data. If it's too high, we may spend

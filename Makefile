@@ -66,6 +66,7 @@ help:
 	@echo "m548x-prg  emutos.prg, a RAM tos for ColdFire Evaluation Boards with BaS_gcc"
 	@echo "c256genx   $(ROM_C256GENX), EmuTOS flash image for the C256 GenX with 68000 CPU Module"
 	@echo "a2560u    $(ROM_A2560U), EmuTOS flash image for the A2560U Foenix"
+	@echo "a2560m    $(ROM_A2560M), EmuTOS flash image for the A2560M Foenix"
 	@echo "a2560x    $(ROM_A2560X), EmuTOS flash image for the A2560X Foenix"
 	@echo "prg     emutos.prg, a RAM tos"
 	@echo "prg256  $(EMU256_PRG), a RAM tos for ST/STe systems"
@@ -225,7 +226,7 @@ ARFLAGS = rc
 
 # Linker with relocation information and binary output (image)
 LD = $(CC) $(MULTILIBFLAGS) -nostartfiles -nostdlib
-LIBS = -lgcc foenix/libfoenix.a
+LIBS = -lgcc
 LDFLAGS = -Wl,-T,obj/emutospp.ld
 PCREL_LDFLAGS = -Wl,--oformat=binary,-Ttext=0,--entry=0
 
@@ -337,7 +338,7 @@ bdos_src = bdosmain.c console.c fsbuf.c fsdir.c fsdrive.c fsfat.c fsglob.c \
 #
 
 util_src = cookie.c doprintf.c intmath.c langs.c memmove.S memset.S miscasm.S \
-           nls.c nlsasm.S setjmp.S string.c lisautil.S miscutil.c
+           nls.c nlsasm.S setjmp.S string.c lisautil.S miscutil.c shellutl.c
 
 # The functions in the following modules are used by the AES and EmuDesk
 ifeq ($(WITH_AES),1)
@@ -376,7 +377,7 @@ aes_src = gemasm.S gemstart.S gemdosif.S gemaplib.c gemasync.c gemctrl.c \
           gemfslib.c gemgraf.c gemgrlib.c gemgsxif.c geminit.c geminput.c \
           gemmnext.c gemmnlib.c gemobed.c gemobjop.c gemoblib.c gempd.c gemqueue.c \
           gemrslib.c gemsclib.c gemshlib.c gemsuper.c gemwmlib.c gemwrect.c \
-          gsx2.c gem_rsc.c mforms.c aescfg.c shellutl.c
+          gsx2.c gem_rsc.c mforms.c aescfg.c
 
 #
 # source code in desk/
@@ -491,7 +492,7 @@ SRC = $(foreach d,$(dirs),$(addprefix $(d)/,$($(d)_src))) $(end_src)
 CORE_OBJ = $(foreach d,$(core_dirs),$(patsubst %.c,obj/%.o,$(patsubst %.S,obj/%.o,$($(d)_src)))) $(FONTOBJ_COMMON) obj/libfont.a obj/version.o
 OPTIONAL_OBJ = $(foreach d,$(optional_dirs),$(patsubst %.c,obj/%.o,$(patsubst %.S,obj/%.o,$($(d)_src))))
 END_OBJ = $(patsubst %,obj/%.o,$(basename $(notdir $(end_src))))
-OBJECTS = $(CORE_OBJ) $(OPTIONAL_OBJ) $(END_OBJ)
+OBJECTS = $(CORE_OBJ) $(OPTIONAL_OBJ) $(OPTIONAL_LIB) $(END_OBJ)
 
 #
 # Preprocess the linker script, to allow #include, #define, #if, etc.
@@ -503,9 +504,6 @@ TOCLEAN += obj/*.ld
 obj/emutospp.ld: emutos.ld include/config.h tosvars.ld
 	$(CPP) $(CPPFLAGS) -P -x c $< -o $@
 
-%.ld:%.ld_
-	$(CPP) $(CPPFLAGS) -P -x c $< -o $@
-
 #
 # the maps must be built at the same time as the images, to enable
 # one generic target to deal with all edited disassembly.
@@ -514,7 +512,7 @@ obj/emutospp.ld: emutos.ld include/config.h tosvars.ld
 TOCLEAN += *.img *.map
 
 emutos.img: $(OBJECTS) obj/emutospp.ld
-	$(LD) $(CORE_OBJ) $(LIBS) $(OPTIONAL_OBJ) $(LIBS) $(END_OBJ) $(LDFLAGS) -Wl,-Map=emutos.map -o emutos.img
+	$(LD) $(CORE_OBJ) $(LIBS) $(OPTIONAL_OBJ) $(OPTIONAL_LIB) $(END_OBJ) $(LDFLAGS) -Wl,-Map=emutos.map -o emutos.img
 	@if [ $$(($$(awk '/^\.data /{print $$3}' emutos.map))) -gt 0 ]; then \
 	  echo "### Warning: The DATA segment is not empty."; \
 	  echo "### Please examine emutos.map and use \"const\" where appropriate."; \
@@ -531,6 +529,10 @@ else
 	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
 	echo "# RAM used: $$(($$MEMBOT)) bytes"
 endif
+
+
+foenix/libfoenix-%.a:
+	$(MAKE) -C foenix libfoenix-$*.a CPUFLAGS='$(CPUFLAGS)'
 
 #
 # Padded Image
@@ -825,9 +827,9 @@ NODEP += a2560u
 a2560u: UNIQUE = $(COUNTRY)
 a2560u: OPTFLAGS = $(SMALL_OPTFLAGS)
 a2560u: override DEF += -DTARGET_A2560U_ROM -DMACHINE_A2560U $(A2560U_DEFS)
-a2560u:
+a2560u: foenix/libfoenix-a2560u.a
 	@echo "# Building A2560U Foenix EmuTOS into $(ROM_MACHINE_A2560U)"
-	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560U=$(ROM_MACHINE_A2560U) $(ROM_MACHINE_A2560U)
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTIONAL_LIB='foenix/libfoenix-a2560u.a' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560U=$(ROM_MACHINE_A2560U) $(ROM_MACHINE_A2560U)
 	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
 	echo "# RAM used: $$(($$MEMBOT))"
 	@printf "$(LOCALCONFINFO)"
@@ -852,9 +854,9 @@ a2560x: UNIQUE = $(COUNTRY)
 a2560x: OPTFLAGS = $(SMALL_OPTFLAGS)
 a2560x: CPUFLAGS = -m68040
 a2560x: override DEF += -DTARGET_A2560X_ROM -DMACHINE_A2560X $(A2560X_DEFS)
-a2560x:
+a2560x: foenix/libfoenix-a2560x.a
 	@echo "# Building A2560X Foenix EmuTOS into $(ROM_MACHINE_A2560X)"
-	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560X=$(ROM_MACHINE_A2560X) $(ROM_MACHINE_A2560X)
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTIONAL_LIB='foenix/libfoenix-a2560x.a' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560X=$(ROM_MACHINE_A2560X) $(ROM_MACHINE_A2560X)
 	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
 	echo "# RAM used: $$(($$MEMBOT))"
 	@printf "$(LOCALCONFINFO)"
@@ -866,23 +868,15 @@ $(ROM_MACHINE_A2560X): emutos.img mkrom
 ROM_MACHINE_A2560M = emutos-a2560m.rom
 A2560M_DEFS =
 
-.PHONY: foenix/libfoenix.a
-foenix/libfoenix.a:
-	cd foenix
-	$(MAKE) libfoenix.a
-
 .PHONY: a2560m
 NODEP += a2560m
 a2560m: UNIQUE = $(COUNTRY)
 a2560m: OPTFLAGS = $(SMALL_OPTFLAGS)
 a2560m: CPUFLAGS = -m68060
 a2560m: override DEF += -DTARGET_A2560M_ROM -DMACHINE_A2560M $(A2560M_DEFS)
-#a2560m: OPTIONAL_OBJ += foenix/libfoenix.a
-#a2560m: LIBS += foenix/libfoenix.a
-
-a2560m:
+a2560m: foenix/libfoenix-a2560m.a
 	@echo "# Building A2560M Foenix EmuTOS into $(ROM_MACHINE_A2560M)"
-	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560M=$(ROM_MACHINE_A2560M) $(ROM_MACHINE_A2560M)
+	$(MAKE) CPUFLAGS='$(CPUFLAGS)' DEF='$(DEF)' OPTIONAL_LIB='foenix/libfoenix-a2560m.a' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROM_MACHINE_A2560M=$(ROM_MACHINE_A2560M) $(ROM_MACHINE_A2560M)
 	@MEMBOT=$(call SHELL_SYMADDR,__end_os_stram,emutos.map);\
 	echo "# RAM used: $$(($$MEMBOT))"
 	@printf "$(LOCALCONFINFO)"
@@ -1509,6 +1503,7 @@ clean:
 	@for dir in $(wildcard tests/*/Makefile) ; do \
 		$(MAKE) -C $$(dirname $$dir) clean ; \
 	done
+	$(MAKE) -C foenix clean
 
 #
 # ColdFire autoconverted sources.

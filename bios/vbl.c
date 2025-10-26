@@ -12,6 +12,11 @@
 #include "vbl.h"
 #include "videl.h"
 
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+#include "a2560u_bios.h"
+#include "../foenix/shadow_fb.h"
+#endif
+
 extern PFVOID vbl_list[8]; /* Default array for the vblqueue TOS variable */
 
 // These are separate functions for clarity, but GCC will inline them.

@@ -56,8 +56,8 @@ void sn76489_mute_all(void) {
  * frequency = the desired frequency in Hz
  */
 void sn76489_freq(uint8_t voice, uint16_t frequency) {
-    long period;
-    long f = frequency;
+    unsigned long period;
+    unsigned long f = frequency;
 
     if (f <<= 5) /* f *= 32, but if frequency if null avoid division by 0 */
         period = SN76489_CLOCK / f;
