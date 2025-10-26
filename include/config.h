@@ -758,9 +758,9 @@
 #endif
 
 /*
- * Defaults for the A2560X from Foenix Retro Systems
+ * Defaults for the A2560K from Foenix Retro Systems
  */
-#ifdef MACHINE_A2560X
+#ifdef MACHINE_A2560K
 # ifndef MACHINE_A2560_DEBUG
 #  define MACHINE_A2560_DEBUG 0
 # endif
@@ -849,6 +849,81 @@
 # endif
 # ifndef CONF_WITH_IDE
 #  define CONF_WITH_IDE 0
+# endif
+# ifndef CONF_WITH_SDMMC
+#  define CONF_WITH_SDMMC 1
+# endif
+# ifndef CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF
+#  define CONF_DETECT_FIRST_BOOT_WITHOUT_MEMCONF 1
+# endif
+# ifndef WITH_AES
+# define WITH_AES 0 /* Not supported yet */
+# endif
+# ifndef WITH_CLI
+#  define WITH_CLI 1
+# endif
+# ifndef CONF_WITH_SN76489
+#  define CONF_WITH_SN76489 1
+# endif
+# ifndef CONF_WITH_WM8776
+#  define CONF_WITH_WM8776 1
+# endif
+# ifndef CONF_WITH_BQ4802LY
+#  define CONF_WITH_BQ4802LY 1
+# endif
+# ifndef CONF_WITH_MPU401
+#  define CONF_WITH_MPU401 1
+# endif
+#if 0
+# ifndef CONF_VRAM_ADDRESS
+#  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
+# endif
+#endif
+# ifndef CONF_WITH_CHUNKY8
+#  define CONF_WITH_CHUNKY8 1
+# endif
+/* At least one of CONF_WITH_A2560_TEXT_MODE and CONF_WITH_A2560X_SHADOW_FRAMEBUFFER must be enabled */
+/* Use VICKY's text mode if possible rather than a bitmap screen buffer when using 8 pixel-high font.
+ * No graphics possible. */
+#define CONF_WITH_A2560_TEXT_MODE 1
+/* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
+#define CONF_WITH_A2560X_SHADOW_FRAMEBUFFER 0
+# ifndef CONF_WITH_FORCE_8x8_FONT
+#  define CONF_WITH_FORCE_8x8_FONT 1
+# endif
+# ifndef ALWAYS_SHOW_INITINFO
+#  define ALWAYS_SHOW_INITINFO 1 /* So we can get into EmuCON */
+# endif
+# ifdef USE_STOP_INSN_TO_FREE_HOST_CPU /* To confirm: this causes a crash so we don't want it */
+#  undef USE_STOP_INSN_TO_FREE_HOST_CPU
+#  define USE_STOP_INSN_TO_FREE_HOST_CPU 0
+# endif
+#ifdef DEFAULT_BAUDRATE
+#  undef DEFAULT_BAUDRATE
+#  define DEFAULT_BAUDRATE 12 /*38400*/
+#endif
+#ifdef MACHINE_A2560_DEBUG
+# define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
+# define RS232_DEBUG_PRINT 0
+#endif
+#endif
+
+
+/*
+ * Defaults for the A2560X from Foenix Retro Systems
+ */
+#ifdef MACHINE_A2560X
+# ifndef MACHINE_A2560_DEBUG
+#  define MACHINE_A2560_DEBUG 0
+# endif
+# ifndef FOENIX_CHANNEL_A_DEBUG_PRINT
+#  define FOENIX_CHANNEL_A_DEBUG_PRINT 0
+# endif
+# ifndef CONF_ATARI_HARDWARE
+#  define CONF_ATARI_HARDWARE 0
+# endif
+# ifndef CONF_WITH_IDE
+#  define CONF_WITH_IDE 1
 # endif
 # ifndef CONF_WITH_SDMMC
 #  define CONF_WITH_SDMMC 1

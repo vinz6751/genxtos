@@ -277,7 +277,7 @@
 
 
 /* 68000 Interrupt vector numbers (not addresses ! The address is vector number * 4) */
-#if defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
   #define INT_VICKYII_A     0x1D
   #define INT_VICKYII_B     0x1E
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
