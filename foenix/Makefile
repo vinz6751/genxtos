@@ -26,6 +26,7 @@ SRC=$(SRC_C) $(SRC_S)
 OBJ_C=$(SRC_C:.c=.o)
 OBJ_S=$(SRC_S:.S=.o)
 OBJ=$(OBJ_C) $(OBJ_S)
+DEP=$(SRC_C:.c=.d)
 
 .PHONY: default
 default:
@@ -42,7 +43,7 @@ libfoenix-%.a: $(OBJ)
 	$(RANLIB) $@
 
 %.o: %.c
-	$(CC) -o $@ -c $< $(CFLAGS)
+	$(CC) -o $@ -c $< $(CFLAGS) -MMD -MP
 
 %.o: %.S
 	$(CC) -o $@ -c $< $(CFLAGS)
@@ -51,7 +52,10 @@ libfoenix-%.a: $(OBJ)
 .PHONY: clean mrproper
 
 clean:
-	@rm -rf *.o *.a *~
+	@rm -rf *.o *.a *.d *~
 
 mrproper: clean
 	@rm -rf $(EXEC)
+
+# Include automatically generated dependency files
+-include $(DEP)
