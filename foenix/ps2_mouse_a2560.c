@@ -1,4 +1,4 @@
-/* ps2_mouse_a2560u - PS/2 mouse driver for A2560U Foenix
+/* ps2_mouse_a2560 - PS/2 mouse driver for A2560U Foenix
  * This is really a bridge between the PS/2, OS and VICKY mouse handling
  * 
  * Author:
@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "ps2.h"
-#include "a2560u.h"
+#include "a2560.h"
 
 /* Settings */
 #define MAXIMUM_TOS_COMPATIBILITY 1
@@ -45,7 +45,7 @@ static void on_change(const vicky_mouse_event_t *event);
 
 static bool init(struct ps2_driver_api_t *api)
 {
-    a2560_debugnl("ps2_mouse_a2560u->init()");
+    a2560_debugnl("ps2_mouse_a2560->init()");
     api->driver->process = process;
 
     vicky_mouse_init(on_change, api);

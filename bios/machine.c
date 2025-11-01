@@ -45,7 +45,7 @@
 #include "biosext.h"
 #include "timer.h"
 #include "amiga.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 
 #if CONF_WITH_ADVANCED_CPU
 UBYTE is_bus32; /* 1 if address bus is 32-bit, 0 if it is 24-bit */

@@ -49,32 +49,32 @@
 #include "stdint.h"
 #include "../foenix/foenix.h"
 #include "../foenix/uart16550.h" /* Serial port */
-#include "../foenix/a2560u.h"
+#include "../foenix/a2560.h"
 #include "../foenix/interrupts.h"
 #include "../foenix/mpu401.h"
 #include "../foenix/shadow_fb.h"
 #include "../foenix/timer.h"
 #include "../foenix/vicky2.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "../foenix/regutils.h"
 
-bool a2560u_bios_sfb_is_active;
+bool a2560_bios_sfb_is_active;
 
 /* Prototypes ****************************************************************/
 
-void a2560u_init_lut0(void);
+void a2560_init_lut0(void);
 
 /* Interrupt */
-void a2560u_irq_bq4802ly(void);
-void a2560u_irq_ps2kbd(void);
-void a2560u_irq_ps2mouse(void);
+void a2560_irq_bq4802ly(void);
+void a2560_irq_ps2kbd(void);
+void a2560_irq_ps2mouse(void);
 
 
 /* Implementation ************************************************************/
 
 void a2560_bios_init(void)
 {
-	a2560u_init(warm_magic != WARM_MAGIC);
+	a2560_init(warm_magic != WARM_MAGIC);
 }
 
 
@@ -109,10 +109,10 @@ void a2560_bios_screen_init(void)
     vblsem = 0;
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_sfb_init();
+    a2560_sfb_init();
 #endif
 
-    a2560u_irq_set_handler(INT_SOF_A, int_vbl);
+    a2560_irq_set_handler(INT_SOF_A, int_vbl);
     KDEBUG(("a2560_bios_screen_init exiting\n"));
 }
 
@@ -237,19 +237,19 @@ void a2560_bios_bconout1(uint8_t byte)
     uart16550_put((UART16550*)UART1,&byte, 1);
 }
 
-void a2560u_irq_com1(void); // Event handler in a2560u_s.S
+void a2560_irq_com1(void); // Event handler in a2560_s.S
 
 void a2560_bios_rs232_init(void) {
     a2560_debugnl("a2560_bios_rs232_init");
     // The UART's base settings are setup earlier
     uart16550_rx_handler = push_serial_iorec;
-    setexc(INT_COM1_VECN, (uint32_t)a2560u_irq_com1);
+    setexc(INT_COM1_VECN, (uint32_t)a2560_irq_com1);
     a2560_irq_enable(INT_COM1);
     uart16550_rx_irq_enable((UART16550*)UART1, true);
 }
 
 /* This does not perfectly emulate the MFP but may enough */
-uint32_t a2560u_bios_rsconf1(int16_t baud_code, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
+uint32_t a2560_bios_rsconf1(int16_t baud_code, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr)
 {
     static const int16_t baud_codes[] = {
         UART16550_19200BPS, UART16550_9600BPS, UART16550_4800BPS, UART16550_3600BPS,
@@ -275,10 +275,10 @@ uint32_t a2560u_bios_rsconf1(int16_t baud_code, EXT_IOREC *iorec, int16_t ctrl, 
     }
     else if (baud_code >= 0) {
         if (baud_code > ARRAY_SIZE(baud_codes)) {
-            KDEBUG(("a2560u_bios_rsconf1 setting invalid baud specification %d\n", baud_code));
+            KDEBUG(("a2560_bios_rsconf1 setting invalid baud specification %d\n", baud_code));
         }
         else {
-            KDEBUG(("[DISABLED] a2560u_bios_rsconf1 setting speed %d bps (code: %d)\n", baud_codes[baud_code], baud_code));
+            KDEBUG(("[DISABLED] a2560_bios_rsconf1 setting speed %d bps (code: %d)\n", baud_codes[baud_code], baud_code));
             uart16550_set_bps((UART16550*)UART1, baud_codes[baud_code]);
             iorec->baudrate = baud_code;
         }
@@ -305,7 +305,7 @@ uint32_t a2560u_bios_rsconf1(int16_t baud_code, EXT_IOREC *iorec, int16_t ctrl, 
                 flags |= UART16550_1_5S;
 
         uart16550_set_line((UART16550*)UART1, flags);
-        KDEBUG(("a2560u_bios_rsconf1 setting flags %x\n", flags));
+        KDEBUG(("a2560_bios_rsconf1 setting flags %x\n", flags));
     }
 
 
@@ -367,7 +367,7 @@ void a2560_bios_kbd_init(void)
     ps2_config.os_callbacks.on_key_up   = kbd_int;
     ps2_config.os_callbacks.on_mouse    = call_mousevec;
 
-    a2560u_kbd_init();
+    a2560_kbd_init();
 }
 
 /* SD Card: the driver is in spi_gavin */
@@ -378,7 +378,7 @@ void a2560_bios_kbd_init(void)
 #include "lineavars.h"
 #include "biosext.h"
 
-static void a2560u_bios_load_font(void);
+static void a2560_bios_load_font(void);
 
 static const uint16_t text_palette[32] =
 {
@@ -419,12 +419,12 @@ static const uint16_t text_palette[32] =
 void a2560_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height)
 {
     a2560_debugnl("a2560_bios_sfb_setup(%p,%d)", addr, text_cell_height);
-    a2560u_sfb_setup(addr, text_cell_height);
-    a2560u_bios_sfb_is_active = true;
+    a2560_sfb_setup(addr, text_cell_height);
+    a2560_bios_sfb_is_active = true;
 }
 
-extern const CONOUT_DRIVER a2560u_conout_text;
-extern const CONOUT_DRIVER a2560u_conout_bmp;
+extern const CONOUT_DRIVER a2560_conout_text;
+extern const CONOUT_DRIVER a2560_conout_bmp;
 
 CONOUT_DRIVER *a2560_bios_get_conout(void)
 {
@@ -437,16 +437,16 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
     {
         a2560_debugnl("a2560_bios_get_conout selected the TEXT mode driver");
         /* VICKY helps us with the 8x8 font and cursor blinking */
-        a2560u_bios_sfb_is_active = false;
-        driver =  (CONOUT_DRIVER*)&a2560u_conout_text;
+        a2560_bios_sfb_is_active = false;
+        driver =  (CONOUT_DRIVER*)&a2560_conout_text;
     }
 # if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
     else
     {
         a2560_debugnl("a2560_bios_get_conout selected the BITMAP driver %p", v_bas_ad);
         /* Use the shadow framebuffer */
-        driver = (CONOUT_DRIVER*)&a2560u_conout_bmp;
-        a2560u_sfb_setup(v_bas_ad, v_cel_ht);
+        driver = (CONOUT_DRIVER*)&a2560_conout_bmp;
+        a2560_sfb_setup(v_bas_ad, v_cel_ht);
     }
 #endif
     if (driver == NULL)
@@ -463,7 +463,7 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
 void a2560_bios_text_init(void)
 {
     a2560_debugnl("a2560_bios_text_init(%p)", vicky);
-    a2560u_bios_load_font();
+    a2560_bios_load_font();
 
     a2560_debugnl("a2560_bios_text_init: vicky2_set_text_lut");
     vicky2_set_text_lut(vicky, text_palette, text_palette);
@@ -501,13 +501,13 @@ void a2560_bios_text_init(void)
 }
 
 
-static void a2560u_bios_load_font(void)
+static void a2560_bios_load_font(void)
 {
     int ascii;
     int i;
 
     uint8_t *dst = vicky->font_memory->mem;
-    a2560_debugnl("a2560u_bios_load_font loading found to %p", dst);
+    a2560_debugnl("a2560_bios_load_font loading found to %p", dst);
 
     for (ascii = 0; ascii < 256; ascii++)
     {
@@ -539,7 +539,7 @@ static ULONG get_timeout_timer(void) {
 }
 
 void a2560_bios_midi_init(void) {
-    a2560u_midi_init(get_timeout_timer, 1000 / timer_ms/*1 second*/);
+    a2560_midi_init(get_timeout_timer, 1000 / timer_ms/*1 second*/);
 #ifdef ENABLE_KDEBUG
     if (!kbdvecs.midivec)
         KDEBUG(("a2560_bios_midi_init: kbdvecs.midivec is NULL, expect crashes !\n"));

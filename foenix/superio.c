@@ -5,7 +5,7 @@
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include "foenix.h"
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
 #include "regutils.h"
 #include "superio.h"
 

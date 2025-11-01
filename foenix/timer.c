@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "foenix.h"
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
 #include "cpu.h"
 #include "interrupts.h"
 #include "regutils.h"
@@ -19,7 +19,7 @@ void a2560_irq_calibration();
  * It's done so timers can be reprogrammed quickly without having to do
  * computation, so to get the best timing possible. */
 /* Timers */
-static const struct a2560u_timer_t {
+static const struct a2560_timer_t {
     uint32_t control;  /* Control register */
     uint32_t value;    /* Value register   */
     uint32_t compare;  /* Compare register */
@@ -30,7 +30,7 @@ static const struct a2560u_timer_t {
     uint16_t irq_mask; /* OR this to the irq_pending_group to acknowledge the interrupt */
     uint16_t vector;   /* Exception vector number (not address !) */
     uint32_t dummy;    /* Useless but having the structure 32-byte larges makes it quicker to generate an offset with lsl #5 */
-} a2560u_timers[] =
+} a2560_timers[] =
 {
 /* Whether to count up or count down. Both work, it really doesn't make a difference */
 #define TIMER_COUNT_UP 1
@@ -57,7 +57,7 @@ void a2560_timer_init(void)
     int i;
 
     /* Disable all timers */
-    for (i = 0; i < sizeof(a2560u_timers)/sizeof(struct a2560u_timer_t); i++)
+    for (i = 0; i < sizeof(a2560_timers)/sizeof(struct a2560_timer_t); i++)
         a2560_timer_enable(i, false);
 }
 
@@ -70,7 +70,7 @@ void a2560_timer_init(void)
  */
 void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *handler)
 {
-    struct a2560u_timer_t *t;
+    struct a2560_timer_t *t;
     uint16_t sr;
 
     if (timer > 3)
@@ -79,7 +79,7 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     a2560_debugnl("Set timer %d, freq:%ldHz, repeat:%s, handler:%p",timer,frequency,repeat?"ON":"OFF",handler);
     
     /* Identify timer control register to use */
-    t = (struct a2560u_timer_t *)&a2560u_timers[timer];
+    t = (struct a2560_timer_t *)&a2560_timers[timer];
 
     /* We don't want interrupts while we reprogramming */
     sr = set_sr(0x2700);
@@ -146,7 +146,7 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
  */
 void a2560_timer_enable(uint16_t timer, bool enable)
 {
-    struct a2560u_timer_t *t = (struct a2560u_timer_t *)&a2560u_timers[timer];
+    struct a2560_timer_t *t = (struct a2560_timer_t *)&a2560_timers[timer];
     a2560_debugnl("a2560_timer_enable(%d,%d)", timer, enable);
     if (enable)
         R32(t->control) |= t->start;
@@ -179,7 +179,7 @@ uint32_t a2560_delay_calibrate(uint32_t calibration_time)
     /* We should disable timer 0 now but we really don't expect that anything uses it during boot */
 
     /* Backup all interrupts masks because they would interfere with measuring time */
-    a2560u_irq_mask_all(masks);
+    a2560_irq_mask_all(masks);
     old_timer_vector = R32(INT_TIMER0_VECN*4);
 
     a2560_set_timer(0, 1000 /*1ms*/, true, a2560_irq_calibration);
@@ -187,7 +187,7 @@ uint32_t a2560_delay_calibrate(uint32_t calibration_time)
 
     /* Restore everything */
     R32(INT_TIMER0_VECN) = old_timer_vector;
-    a2560u_irq_restore(masks);
+    a2560_irq_restore(masks);
 
     a2560_debugnl("irq_count (old)= 0x%08lx, calibration_interrupt_count = %ld", calibration_time, irq_count);
     /* We have interrupts every 1ms so it's easy to count the number of tight loops per irq */

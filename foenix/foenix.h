@@ -159,7 +159,7 @@
 /* Serial ports */
 #ifdef MACHINE_A2560U
 #define UART16550_CLOCK 20000000UL /* 20Mhz, system clock */
-/* Serial port speed codes for a2560u_serial_set_bps */
+/* Serial port speed codes for a2560_serial_set_bps */
 #define UART1       (GAVIN+0x28F8)
 /* For speed codes, checkout uart16550.h */
 #elif defined (MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_GENX)

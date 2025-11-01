@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "a2560u.h"
+#include "a2560.h"
 #include "cpu.h"
 #include "foenix.h"
 #include "regutils.h"
@@ -189,10 +189,10 @@ const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * c
 
 /* IRQ handlers */
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-void a2560u_irq_vicky_a(void); /* VICKY autovector A interrupt handler */
-void a2560u_irq_vicky_b(void); /* VICKY autovector B interrupt handler */
+void a2560_irq_vicky_a(void); /* VICKY autovector A interrupt handler */
+void a2560_irq_vicky_b(void); /* VICKY autovector B interrupt handler */
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
-void a2560u_irq_vicky(void); /* Only channel, or channel B on the A2560K/X/GenX */
+void a2560_irq_vicky(void); /* Only channel, or channel B on the A2560K/X/GenX */
 #else
  #error "Define Foenix machine"
 #endif
@@ -216,10 +216,10 @@ void vicky2_init(void)
 
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     /* Channel A VBL */
-    set_vector(INT_VICKYII_A, (uint32_t)a2560u_irq_vicky_a);
-    set_vector(INT_VICKYII_B, (uint32_t)a2560u_irq_vicky_b);
+    set_vector(INT_VICKYII_A, (uint32_t)a2560_irq_vicky_a);
+    set_vector(INT_VICKYII_B, (uint32_t)a2560_irq_vicky_b);
 #else
-    set_vector(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
+    set_vector(INT_VICKYII, (uint32_t)a2560_irq_vicky);
 #endif
 }
 

@@ -21,7 +21,7 @@
 #include "serport.h"
 #include "processor.h"
 #include "delay.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "coldfire.h" /* For cookie jar info. */
 
 /*

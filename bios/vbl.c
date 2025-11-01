@@ -13,7 +13,7 @@
 #include "videl.h"
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "../foenix/shadow_fb.h"
 #endif
 
@@ -57,9 +57,9 @@ void vbl_handler(void) {
 #endif
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    if (!a2560u_bios_sfb_is_active) {
-        a2560u_sfb_addr = v_bas_ad;
-        a2560u_sfb_copy_fb_to_vram();
+    if (!a2560_bios_sfb_is_active) {
+        a2560_sfb_addr = v_bas_ad;
+        a2560_sfb_copy_fb_to_vram();
     }
 #endif
 

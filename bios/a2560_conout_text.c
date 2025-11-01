@@ -1,5 +1,5 @@
 /*
- * a2560u_conout_text.c - VICKY text mode driver
+ * a2560_conout_text.c - VICKY text mode driver
  *
  *
   * Copyright (C) 2023 The EmuTOS development team
@@ -28,7 +28,7 @@
 #include "string.h"
 #include "conout.h"
 #include "font.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "../foenix/regutils.h"
 
 static void cursor_moved(void);
@@ -230,7 +230,7 @@ static void blink_cursor(void)
     /* Do nothing. VICKY blinks the cursor */
 }
 
-const CONOUT_DRIVER a2560u_conout_text =
+const CONOUT_DRIVER a2560_conout_text =
 {
     init,
     blank_out,

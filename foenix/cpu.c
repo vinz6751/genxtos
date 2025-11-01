@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "foenix.h"
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
 
 uint32_t set_vector(uint16_t num, uint32_t vector)
 {

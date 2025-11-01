@@ -8,7 +8,7 @@
 #include "spi.h"
 #include "../foenix/foenix.h"
 #include "../foenix/regutils.h"
-#include "../foenix/a2560u_debug.h"
+#include "../foenix/a2560_debug.h"
 
 //#define a2560_debugnl(...)
 

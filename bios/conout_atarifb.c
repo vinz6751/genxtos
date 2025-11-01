@@ -33,7 +33,7 @@
 #include "string.h"
 #include "conout.h"
 #include "font.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "../vdi/vdi_defs.h"    /* for phys_work stuff */
 
 #define PLANE_OFFSET    2       /* interleaved planes */

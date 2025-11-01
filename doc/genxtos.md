@@ -27,7 +27,7 @@ You can upload it with something like
 
 ## Principles
 The Foenix specific stuff is in the foenix/ folder. This can be build as a stand-alone library (makefile available) that you can use in other projects. This library contains "drivers" for the Foenix system.
-The OS makes use of this library through the bios/a2560u_bios.c and bios/a2560u_bios_s.S files. These files provide Foenix variants or the original TOS functions, which are inserted in the os by means of #ifdef MACHINE_A2560U, much like it's done for OS ports of EmuTOS to the Amiga etc.
+The OS makes use of this library through the bios/a2560_bios.c and bios/a2560_bios_s.S files. These files provide Foenix variants or the original TOS functions, which are inserted in the os by means of #ifdef MACHINE_A2560U, much like it's done for OS ports of EmuTOS to the Amiga etc.
 
 
 ## Display
@@ -38,8 +38,8 @@ It is not possible to directly render text to the video ram on the Foenix, like 
 The shadow framebuffer keeps a list of dirty cells (a cell is a system ram address pointing to a location in the shadow frame buffer, that is 8 bytes wide and is as tall as the currently used font). Whenever the console (vt52.c) updates a character in the screen, the corresponding text cell's address is added to a ringbuffer of dirty cells. Upon VBL, this buffer is examined and the corresponding portions of the system RAM are copied to the VRAM. If there are too many dirty cells, we copy the whole screen as it ends up being more efficient (I am not sure about the threshold for making the switch in strategy). Currently the copy from system RAM to VRAM are done by the processor so it's slow, but once DMA is available, it should be a lot faster. I'm just not sure if it will still be fast enough or how the "dirty area" management will work with graphics.
 
 The original EmuTOS was refactored so the conout.c (low level text driver) can use different backing drivers. One exists for the original Atari, and 2 are introduced for the Foenix:
-* a2560u_conout_text : uses VICKY's text mode. It's very fast but if you use it, it's hard to do graphics at the same time. Also, the flashing of the cursor is controller by VICKY so it behaves different (like keeping flashing while you type because there's no way to force it displayed).
-* a2560u_conout_bmp : use the shadow frame buffer.
+* a2560_conout_text : uses VICKY's text mode. It's very fast but if you use it, it's hard to do graphics at the same time. Also, the flashing of the cursor is controller by VICKY so it behaves different (like keeping flashing while you type because there's no way to force it displayed).
+* a2560_conout_bmp : use the shadow frame buffer.
 
 The selection is done in a2560_bios_get_conout() based on the availability of the text mode and shadow framebuffer features.
 The shadow frame buffer availability is configured by CONF_WITH_A2560U_SHADOW_FRAMEBUFFER.
@@ -63,7 +63,7 @@ On the Foenix, the mouse is moved automatically when writting PS/2 packets bytes
 * Write the PS/2 bytes to GAVIN so the mouse cursor is moved (that's the only way to move the mouse as the mouse position registers are read-only, unfortunately).
 * Create a fake mouse packet (like the IKBD would do) and call the normal TOS handling routine for it.
 
-That is all done in ps2_mouse_a2560u.c.
+That is all done in ps2_mouse_a2560.c.
 Obviously a mouse accelerator program will not work as it would probably hook into the TOS and tweak the packets or Line-A variables, but it's not the TOS controlling that is setting the mouse position.
 
 

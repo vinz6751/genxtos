@@ -42,7 +42,7 @@
 
 #define R8(x) ((volatile uint8_t*)x) /* Convenience */
 
-void a2560u_rts(uint16_t);
+void a2560_rts(uint16_t);
 
 void (*uart16550_rx_handler)(uint8_t byte);
 
@@ -51,7 +51,7 @@ void uart16550_init(UART16550 *uart)
 {
     uart16550_set_bps(uart, UART16550_9600BPS);
     uart16550_set_line(uart, UART16550_8D | UART16550_1S | UART16550_NOPARITY);
-    uart16550_rx_handler = (void(*)(uint8_t))a2560u_rts;
+    uart16550_rx_handler = (void(*)(uint8_t))a2560_rts;
     //uart[FCR] = 0b00100111; //0b00000110; // No FIFO, reset FIFOs. See 16C750B doc
     uart[FCR] = 0xC1; /* 16550: Clear FIFOs, one byte buffer */
 

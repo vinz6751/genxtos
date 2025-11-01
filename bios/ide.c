@@ -35,7 +35,7 @@
 #include "processor.h"
 #include "biosmem.h"
 #include "amiga.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "intmath.h"
 
 #if CONF_WITH_IDE

@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include "spi.h"
 #include "../foenix/gavin_sdc.h"
-#include "../foenix/a2560u.h"
+#include "../foenix/a2560.h"
 
 /* Nothing needed there, it's all handled by GAVIN */
 static void spi_clock_sd(void) { }

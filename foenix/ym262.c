@@ -13,14 +13,14 @@
 #endif
 
 #if YM262_DEBUG
- #include "a2560u_debug.h"
+ #include "a2560_debug.h"
  #include <stdio.h>
- #define a2560u_debug(...)
- #define a2560u_debugnl(...)
- //#define a2560u_debug printf
- //#define a2560u_debugnl printf
+ #define a2560_debug(...)
+ #define a2560_debugnl(...)
+ //#define a2560_debug printf
+ //#define a2560_debugnl printf
 #else
- #define a2560u_debug(...)
+ #define a2560_debug(...)
  #define a2560_debugnl(...)
 #endif
 
@@ -308,7 +308,7 @@ static void set_global(const struct ym262_setting_t* setting, uint16_t value)
 void ym262_reset(void)
 {
 	int i;
-	a2560u_debug("ym262_reset");
+	a2560_debug("ym262_reset");
 #if 0
 	for (i=0 ; i<N_CHAN; i++)
 	 	ym262_channel_off(i);
@@ -472,21 +472,21 @@ void ym262_set_osc_connection(uint16_t channel, uint16_t connection)
 
 void ym262_channel_on(uint16_t channel)
 {
-	a2560u_debug("ym262_channel_on(channel:%d)", channel);
+	a2560_debug("ym262_channel_on(channel:%d)", channel);
 	set_channel(&chan_note_on_off, channel, YM262_KEY_ON_MASK);
 }
 
 
 void ym262_channel_off(uint16_t channel)
 {
-	a2560u_debug("ym262_channel_off(channel:%d)", channel);
+	a2560_debug("ym262_channel_off(channel:%d)", channel);
 	set_channel(&chan_note_on_off, channel, 0);
 }
 
 
 void ym262_set_block_fnum(uint16_t channel, uint16_t block, uint16_t fnum)
 {
-	a2560u_debug("ym262_set_block_fnum(channel:%d, block:%d, fnum:%d)", channel, block, fnum);
+	a2560_debug("ym262_set_block_fnum(channel:%d, block:%d, fnum:%d)", channel, block, fnum);
 	set_channel(&chan_block_fnum, channel, (block << 2) | (fnum >> 8));
 	set_channel(&chan_fnum, channel, fnum & 0xff);
 }
@@ -610,7 +610,7 @@ int ym262_test(int argc, char **argv)
 	
 	for (channel=0;channel<n_channels;channel++) {
 		//opl3_test();
-		//a2560u_debugnl("Set OPL3 mode");
+		//a2560_debugnl("Set OPL3 mode");
 		//ym262_write_reg(YM262_REG_OPL3_EN, YM262_OPL3_EN_MASK);
 		/* Program a basic sound */
 		// Modulator
@@ -618,35 +618,35 @@ int ym262_test(int argc, char **argv)
 		ym262_set_oscfreqmult(channel, 1, 3);
 		ym262_set_env_type(channel, 1, YM262_EGT_SUSTAINED);
 		ym262_set_attack_rate(channel, 1, 15);
-		//a2560u_debugnl("Set decay rate");
+		//a2560_debugnl("Set decay rate");
 		ym262_set_decay_rate(channel, 1, 15);
-		//a2560u_debugnl("Set slope rate");
+		//a2560_debugnl("Set slope rate");
 		ym262_set_slope_rate(channel, 1, 0);
-		//a2560u_debugnl("Set release rate");
+		//a2560_debugnl("Set release rate");
 		ym262_set_release_rate(channel, 1, 5);
-		//a2560u_debugnl("Set volume");
+		//a2560_debugnl("Set volume");
 		ym262_set_osc_volume(channel, 1,20);
 		ym262_set_vibrato(channel, 1, false);
 		ym262_set_tremolo(channel, 1, false);
 		ym262_set_osc_connection(0, YM262_SYN_FM);
-		//a2560u_debugnl("Set oscfreqmult");
+		//a2560_debugnl("Set oscfreqmult");
 		ym262_set_feedback(channel,3);
 
 		ym262_set_key_scale_level(channel, 0, 0);
 		ym262_set_oscfreqmult(channel, 0, 2);
 		ym262_set_env_type(channel, 0, YM262_EGT_SUSTAINED);
 		ym262_set_attack_rate(channel, 0, 15);
-		//a2560u_debugnl("Set decay rate");
+		//a2560_debugnl("Set decay rate");
 		ym262_set_decay_rate(channel, 0, 2);
-		//a2560u_debugnl("Set slope rate");
+		//a2560_debugnl("Set slope rate");
 		ym262_set_slope_rate(channel, 0, 4);
-		//a2560u_debugnl("Set release rate");
+		//a2560_debugnl("Set release rate");
 		ym262_set_release_rate(channel, 0, 5);
-		//a2560u_debugnl("Set volume");
+		//a2560_debugnl("Set volume");
 		ym262_set_osc_volume(channel, 0,63);
 		ym262_set_vibrato(channel, 0, false);
 		ym262_set_tremolo(channel, 0, false);
-		//a2560u_debugnl("Set oscfreqmult");
+		//a2560_debugnl("Set oscfreqmult");
 
 		ym262_set_block_fnum(0, blocks[note_number], fnums[note_number]);
 		ym262_set_block_fnum(1, blocks[note_number+4], fnums[note_number+4]);
@@ -655,12 +655,12 @@ int ym262_test(int argc, char **argv)
 		ym262_set_block_fnum(4, blocks[note_number-12], fnums[note_number-12]);
 		ym262_set_block_fnum(5, blocks[note_number-24], fnums[note_number-24]);
 
-		a2560u_debug("ym262_set_output(0, YM262_OUTSEL_LR)");
+		a2560_debug("ym262_set_output(0, YM262_OUTSEL_LR)");
 		ym262_set_output(channel,YM262_OUTSEL_LR);
-		a2560u_debug("ym262_set_osc_connection(0, FM)");
+		a2560_debug("ym262_set_osc_connection(0, FM)");
 		ym262_set_osc_connection(channel, YM262_SYN_ADD);
 
-		a2560u_debug("channel_on(0)");
+		a2560_debug("channel_on(0)");
 		ym262_channel_on(channel);
 	}
 

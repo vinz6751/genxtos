@@ -20,7 +20,7 @@
 
 #if defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
  #define FOENIX_WITH_MIDI
- #include "a2560u_bios.h"
+ #include "a2560_bios.h"
 #endif
 
 

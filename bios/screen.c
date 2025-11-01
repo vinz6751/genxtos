@@ -28,7 +28,7 @@
 #include "lisa.h"
 #include "nova.h"
 #include "screen_atari.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 
 
 #if CONF_WITH_VIDEL
@@ -349,7 +349,7 @@ void screen_setphys(const UBYTE *addr)
 #elif defined(MACHINE_LISA)
     lisa_setphys(addr);
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-    a2560u_setphys(addr);
+    a2560_setphys(addr);
 #elif CONF_WITH_ATARI_VIDEO
     atari_setphys(addr);
 #endif

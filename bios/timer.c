@@ -20,7 +20,7 @@
 # include "biosdefs.h"
 # include "mfp.h"
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-# include "a2560u_bios.h"
+# include "a2560_bios.h"
 # include "timer.h"
 #endif
 

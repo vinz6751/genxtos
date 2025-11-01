@@ -4,19 +4,19 @@
 .EQU DIRTY_CELLS_SIZE_SIZEOF, A2560U_DIRTY_CELLS_SIZE*4
 
     // Exports
-    .GLOBAL _a2560u_sfb_mark_cell_dirty
-    .GLOBAL _a2560u_sfb_copy_fb_to_vram
+    .GLOBAL a2560_sfb_mark_cell_dirty
+    .GLOBAL a2560_sfb_copy_fb_to_vram
 
     // Imports
-    .GLOBAL _a2560u_sfb_dirty_cells
-    .GLOBAL _a2560u_bios_vram_fb
-    .GLOBAL _a2560u_sfb_line_size_in_bytes
-    .GLOBAL _a2560u_sfb_text_cell_height
+    .GLOBAL a2560_sfb_dirty_cells
+    .GLOBAL a2560_bios_vram_fb
+    .GLOBAL a2560_sfb_line_size_in_bytes
+    .GLOBAL a2560_sfb_text_cell_height
 
 
 #define DISABLE_VIDEO_ENGINE_DURING_COPY 0// That doesn't seem to bring any visible performance, and may cause flicker
 
-_a2560u_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
+a2560_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
 
 // Allow to limit the number of cells rendered per frame, to avoid spending too much time. -1 means unlimited.
 // If it's not enough the dirty cells array may be too small and we loose data. If it's too high, we may spend
@@ -36,7 +36,7 @@ _a2560u_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     move.l  d0,0xb40000
 #endif
 
-    lea     _a2560u_sfb_dirty_cells,a0
+    lea     a2560_sfb_dirty_cells,a0
     tst.w   4(a0)           // Test "full_copy" to know if we should copy the whole frame buffer to VRAM ?
     jne     copy_whole_screen  // Yes -> go there
     // Otherwise process the list of dirty cells from the ring buffer  
@@ -45,12 +45,12 @@ _a2560u_sfb_copy_fb_to_vram: // Copies our SRAM buffer to video ram
     jeq     cell_copy_done  // Nothing to read -> end
 copy_cell_to_vram:
     // Cache information in registers
-    movea.l _a2560u_bios_vram_fb,a3
-    move.l  _a2560u_sfb_addr,d2    // Cache
-    move.w  _a2560u_sfb_text_cell_height,d4    // Cache. d3 is the actual decounter used in the loop
+    movea.l a2560_bios_vram_fb,a3
+    move.l  a2560_sfb_addr,d2    // Cache
+    move.w  a2560_sfb_text_cell_height,d4    // Cache. d3 is the actual decounter used in the loop
     subq.w  #1,d4           // For the dbra of cell height
     clr.l   d5
-    move.w  _a2560u_sfb_line_size_in_bytes,d5    // Cache for moving to next line of the frame buffer
+    move.w  a2560_sfb_line_size_in_bytes,d5    // Cache for moving to next line of the frame buffer
 cell_copy:
     addq.w  #4,d0           // Advance reader and wrap at 256 (offset 1024)
     andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0
@@ -90,9 +90,9 @@ copy_whole_screen:
     // Copy the whole SRAM frame buffer to VRAM
     move.w  (a0),2(a0)          // Flush the ring buffer (reader <- writer)
     move.w  #0,4(a0)            // Put down the flag to force full copy, as we're doing it now
-    move.l  _a2560u_sfb_size,d0
-    movea.l  _a2560u_sfb_addr,a1       // Source
-    movea.l _a2560u_bios_vram_fb,a3  // Destination
+    move.l  a2560_sfb_size,d0
+    movea.l  a2560_sfb_addr,a1       // Source
+    movea.l a2560_bios_vram_fb,a3  // Destination
     lsr.l   #5,d0               // We unroll the loop to copy 32 bytes at a time
 fbcpy: // We can only do movem.w not movem.l as the later doesn't work (yet ?)
     .rept 4
@@ -111,9 +111,9 @@ fbcpy: // We can only do movem.w not movem.l as the later doesn't work (yet ?)
     rts
 
 
-_a2560u_sfb_mark_cell_dirty:
+a2560_sfb_mark_cell_dirty:
     // Add the given text cell address to the ring buffer of dirty cells
-    lea     _a2560u_sfb_dirty_cells,a0
+    lea     a2560_sfb_dirty_cells,a0
     move.w  (a0),d0     // Writer
     addq.w  #4,d0       // Next position
     andi.w  #DIRTY_CELLS_SIZE_SIZEOF-1,d0   // Wrap if needed

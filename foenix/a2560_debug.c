@@ -1,6 +1,6 @@
 #include "../include/doprintf.h" /* EmuTOS */
 
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
 #include "foenix.h"
 #include "regutils.h"
 #include "uart16550.h"
@@ -56,7 +56,7 @@ void a2560_debug(const char* __restrict__ fmt, ...)
 #endif
 }
 
-void a2560u_here(void) {
+void a2560_here(void) {
 #if MACHINE_A2560_DEBUG
    a2560_debugnl("HERE");
 #endif
