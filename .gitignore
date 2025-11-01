@@ -37,3 +37,6 @@
 bdos/logo.c
 bdos/logo.h
 logo_compressor
+
+# GCC dependency files
+*.d
