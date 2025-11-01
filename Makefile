@@ -531,7 +531,10 @@ else
 endif
 
 
-foenix/libfoenix-%.a:
+# Get all source files from foenix/ that the library depends on
+FOENIX_SRC = $(wildcard foenix/*.c foenix/*.h foenix/*.S)
+
+foenix/libfoenix-%.a: $(FOENIX_SRC) foenix/Makefile
 	$(MAKE) -C foenix libfoenix-$*.a CPUFLAGS='$(CPUFLAGS)'
 
 #
