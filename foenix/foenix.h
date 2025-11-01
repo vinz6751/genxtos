@@ -47,13 +47,13 @@
 
   #if defined(MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560K)
   #define SRAM_TOP        0x00400000 /* Address of first byte after SRAM */
-  // I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank
+  /* I have deliberately inverted bank 0 and 1 so that bank 0 is, for both the U and the X/K/GenX the "full featured" bank */
   #define VRAM_Bank0      0x00800000
   #define VRAM0_SIZE      0x00400000 /* 4MB */
   #define VRAM_Bank1      0x00C00000
   #define VRAM1_SIZE      0x00400000 /* 4MB */
 
-  // Video
+  /* Video */
   #define VICKY_A         0xFEC40000
   #define VICKY_FONT_A    (VICKY_A+VICKY_FONT_MEM_OFFSET)
   #define VICKY_TEXT_A    (VICKY_A+VICKY_TEXT_MEM_OFFSET)
@@ -62,36 +62,36 @@
   #define VICKY_FONT_B    (VICKY_B+VICKY_FONT_MEM_OFFSET)
   #define VICKY_TEXT_B    (VICKY_B+VICKY_TEXT_MEM_OFFSET)
   
-  // Convenience, we treat the most feature-full screen as main screen (so to share code with the U which only has 1 screen)
+  /* Convenience, we treat the most feature-full screen as main screen (so to share code with the U which only has 1 screen) */
   #define VICKY VICKY_B
   #define VICKY_TEXT VICKY_TEXT_B
   
   #elif defined(MACHINE_A2560M)
-  #define SRAM_TOP              0x00800000 // Address of first byte after SRAM
-  #define VICKY2                0xFEC80000 // This is a limited "legacy" mode with no bitmap
-  #define VICKY2_FONT           (VICKY2+VICKY_FONT_MEM_OFFSET) // 0xFEC88000
+  #define SRAM_TOP              0x00800000 /* Address of first byte after SRAM */
+  #define VICKY2                0xFEC80000 /* This is a limited "legacy" mode with no bitmap */
+  #define VICKY2_FONT           (VICKY2+VICKY_FONT_MEM_OFFSET) /* 0xFEC88000 */
   #define VICKY3                0xFC000000
   #define VICKY3_CTRL           VICKY3
-    #define VICKY3_CTRL_EN      0x00000001  // Enable the bitmap background 'DDR3 Memory'
-    #define VICKY3_CTRL_MODE0   0x00000002  // Bitmap Mode 0
-    #define VICKY3_CTRL_MODE1   0x00000004  // Bitmap Mode 1
-    #define VICKY3_CTRL_MODE2   0x00000008  // Bitmap Mode 2
-      // Bitmap Mode [2:0]
-      // 0.0.0 :  512x768     - 1bpp
-      // 0.0.1 :  512x768     - 8bpp
-      // 0.1.0 :  512x768     - 16bpp
-      // 0.1.1 :  512x768     - 32bpp
-      // 1.0.0 :  1024x768    - 1bpp
-      // 1.0.1 :  1024x768    - 8bpp
-      // 1.1.0 :  1024x768    - 16bpp
-      // 1.1.1 :  1024x768    - 32bpp
-  #define VICKY3_BITMAP_ADDR    (VICKY3+4) // Address of bitmap framebuffer in the DDR3 memory
-  #define VKYIII_MONO_COLOR     (VICKY3+8) // Color for the pixels when 1bpp mode is used
+    #define VICKY3_CTRL_EN      0x00000001  /* Enable the bitmap background 'DDR3 Memory' */
+    #define VICKY3_CTRL_MODE0   0x00000002  /* Bitmap Mode 0 */
+    #define VICKY3_CTRL_MODE1   0x00000004  /* Bitmap Mode 1 */
+    #define VICKY3_CTRL_MODE2   0x00000008  /* Bitmap Mode 2 */
+      /* Bitmap Mode [2:0]
+       * 0.0.0 :  512x768     - 1bpp
+       * 0.0.1 :  512x768     - 8bpp
+       * 0.1.0 :  512x768     - 16bpp
+       * 0.1.1 :  512x768     - 32bpp
+       * 1.0.0 :  1024x768    - 1bpp
+       * 1.0.1 :  1024x768    - 8bpp
+       * 1.1.0 :  1024x768    - 16bpp
+       * 1.1.1 :  1024x768    - 32bpp */
+  #define VICKY3_BITMAP_ADDR    (VICKY3+4) /* Address of bitmap framebuffer in the DDR3 memory */
+  #define VKYIII_MONO_COLOR     (VICKY3+8) /* Color for the pixels when 1bpp mode is used */
   #define VICKY3_LUT            0xFC002000
   #define VICKY2_TEXT_MATRIX    (VICKY2+VICKY_TEXT_MEM_OFFSET)
   #define VICKY2_COLOR_MATRIX   (VICKY2+VICKY_TEXT_COL_OFFSET)
 
-  // Convenience for single screen
+  /* Convenience for single screen */
   #define VICKY           VICKY2
   #define VICKY_FONT      VICKY2_FONT
   #define VICKY_TEXT      VICKY2_TEXT_MATRIX
@@ -109,27 +109,27 @@
 
 /* PS/2 keyboard/mouse */
 #ifdef MACHINE_A2560U
-// In the A2560U, there is no SuperIO so the PS2 controller is in the FPGA
+/* In the A2560U, there is no SuperIO so the PS2 controller is in the FPGA */
 #define PS2_BASE       (GAVIN+0x2800)
 #elif defined(MACHINE_A2560X) || defined(MACHINE_A2560K) || defined(MACHINE_GENX) || defined(MACHINE_A2560M)
 #define PS2_BASE       (SUPERIO_BASE+0x60)
 #endif
 
-// IDE and SDCard
+/* IDE and SDCard */
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560U)
 #define IDE_BASE       (GAVIN+0x400)
 #define SDC_BASE       (GAVIN+0x300)
 #elif defined(MACHINE_A2560M)
 #define SDC_BASE       (GAVIN+0x300) /* SD Card 0 (front panel) */
 #define SDC1_BASE      (GAVIN+0x380) /* SD Card 1 (main board) */
-//#define SDC_BASE       (GAVIN+0x300)
-//GAVIN 518 en R32
+/*#define SDC_BASE       (GAVIN+0x300)*/
+/*GAVIN 518 en R32*/
 #endif
 
 
 
 #define GAVIN_CTRL              (GAVIN)
-// Bits of GAVIN's control register
+/* Bits of GAVIN's control register */
   #define GAVIN_CTRL_PWRLED  0x0001
 #if defined(MACHINE_A2560M)
   #define GAVIN_CTRL_SDC1_LED   0x0002
@@ -139,17 +139,17 @@
   #define GAVIN_CTRL_DISKLED    0x0002
 #endif
   #define GAVIN_CTRL_BEEPER     0x0010
-  #define GAVIN_CTRL_LPC_RESET  0x0100 // Super IO Reset line
+  #define GAVIN_CTRL_LPC_RESET  0x0100 /* Super IO Reset line */
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-  #define GAVIN_CTRL_RESET      0x80000000 // Write 0xDEAD---- to reset the machine
+  #define GAVIN_CTRL_RESET      0x80000000 /* Write 0xDEAD---- to reset the machine */
 #endif
 
 #if defined(MACHINE_A2560U)
-#define GAVIN_RESET         (GAVIN+0x02) // Write 0xDEAD to reset the machine
+#define GAVIN_RESET         (GAVIN+0x02) /* Write 0xDEAD to reset the machine */
 #endif
 
 #if defined(MACHINE_A2560M)
-// RGB values of LEDs
+/* RGB values of LEDs */
 #define GAVIN_PWR_LED_COLOR  (GAVIN+0x10)
 #define GAVIN_SDC1_LED_COLOR (GAVIN+0x14)
 #define GAVIN_SDC2_LED_COLOR (GAVIN+0x18)
@@ -216,7 +216,7 @@
 #define INT_GRP(irqn)       (IRQ_PENDING_GRP0 + 2*((irqn&0xf0)>>4))
 
 #if defined(MACHINE_A2560M)
-  // Interrupt group 0
+  /* Interrupt group 0 */
   #define INT_SOF_A           0x00    /* Vicky Channel A Start of Frame */
   #define INT_SOL_A           0x01    /* Vicky Channel A Start of Line */
   #define INT_KBD_PS2         0x08    /* PS/2 Keyboard */
@@ -227,15 +227,15 @@
   #define INT_LPT             0x0D    /* Parallel port */
   #define INT_MIDI            0x0E    /* MPU-401 / MIDI */
   #define INT_RTC             0x0F    /* Real Time Clock */
-  // Interrupt group 1
+  /* Interrupt group 1 */
   #define INT_SDCARD_INSERT   0x18
   #define INT_TIMER0          0x19    /* Timer 0, Clocked with the CPU Clock */
   #define INT_TIMER1          0x1A    /* Timer 1, Clocked with the CPU Clock */
   #define INT_TIMER2          0x1B    /* Timer 2, Clocked with the CPU Clock */
   #define INT_TIMER3          0x1C    /* Timer 3, Clocked with the SOF */
 
-#else // !defined(MACHINE_A2560M)
-  // Interrupt group 0
+#else /* !defined(MACHINE_A2560M) */
+  /* Interrupt group 0 */
   #define INT_SOF_A           0x00    /* Vicky Channel A Start of Frame */
   #define INT_SOL_A           0x01    /* Vicky Channel A Start of Line */
   #define INT_VICKY_A_1       0x02
@@ -254,7 +254,7 @@
     #define INT_RESERVED_2    0x0E
     #define INT_VICKY_B_DAC   0x0F
   #endif
-  // Interrupt group 1
+  /* Interrupt group 1 */
   #define INT_KBD_PS2         0x10    /* PS/2 Keyboard */
   #if defined(MACHINE_A2560K)
     #define INT_MAURICE_PS2   0x11    /* Maurice (A2560K keyboard controller) */
@@ -273,7 +273,7 @@
   #define INT_TIMER3          0x1B    /* Timer 3, Clocked with the SOF Channel A */
   #define INT_TIMER4          0x1C    /* Timer 4, Clocked with the SOF Channel B */
   #define INT_RTC             0x1F    /* Real Time Clock */
-#endif // defined(MACHINE_A2560M)
+#endif /* defined(MACHINE_A2560M) */
 
 
 /* 68000 Interrupt vector numbers (not addresses ! The address is vector number * 4) */
@@ -284,7 +284,7 @@
   #define INT_VICKYII       0x1E
 #endif
 #if defined(MACHINE_A2560M)
-  // See FoenixMCP/src/m68k/startup_m68k.s
+  /* See FoenixMCP/src/m68k/startup_m68k.s */
   #define INT_PS2KBD_VECN   0x40
   #define INT_PS2MOUSE_VECN 0x41
   #define INT_COM1_VECN     0x42

@@ -105,7 +105,7 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     R32(t->value) = 0L;
 # endif
 
-#else // TIMER_COUNT_DOWN
+#else /* TIMER_COUNT_DOWN */
     R32(t->value) = CPU_FREQ / frequency;
     R32(t->compare) = 0L;
 #endif

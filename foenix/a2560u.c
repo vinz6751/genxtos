@@ -19,7 +19,7 @@
 
 #include "vicky2_txt_a_logger.h"
 
-// FIXME: this is an EmuTOS dependency
+/* FIXME: this is an EmuTOS dependency */
 #include "../include/doprintf.h"
 
 int sprintf(char *__restrict__ str, const char *__restrict__ fmt, ...) __attribute__ ((format (printf, 2, 3)));
@@ -107,7 +107,7 @@ void a2560u_init(bool cold_boot)
     a2560_debugnl("wm8776_init");
     wm8776_init();
 
-#if !defined(MACHINE_A2560M) // Not supported yet
+#if !defined(MACHINE_A2560M) /* Not supported yet */
     a2560_debugnl("ym262_reset");
     ym262_reset();
 #endif
@@ -138,7 +138,7 @@ void a2560u_setphys(const uint8_t *address)
 
 /* Serial port support *******************************************************/
 
-void a2560u_irq_com1(void); // Event handler in a2560u_s.S
+void a2560u_irq_com1(void); /* Event handler in a2560u_s.S */
 
 
 /* Real Time Clock  **********************************************************/
@@ -274,7 +274,7 @@ void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
     a2560_debugnl("mpu401_init returns %d",mpu401_init());
 }
 
-#endif // CONF_WITH_MPU401
+#endif /* CONF_WITH_MPU401 */
 
 /* System information ********************************************************/
 
@@ -326,7 +326,7 @@ static const char * foenix_cpu_name[FOENIX_CPU_NAME_SIZE] =
 
 void a2560_system_info(struct foenix_system_info_t *result)
 {
-    // From VICKY
+    /* From VICKY */
 #ifdef MACHINE_A2560U
     result->fpga_date = MAKE_ULONG(R16(VICKY+0x30),R16(VICKY+0x32));
     result->fpga_major = R16(VICKY+0x3A);
@@ -352,7 +352,7 @@ void a2560_system_info(struct foenix_system_info_t *result)
 #endif
     result->pcb_revision_name[3] = '\0';
 
-    // From GAVIN
+    /* From GAVIN */
     uint16_t machine_id = GAVIN_R(GAVIN+0x0C);
     
     a2560_debugnl("Machine id: %x", machine_id);
@@ -377,11 +377,11 @@ void a2560_system_info(struct foenix_system_info_t *result)
         else
             result->vram_size = (1L << 22); /* 4Mo */
 
-        // CPU speed not correctly reported ?
+        /* CPU speed not correctly reported ? */
         result->cpu_speed_hz = foenix_cpu_speed_hz[1];
     }
 
-#if 0 // To produce EmuTOS "advertisement builds" while FPGA is not finished
+#if 0 /* To produce EmuTOS "advertisement builds" while FPGA is not finished */
     result->cpu_name = "MC68LC060";
     result->cpu_speed_hz = 33333333;
     result->model_name = "A2560M FOENIX";

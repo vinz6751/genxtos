@@ -69,9 +69,9 @@ static bool can_drive(const uint8_t ps2_device_type[])
 static void on_change(const vicky_mouse_event_t *event)
 {
     struct ps2_driver_api_t *api = (struct ps2_driver_api_t *)event->user_data;
-    //struct ps2_mouse_local_t *driver_data = (struct ps2_mouse_local_t *)api->driver_data;
+    /*struct ps2_mouse_local_t *driver_data = (struct ps2_mouse_local_t *)api->driver_data;*/
 
-    // Emulate a IKBD mouse packet
+    /* Emulate a IKBD mouse packet */
     int8_t ikbd_packet[3];
 
     int8_t *packet = (int8_t*)event->ps2packet;
@@ -85,16 +85,16 @@ static void on_change(const vicky_mouse_event_t *event)
 void process(const struct ps2_driver_api_t *api, uint8_t byte)
 {
 #if MAXIMUM_TOS_COMPATIBILITY
-    // This is the slower but more compatible option. We write VICKY PS/2 registers as it's the 
-    // only way (currently?) to get the mouse cursor to move. But we simulate an IKBD relative mouse
-    // packet and pass it to the "mousevec" vector of the TOS so all TOS hooks etc. can work.
+    /* This is the slower but more compatible option. We write VICKY PS/2 registers as it's the 
+     * only way (currently?) to get the mouse cursor to move. But we simulate an IKBD relative mouse
+     * packet and pass it to the "mousevec" vector of the TOS so all TOS hooks etc. can work. */
     
     vicky_mouse_ps2(byte);
 #else
-    // This is maximum speed setup. The IKBD handling stuff (mousevec) is bypassed, we directly update line-A variables
-    // and call vectors.
-    // So if apps hook into the XBIOS (mousevec) they won't receive anything. But if they hook at the line-A / VDI level
-    // they're ok.
+    /* This is maximum speed setup. The IKBD handling stuff (mousevec) is bypassed, we directly update line-A variables
+     * and call vectors.
+     * So if apps hook into the XBIOS (mousevec) they won't receive anything. But if they hook at the line-A / VDI level
+     * they're ok. */
     volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
     packet[DRIVER_DATA->state++] = (uint16_t)byte;
     if (DRIVER_DATA->state >= SM_RECEIVED)

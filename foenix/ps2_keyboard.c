@@ -136,7 +136,7 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
         /* On success we're ideal, on failure we swallow the scan code */ \
         STATE = SM_IDLE;
 
-	// a2560_debugnl("scancode:%02x",scancode);
+	/* a2560_debugnl("scancode:%02x",scancode); */
 
     /* These are illegal, we just swallow them */
 	if (scancode == 0 || scancode == 0x80)
@@ -174,7 +174,7 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
 
                 default:
                     {
-                        // Lookup the translation of the E0 prefixed code
+                        /* Lookup the translation of the E0 prefixed code */
                         uint8_t translated_code = scancodeSet1_E0_to_key[scancode & 0x7f];
                         if (translated_code != 0) {
                             if (IS_BREAK(scancode))

@@ -100,8 +100,8 @@ void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t ho
     month_bcd = i_to_bcd(month);
     day_bcd = i_to_bcd(day);
     hour_bcd = i_to_bcd(hour);
-//    if (!time->is_24hours && time->is_pm)
-//        hour_bcd = hour_bcd | 0x80;
+/*    if (!time->is_24hours && time->is_pm)
+        hour_bcd = hour_bcd | 0x80;*/
     minute_bcd = i_to_bcd(minute);
     second_bcd = i_to_bcd(second);
 
@@ -117,7 +117,7 @@ void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t ho
     bq4802ly->minutes = minute_bcd;
     bq4802ly->seconds = second_bcd;
 
-//    if (time->is_24hours)
+/*    if (time->is_24hours)*/
         control = control | BQ4802LY_2412;
 
     /* Re-enable updates to the clock */

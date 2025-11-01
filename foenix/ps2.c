@@ -13,7 +13,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-// #define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -55,15 +55,15 @@
 #define RESEND				0xfe
 
 /* Device flags */
-#define STAT_EXISTS			 (1<<0) // Port exists
-#define STAT_PORTTEST_PASSED (1<<1) // Port self-test passed
-#define STAT_PORT_ENABLED	 (1<<2) // Port is enabled successfully
-#define STAT_CONNECTED		 (1<<3) // Device is connected
-#define STAT_RESET_OK        (1<<4) // Device reset ok
-#define STAT_IDENTIFIED		 (1<<5) // Device identification ok
-#define STAT_ATTACHED		 (1<<6) // Driver found and attached
-#define STAT_DEV1_ENABLED	 (1<<7) // Device 1 is ready to go
-#define STAT_DEV2_ENABLED	 (1<<8) // Device 1 is ready to go
+#define STAT_EXISTS			 (1<<0) /* Port exists */
+#define STAT_PORTTEST_PASSED (1<<1) /* Port self-test passed */
+#define STAT_PORT_ENABLED	 (1<<2) /* Port is enabled successfully */
+#define STAT_CONNECTED		 (1<<3) /* Device is connected */
+#define STAT_RESET_OK        (1<<4) /* Device reset ok */
+#define STAT_IDENTIFIED		 (1<<5) /* Device identification ok */
+#define STAT_ATTACHED		 (1<<6) /* Driver found and attached */
+#define STAT_DEV1_ENABLED	 (1<<7) /* Device 1 is ready to go */
+#define STAT_DEV2_ENABLED	 (1<<8) /* Device 1 is ready to go */
 
 
 /* Global variables */
@@ -344,14 +344,14 @@ static bool setup_driver_api(struct ps2_device_t *dev)
 
 void ps2_channel1_irq_handler(void)
 {
-	//a2560_debugnl("ps2_channel1_irq_handler");
+	/*a2560_debugnl("ps2_channel1_irq_handler");*/
 	L.dev1.driver->process(&L.dev1.api, get_data_no_wait());
 }
 
 
 void ps2_channel2_irq_handler(void)
 {
-	//a2560_debugnl("ps2_channel2_irq_handler");
+	/*a2560_debugnl("ps2_channel2_irq_handler");*/
 	L.dev2.driver->process(&L.dev2.api, get_data_no_wait());
 }
 

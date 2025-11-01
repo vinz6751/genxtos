@@ -56,7 +56,7 @@ void wm8776_init(void)
 
 void wm8776_deinit(void)
 {
-    // TODO: fade out using DMUTE then power off, but it may require timer etc.
+    /* TODO: fade out using DMUTE then power off, but it may require timer etc. */
 }
 
 

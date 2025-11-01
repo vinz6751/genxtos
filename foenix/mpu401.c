@@ -89,7 +89,7 @@ bool mpu401_wait_can_read(void) {
     uint32_t start = get_ticks();
     do {
         if (mpu401_can_read())
-            // There is data waiting
+            /* There is data waiting */
             return true;
     } while ((get_ticks() - start) < timeout_ticks);
 
