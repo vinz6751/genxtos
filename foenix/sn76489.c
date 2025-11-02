@@ -29,7 +29,7 @@ static uint8_t *sn76489_current;
  * Selects the PSG that next function calls will operate on.
  * 0 : left, 1: right, 2: both
  */
-void sn76489_select(int number) {
+void sn76489_select(unsigned int number) {
 # ifdef MACHINE_A2560U
     if (number <= SN76489_COUNT)
         sn76489_current = psgs_ports[number];

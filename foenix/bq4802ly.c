@@ -90,7 +90,6 @@ void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t ho
     uint16_t century;
     uint8_t  hour_bcd, minute_bcd, second_bcd;
     
-
     century = year / 100;
     year = year - (century * 100);
 
