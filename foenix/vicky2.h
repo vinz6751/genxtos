@@ -18,11 +18,11 @@
 
 
 /* VICKY II */
-//#define VICKY_CTRL                  VICKY
+/*#define VICKY_CTRL                  VICKY*/
     #define VICKY_CTRL_TEXT       0x00000001
     #define VICKY_CTRL_TXTOVERLAY 0x00000002
     #define VICKY_CTRL_GFX        0x00000004
-    // Beware VICKY II mode of the A2560M doesn't have bitmap
+    /* Beware VICKY II mode of the A2560M doesn't have bitmap */
     #define VICKY_CTRL_BITMAP     0x00000008
 #if defined(MACHINE_A2560M)
     #define VICKY_CTRL_SLEEP      0x00000010
@@ -36,26 +36,26 @@
     #define VICKY_BORDER_HEIGHT   0x003f0000L
 
 /* Channel A (first screen), VICKY II has only one anyway */
-//#define VICKY_A_BORDER_CTRL         (VICKY+0x0004) /* Border control */
+/*#define VICKY_A_BORDER_CTRL         (VICKY+0x0004) */ /* Border control */
     #define VICKY_BORDER_ENABLE   0x00000001
     #define VICKY_BORDER_SCROLLX  0x00000070
     #define VICKY_BORDER_WIDTH    0x00003f00L
     #define VICKY_BORDER_HEIGHT   0x003f0000L
 
-//#define VICKY_B_BORDER_COLOR        (VICKY+0x0008) /* Border colour 0x--RRGGBB */
-//#define VICKY_A_CURSOR_CTRL         (VICKY+0x0010) /* Cursor configuration */
+/*#define VICKY_B_BORDER_COLOR        (VICKY+0x0008) */ /* Border colour 0x--RRGGBB */
+/*#define VICKY_A_CURSOR_CTRL         (VICKY+0x0010) */ /* Cursor configuration */
     #define VICKY_CURSOR_ENABLE     0x00000001
     #define VICKY_CURSOR_RATE       0x00000006
     #define VICKY_CURSOR_CHAR       0x00ff0000L
 
-//#define VICKY_A_CURSOR_POS          (VICKY+0x0014) /* Cursor position */
+/*#define VICKY_A_CURSOR_POS          (VICKY+0x0014) */ /* Cursor position */
     #define VICKY_CURSOR_X          0x0000ffff
     #define VICKY_CURSOR_Y          0xffff0000
-//#define VICKY_B_BG_COLOR            (VICKY+0x000C) /* Background control */
-//#define VICKY_A_BMP0_FG_CTRL        (VICKY+0x0100) /* Bitmap layer 0 control */
-//#define VICKY_A_BMP0_FB             (VICKY+0x0104) /* Bitmap layer 0 framebuffer address relative to VRAM */
-//#define VICKY_A_BMP1_FG_CTRL        (VICKY+0x0108) /* Bitmap layer 1 control */
-//#define VICKY_A_BMP1_FB             (VICKY+0x010c) /* Bitmap layer 1 framebuffer address relative to VRAM */
+/*#define VICKY_B_BG_COLOR            (VICKY+0x000C) */ /* Background control */
+/*#define VICKY_A_BMP0_FG_CTRL        (VICKY+0x0100) */ /* Bitmap layer 0 control */
+/*#define VICKY_A_BMP0_FB             (VICKY+0x0104) */ /* Bitmap layer 0 framebuffer address relative to VRAM */
+/*#define VICKY_A_BMP1_FG_CTRL        (VICKY+0x0108) */ /* Bitmap layer 1 control */
+/*#define VICKY_A_BMP1_FB             (VICKY+0x010c) */ /* Bitmap layer 1 framebuffer address relative to VRAM */
 
 /* Color palettes */
 #define VICKY_NLUTS           8      /* Number of luts */
@@ -160,11 +160,11 @@ struct vicky2_text_memory_t {
 
 struct vicky2_layer_t {
     uint32_t control;
-    uint8_t  *address; // Relative to VRAM start
+    uint8_t  *address; /* Relative to VRAM start */
 };
 
 struct vicky2_bitmap_t {
-    struct vicky2_layer_t layer[3]; // Bitmap 0, bitmap 1, collision detection
+    struct vicky2_layer_t layer[3]; /* Bitmap 0, bitmap 1, collision detection */
 };
 
 struct vicky2_palette_t {
@@ -180,7 +180,7 @@ struct vicky2_font_memory_t {
 };
 
 #ifdef MACHINE_A2560U
-// A2560
+/* A2560 */
 struct vicky2_t {
     uint32_t control;
     uint32_t border_control;
@@ -192,7 +192,7 @@ struct vicky2_t {
     uint16_t reserved[8];
     uint16_t fpga_year;
     uint16_t fpga_month_day;
-    uint16_t pcb_revision[2]; // Null-terminated string
+    uint16_t pcb_revision[2]; /* Null-terminated string */
     uint16_t fpga_sub_version;
     uint16_t fpga_version;
     uint16_t fpga_part_number_low;
@@ -218,9 +218,9 @@ extern const struct vicky2_channel_t * const vicky;
 
 #elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 struct vicky2_mouse_control_t {
-    uint16_t control; // READ AS 32BITS !
+    uint16_t control; /* READ AS 32BITS ! */
     uint16_t reserved02;
-    uint16_t yx; // Read only
+    uint16_t yx; /* Read only */
     uint16_t reserved06;
 };
 
@@ -252,11 +252,11 @@ struct vicky2_t {
 #endif
     
     uint32_t mouse_graphics[16*16*2];
-    uint16_t mouse_control; // Must write as 32bits !
+    uint16_t mouse_control; /* Must write as 32bits ! */
     uint16_t reserved_c02;
-    uint32_t mouse_position; // Read only
+    uint32_t mouse_position; /* Read only */
     uint16_t reserved_c06;
-    uint32_t ps2_byte[3]; // Must write as 32 bits. See doc.
+    uint32_t ps2_byte[3]; /* Must write as 32 bits. See doc. */
 };
 
 struct vicky2_mouse_gfx_t {
@@ -265,7 +265,7 @@ struct vicky2_mouse_gfx_t {
 
 struct vicky2_sprite_control_t {
     uint16_t control;
-    uint16_t address; // Must be on 16bit boundary address
+    uint16_t address; /* Must be on 16bit boundary address */
 };
 
 struct vicky2_sprites_control_t {
@@ -290,13 +290,13 @@ struct vicky2_channel_t {
     struct vicky2_gamma_lut_memory_t *gamma;
     struct vicky2_font_memory_t *font_memory;
     struct vicky2_text_memory_t *text_memory;
-    const FOENIX_VIDEO_MODE *video_modes; // Array of video modes
+    const FOENIX_VIDEO_MODE *video_modes; /* Array of video modes */
 };
 
-// Convenience pointers for the default (or only) screen
+/* Convenience pointers for the default (or only) screen */
 extern const struct vicky2_channel_t vicky2_channel_a;
 extern const struct vicky2_channel_t vicky2_channel_b;
-// Convenience, will point to either vicky2_channel_a or vicky2_channel_b depending on the machine.
+/* Convenience, will point to either vicky2_channel_a or vicky2_channel_b depending on the machine. */
 extern const struct vicky2_channel_t * const vicky;
 
 #endif
@@ -331,7 +331,7 @@ void vicky2_set_text_cursor_xy(const struct vicky2_channel_t * const vicky, uint
 
 /* Mouse support: see vicky_mouse.h */
 
-// Utility
+/* Utility */
 uint32_t convert_atari2vicky_color(uint16_t orgb);
 
-#endif // VICKY2_H
+#endif /* VICKY2_H */

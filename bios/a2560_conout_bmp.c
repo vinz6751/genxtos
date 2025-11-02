@@ -1,5 +1,5 @@
 /*
- * a2560u_conout_text.c - VICKY framebuffer mode driver
+ * a2560_conout_bmp.c - VICKY framebuffer mode driver
  *
  *
   * Copyright (C) 2022 The EmuTOS development team
@@ -28,7 +28,7 @@
 #include "string.h"
 #include "conout.h"
 #include "font.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "../foenix/shadow_fb.h"
 #include "../foenix/regutils.h"
 
@@ -125,7 +125,7 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_sfb_mark_cell_dirty(dst.pxaddr);
+    a2560_sfb_mark_cell_dirty(dst.pxaddr);
 #endif
 }
 
@@ -152,7 +152,7 @@ static void neg_cell(CHAR_ADDR cell)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_sfb_mark_cell_dirty(c);
+    a2560_sfb_mark_cell_dirty(c);
 #endif
 }
 
@@ -219,7 +219,7 @@ static void blank_out(int topx, int topy, int botx, int boty)
     }
 
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560u_sfb_mark_screen_dirty();
+    a2560_sfb_mark_screen_dirty();
 #endif
 }
 
@@ -264,7 +264,7 @@ static void unpaint_cursor(void)
 }
 
 
-const CONOUT_DRIVER a2560u_conout_bmp =
+const CONOUT_DRIVER a2560_conout_bmp =
 {
     init,
     blank_out,

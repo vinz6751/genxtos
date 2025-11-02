@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "a2560u.h"
+#include "a2560.h"
 #include "cpu.h"
 #include "foenix.h"
 #include "regutils.h"
@@ -93,8 +93,8 @@ const struct vicky2_channel_t vicky2_channel = {
     (struct vicky2_bitmap_t * const )(VICKY+0x100),
     (struct vicky2_tile_t * const)(VICKY+0x200),
     (struct vicky2_collision_t * const )(VICKY + 0x300),
-    (struct vicky2_mouse_gfx_t * const)(VICKY + VICKY_MOUSE_MEM_OFFSET), // Mouse graphics
-    (struct vicky2_mouse_control_t * const)(VICKY + VICKY_MOUSE_CTRL_OFFSET), // Mouse control
+    (struct vicky2_mouse_gfx_t * const)(VICKY + VICKY_MOUSE_MEM_OFFSET), /* Mouse graphics */
+    (struct vicky2_mouse_control_t * const)(VICKY + VICKY_MOUSE_CTRL_OFFSET), /* Mouse control */
     (struct vicky2_sprites_control_t ** const)(VICKY + 0x1000),
     (struct vicky2_bmp_palette_t * const)(VICKY + 0x2000),
     (struct vicky2_gamma_lut_memory_t * const)(VICKY + 0x4000),
@@ -103,7 +103,7 @@ const struct vicky2_channel_t vicky2_channel = {
     vicky2_video_modes
 };
 
-// Default screen
+/* Default screen */
 const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * const)&vicky2_channel;
 
 #elif defined (MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
@@ -128,8 +128,8 @@ const struct vicky2_channel_t vicky2_channel_a = {
     (struct vicky2_bitmap_t * const)0L,
     (struct vicky2_tile_t * const)0L,
     (struct vicky2_collision_t * const)0L,
-    (struct vicky2_mouse_gfx_t * const)(VICKY_A + VICKY_MOUSE_MEM_OFFSET), // Mouse graphics
-    (struct vicky2_mouse_control_t * const)(VICKY_A + VICKY_MOUSE_CTRL_OFFSET), // Mouse control
+    (struct vicky2_mouse_gfx_t * const)(VICKY_A + VICKY_MOUSE_MEM_OFFSET), /* Mouse graphics */
+    (struct vicky2_mouse_control_t * const)(VICKY_A + VICKY_MOUSE_CTRL_OFFSET), /* Mouse control */
     (struct vicky2_sprites_control_t ** const)0L,
     (struct vicky2_bmp_palette_t * const)0L,
     (struct vicky2_gamma_lut_memory_t * const)0L,
@@ -143,8 +143,8 @@ const struct vicky2_channel_t vicky2_channel_b = {
     (struct vicky2_bitmap_t * const )(VICKY_B+0x100),
     (struct vicky2_tile_t * const)(VICKY_B+0x200),
     (struct vicky2_collision_t * const )(VICKY_B + 0x300),
-    (struct vicky2_mouse_gfx_t * const)(VICKY_B + VICKY_MOUSE_MEM_OFFSET), // Mouse graphics
-    (struct vicky2_mouse_control_t * const)(VICKY_B + VICKY_MOUSE_CTRL_OFFSET), // Mouse control
+    (struct vicky2_mouse_gfx_t * const)(VICKY_B + VICKY_MOUSE_MEM_OFFSET), /* Mouse graphics */
+    (struct vicky2_mouse_control_t * const)(VICKY_B + VICKY_MOUSE_CTRL_OFFSET), /* Mouse control */
     (struct vicky2_sprites_control_t ** const)(VICKY_B + 0x1000),
     (struct vicky2_bmp_palette_t * const)(VICKY_B + 0x2000),
     (struct vicky2_gamma_lut_memory_t * const)(VICKY_B + 0x4000),
@@ -153,7 +153,7 @@ const struct vicky2_channel_t vicky2_channel_b = {
     vicky2_b_video_modes
 };
 
-// Default screen
+/* Default screen */
 const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * const)&vicky2_channel_b;
 #elif defined(MACHINE_A2560M)
 const FOENIX_VIDEO_MODE vicky3_video_modes[] = {
@@ -167,14 +167,14 @@ const FOENIX_VIDEO_MODE vicky3_video_modes[] = {
     { 7, 1024, 768, 32, 60 }
 };
 
-// A2560M's VICKYII is stripped down, it doesn't have bitmap, border, sprites etc.
+/* A2560M's VICKYII is stripped down, it doesn't have bitmap, border, sprites etc. */
 const struct vicky2_channel_t vicky3_channel = {
     (struct vicky2_t * const)VICKY2,
     (struct vicky2_bitmap_t * const)0L,
     (struct vicky2_tile_t * const)0L,
     (struct vicky2_collision_t * const)0L,
-    (struct vicky2_mouse_gfx_t * const)(VICKY2 + VICKY_MOUSE_MEM_OFFSET), // Mouse graphics
-    (struct vicky2_mouse_control_t * const)(VICKY2 + VICKY_MOUSE_CTRL_OFFSET), // Mouse control
+    (struct vicky2_mouse_gfx_t * const)(VICKY2 + VICKY_MOUSE_MEM_OFFSET), /* Mouse graphics */
+    (struct vicky2_mouse_control_t * const)(VICKY2 + VICKY_MOUSE_CTRL_OFFSET), /* Mouse control */
     (struct vicky2_sprites_control_t ** const)0L,
     (struct vicky2_bmp_palette_t * const)0L,
     (struct vicky2_gamma_lut_memory_t * const)0L,
@@ -189,10 +189,10 @@ const struct vicky2_channel_t * const vicky = (const struct vicky2_channel_t * c
 
 /* IRQ handlers */
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-void a2560u_irq_vicky_a(void); // VICKY autovector A interrupt handler
-void a2560u_irq_vicky_b(void); // VICKY autovector B interrupt handler
+void a2560_irq_vicky_a(void); /* VICKY autovector A interrupt handler */
+void a2560_irq_vicky_b(void); /* VICKY autovector B interrupt handler */
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
-void a2560u_irq_vicky(void); // Only channel, or channel B on the A2560K/X/GenX
+void a2560_irq_vicky(void); /* Only channel, or channel B on the A2560K/X/GenX */
 #else
  #error "Define Foenix machine"
 #endif
@@ -215,11 +215,11 @@ void vicky2_init(void)
 #endif
 
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-    // Channel A VBL
-    set_vector(INT_VICKYII_A, (uint32_t)a2560u_irq_vicky_a);
-    set_vector(INT_VICKYII_B, (uint32_t)a2560u_irq_vicky_b);
+    /* Channel A VBL */
+    set_vector(INT_VICKYII_A, (uint32_t)a2560_irq_vicky_a);
+    set_vector(INT_VICKYII_B, (uint32_t)a2560_irq_vicky_b);
 #else
-    set_vector(INT_VICKYII, (uint32_t)a2560u_irq_vicky);
+    set_vector(INT_VICKYII, (uint32_t)a2560_irq_vicky);
 #endif
 }
 
@@ -239,14 +239,14 @@ void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
     a2560_debugnl("vicky2_init(%p)", vicky->ctrl);
 
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-    // Initialise text screen for logging
-    vicky->ctrl->control = VICKY_CTRL_TEXT; // Default is 800x600
+    /* Initialise text screen for logging */
+    vicky->ctrl->control = VICKY_CTRL_TEXT; /* Default is 800x600 */
     vicky->ctrl->background_color = 0xff8888ff;
-    // EmuTOS code is not ready to support borders
-    //vicky->ctrl->border_control = 0x00080800|VICKY_BORDER_ENABLE;
+    /* EmuTOS code is not ready to support borders */
+    /*vicky->ctrl->border_control = 0x00080800|VICKY_BORDER_ENABLE;*/
     vicky->ctrl->border_control = 0;
     vicky->ctrl->border_color = 0xffffffff;
-    vicky->ctrl->background_color = 0x00222222;//convert_atari2vicky_color(vicky2_default_palette[15]);
+    vicky->ctrl->background_color = 0x00222222; /*convert_atari2vicky_color(vicky2_default_palette[15]);*/
     vicky->ctrl->cursor_control = 0xf0ff0001;
     vicky->ctrl->cursor_position = 0x00000000;
     channel_A_set_fg_color(0);
@@ -256,11 +256,11 @@ void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
         vicky->text_memory->palette_bg[i].code = vicky->text_memory->palette_fg[i].code = convert_atari2vicky_color(vicky2_default_palette[i]);
     }
 #elif defined(MACHINE_A2560M)
-    uint32_t msr_shadow = 0; // This assumes the default video mode
+    uint32_t msr_shadow = 0; /* This assumes the default video mode */
     msr_shadow |= VICKY_CTRL_TEXT;
 
-    // This could probably be moved elsewhere
-#if 0 // check the offsets
+    /* This could probably be moved elsewhere */
+#if 0 /* check the offsets */
     a2560_debugnl("vicky->ctrl->control: %p", &vicky->ctrl->control);
     a2560_debugnl("vicky->ctrl->cursor_control: %p", &vicky->ctrl->cursor_control);
     a2560_debugnl("vicky->ctrl->cursor_position: %p", &vicky->ctrl->cursor_position);
@@ -273,10 +273,10 @@ void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
     a2560_debugnl("vicky->text_memory->color: %p", &vicky->text_memory->color);
 #endif
 
-    vicky->ctrl->cursor_control = 0x00410009L; // Set the Cursor - FONTSet0, SLowest FLash
+    vicky->ctrl->cursor_control = 0x00410009L; /* Set the Cursor - FONTSet0, SLowest FLash */
     vicky->ctrl->cursor_position = 0;
     vicky->ctrl->font_size_control = 0x08080808L;
-    vicky->ctrl->text_window_size = 0x3c50L; // 60x80
+    vicky->ctrl->text_window_size = 0x3c50L; /* 60x80 */
     vicky->ctrl->window_pos_x = 0x01ff00B7L;
     vicky->ctrl->window_size_x = 0x028001E0L;
     vicky->ctrl->window_prefetch = 0x01090000L;
@@ -284,7 +284,7 @@ void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
 #if 0
     uint8_t *t = vicky->text_memory->text;
     uint8_t *c = vicky->text_memory->color;
-    #if 0 // test
+    #if 0 /* test */
     for (int i=0; i<4800; i++) {
         *t++ = '+';
         *c++ = 0xf2+i;
@@ -294,10 +294,10 @@ void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
     vicky->ctrl->control = msr_shadow;
 #endif
 
-#if !defined(MACHINE_A2560M) // Does need it ?
-    // Kick the PLL
-    // If VICKY is generating a 40MHz signal, we need to switch the bit to go to 40MHz before
-    // clearing it to go back to 25MHz. Thanks MCP for the trick !
+#if !defined(MACHINE_A2560M) /* Does need it ? */
+    /* Kick the PLL
+     * If VICKY is generating a 40MHz signal, we need to switch the bit to go to 40MHz before
+     * clearing it to go back to 25MHz. Thanks MCP for the trick ! */
     if (vicky->ctrl->control & VICKY_CTRL_CLK40) {
         a2560_debugnl("kicking PLL");
         uint32_t ctrl = vicky->ctrl->control;
@@ -376,10 +376,10 @@ void vicky2_set_lut_color(const struct vicky2_channel_t * const vicky, uint16_t 
     volatile uint8_t * c = (uint8_t *)&vicky->lut->lut[lut].color[number].code;
     COLOR32 *clr = (COLOR32*)&color;
 
-    c[0] = clr->blue; // B
-    c[1] = clr->green; // G
-    c[2] = clr->red; // R
-    c[3] = 0xff; // A
+    c[0] = clr->blue; /* B */
+    c[1] = clr->green; /* G */
+    c[2] = clr->red; /* R */
+    c[3] = 0xff; /* A */
 #elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     vicky->lut->lut[lut].color[number] = *((COLOR32*)&color);
 #endif
@@ -501,10 +501,10 @@ void vicky2_set_text_lut(const struct vicky2_channel_t * const vicky, const uint
     a2560_debugnl("TEXT color lut set fg:%p bg:%p", fglut, bglut);
 #endif
 
-#if 0 // test
+#if 0 /* test */
 
     for (i=0;i<1000;i++) {
-        vicky->text_memory->color[i] = (i%0xf);// | (i % 0xf0) << 4;
+        vicky->text_memory->color[i] = (i%0xf); /*| (i % 0xf0) << 4;*/
         vicky->text_memory->text[i] = '0' + i%10;
     }
 

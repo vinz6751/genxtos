@@ -1,5 +1,5 @@
 /*
- * a2560u - Foenix Retro Systems A2560 specific functions
+ * a2560 - Foenix Retro Systems A2560 specific functions
  *
  * Copyright (C) 2013-2025 The EmuTOS development team
  *
@@ -21,11 +21,11 @@
 #include "../bios/serport.h"
 #include "../foenix/vicky2.h"
 #include "../foenix/vicky_mouse.h"
-#include "../foenix/a2560u.h"
+#include "../foenix/a2560.h"
 
 /* Indicates if/sets the shadow framebuffer is active.
  * If so, on each VBL we copy the shadow frame buffer to Video RAM. */
-extern bool a2560u_bios_sfb_is_active;
+extern bool a2560_bios_sfb_is_active;
 
 /* C entry point for initialisation */
 void     a2560_bios_init(void);
@@ -51,7 +51,7 @@ void a2560_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height);
 uint32_t a2560_bios_bcostat1(void);
 void a2560_bios_bconout1(uint8_t byte);
 void a2560_bios_rs232_init(void);
-uint32_t a2560u_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr);
+uint32_t a2560_bios_rsconf1(int16_t baud, EXT_IOREC *iorec, int16_t ctrl, int16_t ucr, int16_t rsr, int16_t tsr, int16_t scr);
 
 /* Timing stuff */
 #define HZ200_TIMER_NUMBER 2

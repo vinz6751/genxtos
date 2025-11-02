@@ -41,7 +41,7 @@
 #include "timer.h"
 #include "vectors.h"
 #include "xbios.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "xbios_tt.h"
 
 #define DBG_XBIOS        0

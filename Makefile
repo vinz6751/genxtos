@@ -318,7 +318,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c bios.c xbios
              lisa.c lisa2.S \
              delay.c delayasm.S sd.c timer.c timer_.S memory2.c bootparams.c scsi.c nova.c \
              dsp.c dsp2.S scsidriv.c vbl.c \
-             a2560u_bios.c a2560u_bios_s.S a2560u_conout_text.c a2560u_conout_bmp.c spi_a2560m.c spi_gavin.c
+             a2560_bios.c a2560_bios_s.S a2560_conout_text.c a2560_conout_bmp.c spi_a2560m.c spi_gavin.c
 
 
 ifeq (1,$(COLDFIRE))
@@ -531,7 +531,10 @@ else
 endif
 
 
-foenix/libfoenix-%.a:
+# Get all source files from foenix/ that the library depends on
+FOENIX_SRC = $(wildcard foenix/*.c foenix/*.h foenix/*.S)
+
+foenix/libfoenix-%.a: $(FOENIX_SRC) foenix/Makefile
 	$(MAKE) -C foenix libfoenix-$*.a CPUFLAGS='$(CPUFLAGS)'
 
 #

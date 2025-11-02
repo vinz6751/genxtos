@@ -1,11 +1,11 @@
-// This is standalone and raw logger for the A2560X/K/GenX channel A
-// It is meant to be standalone and pretty raw so to minimize chances of failing, as it is used for debugging.
+/* This is standalone and raw logger for the A2560X/K/GenX channel A
+ * It is meant to be standalone and pretty raw so to minimize chances of failing, as it is used for debugging. */
 
 
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include <stdint.h>
-//#include "string.h"
+/*#include "string.h"*/
 #include "foenix.h"
 #include "vicky2.h"
 #include "vicky2_txt_a_logger.h"
@@ -201,11 +201,11 @@ struct vicky3_t {
     uint32_t font_count_control;
     uint32_t reserved_0028[6];
     uint32_t mouse_graphics[16*16*2];
-    uint16_t mouse_control; // Must write as 32bits !
+    uint16_t mouse_control; /* Must write as 32bits ! */
     uint16_t reserved_c02;
-    uint32_t mouse_position; // Read only
+    uint32_t mouse_position; /* Read only */
     uint16_t reserved_c06;
-    uint32_t ps2_byte[3]; // Must write as 32 bits. See doc.
+    uint32_t ps2_byte[3]; /* Must write as 32 bits. See doc. */
 };
 
 struct vicky3_text_memory_t {
@@ -235,14 +235,14 @@ void channel_A_logger_init(void)
 
     vicky2_init_channel(vicky);
 #if 1
-    // Initialise text screen for logging
-    vicky->ctrl->control = VICKY_CTRL_TEXT; // Default is 800x600
-    //vicky->ctrl->background_color = 0xff8888ff;
-    //vicky->ctrl->border_control = 0x00080800| VICKY_BORDER_ENABLE;
-    //vicky->ctrl->border_color = 0xffffffff;
-    //vicky->ctrl->background_color = 0x00111111;//convert_atari2vicky_color(tt_dflt_palette[15]);
-    //vicky->ctrl->cursor_control = 0xf0ff0001;
-    //vicky->ctrl->cursor_position = 0x00000000;
+    /* Initialise text screen for logging */
+    vicky->ctrl->control = VICKY_CTRL_TEXT; /* Default is 800x600 */
+    /*vicky->ctrl->background_color = 0xff8888ff;*/
+    /*vicky->ctrl->border_control = 0x00080800| VICKY_BORDER_ENABLE;*/
+    /*vicky->ctrl->border_color = 0xffffffff;*/
+    /*vicky->ctrl->background_color = 0x00111111;*/ /*convert_atari2vicky_color(tt_dflt_palette[15]);*/
+    /*vicky->ctrl->cursor_control = 0xf0ff0001;*/
+    /*vicky->ctrl->cursor_position = 0x00000000;*/
     vicky->ctrl->font_size_control = 0x08080808; /* 8x8 character */
     vicky->ctrl->font_count_control = (LINE_COUNT & 0xff) << 8 | (COL_COUNT & 0xff);
 #endif
@@ -254,21 +254,21 @@ void channel_A_logger_init(void)
     }
 
 #if 0
-    vicky3_a_ctrl->control = 0x001; // Text enable, enable video, 800x600, no gamma
-    vicky3_a_ctrl->border_color = 0; // No border
-    vicky3_a_ctrl->background_color = 0x00110033UL; // xxRGB
+    vicky3_a_ctrl->control = 0x001; /* Text enable, enable video, 800x600, no gamma */
+    vicky3_a_ctrl->border_color = 0; /* No border */
+    vicky3_a_ctrl->background_color = 0x00110033UL; /* xxRGB */
     vicky3_a_ctrl->cursor_control =  0x027F0007UL;
     vicky3_a_ctrl->font_size_control = 0x08080808;
     vicky3_a_ctrl->font_count_control = (LINE_COUNT<<8) | COL_COUNT;
 #endif
-    // Load font
+    /* Load font */
     for (i=0; i<sizeof(MSX_CP437_8x8_bin); i++)
         vicky->font_memory->mem[i] = MSX_CP437_8x8_bin[i];
 
-    // Setup colors
-    vicky->text_memory->palette_fg[0].code = 0x00000000L; //vicky3_a_ctrl->background_color;
-    vicky->text_memory->palette_fg[1].code = 0x00ffffffL; // White
-    vicky->text_memory->palette_fg[2].code = 0x00ff0000L; // Used for cursor color
+    /* Setup colors */
+    vicky->text_memory->palette_fg[0].code = 0x00000000L; /*vicky3_a_ctrl->background_color;*/
+    vicky->text_memory->palette_fg[1].code = 0x00ffffffL; /* White */
+    vicky->text_memory->palette_fg[2].code = 0x00ff0000L; /* Used for cursor color */
 }
 
 
@@ -276,7 +276,7 @@ void channel_A_cls(void)
 {
     int i;
 
-    // Clear screen
+    /* Clear screen */
     for (i=0; i<COL_COUNT*LINE_COUNT; i++)
     {
         text_memory->display[i] = 0;
@@ -304,7 +304,7 @@ void channel_A_write(const char *c)
                 scroll();
             else
                 y++;
-            x = 0; // Assume we intend that \n = \r\n
+            x = 0; /* Assume we intend that \n = \r\n */
         }
         else
         {
@@ -313,7 +313,7 @@ void channel_A_write(const char *c)
 
             if (++x == COL_COUNT)
             {
-                // Wrap and scroll if needed
+                /* Wrap and scroll if needed */
                 if (y == LINE_COUNT-1)
                     scroll();
                 else
@@ -371,11 +371,11 @@ static void scroll(void)
         *dst++ = ' ';
     }
 #else
-    // This doesn't work because it uses 16/32 byte writes
+    /* This doesn't work because it uses 16/32 byte writes */
     memcpy(&text_memory->display[COL_COUNT], &text_memory->display[0], COL_COUNT*LINE_COUNT-1);
-    memset(&text_memory->display[COL_COUNT*LINE_COUNT-1], COL_COUNT, 0); // VBCC doesn't know bzero
+    memset(&text_memory->display[COL_COUNT*LINE_COUNT-1], COL_COUNT, 0); /* VBCC doesn't know bzero */
 #endif    
-    // If we used background colours we would have to scroll them as well, but we don't.
+    /* If we used background colours we would have to scroll them as well, but we don't. */
 }
 
 #endif

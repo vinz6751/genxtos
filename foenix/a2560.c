@@ -15,11 +15,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
 
 #include "vicky2_txt_a_logger.h"
 
-// FIXME: this is an EmuTOS dependency
+/* FIXME: this is an EmuTOS dependency */
 #include "../include/doprintf.h"
 
 int sprintf(char *__restrict__ str, const char *__restrict__ fmt, ...) __attribute__ ((format (printf, 2, 3)));
@@ -39,15 +39,15 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #define HIBYTE(x) ((UBYTE)((UWORD)(x) >> 8))
 
 #include "foenix.h"
-#include "a2560u_debug.h"
-#include "a2560u.h"
+#include "a2560_debug.h"
+#include "a2560.h"
 #include "bq4802ly.h"  /* Real time clock */
 #include "cpu.h"
 #include "interrupts.h"
 #include "mpu401.h"    /* MIDI interface */
 #include "ps2.h"
 #include "ps2_keyboard.h"
-#include "ps2_mouse_a2560u.h"
+#include "ps2_mouse_a2560.h"
 #include "regutils.h"
 #include "sn76489.h"   /* Programmable Sound Generator */
 #include "superio.h"
@@ -64,21 +64,21 @@ uint32_t cpu_freq; /* CPU frequency */
 
 /* Prototypes ****************************************************************/
 
-void a2560u_init_lut0(void);
+void a2560_init_lut0(void);
 
 
-void a2560u_irq_bq4802ly(void);
+void a2560_irq_bq4802ly(void);
 
 
 
-void a2560u_irq_ps2kbd(void);
-void a2560u_irq_ps2mouse(void);
+void a2560_irq_ps2kbd(void);
+void a2560_irq_ps2mouse(void);
 
 /* Implementation ************************************************************/
 
-void a2560u_init(bool cold_boot)
+void a2560_init(bool cold_boot)
 {
-    a2560_debugnl("a2560u_init()");
+    a2560_debugnl("a2560_init()");
 
 #if !defined(MACHINE_A2560M)
     a2560_beeper(true);
@@ -98,8 +98,8 @@ void a2560u_init(bool cold_boot)
     uart16550_init((UART16550*)UART1);
 #endif
 
-    a2560_debugnl("a2560u_irq_init()");
-    a2560u_irq_init();
+    a2560_debugnl("a2560_irq_init()");
+    a2560_irq_init();
 	
     a2560_debugnl("a2560_timer_init");
     a2560_timer_init();
@@ -107,7 +107,7 @@ void a2560u_init(bool cold_boot)
     a2560_debugnl("wm8776_init");
     wm8776_init();
 
-#if !defined(MACHINE_A2560M) // Not supported yet
+#if !defined(MACHINE_A2560M) /* Not supported yet */
     a2560_debugnl("ym262_reset");
     ym262_reset();
 #endif
@@ -116,7 +116,7 @@ void a2560u_init(bool cold_boot)
     sn76489_mute_all();
 
     /* Clear screen and home */
-    a2560_debugnl("a2560u_init() done");
+    a2560_debugnl("a2560_init() done");
 
 #if !defined(MACHINE_A2560M)
     a2560_beeper(false);
@@ -126,26 +126,26 @@ void a2560u_init(bool cold_boot)
 
 /* Video  ********************************************************************/
 
-uint8_t *a2560u_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
+uint8_t *a2560_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
 
 
-void a2560u_setphys(const uint8_t *address)
+void a2560_setphys(const uint8_t *address)
 {
-    a2560u_bios_vram_fb = (uint8_t*)address;
+    a2560_bios_vram_fb = (uint8_t*)address;
     vicky2_set_bitmap_address(vicky, 0, (uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
 }
 
 
 /* Serial port support *******************************************************/
 
-void a2560u_irq_com1(void); // Event handler in a2560u_s.S
+void a2560_irq_com1(void); /* Event handler in a2560_s.S */
 
 
 /* Real Time Clock  **********************************************************/
 
 void a2560_clock_init(void)
 {
-    set_vector(INT_BQ4802LY_VECN, (uint32_t)a2560u_irq_bq4802ly);
+    set_vector(INT_BQ4802LY_VECN, (uint32_t)a2560_irq_bq4802ly);
     bq4802ly_init();
 }
 
@@ -204,7 +204,7 @@ static void irq_msg45(void) { a2560_debugnl("0x45"); }
 static void irq_msg46(void) { a2560_debugnl("0x46"); }
 static void irq_msg47(void) { a2560_debugnl("0x47"); }
 
-/* The following must be set by the calling OS prior to calling a2560u_kbd_init
+/* The following must be set by the calling OS prior to calling a2560_kbd_init
  * ps2_config.counter      = ;
  * ps2_config.counter_freq = ;
  * ps2_config.malloc       = ;
@@ -212,11 +212,11 @@ static void irq_msg47(void) { a2560_debugnl("0x47"); }
  * ps2_config.os_callbacks.on_key_up   = ;
  * ps2_config.os_callbacks.on_mouse    = ;
  */
-void a2560u_kbd_init(void)
+void a2560_kbd_init(void)
 {
     /* Disable IRQ while we're configuring */
-    a2560u_irq_disable(INT_KBD_PS2);
-    a2560u_irq_disable(INT_MOUSE);
+    a2560_irq_disable(INT_KBD_PS2);
+    a2560_irq_disable(INT_MOUSE);
 
     /* Explain our setup to the PS/2 subsystem */
     ps2_config.port_data    = (uint8_t*)PS2_DATA;
@@ -234,8 +234,8 @@ void a2560u_kbd_init(void)
     ps2_init();
 
     /* Register GAVIN interrupt handlers */
-    set_vector(INT_PS2KBD_VECN, (uint32_t)a2560u_irq_ps2kbd);
-    set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560u_irq_ps2mouse);
+    set_vector(INT_PS2KBD_VECN, (uint32_t)a2560_irq_ps2kbd);
+    set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560_irq_ps2mouse);
 /*
 set_vector(INT_PS2KBD_VECN, (uint32_t)irq_msg40);
 set_vector(INT_PS2KBD_VECN+1, (uint32_t)irq_msg41);
@@ -247,8 +247,8 @@ set_vector(INT_PS2KBD_VECN+6, (uint32_t)irq_msg46);
 set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
 */
     /* Acknowledge any pending interrupt */
-    a2560u_irq_acknowledge(INT_KBD_PS2);
-    a2560u_irq_acknowledge(INT_MOUSE);
+    a2560_irq_acknowledge(INT_KBD_PS2);
+    a2560_irq_acknowledge(INT_MOUSE);
 
     /* Go ! */
     a2560_debugnl("Enabling GAVIN PS2/mouse irqs");
@@ -259,22 +259,22 @@ set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
 
 /* MIDI **********************************************************************/
 #if CONF_WITH_MPU401
-extern void a2560u_irq_mpu401(void);
+extern void a2560_irq_mpu401(void);
 
 void (*mpu401_rx_handler)(uint8_t byte);
 
-void a2560u_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
-    a2560_debugnl("a2560u_midi_init");
-    a2560u_irq_disable(INT_MIDI);
+void a2560_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
+    a2560_debugnl("a2560_midi_init");
+    a2560_irq_disable(INT_MIDI);
     mpu401_set_timeout(timer, timeout);
-    mpu401_rx_handler = (void(*)(uint8_t))a2560u_rts;
-    set_vector(INT_MIDI_VECN, (uint32_t)a2560u_irq_mpu401);
-    a2560u_irq_acknowledge(INT_MIDI);
+    mpu401_rx_handler = (void(*)(uint8_t))a2560_rts;
+    set_vector(INT_MIDI_VECN, (uint32_t)a2560_irq_mpu401);
+    a2560_irq_acknowledge(INT_MIDI);
     a2560_irq_enable(INT_MIDI);
     a2560_debugnl("mpu401_init returns %d",mpu401_init());
 }
 
-#endif // CONF_WITH_MPU401
+#endif /* CONF_WITH_MPU401 */
 
 /* System information ********************************************************/
 
@@ -326,7 +326,7 @@ static const char * foenix_cpu_name[FOENIX_CPU_NAME_SIZE] =
 
 void a2560_system_info(struct foenix_system_info_t *result)
 {
-    // From VICKY
+    /* From VICKY */
 #ifdef MACHINE_A2560U
     result->fpga_date = MAKE_ULONG(R16(VICKY+0x30),R16(VICKY+0x32));
     result->fpga_major = R16(VICKY+0x3A);
@@ -352,7 +352,7 @@ void a2560_system_info(struct foenix_system_info_t *result)
 #endif
     result->pcb_revision_name[3] = '\0';
 
-    // From GAVIN
+    /* From GAVIN */
     uint16_t machine_id = GAVIN_R(GAVIN+0x0C);
     
     a2560_debugnl("Machine id: %x", machine_id);
@@ -377,11 +377,11 @@ void a2560_system_info(struct foenix_system_info_t *result)
         else
             result->vram_size = (1L << 22); /* 4Mo */
 
-        // CPU speed not correctly reported ?
+        /* CPU speed not correctly reported ? */
         result->cpu_speed_hz = foenix_cpu_speed_hz[1];
     }
 
-#if 0 // To produce EmuTOS "advertisement builds" while FPGA is not finished
+#if 0 /* To produce EmuTOS "advertisement builds" while FPGA is not finished */
     result->cpu_name = "MC68LC060";
     result->cpu_speed_hz = 33333333;
     result->model_name = "A2560M FOENIX";

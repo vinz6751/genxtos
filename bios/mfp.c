@@ -22,7 +22,7 @@
 
 #include "coldfire.h"
 #include "lisa.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 
 #if CONF_WITH_MFP || CONF_WITH_TT_MFP
 # include "mfp68901.h"

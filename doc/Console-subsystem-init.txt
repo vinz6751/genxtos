@@ -5,9 +5,9 @@ screen.setscreen
 	screen.screen_init_services
 		linea_init()
 		vt52/vt52_init()
-			conout.c utilise a2560u_conout_text driver
+			conout.c utilise a2560_conout_text driver
 			conout_init
-				a2560u_conout_text.init(Fonthead)
+				a2560_conout_text.init(Fonthead)
 					a2560_bios_text_init
 
 

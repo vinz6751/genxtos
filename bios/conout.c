@@ -27,7 +27,7 @@
 #include "string.h"
 #include "conout.h"
 #include "font.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 
 /* Driver in use for outputing text */
 static CONOUT_DRIVER * conout;

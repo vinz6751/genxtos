@@ -22,7 +22,7 @@
 #include "spi.h"
 #include "string.h"
 #include "tosvars.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "coldfire.h"
 
 #include "../foenix/regutils.h"

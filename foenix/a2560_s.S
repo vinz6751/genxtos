@@ -8,23 +8,23 @@
 
 | Exports ---------------------------------------------------------------------
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-    .GLOBAL _a2560u_irq_vicky_a
-    .GLOBAL _a2560u_irq_vicky_b
+    .GLOBAL _a2560_irq_vicky_a
+    .GLOBAL _a2560_irq_vicky_b
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
-    .GLOBAL _a2560u_irq_vicky
+    .GLOBAL _a2560_irq_vicky
 #else
  #error "Need to specify Foenix model"
 #endif
-    .GLOBAL _a2560u_irq_bq4802ly
-    .GLOBAL _a2560u_irq_ps2kbd
-    .GLOBAL _a2560u_irq_ps2mouse
-    .GLOBAL _a2560u_irq_com1
+    .GLOBAL _a2560_irq_bq4802ly
+    .GLOBAL _a2560_irq_ps2kbd
+    .GLOBAL _a2560_irq_ps2mouse
+    .GLOBAL _a2560_irq_com1
 #if CONF_WITH_MPU401
-    .GLOBAL _a2560u_irq_com2
-    .GLOBAL _a2560u_irq_mpu401
+    .GLOBAL _a2560_irq_com2
+    .GLOBAL _a2560_irq_mpu401
 #endif
-    .GLOBAL _a2560u_rte
-    .GLOBAL _a2560u_rts
+    .GLOBAL _a2560_rte
+    .GLOBAL _a2560_rts
 
 | Imports ---------------------------------------------------------------------
     .GLOBAL a2560_irq_vectors
@@ -41,18 +41,18 @@
     .GLOBAL _mpu401_rx_handler
 #endif
 
-_a2560u_rts:
+_a2560_rts:
     rts
 
 
-_a2560u_rte:
+_a2560_rte:
     rte
 
 
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-_a2560u_irq_vicky_a: // VICKY autovector A interrupt handler
+_a2560_irq_vicky_a: // VICKY autovector A interrupt handler
 #elif defined(MACHINE_A2560U) || defined(MACHINE_A2560M)
-_a2560u_irq_vicky: // VICKY (only channel's) autovector interrupt handler
+_a2560_irq_vicky: // VICKY (only channel's) autovector interrupt handler
 #endif
     // Handlers can use d0 and a0 without saving them.
     movem.l d0-d1/a0-a1,-(sp)
@@ -81,7 +81,7 @@ vicky_irq_done:
 
 
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-_a2560u_irq_vicky_b: // VICKY channel B autovector interrupt handler
+_a2560_irq_vicky_b: // VICKY channel B autovector interrupt handler
     // Handlers can use d0 and a0 without saving them.
     movem.l d0-d1/a0-a1,-(sp)
     lea     _a2560_irq_vectors,a0
@@ -105,7 +105,7 @@ vicky_irq_b_done:
 #endif
 
 
-_a2560u_irq_bq4802ly: // Real time clock interrupt handler
+_a2560_irq_bq4802ly: // Real time clock interrupt handler
     tst.b   BQ4802LY_BASE+0x26  // Acknowledge interrupt on the bq4802LY by reading the flags
     move.w  #(1<<INT_BIT(INT_RTC)),INT_GRP(INT_RTC) // Acknowledge GAVIN interrupt
     addq.l  #1,_bq4802ly_ticks
@@ -113,7 +113,7 @@ _a2560u_irq_bq4802ly: // Real time clock interrupt handler
     rts     // The handler must save register and terminate with rte
 
 
-_a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
+_a2560_irq_ps2kbd: // PS/2 keyboard interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
     // higher priority, we could be loosing data due to overruns. So when this handler is caller,
     // we don't want it to be interrupted.
@@ -127,7 +127,7 @@ _a2560u_irq_ps2kbd: // PS/2 keyboard interrupt handler
     rte
 
 
-_a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
+_a2560_irq_ps2mouse: // PS/2 mouse interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
     // higher priority, we could be loosing data due to overruns. So when this handler is caller,
     // we don't want it to be interrupted.
@@ -142,7 +142,7 @@ _a2560u_irq_ps2mouse: // PS/2 mouse interrupt handler
     rte
 
 
-_a2560u_irq_com1: // UART COM1 interrupt handler
+_a2560_irq_com1: // UART COM1 interrupt handler
     // On the A2560U this is not completely working as it should because it seems the interrupts don't get acknowledged correctly
     // when we read the Interrupt Status Register (UART0+UART16750_ISR). As a result we can't acknowledge the
     // interrupts so we always get the highest priority one masking the others.
@@ -168,7 +168,7 @@ com_done:
 #if CONF_WITH_MPU401
 
 /* That must mean we have a SuperIO therefore a 2nd serial port */
-_a2560u_irq_com2: // UART COM2 interrupt handler
+_a2560_irq_com2: // UART COM2 interrupt handler
     movem.l d0-d2/a0-a2,-(sp)
 com2_do:
     move.w  #(1<<INT_BIT(INT_COM2)),INT_GRP(INT_COM2)
@@ -185,7 +185,7 @@ com2_do:
     bra.s   com2_do
 
 
-_a2560u_irq_mpu401:
+_a2560_irq_mpu401:
     | Handle MIDI interrupts. Note that there is no overrun or frame error
     | detection supported by the SuperIO's MPU-401 implementation (contrary to the
     | Atari ST's 6850 ACIA)

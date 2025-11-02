@@ -44,7 +44,7 @@
 #include "coldfire.h"
 #include "amiga.h"
 #include "lisa.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 
 #define KEY_CTRL_HOME 0x77      /* scancode values set when ctrl modifies scancode */
 #define KEY_CTRL_LTARROW 0x73

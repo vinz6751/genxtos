@@ -3,7 +3,7 @@ This are notes about the work that has been done to make EmuTOS work on the Foen
 1. Display
 The OS works with graphics and text enabled (with overlay), so the color 0 of the text is transparent and the bitmap is rendered behind it. This is so we can have VICKY's high performance text mode and be able to draw things at the same time.
 VICKY II currently only supports 8x8.
-However we can alternatively support 8x16 by rendering everything to a shadow framebuffer in RAM and copy that framebuffer to the VRAM during VBL. Without DMA, this is slow so we have a mecanism where we can render only a particular text cell of the screen. We have a ringbuffer a2560u_bios_dirty_cells where we can store the list of cells that have to be repainted. If there are too many, it's possible to order a full copy of the shadow framebuffer. Obviously, without DMA this is slow, and the bigger the resolution, the slower.
+However we can alternatively support 8x16 by rendering everything to a shadow framebuffer in RAM and copy that framebuffer to the VRAM during VBL. Without DMA, this is slow so we have a mecanism where we can render only a particular text cell of the screen. We have a ringbuffer a2560_bios_dirty_cells where we can store the list of cells that have to be repainted. If there are too many, it's possible to order a full copy of the shadow framebuffer. Obviously, without DMA this is slow, and the bigger the resolution, the slower.
 
 
 

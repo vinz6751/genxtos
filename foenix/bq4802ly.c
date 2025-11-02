@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 #include "bq4802ly.h"
-#include "a2560u.h"
+#include "a2560.h"
 #include "interrupts.h"
 
 typedef void (*tick_handler_t)(void);
@@ -33,13 +33,13 @@ static uint16_t bcd_to_i(uint8_t bcd);
 
 void bq4802ly_init(void)
 {
-    a2560u_irq_disable(INT_RTC);
+    a2560_irq_disable(INT_RTC);
 
     /* Make sure the RTC is on. Yes the way this works is awkward :) */
     bq4802ly->control = BQ4802LY_STOP;
 
     bq4802ly_set_tick_rate(BQ4802LY_RATE_500ms);
-    bq4802ly_set_tick_handler(a2560u_rte);
+    bq4802ly_set_tick_handler(a2560_rte);
     bq4802ly_enable_ticks(false);
 }
 
@@ -64,7 +64,7 @@ void bq4802ly_enable_ticks(bool enable)
     else
     {
         bq4802ly->enables &= BQ4802LY_PIE;
-        a2560u_irq_disable(INT_RTC);
+        a2560_irq_disable(INT_RTC);
     }
 }
 
@@ -99,8 +99,8 @@ void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t ho
     month_bcd = i_to_bcd(month);
     day_bcd = i_to_bcd(day);
     hour_bcd = i_to_bcd(hour);
-//    if (!time->is_24hours && time->is_pm)
-//        hour_bcd = hour_bcd | 0x80;
+/*    if (!time->is_24hours && time->is_pm)
+        hour_bcd = hour_bcd | 0x80;*/
     minute_bcd = i_to_bcd(minute);
     second_bcd = i_to_bcd(second);
 
@@ -116,7 +116,7 @@ void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t ho
     bq4802ly->minutes = minute_bcd;
     bq4802ly->seconds = second_bcd;
 
-//    if (time->is_24hours)
+/*    if (time->is_24hours)*/
         control = control | BQ4802LY_2412;
 
     /* Re-enable updates to the clock */

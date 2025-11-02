@@ -33,7 +33,7 @@
 #include "../bdos/bdosstub.h"
 #include "amiga.h"
 #include "lisa.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 #include "disk.h"
 #include "acsi.h"
 

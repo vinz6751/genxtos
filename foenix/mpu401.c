@@ -20,7 +20,7 @@
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include "foenix.h"
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
 #include "mpu401.h"
 
 /** Timeout for waiting on the MIDI interface */
@@ -89,7 +89,7 @@ bool mpu401_wait_can_read(void) {
     uint32_t start = get_ticks();
     do {
         if (mpu401_can_read())
-            // There is data waiting
+            /* There is data waiting */
             return true;
     } while ((get_ticks() - start) < timeout_ticks);
 

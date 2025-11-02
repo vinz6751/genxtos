@@ -1,6 +1,13 @@
+/* m68k-specific functions
+ * Author: Vincent Barrilliot
+ */
+
 #include <stdint.h>
 #include "foenix.h"
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
+
+uint16_t cpu_has_long_frames;
+
 
 uint32_t set_vector(uint16_t num, uint32_t vector)
 {
@@ -14,4 +21,16 @@ uint32_t set_vector(uint16_t num, uint32_t vector)
         *addr = vector;
     }
     return oldvector;
+}
+
+
+void cpu_init(void)
+{
+    /* Detect if the CPU has long frames. We could also detect using tests, or drive it from
+     * the the system information provided by GAVIN */
+#if defined(MACHINE_A2560U)
+    cpu_has_long_frames = 0;
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A256M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+    cpu_has_long_frames = 1;
+#endif
 }

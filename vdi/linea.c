@@ -20,7 +20,7 @@
 #include "lineavars.h"
 #include "../bios/screen.h" /* Fixme */
 #include "tosvars.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 
 
 /* Scales block number according to the number of bitplanes, used to speedup get_start_addr

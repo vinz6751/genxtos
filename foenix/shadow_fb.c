@@ -7,7 +7,7 @@
  */
 
 #include <stdint.h>
-#include "a2560u_debug.h"
+#include "a2560_debug.h"
 #include "shadow_fb.h"
 #include "vicky2.h"
 
@@ -19,37 +19,37 @@ volatile struct
     uint16_t reader;
     uint16_t full_copy; /* Set this to non-zero to copy the whole frame buffer and flush the ring buffer */
     uint8_t *cells[A2560U_DIRTY_CELLS_SIZE];
-} a2560u_sfb_dirty_cells;
+} a2560_sfb_dirty_cells;
 
 
 /* Size and address of the shadow frame buffer */
-uint8_t  *a2560u_sfb_addr;
-uint32_t a2560u_sfb_size;
-uint16_t a2560u_sfb_line_size_in_bytes;
-uint16_t a2560u_sfb_text_cell_height;
+uint8_t  *a2560_sfb_addr;
+uint32_t a2560_sfb_size;
+uint16_t a2560_sfb_line_size_in_bytes;
+uint16_t a2560_sfb_text_cell_height;
 
 
-void a2560u_sfb_init(void)
+void a2560_sfb_init(void)
 {
-    a2560u_sfb_dirty_cells.writer = a2560u_sfb_dirty_cells.reader = a2560u_sfb_dirty_cells.full_copy = 0;
+    a2560_sfb_dirty_cells.writer = a2560_sfb_dirty_cells.reader = a2560_sfb_dirty_cells.full_copy = 0;
 }
 
 
-void a2560u_sfb_setup(const uint8_t *addr, uint16_t text_cell_height)
+void a2560_sfb_setup(const uint8_t *addr, uint16_t text_cell_height)
 {
     FOENIX_VIDEO_MODE mode;
 
-    // a2560u_debug("a2560u_sfb_setup(%p,%d)", addr, text_cell_height);
-    a2560u_sfb_addr = (uint8_t *)addr;
-    a2560u_sfb_text_cell_height = text_cell_height;
+    // a2560_debug("a2560_sfb_setup(%p,%d)", addr, text_cell_height);
+    a2560_sfb_addr = (uint8_t *)addr;
+    a2560_sfb_text_cell_height = text_cell_height;
     
     vicky2_read_video_mode(vicky, &mode);
-    a2560u_sfb_size = mode.w * mode.h;
-    a2560u_sfb_line_size_in_bytes = mode.w;
+    a2560_sfb_size = mode.w * mode.h;
+    a2560_sfb_line_size_in_bytes = mode.w;
 }
 
 
-void a2560u_sfb_mark_screen_dirty(void)
+void a2560_sfb_mark_screen_dirty(void)
 {
-    a2560u_sfb_dirty_cells.full_copy = -1;
+    a2560_sfb_dirty_cells.full_copy = -1;
 }

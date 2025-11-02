@@ -16,7 +16,7 @@
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include "linea.h"
-#include "a2560u_bios.h"
+#include "a2560_bios.h"
 
 static void mouse_set_visible(WORD x, WORD y)
 {
@@ -33,8 +33,8 @@ static void mouse_set_invisible(void)
 }
 
 
-/* This is here rather than in a2560u.c because MFORM would required to include aesdefs.h there.
- * and I'd like the a2560u.c to not have dependencies on EmuTOS so it can be used elsewhere. */
+/* This is here rather than in a2560.c because MFORM would required to include aesdefs.h there.
+ * and I'd like the a2560.c to not have dependencies on EmuTOS so it can be used elsewhere. */
 static void set_mouse_cursor(const MFORM *src)
 {
     /* No hot-spot support in the Foenix :( */
@@ -56,14 +56,14 @@ static void set_mouse_cursor(const MFORM *src)
                 // 2 words, GB AR then GB
                 if (data & 0x8000)
                 {
-                    //a2560u_debug("X");
+                    //a2560_debug("X");
                     /* Black */
                     *v++= 0x0000;
                     *v++= 0xff00;
                 }
                 else
                 {
-                    //a2560u_debug("O");
+                    //a2560_debug("O");
                     /* White */
                     *v++ = 0xffff;
                     *v++ = 0xffff;
@@ -71,7 +71,7 @@ static void set_mouse_cursor(const MFORM *src)
             }
             else
             {
-                //a2560u_debug("-");
+                //a2560_debug("-");
                 /* Transparent */
                 *v++ = 0;
                 *v++ = 0;
