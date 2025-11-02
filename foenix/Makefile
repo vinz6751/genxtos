@@ -19,12 +19,12 @@ CFLAGS=-mshort -fomit-frame-pointer -Os -std=c99 -D$(MACHINE_NAME) $(CPUFLAGS)
 
 SRC_C=a2560.c a2560_debug.c bq4802ly.c cpu.c interrupts.c mpu401.c \
 	ps2_keyboard.c ps2_mouse_a2560.c ps2.c \
-	sn76489.c superio.c timer.c ym2612.c uart16550.c vicky2.c vicky_mouse.c wm8776.c \
+	sn76489.c superio.c timer.c uart16550.c vicky2.c vicky_mouse.c wm8776.c \
 	shadow_fb.c \
 	trap.c trap_dispatch.c \
 	vicky2_txt_a_logger.c \
-	ym262.c
-SRC_S=a2560u_s.S shadow_fb_s.S timer_s.S
+	ym2151.c ym262.c
+SRC_S=a2560_s.S shadow_fb_s.S timer_s.S
 SRC=$(SRC_C) $(SRC_S)
 OBJ_C=$(SRC_C:.c=.o)
 OBJ_S=$(SRC_S:.S=.o)
@@ -41,7 +41,7 @@ libfoenix-a2560x.a: MACHINE_NAME=MACHINE_A2560X
 libfoenix-a2560u.a: MACHINE_NAME=MACHINE_A2560U
 libfoenix-genx.a: MACHINE_NAME=MACHINE_GENX
 
-libfoenix-%.a: $(OBJ)
+libfoenix-a2560k.a libfoenix-a2560m.a u.a libfoenix-a2560x.a libfoenix-genx.a: $(OBJ)
 	$(AR) -crs $@ $^
 	$(RANLIB) $@
 
