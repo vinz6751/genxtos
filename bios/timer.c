@@ -14,7 +14,10 @@
 
 /* #define ENABLE_KDEBUG */
 
- #include "config.h"
+#include "config.h"
+#include "timer.h"
+#include "tosvars.h"
+
 
 #if CONF_WITH_MFP
 # include "biosdefs.h"
