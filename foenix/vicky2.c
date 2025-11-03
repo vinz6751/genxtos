@@ -216,10 +216,10 @@ void vicky2_init(void)
 
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     /* Channel A VBL */
-    set_vector(INT_VICKYII_A, (uint32_t)a2560_irq_vicky_a);
-    set_vector(INT_VICKYII_B, (uint32_t)a2560_irq_vicky_b);
+    cpu_set_vector(INT_VICKYII_A, (uint32_t)a2560_irq_vicky_a);
+    cpu_set_vector(INT_VICKYII_B, (uint32_t)a2560_irq_vicky_b);
 #else
-    set_vector(INT_VICKYII, (uint32_t)a2560_irq_vicky);
+    cpu_set_vector(INT_VICKYII, (uint32_t)a2560_irq_vicky);
 #endif
 }
 

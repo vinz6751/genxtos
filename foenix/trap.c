@@ -44,15 +44,15 @@ int32_t trap_dispatch(void *arguments);
 
 void trap_init(void)
 {
-    old_handler = (uint32_t)set_vector(VECTOR_NUMBER, (uint32_t)trap_irq_handler);
+    old_handler = (uint32_t)cpu_set_vector(VECTOR_NUMBER, (uint32_t)trap_irq_handler);
 }
 
 
 void trap_exit(void)
 {
-    uint32_t current_handler = (uint32_t)set_vector(VECTOR_NUMBER, -1L);
+    uint32_t current_handler = (uint32_t)cpu_set_vector(VECTOR_NUMBER, -1L);
     if (current_handler == (uint32_t)trap_irq_handler) {
-        set_vector(VECTOR_NUMBER, old_handler);
+        cpu_set_vector(VECTOR_NUMBER, old_handler);
     }
 }
 

@@ -145,7 +145,7 @@ void a2560_irq_com1(void); /* Event handler in a2560_s.S */
 
 void a2560_clock_init(void)
 {
-    set_vector(INT_BQ4802LY_VECN, (uint32_t)a2560_irq_bq4802ly);
+    cpu_set_vector(INT_BQ4802LY_VECN, (uint32_t)a2560_irq_bq4802ly);
     bq4802ly_init();
 }
 
@@ -234,17 +234,17 @@ void a2560_kbd_init(void)
     ps2_init();
 
     /* Register GAVIN interrupt handlers */
-    set_vector(INT_PS2KBD_VECN, (uint32_t)a2560_irq_ps2kbd);
-    set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560_irq_ps2mouse);
+    cpu_set_vector(INT_PS2KBD_VECN, (uint32_t)a2560_irq_ps2kbd);
+    cpu_set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560_irq_ps2mouse);
 /*
-set_vector(INT_PS2KBD_VECN, (uint32_t)irq_msg40);
-set_vector(INT_PS2KBD_VECN+1, (uint32_t)irq_msg41);
-set_vector(INT_PS2KBD_VECN+2, (uint32_t)irq_msg42);
-set_vector(INT_PS2KBD_VECN+3, (uint32_t)irq_msg43);
-set_vector(INT_PS2KBD_VECN+4, (uint32_t)irq_msg44);
-set_vector(INT_PS2KBD_VECN+5, (uint32_t)irq_msg45);
-set_vector(INT_PS2KBD_VECN+6, (uint32_t)irq_msg46);
-set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
+cpu_set_vector(INT_PS2KBD_VECN, (uint32_t)irq_msg40);
+cpu_set_vector(INT_PS2KBD_VECN+1, (uint32_t)irq_msg41);
+cpu_set_vector(INT_PS2KBD_VECN+2, (uint32_t)irq_msg42);
+cpu_set_vector(INT_PS2KBD_VECN+3, (uint32_t)irq_msg43);
+cpu_set_vector(INT_PS2KBD_VECN+4, (uint32_t)irq_msg44);
+cpu_set_vector(INT_PS2KBD_VECN+5, (uint32_t)irq_msg45);
+cpu_set_vector(INT_PS2KBD_VECN+6, (uint32_t)irq_msg46);
+cpu_set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
 */
     /* Acknowledge any pending interrupt */
     a2560_irq_acknowledge(INT_KBD_PS2);
@@ -268,7 +268,7 @@ void a2560_midi_init(uint32_t (*timer)(void),uint16_t timeout) {
     a2560_irq_disable(INT_MIDI);
     mpu401_set_timeout(timer, timeout);
     mpu401_rx_handler = (void(*)(uint8_t))a2560_rts;
-    set_vector(INT_MIDI_VECN, (uint32_t)a2560_irq_mpu401);
+    cpu_set_vector(INT_MIDI_VECN, (uint32_t)a2560_irq_mpu401);
     a2560_irq_acknowledge(INT_MIDI);
     a2560_irq_enable(INT_MIDI);
     a2560_debugnl("mpu401_init returns %d",mpu401_init());

@@ -66,7 +66,7 @@ __extension__                             \
  * Returns the previous.
  */
 
-uint32_t set_vector(uint16_t num, uint32_t vector);
+uint32_t cpu_set_vector(uint16_t num, uint32_t vector);
 
 /*
  * Setup the CPU for basic use

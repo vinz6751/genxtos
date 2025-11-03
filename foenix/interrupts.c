@@ -30,7 +30,7 @@ void a2560_irq_init(void)
     }
 
     for (i=0x40; i<0x60; i++)
-        set_vector(i,(uint32_t)a2560_rte); /* That's not even correct because it doesn't acknowledge interrupts */
+        cpu_set_vector(i,(uint32_t)a2560_rte); /* That's not even correct because it doesn't acknowledge interrupts */
 }
 
 

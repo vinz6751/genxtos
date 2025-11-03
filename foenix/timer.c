@@ -116,7 +116,7 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     R32(t->control) |= t->prog;
 
     /* Set handler */
-    set_vector(t->vector, (uint32_t)handler);
+    cpu_set_vector(t->vector, (uint32_t)handler);
 
     /* Before starting the timer, ignore any previous pending interrupt from it */
     if (R16(IRQ_PENDING_GRP1) & t->irq_mask)
@@ -130,7 +130,7 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     a2560_debugnl("AFTER SETTING TIMER %d", timer);
     a2560_debugnl("CPU freq     %ld", cpu_freq);
     a2560_debugnl("CPU          sr=%04x", get_sr());
-    a2560_debugnl("vector       0x%02x=%p",t->vector,(void*)set_vector(t->vector, -1L));
+    a2560_debugnl("vector       0x%02x=%p",t->vector,(void*)cpu_set_vector(t->vector, -1L));
     a2560_debugnl("value        %p=%p",(void*)t->value,R32(t->value));
     a2560_debugnl("compare      %p=%p",(void*)t->compare,R32(t->compare));
     a2560_debugnl("irq_pending  %p=%04x", (void*)IRQ_PENDING_GRP1,R16(IRQ_PENDING_GRP1));
