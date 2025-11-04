@@ -404,7 +404,7 @@ WORD gsx_tick(void *tcode, void *ptsave)
 
 
 
-void gsx_mfset(const MFORM *pmfnew)
+void gsx_mfset(const MFORM *new_cursor)
 {
     gsx_moff();
     if (!gl_ctmown)
@@ -412,9 +412,9 @@ void gsx_mfset(const MFORM *pmfnew)
 #if CONF_WITH_GRAF_MOUSE_EXTENSION
         gl_prevmouse = gl_mouse;
 #endif
-        gl_mouse = *pmfnew;
+        gl_mouse = *new_cursor;
     }
-    memcpy(intin, (void *)pmfnew, sizeof(MFORM));
+    memcpy(intin, (void *)new_cursor, sizeof(MFORM));
     gsx_ncode(SET_CUR_FORM, 0, sizeof(MFORM)/sizeof(WORD));
     gsx_mon();
 }

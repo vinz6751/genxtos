@@ -13,24 +13,22 @@
 
 #include "linea.h"
 #include "lineavars.h"
+/* get_start_addr() uses these: */
+#include "intmath.h" /* for muls() */
+#include "tosvars.h" /* for v_bas_ad, v_lin_wr */
+#include "vdi_inline.h"
+
+
+#define MOUSE_WIDTH     16      /* in pixels */
+#define MOUSE_HEIGHT    16
 
 
 #if CONF_WITH_VDI_16BIT
-/*
- * cur_display16() - blits mouse "cursor" to 16-bit screen
- *
- * see cur_display() for more info
- */
-static void cur_display16(Mcdb *sprite, MCS *mcs, WORD x, WORD y)
 
-/*
- * cur_replace16 - replace cursor with saved data (for 16-bit screens)
- *
- * see cur_replace for more details
- */
-static void cur_replace16(MCS *mcs)
+static void cur_display16(MCDB *sprite, MCS *mcs, WORD x, WORD y);
+static void cur_replace16(MCS *mcs);
 
-#endif
+#endif /* CONF_WITH_VDI_16BIT */
 
 
 static void paint_clipped_sprite(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_start, UWORD shft);
@@ -287,12 +285,13 @@ static void paint_clipped_sprite(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_st
 
 
 #if CONF_WITH_VDI_16BIT
+#include "vdi_defs.h"
 /*
  * cur_display16() - blits mouse "cursor" to 16-bit screen
  *
  * see cur_display() for more info
  */
-static void cur_display16(Mcdb *sprite, MCS *mcs, WORD x, WORD y)
+static void cur_display16(MCDB *sprite, MCS *mcs, WORD x, WORD y)
 {
     UWORD *mask_start, *dst, *save, *palette;
     UWORD bgcol, fgcol, bgmask, fgmask;

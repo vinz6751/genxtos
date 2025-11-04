@@ -54,7 +54,6 @@ static void set_mouse_cursor(const MFORM *src)
     /* save y-offset of mouse hot spot */
     dst->yhot = src->mf_yhot & 0x000f;
 
-    /* TODO: this is broken, it makes this code (LineA depend on the VDI) */
     /* check/fix background color index */
     col = linea_validate_color_index(src->mf_bg);
     dst->bg_col = MAP_COL[col];

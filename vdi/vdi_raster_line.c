@@ -1211,8 +1211,12 @@ void vertical_line(const Line *line, WORD wrt_mode, UWORD color)
     WORD yinc;                  /* in/decrease for each y step */
     UWORD bit, bitcomp;
     WORD plane, loopcnt;
-    UWORD linemask = LN_MASK;
+    UWORD linemask;
+    WORD bit_inverted_linemask;
 
+    //bit_inverted_linemask = ((1 << 16) - 1) ^ (WORD)LINEMASK;
+
+    
     /* calculate increase value for y to add to actual address */
     dy = line->y2 - line->y1;
     yinc = v_lin_wr / 2;        /* one line of words */

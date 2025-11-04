@@ -411,7 +411,7 @@ void *srealloc(long amount)
     if (amount > available)
         return NULL;
 
-    /* update length in MD, plus saved video ram info */
+    /* update length in MEMORY_DESCRIPTOR, plus saved video ram info */
     last->m_length = last->m_length + video_ram_size - amount;
     video_ram_size = amount;
     video_ram_addr = last->m_start + last->m_length;

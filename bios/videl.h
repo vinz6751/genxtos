@@ -50,6 +50,9 @@
 #define VALID_VDI_BPP(mode) ((mode&VIDEL_BPPMASK)<=VIDEL_8BPP)
 #endif
 
+/* for 16-bit resolutions */
+#define OVERLAY_BIT 0x0020
+
 /* selected Falcon videomodes */
 #define FALCON_ST_HIGH      (VIDEL_COMPAT|VIDEL_80COL|VIDEL_1BPP)
 #define FALCON_ST_MEDIUM    (VIDEL_COMPAT|VIDEL_80COL|VIDEL_2BPP)

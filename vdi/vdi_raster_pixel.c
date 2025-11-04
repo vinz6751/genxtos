@@ -21,6 +21,7 @@
 #include "lineavars.h"
 #include "vdi_inline.h"
 #include "vdi_raster_pixel.h"
+#include "../bios/videl.h" // OVERLAY_BIT
 
 /*
  * get_color - Get color value of requested pixel.
@@ -321,7 +322,7 @@ end_pts(const VwkClip *clip, WORD x, WORD y, UWORD search_color, BOOL seed_type,
 #if CONF_WITH_VDI_16BIT
     if (TRUECOLOR_MODE)
     {
-        return end_pts16(clip, x, y, search_color,xleftout, xrightout);
+        return end_pts16(clip, x, y, search_color, seed_type, xleftout, xrightout);
     }
 #endif
 

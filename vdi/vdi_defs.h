@@ -18,11 +18,6 @@
 
 #define HAVE_BEZIER 0           /* switch on bezier capability - entirely untested */
 
-#define TRUECOLOR_MODE  (v_planes > 8)
-
-
-#define TRUECOLOR_MODE  (v_planes > 8)
-
 
 #if CONF_WITH_VIDEL
 # define UDPAT_PLANES   32      /* actually 16, but each plane occupies 2 WORDs */

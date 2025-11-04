@@ -23,6 +23,12 @@
 
 /* Screen related variables */
 
+
+/* This is an opinionated convenience macro. We're considering that if we have more than
+ * 8 planes (256 colors), we're in truecolor mode ie a mode where each pixel represents its
+ * own color value (rather than an index into a color palette). */
+#define TRUECOLOR_MODE  (v_planes > 8)
+
 /*
  * mouse cursor save area
  *
@@ -39,8 +45,10 @@ typedef struct {
         ULONG   area[8*16];     /* handle up to 8 video planes (also 16-bit) */
 } MCS;
 
-/* Mouse / sprite structure (16x16) */
-typedef struct {
+/* Mouse / sprite structure (16x16) used by the Line A to represent a drawable
+ * mouse cursor. Note that this is close to AES's MFORM structure, but here 
+ * the mask and data are interleaved for performance reasons. */
+ typedef struct {
     WORD    xhot;
     WORD    yhot;
     WORD    planes;
@@ -49,9 +57,13 @@ typedef struct {
     UWORD   maskdata[32];   /* mask & data are interleaved */
 } MCDB;
 
+
 /* defines for 'stat' above */
-#define MCS_VALID   0x01        /* save area is valid */
-#define MCS_LONGS   0x02        /* saved data is in longword format */
+#define MCS_VALID   0x01        /* save area contains valid data */
+/* indicate that saved data is in longword format.
+ * we save longwords in case the mouse is over 2 blocks boundary
+ * (groups of 16pixels in the Atari interleaved planes frame buffer) */
+#define MCS_LONGS   0x02        
 
 /* VDI local parameter block (VDIPB) */
 extern WORD *CONTRL; /* +4   ptr to the CONTRL array */
@@ -66,7 +78,7 @@ extern UBYTE mouse_shape_semaphore;  /* non-zero while mouse cursor is being mod
 extern MCS   mouse_cursor_save;      /* in linea variable area */
 extern MCS   ext_mouse_cursor_save;  /* use for v_planes > 4 */
 extern WORD  HIDE_CNT;               /* number of levels the mouse is hidden */
-extern MCDB  mouse_cdb;              /* storage for mouse sprite */
+extern MCDB  mouse_cdb;              /* storage for mouse sprite (cursor definition block) */
 extern WORD  GCURX;                  /* current mouse X position */
 extern WORD  GCURY;                  /* current mouse Y position */
 extern WORD  MOUSE_BT;               /* mouse button state, 1 bit per button. Left = 1, Right = 2, Middle = 4 etc. */

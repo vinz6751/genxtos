@@ -39,7 +39,7 @@ void linea_mouse_show(void);
 void linea_mouse_hide(void);
 void linea_mouse_transform(void);
 void linea_mouse_set_form(const MFORM *src);
-UWORD *get_start_addr(const WORD x, const WORD y);
+void linea_mouse_set_color(WORD fg_col, WORD bg_col);
 WORD linea_validate_color_index(WORD colnum);
 
 /* Sprite support */

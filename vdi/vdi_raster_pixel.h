@@ -21,7 +21,7 @@ void pixelput(const WORD x, const WORD y);
 #if CONF_WITH_VDI_16BIT
 UWORD search_to_right16(const VwkClip *clip, WORD x, const UWORD search_col, UWORD *addr);
 UWORD search_to_left16(const VwkClip *clip, WORD x, const UWORD search_col, UWORD *addr);
-WORD end_pts16(const VwkClip *clip, WORD x, WORD y, UWORD search_color, WORD *xleftout, WORD *xrightout);
+WORD end_pts16(const VwkClip *clip, WORD x, WORD y, UWORD search_color, BOOL seed_type, WORD *xleftout, WORD *xrightout);
 #endif
 UWORD search_to_right (const VwkClip * clip, WORD x, UWORD mask, const UWORD search_col, UWORD * addr);
 UWORD search_to_left (const VwkClip * clip, WORD x, UWORD mask, const UWORD search_col, UWORD * addr);

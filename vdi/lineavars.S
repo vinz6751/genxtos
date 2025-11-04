@@ -100,7 +100,7 @@
 _CUR_FONT:      .ds.l   1       // -906 current VDI font
                 .ds.w   23      // -902
 
-/* The mouse form storage area: */
+/* The mouse cursor definition block (MCDB structure): */
 _mouse_cdb:
 _m_pos_hx:       .ds.w   1       // -856 (cdb+0) Mouse hot spot - x coord
 _m_pos_hy:       .ds.w   1       // -854 (cdb+2) Mouse hot spot - y coord

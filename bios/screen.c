@@ -20,7 +20,8 @@
 #include "bios.h"
 #include "biosmem.h"
 #include "has.h"
-#include "linea.h" // V_REZ_HZ / V_REZ_VT
+#include "linea.h" // V_REZ_HZ / 
+#include "bdosbind.h" // Srealloc() FIXME layering breakage: XBIOS calling GEMDOS
 #include "screen.h"
 #include "tosvars.h"
 #include "vt52.h"
@@ -28,6 +29,9 @@
 #include "lisa.h"
 #include "nova.h"
 #include "screen_atari.h"
+#include "screen_tt.h"
+#include "videl.h"
+#include "xbiosbind.h"
 #include "a2560_bios.h"
 
 

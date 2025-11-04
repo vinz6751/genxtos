@@ -22,6 +22,7 @@
 #include "vdistub.h"
 #include "tosvars.h"
 #include "biosext.h"
+#include "linea.h"
 #include "lineavars.h"
 #include "a2560_bios.h"
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
@@ -31,26 +32,6 @@
 #if WITH_AES
 #include "../aes/aesstub.h"
 #endif
-
-#define MOUSE_WIDTH     16      /* in pixels */
-#define MOUSE_HEIGHT    16
-
-/* Mouse / sprite structure */
-typedef struct Mcdb_ Mcdb;
-struct Mcdb_ {
-        WORD    xhot;
-        WORD    yhot;
-        WORD    planes;
-        WORD    bg_col;
-        WORD    fg_col;
-        UWORD   maskdata[32];   /* mask & data are interleaved */
-};
-
-/* prototypes */
-static void mform_color_fixup(const MFORM *src, MCDB *dst);
-
-/* prototypes for functions in vdi_asm.S */
-
 
 
 #if CONF_WITH_EXTENDED_MOUSE
@@ -91,7 +72,6 @@ void vdimouse_init(void)
     str_mode = 0;               /* default is request mode  */
 
     /* Move in the default mouse form (presently the arrow) */    
-    mform_color_fixup((const MFORM*)default_mform(), &mouse_cdb); /* FIXME CHEAT, not sure how to inject an implementation-specific validator... */
     linea_mouse_set_form(default_mform());
     linea_mouse_init();
 
@@ -126,20 +106,6 @@ void vdimouse_exit(void)
 #endif
 }
 
-
-/* Check/fix colors used by a Mouse Form so they're compatible with the number of colors of the workstation */
-static void mform_color_fixup(const MFORM *src, MCDB *dst)
-{
-    WORD col;
-
-    /* check/fix background color index */
-    col = validate_color_index(src->mf_bg);
-    dst->bg_col = MAP_COL[col];
-
-    /* check/fix foreground color index */
-    col = validate_color_index(src->mf_fg);
-    dst->fg_col = MAP_COL[col];
-}
 
 #if CONF_WITH_EXTENDED_MOUSE
 
@@ -196,4 +162,5 @@ void vdi_vex_wheelv(Vwk * vwk)
     ULONG_AT(&CONTRL[9]) = (ULONG) user_wheel;
     user_wheel = (PFVOID) ULONG_AT(&CONTRL[7]);
 }
-#endif
+
+#endif /* CONF_WITH_EXTENDED_MOUSE */
