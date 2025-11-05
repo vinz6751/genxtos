@@ -2,7 +2,7 @@ Initialisation du sous-système console:
 
 screen.setscreen
 	a2560_bios_setrez
-	screen.screen_init_services
+	screen.screen_init_services_from_mode_info
 		linea_init()
 		vt52/vt52_init()
 			conout.c utilise a2560_conout_text driver

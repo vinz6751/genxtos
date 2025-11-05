@@ -64,9 +64,9 @@ void screen_atari_init_mode(void) {
     /* Initialize the interrupt handlers & the VBL semaphore.
      * It is important to do this first because the initialization code below
      * may call vsync(), which temporarily enables the interrupts. */
+    vblsem = 0;
     setexc((VEC_HBL/4), (LONG)int_hbl);
     setexc((VEC_VBL/4), (LONG)int_vbl);
-    vblsem = 0;
 
     /* first, see what we're connected to, and set the
      * resolution / video mode appropriately */
@@ -336,11 +336,13 @@ const UBYTE *atari_physbase(void)
 ULONG atari_calc_vram_size(void)
 {
     ULONG vram_size;
+    WORD planes, w, h;
 
     if (HAS_VIDEL)
-        return FALCON_VRAM_SIZE + EXTRA_VRAM_SIZE;
+        return FALCON_VRAM_SIZE + EXTRA_VRAM_SIZE;;
 
-    vram_size = (ULONG)BYTES_LIN * V_REZ_VT;
+    screen_get_current_mode_info(&planes, &w, &h);
+    vram_size = (ULONG)(w / 8 * planes) * h;
 
     /* TT TOS allocates 256 bytes more than actually needed. */
     if (HAS_TT_SHIFTER)

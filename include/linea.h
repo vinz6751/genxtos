@@ -30,7 +30,7 @@ typedef struct {
 extern const LINEA_MOUSE_RENDERER mouse_display_driver;
 extern void (*linea_on_resolution_changed)(void);
 
-void linea_init(void); /* Initialize the Line-A layer */
+void linea_init(UWORD planes, UWORD xrez, UWORD yrez);
 void linea_resolution_changed(void);
 void linea_mouse_init(void);
 void linea_mouse_deinit(void);

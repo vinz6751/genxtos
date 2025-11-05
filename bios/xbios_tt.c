@@ -46,7 +46,7 @@ WORD esetshift(WORD mode)
      * because the resolution may have changed, we must reinitialise
      * the screen services (Line-A, VT52 emulator)
      */
-    screen_init_services();
+    screen_init_services_from_mode_info();
 
     return oldmode;
 }

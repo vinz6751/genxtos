@@ -319,31 +319,24 @@ static void bios_init(void)
     }
 #endif
 
-    /* Initialize the screen mode
-     * Must be done before calling linea_init(). */
-    KDEBUG(("screen_init_mode()\n"));
-    screen_init_mode(); /* detect monitor type, ... */
-
-    /* Set up the video system */
-    KDEBUG(("linea_init()\n"));
-    linea_init();       /* initialize screen related line-a variables */
-
-    /* Initialize the screen address
-     * Must be done after calling linea_init(). */
-    KDEBUG(("screen_init_address()\n"));
-    screen_init_address();
-
     /* Initialise the font list (requires cookie jar to be ready as it uses _AKP) */
     KDEBUG(("font_init()\n"));
     font_init();
 
-    /* Initialize the vt52 console */
-    KDEBUG(("vt52_init()\n"));
-    vt52_init();
+    /* Set some sensible screen mode/resolution based on what's hooked to the computer */
+    KDEBUG(("screen_init_mode()\n"));
+    screen_init_mode();
+
+    /* Setup the video RAM / allocate it if necessary */
+    KDEBUG(("screen_init_address()\n"));
+    screen_init_address();
+
+    /* Initialize the screen services (line-A and VT-52) */
+    KDEBUG(("screen_init_services_from_mode_info()\n"));
+    screen_init_services_from_mode_info();
 
     /* Now kcprintf() will also send debug info to the screen */
-    KDEBUG(("after vt52_init()\n"));
-
+    KDEBUG(("display_startup_msg()\n"));
     /* Now we have output, let the user know we're alive */
     display_startup_msg();
 

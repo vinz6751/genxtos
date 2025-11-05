@@ -18,7 +18,7 @@
 #include "intmath.h"
 #include "linea.h"
 #include "lineavars.h"
-#include "../bios/screen.h" /* Fixme */
+//#include "../bios/screen.h" /* Fixme */
 #include "tosvars.h"
 #include "a2560_bios.h"
 
@@ -37,13 +37,14 @@ void (*linea_on_resolution_changed)(void);
 /*
  * linea_init - init linea variables
  */
-void linea_init(void)
+void linea_init(UWORD planes, UWORD xrez, UWORD yrez)
 {
-    screen_get_current_mode_info(&v_planes, &V_REZ_HZ, &V_REZ_VT);
+    KDEBUG(("linea_init(%d, %d, %d)\n", v_planes, xrez, yrez));
+
+    v_planes = planes;
+    V_REZ_HZ = xrez;
+    V_REZ_VT = yrez;
     linea_resolution_changed();
-    
-    KDEBUG(("linea_init(): %dx%d %d-plane (v_lin_wr=%d)\n",
-        V_REZ_HZ, V_REZ_VT, v_planes, v_lin_wr));
 }
 
 
@@ -84,8 +85,8 @@ void linea_resolution_changed(void)
  */
 WORD linea_validate_color_index(WORD colnum)
 {
-    if ((colnum < 0) || (colnum >= numcolors))
-        return 1;
+    //if ((colnum < 0) || (colnum >= numcolors))
+    //    return 1;
 
     return colnum;
 }

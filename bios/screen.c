@@ -40,6 +40,9 @@ LONG video_ram_size;        /* these are used by Srealloc() */
 void *video_ram_addr;
 #endif
 
+/* This flavour allows the caller to specify the resolution */
+static void screen_init_services(UWORD planes, UWORD xrez, UWORD yrez);
+
 
 /*
  * Check specified mode/rez to see if we should change; used in early
@@ -174,7 +177,7 @@ void screen_set_rez_hacked(void)
 {
     rez_was_hacked = TRUE;
 
-    screen_init_services();
+    screen_init_services(v_planes, V_REZ_HZ, V_REZ_VT);
 }
 
 /*
@@ -449,21 +452,36 @@ WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
     atari_setrez(rez, videlmode);
 #endif
 
-    screen_init_services();
+    screen_init_services_from_mode_info();
 
     return oldmode;
 }
 
-void screen_init_services(void)
+
+static void screen_init_services(UWORD planes, UWORD xrez, UWORD yrez)
 {
-    KDEBUG(("screen_init_services\n"));
-    /* Temporarily halt VBL processing */
-    vblsem = 0;
-    /* Re-initialize line-a, VT52 etc: */
-    linea_init();
-    vt52_init();
-    /* Restart VBL processing */
-    vblsem = 1;
+    KDEBUG(("screen_init_services(%d, %d, %d)\n", planes, xrez, yrez));
+    /* Temporarily halt VBL processing. We use --/++ rather than = 0/1 because during
+     * boot, we call this function, but we don't want it to start VBL processing yet. */
+     vblsem--;
+
+     /* Re-initialize line-a, VT52 etc: */
+     linea_init(planes, xrez, yrez);
+     vt52_init();
+ 
+     /* Restart VBL processing */
+     vblsem++; 
+}
+
+
+void screen_init_services_from_mode_info(void)
+{
+    UWORD planes, xrez, yrez;
+
+    KDEBUG(("screen_init_services_from_mode_info\n"));
+
+    screen_get_current_mode_info(&planes, &xrez, &yrez);
+    screen_init_services(planes, xrez, yrez);
 }
 
 
