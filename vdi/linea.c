@@ -14,11 +14,9 @@
  /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
-#include "aesdefs.h"
 #include "intmath.h"
 #include "linea.h"
 #include "lineavars.h"
-//#include "../bios/screen.h" /* Fixme */
 #include "tosvars.h"
 #include "a2560_bios.h"
 
@@ -46,7 +44,6 @@ void linea_init(UWORD planes, UWORD xrez, UWORD yrez)
     V_REZ_VT = yrez;
     linea_resolution_changed();
 }
-
 
 
 void linea_resolution_changed(void)
@@ -85,8 +82,8 @@ void linea_resolution_changed(void)
  */
 WORD linea_validate_color_index(WORD colnum)
 {
-    //if ((colnum < 0) || (colnum >= numcolors))
-    //    return 1;
+    if ((colnum < 0) || (colnum >= numcolors))
+        return 1;
 
     return colnum;
 }
