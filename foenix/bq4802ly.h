@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "a2560_struct.h"
+
 struct __attribute__((aligned(16))) bq4802ly_t 
 {
     volatile uint8_t seconds;
@@ -87,9 +89,8 @@ typedef void (*tick_handler_t)(void);
 void bq4802ly_init(void);
 void bq4802ly_set_tick_rate(uint16_t rate);
 void bq4802ly_enable_ticks(bool enable);
-tick_handler_t bq4802ly_get_tick_handler(void);
 /* The handler must save all the registers, it uses and terminate with rte */
-void bq4802ly_set_tick_handler(tick_handler_t handler);
+tick_handler_t bq4802ly_set_tick_handler(tick_handler_t handler);
 uint32_t bq4802ly_get_ticks(void);
 void bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t hour, uint8_t minute, uint8_t second);
 void bq4802ly_get_datetime(uint8_t *day, uint8_t *month, uint16_t *year, uint8_t *hour, uint8_t *minute, uint8_t *second);

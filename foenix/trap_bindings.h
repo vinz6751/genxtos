@@ -45,8 +45,20 @@ void ARGS_ON_STACK fnx_sn76489_noise_source(uint8_t type, uint8_t source);
 
 /* Keyboard */
 void ARGS_ON_STACK fnx_kbd_init(const uint32_t *counter, uint16_t counter_freq);
+/* PS/2 stuff. Note: we don't assume the keyboard is PS/2 because e.g the K has a keyboard with a controller (Maurice) which is not PS/2*/
 scancode_handler_t ARGS_ON_STACK fnx_ps2_set_key_up_handler(scancode_handler_t);
 scancode_handler_t ARGS_ON_STACK fnx_ps2_set_key_down_handler(scancode_handler_t);
 mouse_packet_handler_t ARGS_ON_STACK fnx_ps2_set_mouse_handler(mouse_packet_handler_t);
+
+/* Real Time Clock */
+void fnx_bq4802ly_init(void);
+void fnx_bq4802ly_set_tick_rate(uint16_t rate);
+void fnx_bq4802ly_enable_ticks(bool enable);
+tick_handler_t fnx_bq4802ly_get_tick_handler(void);
+/* The handler must save all the registers, it uses and terminate with rte */
+void fnx_bq4802ly_set_tick_handler(tick_handler_t handler);
+uint32_t fnx_bq4802ly_get_ticks(void);
+void fnx_bq4802ly_set_datetime(uint8_t day, uint8_t month, uint16_t year, uint8_t hour, uint8_t minute, uint8_t second);
+void fnx_bq4802ly_get_datetime(uint8_t *day, uint8_t *month, uint16_t *year, uint8_t *hour, uint8_t *minute, uint8_t *second);
 
 #endif

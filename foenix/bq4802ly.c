@@ -69,17 +69,17 @@ void bq4802ly_enable_ticks(bool enable)
 }
 
 
-uint32_t bq4802ly_get_ticks(void) {
+uint32_t bq4802ly_get_ticks(void)
+{
     return bq4802ly_ticks;
 }
 
 
-tick_handler_t bq4802ly_get_tick_handler(void) {
-    return bq4802ly_tick_handler;
-}
-
-void bq4802ly_set_tick_handler(tick_handler_t handler) {
+tick_handler_t bq4802ly_set_tick_handler(tick_handler_t handler)
+{
+    tick_handler_t previous = bq4802ly_tick_handler;
     bq4802ly_tick_handler = handler;
+    return previous;
 }
 
 

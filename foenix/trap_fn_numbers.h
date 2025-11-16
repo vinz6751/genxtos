@@ -56,4 +56,14 @@
 #define FNX_PS2_SET_KEY_DOWN_HANDLER    (FNX_KBD_BASE+2)
 #define FNX_PS2_SET_MOUSE_HANDLER       (FNX_KBD_BASE+3)
 
+/* Real Time Clock */
+#define FNX_RTC_BASE                170
+#define FNX_RTC_INIT                (FNX_RTC_BASE+0)
+#define FNX_RTC_SET_TICK_RATE       (FNX_RTC_BASE+1)
+#define FNX_RTC_ENABLE_TICKS        (FNX_RTC_BASE+2)
+#define FNX_RTC_SET_TICK_HANDLER    (FNX_RTC_BASE+3)
+#define FNX_RTC_GET_TICKS           (FNX_RTC_BASE+4)
+#define FNX_RTC_SET_DATETIME        (FNX_RTC_BASE+5)
+#define FNX_RTC_GET_DATETIME        (FNX_RTC_BASE+6)
+
 #endif

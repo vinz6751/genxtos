@@ -16,7 +16,11 @@ struct foenix_system_info_t
     uint32_t fpga_partnumber;
 };
 
+/* Keyboard / mouse */
 typedef void (*scancode_handler_t)(uint8_t);
 typedef void (*mouse_packet_handler_t)(int8_t*);
+
+/* Handler for the Real Time Clock ticking, must save registers and return with RTE */
+typedef void (*tick_handler_t)(void);
 
 #endif

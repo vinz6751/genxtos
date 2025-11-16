@@ -2,7 +2,7 @@
 
 #define CONCAT1(a, b) CONCAT2(a, b)
 #define CONCAT2(a, b) a ## b
-#define SYM(x) CONCAT1 (_,x)
+#define SYM(x) CONCAT1 (_,x)  /* This exists to cater for some compilers prefixing symbols with _ and others not */
 
 #define TRAP_NUMBER 15
 
@@ -135,21 +135,21 @@ SYM(fnx_sn76489_mute_all):
     .GLOBAL SYM(fnx_sn76489_freq)
 SYM(fnx_sn76489_freq):
     lea     4(sp),a0
-    move.l  2(a0),-(sp)
+    move.w  2(a0),-(sp)
     move.w  0(a0),-(sp)
     move.w  #FNX_SN76489_FREQ,-(sp)
     trap    #TRAP_NUMBER
-    addq.l  #8,sp
+    addq.l  #6,sp
     rts
 
     .GLOBAL SYM(fnx_sn76489_tone)
 SYM(fnx_sn76489_tone):
     lea     4(sp),a0
-    move.l  2(a0),-(sp)
+    move.w  2(a0),-(sp)
     move.w  0(a0),-(sp)
     move.w  #FNX_SN76489_TONE,-(sp)
     trap    #TRAP_NUMBER
-    addq.l  #8,sp
+    addq.l  #6,sp
     rts
 
     .GLOBAL SYM(fnx_sn76489_attenuation)
@@ -243,4 +243,71 @@ SYM(fnx_ps2_set_mouse_handler):
     move.w  #FNX_PS2_SET_MOUSE_HANDLER,-(sp)
     trap    #TRAP_NUMBER
     addq.l  #6,sp
+    rts
+
+/* Real Time Clock ***********************************************************/
+    .GLOBAL SYM(fnx_bq4802ly_init)
+SYM(fnx_bq4802ly_init):
+    move.w  #FNX_RTC_INIT,-(sp)
+    trap    #TRAP_NUMBER
+    addq.l  #2,sp
+    rts
+
+    .GLOBAL SYM(fnx_bq4802ly_set_tick_rate)
+SYM(fnx_bq4802ly_set_tick_rate):
+    move.w  4(sp),-(sp)
+    move.w  #FNX_RTC_SET_TICK_RATE,-(sp)
+    trap    #TRAP_NUMBER
+    addq.l  #4,sp
+    rts
+
+    .GLOBAL SYM(fnx_bq4802ly_enable_ticks)
+SYM(fnx_bq4802ly_enable_ticks):
+    move.w  4(sp),-(sp)
+    move.w  #FNX_RTC_ENABLE_TICKS,-(sp)
+    trap    #TRAP_NUMBER
+    addq.l  #4,sp
+    rts
+
+    .GLOBAL SYM(fnx_bq4802ly_set_tick_handler)
+SYM(fnx_bq4802ly_set_tick_handler):
+    move.l  4(sp),-(sp)
+    move.w  #FNX_RTC_SET_TICK_HANDLER,-(sp)
+    trap    #TRAP_NUMBER
+    addq.l  #6,sp
+    rts
+
+    .GLOBAL SYM(fnx_bq4802ly_get_ticks)
+SYM(fnx_bq4802ly_get_ticks):
+    move.w  #FNX_RTC_GET_TICKS,-(sp)
+    trap    #TRAP_NUMBER
+    addq.l  #2,sp
+    rts
+
+    .GLOBAL SYM(fnx_bq4802ly_set_datetime)
+SYM(fnx_bq4802ly_set_datetime):
+    lea     4(sp),a0
+    move.w  10(a0),-(sp)
+    move.w  8(a0),-(sp)
+    move.w  6(a0),-(sp)
+    move.w  4(a0),-(sp)
+    move.w  2(a0),-(sp)
+    move.w  0(a0),-(sp)
+    move.w  #FNX_RTC_SET_DATETIME,-(sp)
+    trap    #TRAP_NUMBER
+    lea     16(sp),sp
+    rts
+
+    .GLOBAL SYM(fnx_bq4802ly_get_datetime)
+SYM(fnx_bq4802ly_get_datetime):
+    lea     4(sp),a0
+    move.l  20(a0),-(sp)
+    move.l  16(a0),-(sp)
+    move.l  12(a0),-(sp)
+    move.l  8(a0),-(sp)
+    move.l  4(a0),-(sp)
+    move.l  0(a0),-(sp)
+    move.w  #FNX_RTC_SET_DATETIME,-(sp)
+    trap    #TRAP_NUMBER
+    lea     26(sp),sp
     rts
