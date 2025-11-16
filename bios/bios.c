@@ -17,7 +17,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-/* #define ENABLE_KDEBUG */
+#define ENABLE_KDEBUG
 
 #include "emutos.h"
 #include "aciavecs.h"
@@ -67,7 +67,11 @@
 #include "amiga.h"
 #include "lisa.h"
 #include "coldfire.h"
+/* Foenix A2560 stuff */
 #include "a2560_bios.h"
+#include "../foenix/trap.h"
+#include "../foenix/trap_bindings.h"
+#include "../foenix/cpu.h"
 
 #if WITH_CLI
 #include "../cli/clistub.h"
@@ -245,6 +249,7 @@ static void bios_init(void)
     /* Initialize the processor */
     KDEBUG(("processor_init()\n"));
     processor_init();   /* Set CPU type, longframe and FPU type */
+	/* Initialise the trap interface of the Foenix library */
 
 #if CONF_WITH_ADVANCED_CPU
     is_bus32 = (UBYTE)detect_32bit_address_bus();
@@ -266,6 +271,11 @@ static void bios_init(void)
     /* Initialise machine-specific stuff */
     KDEBUG(("machine_init()\n"));
     machine_init();
+
+    /* This must be done first because it detects long stack frames, that the trap handler needs to know about */
+	m68k_cpu_init();
+    KDEBUG(("Initialising Foenix lib trap interface cpu_has_long_frames:%d\n",cpu_has_long_frames));
+	trap_init();
 
     /* Initialize the BIOS memory management */
     KDEBUG(("bmem_init()\n"));
@@ -586,6 +596,32 @@ static void bios_init(void)
     }
 #endif
 
+#if 0 && (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX))
+    {
+        struct foenix_system_info_t sysinfo;
+        KDEBUG(("@sysinfo: %p\n", &sysinfo));
+        fnx_system_info(&sysinfo);
+        KDEBUG(("Model name: %s\n", sysinfo.model_name));
+        KDEBUG(("CPU ID    : %d\n", sysinfo.cpu_id));
+        KDEBUG(("CPU speed : %ld\n", sysinfo.cpu_speed_hz));
+        KDEBUG(("VRAM size : %ld\n", sysinfo.vram_size));
+        KDEBUG(("CPU name  : %s\n", sysinfo.cpu_name));
+        KDEBUG(("PCB rev.  : %c%c%c%c\n", sysinfo.pcb_revision_name[0], sysinfo.pcb_revision_name[1], sysinfo.pcb_revision_name[2], sysinfo.pcb_revision_name[3]));
+        KDEBUG(("FPGA date : %ld\n", sysinfo.fpga_date));
+        KDEBUG(("FPGA ver  : %d.%d\n", sysinfo.fpga_major, sysinfo.fpga_minor));
+        KDEBUG(("FPGA part#: %ld\n", sysinfo.fpga_partnumber));
+        KDEBUG(("sizeof(bool):%ld\n",sizeof(bool)));
+
+        fnx_sn76489_select(0);
+        fnx_sn76489_mute_all();
+        fnx_sn76489_freq(0,440);
+        fnx_sn76489_attenuation(0,0);
+
+    }
+
+#endif
+
+	
     KDEBUG(("bios_init() end\n"));
 }
 

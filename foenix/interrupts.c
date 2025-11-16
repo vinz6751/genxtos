@@ -37,7 +37,7 @@ void a2560_irq_init(void)
 void a2560_irq_mask_all(uint16_t *save)
 {
     int i;
-    uint16_t sr = set_sr(0x2700);
+    uint16_t sr = m68k_set_sr(0x2700);
 
     for (i = 0; i < IRQ_GROUPS; i++)
     {
@@ -45,7 +45,7 @@ void a2560_irq_mask_all(uint16_t *save)
         ((volatile uint16_t*)IRQ_MASK_GRP0)[i] = 0xffff;
     }
 
-    set_sr(sr);
+    m68k_set_sr(sr);
 }
 
 

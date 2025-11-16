@@ -18,10 +18,10 @@
 #define MAXIMUM_TOS_COMPATIBILITY 1
 
  /* Prototypes */
-static const char driver_name[] = "PS/2 Mouse";
+static const char driver_name[] = "A2560 PS/2 Mouse";
 static bool init(struct ps2_driver_api_t *api);
 static bool can_drive(const uint8_t ps2_device_type[]);
-static void process(const struct ps2_driver_api_t *api, uint8_t byte);
+static void process(struct ps2_driver_api_t *api, uint8_t byte);
 
 /* Driver itself */
 const struct ps2_driver_t ps2_mouse_driver_a2560u =
@@ -46,7 +46,6 @@ static void on_change(const vicky_mouse_event_t *event);
 static bool init(struct ps2_driver_api_t *api)
 {
     a2560_debugnl("ps2_mouse_a2560->init()");
-    api->driver->process = process;
 
     vicky_mouse_init(on_change, api);
 
@@ -78,11 +77,11 @@ static void on_change(const vicky_mouse_event_t *event)
     ikbd_packet[0] = 0xf8 | (*packet++ & 3);
     ikbd_packet[1] = *packet++;
     ikbd_packet[2] = *packet++;
-    api->os_callbacks.on_mouse(ikbd_packet);
+    api->callbacks.on_mouse(ikbd_packet);
 }
 
 
-void process(const struct ps2_driver_api_t *api, uint8_t byte)
+void process(struct ps2_driver_api_t *api, uint8_t byte)
 {
 #if MAXIMUM_TOS_COMPATIBILITY
     /* This is the slower but more compatible option. We write VICKY PS/2 registers as it's the 
@@ -96,10 +95,10 @@ void process(const struct ps2_driver_api_t *api, uint8_t byte)
      * So if apps hook into the XBIOS (mousevec) they won't receive anything. But if they hook at the line-A / VDI level
      * they're ok. */
     volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
-    packet[DRIVER_DATA->state++] = (uint16_t)byte;
-    if (DRIVER_DATA->state >= SM_RECEIVED)
+    packet[DRIVER_DATA++] = (uint16_t)byte;
+    if (DRIVER_DATA >= SM_RECEIVED)
     {
-        DRIVER_DATA->state = SM_IDLE;
+        DRIVER_DATA = SM_IDLE;
 
         uint16_t new_cur_ms_stat;
         uint16_t x,y;

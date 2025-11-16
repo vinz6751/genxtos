@@ -17,7 +17,7 @@
 #include <stdint.h>
 
 /* Select the PSG (0:left, 1:right, 2:both) */
-void sn76489_select(unsigned int number);
+void sn76489_select(uint8_t number);
 
 void sn76489_mute_all(void);
 void sn76489_freq(uint8_t voice, uint16_t frequency);

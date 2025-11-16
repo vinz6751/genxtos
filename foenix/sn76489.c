@@ -23,17 +23,15 @@ static const uint8_t* psgs_ports[] = {
     (uint8_t*const)SN76489_BOTH
 };
 
-static uint8_t *sn76489_current;
+static volatile uint8_t *sn76489_current;
 
 /*
  * Selects the PSG that next function calls will operate on.
  * 0 : left, 1: right, 2: both
  */
-void sn76489_select(unsigned int number) {
-# ifdef MACHINE_A2560U
+void sn76489_select(uint8_t number) {
     if (number <= SN76489_COUNT)
-        sn76489_current = psgs_ports[number];
-# endif
+        sn76489_current = (uint8_t*)psgs_ports[number];
 }
 
 /*
@@ -56,8 +54,8 @@ void sn76489_mute_all(void) {
  * frequency = the desired frequency in Hz
  */
 void sn76489_freq(uint8_t voice, uint16_t frequency) {
-    unsigned long period;
-    unsigned long f = frequency;
+    long period;
+    long f = frequency;
 
     if (f <<= 5) /* f *= 32, but if frequency if null avoid division by 0 */
         period = SN76489_CLOCK / f;

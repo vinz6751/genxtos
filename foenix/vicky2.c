@@ -278,6 +278,7 @@ void vicky2_init_channel(const struct vicky2_channel_t * const vicky)
     vicky->ctrl->font_size_control = 0x08080808L;
     vicky->ctrl->text_window_size = 0x3c50L; /* 60x80 */
     vicky->ctrl->window_pos_x = 0x01ff00B7L;
+    //vicky->ctrl->window_size_x = 0x028001E0L;
     vicky->ctrl->window_size_x = 0x028001E0L;
     vicky->ctrl->window_prefetch = 0x01090000L;
 

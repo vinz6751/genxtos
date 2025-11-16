@@ -82,7 +82,7 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     t = (struct a2560_timer_t *)&a2560_timers[timer];
 
     /* We don't want interrupts while we reprogramming */
-    sr = set_sr(0x2700);
+    sr = m68k_set_sr(0x2700);
 
     /* Stop the timer while we configure */
     a2560_timer_enable(timer, false);
@@ -125,11 +125,11 @@ void a2560_set_timer(uint16_t timer, uint32_t frequency, bool repeat, void *hand
     /* Unmask interrupts for that timer */
     R16(IRQ_MASK_GRP1) &= ~t->irq_mask;
 
-    set_sr(sr);
+    m68k_set_sr(sr);
 #if 0
     a2560_debugnl("AFTER SETTING TIMER %d", timer);
     a2560_debugnl("CPU freq     %ld", cpu_freq);
-    a2560_debugnl("CPU          sr=%04x", get_sr());
+    a2560_debugnl("CPU          sr=%04x", m68k_get_sr());
     a2560_debugnl("vector       0x%02x=%p",t->vector,(void*)set_vector(t->vector, -1L));
     a2560_debugnl("value        %p=%p",(void*)t->value,R32(t->value));
     a2560_debugnl("compare      %p=%p",(void*)t->compare,R32(t->compare));
