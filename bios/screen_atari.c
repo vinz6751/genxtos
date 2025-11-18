@@ -336,6 +336,41 @@ const UBYTE *atari_physbase(void)
 ULONG atari_calc_vram_size(void)
 {
     ULONG vram_size;
+
+#if CONF_WITH_VIDEL
+    if (has_videl)
+    {
+        /* mode is already set */
+        vram_size = vgetsize(vsetmode(-1));
+        KDEBUG(("atari_calc_vram_size: minimum required size %ld bytes\n", vram_size));
+        /*
+         * for compatibility with previous EmuTOS versions allocate at least
+         * FALCON_VRAM_SIZE+EXTRA_VRAM_SIZE
+         */
+        if (vram_size < FALCON_VRAM_SIZE)
+            vram_size = FALCON_VRAM_SIZE;
+        return vram_size + EXTRA_VRAM_SIZE;
+    }
+#endif
+
+    vram_size = (ULONG)BYTES_LIN * V_REZ_VT;
+
+    /* TT TOS allocates 256 bytes more than actually needed. */
+    if (HAS_TT_SHIFTER)
+        return vram_size + EXTRA_VRAM_SIZE;
+
+    /*
+     * The most important issue for the ST is ensuring that screen memory
+     * starts on a 256-byte boundary for hardware reasons.  We assume
+     * that screen memory is allocated at the top of memory, and that
+     * memory ends on a 256-byte boundary.  So we must allocate a multiple
+     * of 256 bytes.  For compatibility with ST TOS, we also allocate
+     * (at least) 768 bytes more than actually needed.
+     */
+    return (vram_size + 768UL + 255UL) & ~255UL;
+
+#if 0 // TODO: Prune (old code)
+    ULONG vram_size;
     WORD planes, w, h;
 
     if (HAS_VIDEL)
@@ -357,6 +392,7 @@ ULONG atari_calc_vram_size(void)
      * (at least) 768 bytes more than actually needed.
      */
     return (vram_size + 768UL + 255UL) & ~255UL;
+#endif 
 }
 
 static void shifter_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)

@@ -31,7 +31,7 @@
 #include "screen_atari.h"
 #include "screen_tt.h"
 #include "videl.h"
-#include "xbiosbind.h"
+#include "xbiosbind.h" /* for Srealloc, which is a layering breakage ! (BIOS calling BDOS */
 #include "a2560_bios.h"
 
 
@@ -43,6 +43,7 @@ void *video_ram_addr;
 /* This flavour allows the caller to specify the resolution */
 static void screen_init_services(UWORD planes, UWORD xrez, UWORD yrez);
 
+static ULONG calc_vram_size(void);
 
 /*
  * Check specified mode/rez to see if we should change; used in early
@@ -231,7 +232,7 @@ WORD get_monitor_type(void)
  * because some programs (e.g. NVDI) rely on this and write past what
  * should be the end of screen memory.
  */
-ULONG calc_vram_size(void)
+static ULONG calc_vram_size(void)
 {
 #ifdef MACHINE_AMIGA
     return amiga_initial_vram_size();
