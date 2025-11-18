@@ -55,7 +55,7 @@ typedef struct moblk
 #define W_HSLIDE    17
 #define W_HELEV     18
 
-#define NUM_ELEM    19
+#define NUM_ELEM    19 /* max number of objects making up the window's gadgets */
 
 /* values used in w_flags field of window structure */
 #define VF_INUSE    0x0001      /* the window has been created */

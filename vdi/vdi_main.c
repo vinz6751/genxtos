@@ -158,8 +158,12 @@ void vdi_screen_driver(void)
     else {
         return;
     }
+
+    /* Set the number of points out and the number of integers out */
     contrl[2] = jmptab->nptsout;
     contrl[4] = jmptab->nintout;
+
+    /* Call the appropriate function */
     (*jmptab->op) (vwk);
 
     /*
