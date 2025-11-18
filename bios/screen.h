@@ -38,7 +38,7 @@
 
 
 /* Called when we detect that a different monitor is plugged */
-void detect_monitor_change(void);
+void screen_detect_monitor_change(void);
 
 /* set screen address, mode, ... */
 void screen_init_address(void);
@@ -47,6 +47,7 @@ void screen_init_services_from_mode_info(void);
 void screen_setphys(const UBYTE *addr);
 void screen_set_rez_hacked(void);
 void screen_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez);
+void screen_do_set_palette(UWORD *new_palette);
 
 /* hardware-independent xbios routines */
 const UBYTE *physbase(void);

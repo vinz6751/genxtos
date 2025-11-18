@@ -48,7 +48,7 @@ void vbl_handler(void) {
 
 #if CONF_WITH_ATARI_VIDEO
     // check for monitor switching and jump to _swv_vec if necessary...
-    detect_monitor_change();
+    screen_detect_monitor_change();
 #endif
 
 #if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) || CONF_WITH_A2560U_SHADOW_FRAMEBUFFER /* If we have text mode only, VICKY takes care of the blinking */
@@ -63,7 +63,12 @@ void vbl_handler(void) {
     }
 #endif
 
-    copy_palette();
+    // Support of Setpalette
+    if (colorptr) {
+        screen_do_set_palette(colorptr);
+        colorptr = 0;
+    }
+
     set_new_screen_address();
 
 #if CONF_WITH_FDC
@@ -73,60 +78,6 @@ void vbl_handler(void) {
     process_vbl_queue();
 
     dump_screen();
-}
-
-
-static void copy_palette(void) {
-    // Support of Setpalette
-    if (!colorptr)
-        return;
-
-#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) && 0
-    WORD i;
-    *VICKY_B_BG_COLOR = colorptr[0];
-    for (i=0; i<16; i++) {
-        uint32_t color = convert_atari2vicky_color(colorptr[i]);
-        if (i == 0) {
-            *VICKY_B_BG_COLOR = color;
-        }
-        else {
-            vicky2_set_lut_color(vicky, 0, i, color);
-        }
-    }
-#elif CONF_WITH_ATARI_VIDEO
-    // the contents of colorptr indicate the palette processing required; since
-    // the source address must be on a word boundary, we use bit 0 as a flag:
-    //  contents                 meaning
-    //  --------                 -------
-    //     0                     do nothing
-    //  address                  load ST(e) palette registers from address
-    //  address with flag set    load 16 Falcon palette registers from address
-    //     0 with flag set       load 256 Falcon palette registers from
-    //                             _falcon_shadow_palette
-    UWORD *palette_regs;
-    UWORD *new_palette;
-    WORD palette_size;
-    
-    new_palette = colorptr;
-    colorptr = 0;
-
-    if ((LONG)new_palette & 1) {
-        new_palette = (UWORD*)((LONG)new_palette & ~1); // Test & clear Falcon indicator
-#if CONF_WITH_VIDEL
-        palette_regs = (UWORD*)0xffff9800L;
-        palette_size = falcon_shadow_count - 1;
-#endif
-    }
-    else {
-        palette_regs = (UWORD*)0xffff8240L;
-        palette_size = 16/2 -1; // Number of colors of the Shifter (regardless of resolution) / 2 as we copy LONGS
-    }
-    // Copy the palette
-    do {
-        *((ULONG*)palette_regs++) = *((ULONG*)new_palette++);
-    } while (--palette_size >= 0); // Hope for dbra
-#endif
-    colorptr = 0; // Job done
 }
 
 

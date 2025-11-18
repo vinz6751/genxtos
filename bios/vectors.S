@@ -57,7 +57,7 @@
         .extern etv_critic
         .extern _v_bas_ad
 
-        .extern _detect_monitor_change  // screen.c
+        .extern _screen_detect_monitor_change  // screen.c
         .extern _blink          // conout.c - console output
 
 // Note: this scheme is designed to print the exception number

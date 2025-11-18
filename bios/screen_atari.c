@@ -437,13 +437,13 @@ void fixup_ste_palette(WORD rez)
 
 
 /*
- * detect_monitor_change(): called by VBL interrupt handler
+ * screen_detect_monitor_change(): called by VBL interrupt handler
  *
  * this checks if the current monitor mode (monochrome/colour) is the
  * same as that set in the shifter.  if not, it calls swv_vec() which
  * by default does a system restart.
  */
-void detect_monitor_change(void)
+void screen_detect_monitor_change(void)
 {
     SBYTE monoflag;
     volatile SBYTE *gpip = ((volatile SBYTE *)0xfffffa01L);

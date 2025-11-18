@@ -484,7 +484,9 @@ void screen_init_services_from_mode_info(void)
     screen_init_services(planes, xrez, yrez);
 }
 
-
+/** Schedule the palette change for the next VBL
+ * The new palette is stored as colorptr
+*/
 void setpalette(const UWORD *palettePtr)
 {
 #ifdef ENABLE_KDEBUG
@@ -501,6 +503,62 @@ void setpalette(const UWORD *palettePtr)
     /* next VBL will do this */
     colorptr = palettePtr;
 }
+
+
+/**
+ * Set the palette
+ * 
+ * This function is called by the VBL interrupt handler to set the palette.
+ * It is used to set the palette for the Falcon and the Shifter.
+ * It is also used to set the palette for the VICKY.
+ * 
+ * It is called after the Setpalette xbios call is made.
+ */
+void screen_do_set_palette(UWORD *new_palette) {
+
+#if (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) && 0
+    WORD i;
+    *VICKY_B_BG_COLOR = colorptr[0];
+    for (i=0; i<16; i++) {
+        uint32_t color = convert_atari2vicky_color(new_palette[i]);
+        if (i == 0) {
+            *VICKY_B_BG_COLOR = color;
+        }
+        else {
+            vicky2_set_lut_color(vicky, 0, i, color);
+        }
+    }
+#elif CONF_WITH_ATARI_VIDEO
+    // the contents of colorptr indicate the palette processing required; since
+    // the source address must be on a word boundary, we use bit 0 as a flag:
+    //  contents                 meaning
+    //  --------                 -------
+    //     0                     do nothing
+    //  address                  load ST(e) palette registers from address
+    //  address with flag set    load 16 Falcon palette registers from address
+    //     0 with flag set       load 256 Falcon palette registers from
+    //                             _falcon_shadow_palette
+    UWORD *palette_regs;
+    WORD palette_size;    
+
+    if ((LONG)new_palette & 1) {
+        new_palette = (UWORD*)((LONG)new_palette & ~1); // Test & clear Falcon indicator
+#if CONF_WITH_VIDEL
+        palette_regs = (UWORD*)0xffff9800L;
+        palette_size = falcon_shadow_count - 1;
+#endif
+    }
+    else {
+        palette_regs = (UWORD*)0xffff8240L;
+        palette_size = 16/2 -1; // Number of colors of the Shifter (regardless of resolution) / 2 as we copy LONGS
+    }
+    // Copy the palette
+    do {
+        *((ULONG*)palette_regs++) = *((ULONG*)new_palette++);
+    } while (--palette_size >= 0); // Hope for dbra
+#endif
+}
+
 
 /*
  * setcolor(): implement the Setcolor() xbios call
