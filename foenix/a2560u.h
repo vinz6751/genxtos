@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "a2560u_debug.h"
+#include "a2560_struct.h"
 #include "vicky2.h"
 #include "vicky_mouse.h"
 #include "foenix.h"
@@ -33,23 +34,6 @@ struct IDE
 };
 #define ide_interface ((volatile struct IDE* const)IDE_BASE)
 #endif
-
-
-/* System info from GAVIN and VICKY */
-struct foenix_system_info_t
-{
-    char     *model_name;
-    uint8_t  cpu_id;
-    uint32_t cpu_speed_hz;
-    uint32_t vram_size;
-    char     *cpu_name;
-    char     pcb_revision_name[4];
-    uint32_t fpga_date; /* ddddmmyy, BCD */
-    uint16_t fpga_major;
-    uint16_t fpga_minor;
-    uint32_t fpga_partnumber;
-};
-
 
 void a2560u_init(bool cold_boot);
 

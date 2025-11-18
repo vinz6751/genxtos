@@ -24,13 +24,13 @@ uint32_t cpu_set_vector(uint16_t num, uint32_t vector)
 }
 
 
-void cpu_init(void)
+void m68k_cpu_init(void)
 {
     /* Detect if the CPU has long frames. We could also detect using tests, or drive it from
      * the the system information provided by GAVIN */
 #if defined(MACHINE_A2560U)
     cpu_has_long_frames = 0;
-#elif defined(MACHINE_A2560K) || defined(MACHINE_A256M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-    cpu_has_long_frames = 1;
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+    cpu_has_long_frames = -1;
 #endif
 }

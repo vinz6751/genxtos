@@ -44,10 +44,8 @@ typedef long            LONG;                   /*  signed 32 bit word  */
 #include "bq4802ly.h"  /* Real time clock */
 #include "cpu.h"
 #include "interrupts.h"
+#include "keyboard.h"
 #include "mpu401.h"    /* MIDI interface */
-#include "ps2.h"
-#include "ps2_keyboard.h"
-#include "ps2_mouse_a2560.h"
 #include "regutils.h"
 #include "sn76489.h"   /* Programmable Sound Generator */
 #include "superio.h"
@@ -69,10 +67,6 @@ void a2560_init_lut0(void);
 
 void a2560_irq_bq4802ly(void);
 
-
-
-void a2560_irq_ps2kbd(void);
-void a2560_irq_ps2mouse(void);
 
 /* Implementation ************************************************************/
 
@@ -176,84 +170,6 @@ void a2560_setdt(uint32_t datetime)
         (time & 0b1111100000000000) >> 11, /* hour */
         (time & 0b0000011111100000) >> 5,  /* minute */
         (time & 0b0000000000011111) << 1); /* second are divided by 2 in TOS*/
-}
-
-
-/* PS/2 setup  ***************************************************************/
-
-/* List here all drivers we support */
-static const struct ps2_driver_t * const drivers[] = {
-    &ps2_keyboard_driver,
-    &ps2_mouse_driver_a2560u
-};
-
-static void irq_msg40(void);
-static void irq_msg41(void);
-static void irq_msg42(void);
-static void irq_msg43(void);
-static void irq_msg44(void);
-static void irq_msg45(void);
-static void irq_msg46(void);
-static void irq_msg47(void);
-static void irq_msg40(void) { a2560_debugnl("0x40"); }
-static void irq_msg41(void) { a2560_debugnl("0x41"); }
-static void irq_msg42(void) { a2560_debugnl("0x42"); }
-static void irq_msg43(void) { a2560_debugnl("0x43"); }
-static void irq_msg44(void) { a2560_debugnl("0x44"); }
-static void irq_msg45(void) { a2560_debugnl("0x45"); }
-static void irq_msg46(void) { a2560_debugnl("0x46"); }
-static void irq_msg47(void) { a2560_debugnl("0x47"); }
-
-/* The following must be set by the calling OS prior to calling a2560_kbd_init
- * ps2_config.counter      = ;
- * ps2_config.counter_freq = ;
- * ps2_config.malloc       = ;
- * ps2_config.os_callbacks.on_key_down = ;
- * ps2_config.os_callbacks.on_key_up   = ;
- * ps2_config.os_callbacks.on_mouse    = ;
- */
-void a2560_kbd_init(void)
-{
-    /* Disable IRQ while we're configuring */
-    a2560_irq_disable(INT_KBD_PS2);
-    a2560_irq_disable(INT_MOUSE);
-
-    /* Explain our setup to the PS/2 subsystem */
-    ps2_config.port_data    = (uint8_t*)PS2_DATA;
-    ps2_config.port_status  = (uint8_t*)PS2_CMD;
-    ps2_config.port_cmd     = (uint8_t*)PS2_CMD;
-    ps2_config.n_drivers    = sizeof(drivers)/sizeof(struct ps2_driver_t*);
-    ps2_config.drivers      = drivers;
-
-#if 0
-    a2560_debugnl("port_data: %p", ps2_config.port_data);
-    a2560_debugnl("port_status: %p", ps2_config.port_status);
-    a2560_debugnl("port_cmd: %p", ps2_config.port_cmd);
-#endif
-
-    ps2_init();
-
-    /* Register GAVIN interrupt handlers */
-    cpu_set_vector(INT_PS2KBD_VECN, (uint32_t)a2560_irq_ps2kbd);
-    cpu_set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560_irq_ps2mouse);
-/*
-cpu_set_vector(INT_PS2KBD_VECN, (uint32_t)irq_msg40);
-cpu_set_vector(INT_PS2KBD_VECN+1, (uint32_t)irq_msg41);
-cpu_set_vector(INT_PS2KBD_VECN+2, (uint32_t)irq_msg42);
-cpu_set_vector(INT_PS2KBD_VECN+3, (uint32_t)irq_msg43);
-cpu_set_vector(INT_PS2KBD_VECN+4, (uint32_t)irq_msg44);
-cpu_set_vector(INT_PS2KBD_VECN+5, (uint32_t)irq_msg45);
-cpu_set_vector(INT_PS2KBD_VECN+6, (uint32_t)irq_msg46);
-cpu_set_vector(INT_PS2KBD_VECN+7, (uint32_t)irq_msg47);
-*/
-    /* Acknowledge any pending interrupt */
-    a2560_irq_acknowledge(INT_KBD_PS2);
-    a2560_irq_acknowledge(INT_MOUSE);
-
-    /* Go ! */
-    a2560_debugnl("Enabling GAVIN PS2/mouse irqs");
-    a2560_irq_enable(INT_KBD_PS2);
-    a2560_irq_enable(INT_MOUSE);
 }
 
 

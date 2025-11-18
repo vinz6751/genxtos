@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "a2560_debug.h"
+#include "a2560_struct.h"
 #include "vicky2.h"
 #include "vicky_mouse.h"
 #include "foenix.h"
@@ -35,22 +36,6 @@ struct IDE
 #endif
 
 
-/* System info from GAVIN and VICKY */
-struct foenix_system_info_t
-{
-    char     *model_name;
-    uint8_t  cpu_id;
-    uint32_t cpu_speed_hz;
-    uint32_t vram_size;
-    char     *cpu_name;
-    char     pcb_revision_name[4];
-    uint32_t fpga_date; /* ddddmmyy, BCD */
-    uint16_t fpga_major;
-    uint16_t fpga_minor;
-    uint32_t fpga_partnumber;
-};
-
-
 void a2560_init(bool cold_boot);
 
 void a2560_beeper(bool on);
@@ -76,7 +61,6 @@ void a2560_setdt(uint32_t datetime);
 void a2560_rte(void); /* Actually, just the RTE instruction. Not a function */
 void a2560_rts(void); /* Actually, just the RTS instruction. */
 
-void a2560_kbd_init(void);
 void a2560_midi_init(uint32_t (*timer)(void),uint16_t timeout);
 
 #endif

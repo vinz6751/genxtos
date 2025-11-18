@@ -16,7 +16,9 @@
 #ifndef FOENIX_H
 #define FOENIX_H
 
+#if !(defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_A2560U) || defined(MACHINE_GENX))
 #include "../include/config.h"
+#endif
 
 /* General memory map */
 #define VICKY_TEXT_SIZE 0x4000 /* Size of the text memory */
@@ -346,7 +348,11 @@
 
 
 /* BEATRIX */
-#define SN76489_CLOCK 357954500UL
+#if defined(MACHINE_A2560M)
+#define SN76489_CLOCK 5632000UL /* Found by trial/error, it seems like it's an issue that will be corrected */
+#else
+#define SN76489_CLOCK 3579545UL
+#endif
 #define SN76489_COUNT 2
 #define SN76489_L     (BEATRIX+0x0110) /* Left SN76489 */
 #define SN76489_R     (BEATRIX+0x0120) /* Right SN76489 */

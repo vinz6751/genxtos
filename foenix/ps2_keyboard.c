@@ -19,7 +19,7 @@
  /* Prototypes */
 static const char driver_name[] = "PS/2 Keyboard";
 static bool init(struct ps2_driver_api_t *api);
-static void process(const struct ps2_driver_api_t *api, uint8_t scancodestate);
+static void process(struct ps2_driver_api_t *api, uint8_t scancodestate);
 static bool can_drive(const uint8_t ps2_device_type[]);
 
 /* Driver */
@@ -70,25 +70,15 @@ static const uint8_t scancodeSet1_E0_to_key[128] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  /* 0x78 - 0x7F */
  };
 
-/* Internal state of the driver */
-struct ps2_keyboard_local_t
-{
-    sm_state_t state;  /* State of the state machine */   
-};
 
 /* Convenience */
-#define DRIVER_DATA ((struct ps2_keyboard_local_t*)api->driver_data)
+#define STATE ((sm_state_t)(api->driver_data))
+#define SET_STATE(x) (api->driver_data = (uint32_t)(x))
 
 /* Initialise the driver for operations */
 static bool init(struct ps2_driver_api_t *api)
 {
-	/* Shut down leds */
-    api->driver->process = process;
-    api->driver_data = (api->malloc)(sizeof(struct ps2_keyboard_local_t));
-    if (api->driver_data == NULL)
-        return ERROR;
-
-    DRIVER_DATA->state = SM_IDLE;
+    SET_STATE(SM_IDLE);
 
     return SUCCESS;
 }
@@ -114,27 +104,25 @@ static bool can_drive(const uint8_t ps2_device_type[])
     return ERROR;
 }
 
-static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
+static void process(struct ps2_driver_api_t *api, uint8_t scancode)
 {
     /* Factoring helpers, see the meat below */
-
-    #define STATE ((struct ps2_keyboard_local_t*)(api->driver_data))->state
     #define IS_BREAK(x) (x & 0x80)
 
     /* On unexpected scan code, return the state machine to idle (swallow the code) */
-    #define check_and_set_next(expected, next) STATE = (scancode == expected) ? next : SM_IDLE;
+    #define check_and_set_next(expected, next) SET_STATE((scancode == expected) ? next : SM_IDLE);
 
     #define check_and_down(expected, pressed) \
         if (scancode == expected) \
-            api->os_callbacks.on_key_down(pressed); \
+            api->callbacks.on_key_down(pressed); \
         /* On success we're ideal, on failure we swallow the scan code */ \
-        STATE = SM_IDLE;
+        SET_STATE(SM_IDLE);
 
     #define check_and_up(expected, released) \
         if (scancode == expected) \
-            api->os_callbacks.on_key_up(scancode); \
+            api->callbacks.on_key_up(scancode); \
         /* On success we're ideal, on failure we swallow the scan code */ \
-        STATE = SM_IDLE;
+        SET_STATE(SM_IDLE);
 
 	/* a2560_debugnl("scancode:%02x",scancode); */
 
@@ -146,18 +134,18 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
         case SM_IDLE:
             switch (scancode) {
                 case 0xE0:
-                    STATE = SM_E0;
+                    SET_STATE(SM_E0);
                     break;
 
                 case 0xE1:
-                    STATE = SM_E1;
+                    SET_STATE(SM_E1);
                     break;
 
                 default:
                     if (IS_BREAK(scancode))
-                        api->os_callbacks.on_key_up(scancode & 0x7f);
+                        api->callbacks.on_key_up(scancode & 0x7f);
                     else
-                        api->os_callbacks.on_key_down(scancode);
+                        api->callbacks.on_key_down(scancode);
                     break;
             }
             break;
@@ -165,11 +153,11 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
         case SM_E0:
             switch (scancode) {
                 case 0x2A:
-                    STATE = SM_E02A;
+                    SET_STATE(SM_E02A);
                     break;
 
                 case 0xB7:
-                    STATE = SM_E0B7;
+                    SET_STATE(SM_E0B7);
                     break;
 
                 default:
@@ -178,14 +166,14 @@ static void process(const struct ps2_driver_api_t *api, uint8_t scancode)
                         uint8_t translated_code = scancodeSet1_E0_to_key[scancode & 0x7f];
                         if (translated_code != 0) {
                             if (IS_BREAK(scancode))
-                                api->os_callbacks.on_key_up(translated_code);
+                                api->callbacks.on_key_up(translated_code);
                             else
-                                api->os_callbacks.on_key_down(translated_code);
+                                api->callbacks.on_key_down(translated_code);
                         }
                         else {
                             a2560_debugnl("No scancodeSet1_E0_to_key for %02x", scancode);
                         }
-                        STATE = SM_IDLE;
+                        SET_STATE(SM_IDLE);
                     }
                     break;
             }

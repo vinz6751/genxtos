@@ -64,11 +64,6 @@ bool a2560_bios_sfb_is_active;
 
 void a2560_init_lut0(void);
 
-/* Interrupt */
-void a2560_irq_bq4802ly(void);
-void a2560_irq_ps2kbd(void);
-void a2560_irq_ps2mouse(void);
-
 
 /* Implementation ************************************************************/
 
@@ -351,27 +346,22 @@ void a2560_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *v
 }
 
 /* PS/2 setup  ***************************************************************/
-#include "../foenix/ps2.h"
 
-static void *balloc_proxy(size_t howmuch)
-{
-    return balloc_stram(howmuch, false);
-}
+#include "../foenix/trap_bindings.h"
 
 void a2560_bios_kbd_init(void)
 {
-    ps2_config.counter      = (uint32_t*)&frclock; /* FIXME we're using the VBL counter */
-    ps2_config.counter_freq = 60;
-    ps2_config.malloc       = balloc_proxy;
-    ps2_config.os_callbacks.on_key_down = kbd_int;
-    ps2_config.os_callbacks.on_key_up   = kbd_int;
-    ps2_config.os_callbacks.on_mouse    = call_mousevec;
-
-    a2560_kbd_init();
+    /* We're using the VBL counter: that may depend on the resolution, if it changes,
+     * and of the VBLs are blocked, the counter will not work. But after init, when everything
+     * is setup and we're only reacting to interupts, it shouldn't matter. */
+    fnx_kbd_init((uint32_t*)&frclock, 60);
+    fnx_ps2_set_key_up_handler(kbd_int);
+    fnx_ps2_set_key_down_handler(kbd_int);
+    fnx_ps2_set_mouse_handler(call_mousevec);
 }
 
-/* SD Card: the driver is in spi_gavin */
 
+/* SD Card: the driver is in spi_gavin */
 
 /* Text mode support *********************************************************/
 #include "font.h"

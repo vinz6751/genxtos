@@ -11,7 +11,7 @@
 extern uint16_t cpu_has_long_frames;
 
 
-#define set_sr(a)                         \
+#define m68k_set_sr(a)                         \
 __extension__                             \
 ({int16_t _r, _a = (a);                     \
   __asm__ volatile                        \
@@ -26,11 +26,11 @@ __extension__                             \
 
 
 /*
- * WORD get_sr(void);
+ * WORD m68k_get_sr(void);
  *   returns the current value of sr.
  */
 
-#define get_sr()                          \
+#define m68k_get_sr()                          \
 __extension__                             \
 ({int16_t _r;                               \
   __asm__ volatile                        \
@@ -53,7 +53,7 @@ __extension__                             \
 ({uint32_t _r;                            \
   __asm__ volatile                        \
   ("move.l usp,%0"                        \
-  : "=da"(_r)        /* outputs */        \
+  : "=a"(_r)         /* outputs */        \
   :                  /* inputs  */        \
   : "memory"         /* clobbered */      \
   );                                      \
@@ -71,7 +71,7 @@ uint32_t cpu_set_vector(uint16_t num, uint32_t vector);
 /*
  * Setup the CPU for basic use
  */
-void cpu_init(void);
+void m68k_cpu_init(void);
 
 
 #endif

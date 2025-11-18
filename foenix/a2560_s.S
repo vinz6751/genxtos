@@ -19,7 +19,7 @@
     .GLOBAL _a2560_irq_ps2kbd
     .GLOBAL _a2560_irq_ps2mouse
     .GLOBAL _a2560_irq_com1
-#if CONF_WITH_MPU401
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     .GLOBAL _a2560_irq_com2
     .GLOBAL _a2560_irq_mpu401
 #endif
@@ -29,8 +29,6 @@
 | Imports ---------------------------------------------------------------------
     .GLOBAL a2560_irq_vectors
     .GLOBAL _bq4802ly_ticks
-    .GLOBAL _hz_200
-    .GLOBAL _ps2_config
     .GLOBAL _ps2_channel1_irq_handler
     .GLOBAL _ps2_channel2_irq_handler
     .GLOBAL _calibration_loop_count
@@ -115,15 +113,13 @@ _a2560_irq_bq4802ly: // Real time clock interrupt handler
 
 _a2560_irq_ps2kbd: // PS/2 keyboard interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
-    // higher priority, we could be loosing data due to overruns. So when this handler is caller,
+    // higher priority, we could be loosing data due to overruns. So when this handler is called,
     // we don't want it to be interrupted.
-    move.w  sr,-(sp)
     move.w  #0x2700,sr
     move.w  #(1<<INT_BIT(INT_KBD_PS2)),INT_GRP(INT_KBD_PS2)
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel1_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
-    move.w  (sp)+,sr
     rte
 
 
@@ -131,14 +127,11 @@ _a2560_irq_ps2mouse: // PS/2 mouse interrupt handler
     // This interrupt has low priority and if its processing is delayed by another interrupt with
     // higher priority, we could be loosing data due to overruns. So when this handler is caller,
     // we don't want it to be interrupted.
-
-    move.w  sr,-(sp)
     move.w  #0x2700,sr
     move.w  #(1<<INT_BIT(INT_MOUSE)),INT_GRP(INT_MOUSE)
     movem.l d0-d2/a0-a2,-(sp) // Save GCC scratch registers
     jbsr    _ps2_channel2_irq_handler
     movem.l (sp)+,d0-d2/a0-a2
-    move.w  (sp)+,sr
     rte
 
 
@@ -165,7 +158,7 @@ com_done:
     movem.l (sp)+,d0-d2/a0-a2
     rte
 
-#if CONF_WITH_MPU401
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 /* That must mean we have a SuperIO therefore a 2nd serial port */
 _a2560_irq_com2: // UART COM2 interrupt handler

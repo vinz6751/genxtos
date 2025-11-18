@@ -5,7 +5,7 @@
  *	Vincent Barrilliot
  *
  * Limitations:
- * * the driver requires a timer works, because it uses it for timeouts.
+ * * the driver requires a timer to work, because it uses it for timeouts.
  * * cannot have multiple instances of this handler as it uses global vars (but which 68k machine has more than one PS/2 port ?)
  * * ancient AT keyboard with translation enabled in the PS/Controller is not supported.
  *
@@ -112,7 +112,6 @@ static struct ps2_global_t L;
 
 /* Global */
 struct ps2_api_t ps2_config;
-#define P ps2_config /* local convenience */
 
 /* Prototypes */
 static bool wait_until_can_write(void);
@@ -146,12 +145,12 @@ uint16_t ps2_init(void)
 {
 	uint8_t config = 0;
 
-	a2560_debugnl("ps2_init() P.counter_freq:%dHz", P.counter_freq);
+	a2560_debugnl("ps2_init() ps2_config.counter_freq:%dHz", ps2_config.counter_freq);
 
 	/* We get about 960 bytes/s max as the interface is 9600bps 8/1/1 no parity (10 bits).
 	 * Period for 1 character is 1/960, we convert to mi
 	 * We want to be able to wait 1 character. */
-	L.timeout = P.counter_freq / 30;
+	L.timeout = ps2_config.counter_freq / 30;
 	if (!L.timeout)
 		L.timeout = 1;
 
@@ -302,9 +301,9 @@ static bool attach_driver(struct ps2_device_t *dev)
 	{
 		int i;
 
-		for (i = 0 ; i < P.n_drivers ; i++)
+		for (i = 0 ; i < ps2_config.n_drivers ; i++)
 		{
-			const struct ps2_driver_t *driver = P.drivers[i];
+			const struct ps2_driver_t *driver = ps2_config.drivers[i];
 			if (driver->can_drive(dev->type))
 			{
 				a2560_debugnl("attach_driver: Found driver %s", driver->name);
@@ -320,22 +319,31 @@ static bool attach_driver(struct ps2_device_t *dev)
 	return ERROR;
 }
 
+/* We use these indirections because if the handlers are changed in a higher layer,
+ * the driver's wouldn't know. */
+static void on_key_down(uint8_t scancode)
+{
+	ps2_config.callbacks.on_key_down(scancode);
+}
 
 static void on_key_up(uint8_t scancode)
 {
-	P.os_callbacks.on_key_up(scancode | 0x80);
+	ps2_config.callbacks.on_key_up(scancode | 0x80);
+}
+
+static void on_mouse(int8_t *packet)
+{
+	ps2_config.callbacks.on_mouse(packet);
 }
 
 
 static bool setup_driver_api(struct ps2_device_t *dev)
 {
-	dev->api.send_data = dev->id == dev1 ? send_data1 : send_data2;
-	dev->api.get_data = get_data_no_wait;
-	dev->api.malloc = P.malloc;
-	dev->api.os_callbacks.on_key_down = P.os_callbacks.on_key_down;
-	dev->api.os_callbacks.on_key_up = on_key_up;
-	dev->api.os_callbacks.on_mouse = P.os_callbacks.on_mouse;
+	dev->api.callbacks.on_key_down = on_key_down;
+	dev->api.callbacks.on_key_up = on_key_up;
+	dev->api.callbacks.on_mouse = on_mouse;
 
+	/* Flush */
 	while (get_data());
 
 	return dev->driver->init(&dev->api);
@@ -358,10 +366,10 @@ void ps2_channel2_irq_handler(void)
 
 static bool wait_until_can_write(void)
 {
-	uint32_t timeout = *P.counter + L.timeout;
+	uint32_t timeout = *ps2_config.counter + L.timeout;
 
-    while ((*P.port_status & INPUT_FULL))
-		if (*P.counter > timeout)
+    while ((*ps2_config.port_status & INPUT_FULL))
+		if (*ps2_config.counter > timeout)
 			return ERROR;
 
     return SUCCESS;
@@ -370,11 +378,11 @@ static bool wait_until_can_write(void)
 
 static bool wait_until_can_read(void)
 {
-	uint32_t timeout = *P.counter + L.timeout;
+	uint32_t timeout = *ps2_config.counter + L.timeout;
 
-    while ((*P.port_status & OUTPUT_FULL) == 0)
+    while ((*ps2_config.port_status & OUTPUT_FULL) == 0)
 	{
-		if (*P.counter > timeout)
+		if (*ps2_config.counter > timeout)
 			return ERROR;
 	}
 
@@ -387,7 +395,7 @@ static bool send_command(uint8_t cmd)
 	if (wait_until_can_write())
 	{
 		a2560_debugnl("Sending cmd 0x%x", cmd);
-		*P.port_cmd = cmd;
+		*ps2_config.port_cmd = cmd;
 		return SUCCESS;
 	}
 
@@ -409,7 +417,7 @@ static bool get_data(void)
 
 static uint8_t get_data_no_wait(void)
 {
-	return *P.port_data;
+	return *ps2_config.port_data;
 }
 
 
@@ -439,7 +447,7 @@ static bool send_data1(uint8_t data)
 	if (wait_until_can_write())
 	{
 		a2560_debugnl("Sending data 0x%x", data);
-		*P.port_data = data;
+		*ps2_config.port_data = data;
 		return SUCCESS;
 	}
 
@@ -502,8 +510,8 @@ static bool reset_device(struct ps2_device_t *dev)
 	if (tries < 0)
 		return ERROR;
 
-	timeout = *P.counter + P.counter_freq * 5 / 7; /* Basic Assurance Test should last 500-750ms  (5/7 -> 700ms)*/;
-	while (*P.counter < timeout)
+	timeout = *ps2_config.counter + ps2_config.counter_freq * 5 / 7; /* Basic Assurance Test should last 500-750ms  (5/7 -> 700ms)*/;
+	while (*ps2_config.counter < timeout)
 	{
 		if (get_data())
 		{

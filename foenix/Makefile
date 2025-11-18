@@ -13,18 +13,22 @@ AS=$(TOOLCHAIN)as
 AR=$(TOOLCHAIN)ar
 RANLIB=$(TOOLCHAIN)ranlib
 STRIP=$(TOOLCHAIN)strip
-#-mshort is really only for 68k targets, others have a 32bit data bus so there's no performance to gain from that
-# EmuTOS uses that so we're doing it too.
-CFLAGS=-mshort -fomit-frame-pointer -Os -std=c99 -D$(MACHINE_NAME) $(CPUFLAGS)
+# We do -std=c99 so we can use "for(int x;...)" without problems
+# -mshort is really only for 68k targets, others have a 32bit data bus so there's no performance to gain from that
+#  EmuTOS uses that so we're doing it too.
+# -msoft-float is because my A2560M has a 68EC060 with no FPU. Without this option, the "interrupt_handler"
+#  function would try to save FPU register and it'd crash. If the machine does have a FPU and it is used,
+#  this option should be removed.
+CFLAGS=-mshort -fomit-frame-pointer -Os -std=c99 -D$(MACHINE_NAME) $(CPUFLAGS) -msoft-float
 
 SRC_C=a2560.c a2560_debug.c bq4802ly.c cpu.c interrupts.c mpu401.c \
-	ps2_keyboard.c ps2_mouse_a2560.c ps2.c \
+	keyboard.c ps2_keyboard.c ps2_mouse_a2560.c ps2.c \
 	sn76489.c superio.c timer.c uart16550.c vicky2.c vicky_mouse.c wm8776.c \
 	shadow_fb.c \
 	trap.c trap_dispatch.c \
 	vicky2_txt_a_logger.c \
 	ym2151.c ym262.c
-SRC_S=a2560_s.S shadow_fb_s.S timer_s.S
+SRC_S=a2560_s.S shadow_fb_s.S timer_s.S trap_bindings.S trap_handler.S
 SRC=$(SRC_C) $(SRC_S)
 OBJ_C=$(SRC_C:.c=.o)
 OBJ_S=$(SRC_S:.S=.o)

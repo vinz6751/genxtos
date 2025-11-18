@@ -42,30 +42,24 @@ struct ps2_driver_t
 	/* Whether the driver can manage the given PS/2 device type (2-byte ID). */
 	bool	(*can_drive)(const uint8_t ps2_device_type[]);
 	/* Process the data received during interrupts and fire up OS callbacks */
-	void	(*process)(const struct ps2_driver_api_t *this, uint8_t byte);
+	void	(*process)(struct ps2_driver_api_t *this, uint8_t byte);
 };
 
-/* OS callbacks that the driver will call as it does its job */
-struct ps2_os_callbacks_t {
+/* Callbacks that the driver will call as it does its job */
+struct ps2_callbacks_t {
 	void (*on_key_down)(uint8_t scancode);
 	void (*on_key_up)(uint8_t scancode);
 	void (*on_mouse)(int8_t *packet);
 };
 
-/* This is the interface between the driver and the rest */
+/* This is what the PS/2 system provides to the driver so it knows what to fire and can keep its state */
 struct ps2_driver_api_t
 {
 	/* Provided by the PS/2 system to the driver */
-	bool    (*send_data)(uint8_t b);
-	uint8_t (*get_data)(void);
-	void*   (*malloc)(size_t size);
-
-	struct ps2_os_callbacks_t os_callbacks;
-
-	struct ps2_driver_t *driver;
+	struct ps2_callbacks_t callbacks;
 
 	/* State of the driver, driver does what it wants with this, nobody cares. */
-	void *driver_data; 
+	uint32_t driver_data;
 };
 
 
@@ -76,7 +70,7 @@ struct ps2_api_t
 	
 	/* --- INPUT parameters (provided by OS) --- */
 	/* Ever increasing counter and its frequency in Hz */
-	volatile uint32_t *counter;
+	volatile const uint32_t *counter;
 	uint16_t		   counter_freq;
 	/* PS/2 port addresses */
 	volatile uint8_t  *port_data;
@@ -85,11 +79,9 @@ struct ps2_api_t
 	/* Available drivers */
 	uint8_t			   n_drivers;
 	const struct ps2_driver_t * const *drivers;
-	/* OS functions that we can use */
-	void* (*malloc)(size_t size);
 
 	/* Events PS/2 -> OS. Ultimately, calling these are the purpose in life of drivers */
-	struct ps2_os_callbacks_t os_callbacks;
+	struct ps2_callbacks_t callbacks;
 };
 
 extern struct ps2_api_t ps2_config;
