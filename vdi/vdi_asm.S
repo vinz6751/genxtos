@@ -109,7 +109,7 @@ save_ptsin:
 
 no_ptsin:
 /* Call screen which contains all the C routines for the SCREEN DRIVER. */
-        jsr     _screen
+        jsr     _vdi_screen_driver
 
 /* Restore user's CONTRL[1] element from the stack. */
         movea.l _CONTRL,a0      // get address of user's CONTRL array
