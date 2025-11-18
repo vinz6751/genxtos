@@ -14,7 +14,7 @@
 #include "asm.h"
 
 /* forward prototypes */
-void screen(void);
+void vdi_screen_driver(void);
 
 
 WORD flip_y;                    /* True if magnitudes being returned */
@@ -116,9 +116,11 @@ static struct vdi_jmptab const jmptb2[] = {
 
 
 /*
- * screen - Screen driver entry point
+ * screen - Screen driver entry point.
+ * It is called by the VDI trap handler and uses the CONTRL array
+ * to dispatch the VDI call to the appropriate function.
  */
-void screen(void)
+void vdi_screen_driver(void)
 {
     WORD opcode, handle;
     WORD *contrl = CONTRL;
@@ -152,7 +154,8 @@ void screen(void)
     }
     else if ((opcode >= V_OPNVWK_OP) && (opcode < V_OPNVWK_OP+JMPTB2_ENTRIES)) {
         jmptab = &jmptb2[opcode - V_OPNVWK_OP];
-    } else {
+    }
+    else {
         return;
     }
     contrl[2] = jmptab->nptsout;

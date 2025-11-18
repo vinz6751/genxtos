@@ -69,7 +69,11 @@ void vbl_handler(void) {
         colorptr = 0;
     }
 
-    set_new_screen_address();
+    // Support of set new video address at VBL (_screenpt variable)
+    if (screenpt) {
+        screen_setphys(screenpt);
+        screenpt = 0;
+    }
 
 #if CONF_WITH_FDC
     flopvbl();
@@ -78,14 +82,6 @@ void vbl_handler(void) {
     process_vbl_queue();
 
     dump_screen();
-}
-
-
-static void set_new_screen_address(void) {
-    // Support of set new video address at VBL (_screenpt variable)
-    if (screenpt) {
-        screen_setphys(screenpt);
-    }
 }
 
 

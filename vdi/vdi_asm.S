@@ -15,7 +15,7 @@
         .extern _local_pb
         .extern _CONTRL
         .extern _flip_y
-        .extern _screen
+        .extern _vdi_screen_driver
         .extern _vdishare               //see vdi_fill.c
 
 #define lcl_ptsin _vdishare
