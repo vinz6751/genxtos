@@ -13,6 +13,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
+
 #include "emutos.h"
 #include "asm.h"
 #include "bios.h"
@@ -336,6 +337,7 @@ const UBYTE *atari_physbase(void)
 ULONG atari_calc_vram_size(void)
 {
     ULONG vram_size;
+    WORD planes, w, h;
 
 #if CONF_WITH_VIDEL
     if (has_videl)
@@ -353,29 +355,6 @@ ULONG atari_calc_vram_size(void)
     }
 #endif
 
-    vram_size = (ULONG)BYTES_LIN * V_REZ_VT;
-
-    /* TT TOS allocates 256 bytes more than actually needed. */
-    if (HAS_TT_SHIFTER)
-        return vram_size + EXTRA_VRAM_SIZE;
-
-    /*
-     * The most important issue for the ST is ensuring that screen memory
-     * starts on a 256-byte boundary for hardware reasons.  We assume
-     * that screen memory is allocated at the top of memory, and that
-     * memory ends on a 256-byte boundary.  So we must allocate a multiple
-     * of 256 bytes.  For compatibility with ST TOS, we also allocate
-     * (at least) 768 bytes more than actually needed.
-     */
-    return (vram_size + 768UL + 255UL) & ~255UL;
-
-#if 0 // TODO: Prune (old code)
-    ULONG vram_size;
-    WORD planes, w, h;
-
-    if (HAS_VIDEL)
-        return FALCON_VRAM_SIZE + EXTRA_VRAM_SIZE;;
-
     screen_get_current_mode_info(&planes, &w, &h);
     vram_size = (ULONG)(w / 8 * planes) * h;
 
@@ -392,7 +371,6 @@ ULONG atari_calc_vram_size(void)
      * (at least) 768 bytes more than actually needed.
      */
     return (vram_size + 768UL + 255UL) & ~255UL;
-#endif 
 }
 
 static void shifter_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
