@@ -72,7 +72,6 @@ void vdimouse_init(void)
     str_mode = 0;               /* default is request mode  */
 
     /* Move in the default mouse form (presently the arrow) */    
-    linea_mouse_set_form(default_mform());
     linea_mouse_init();
 
 #if CONF_WITH_EXTENDED_MOUSE

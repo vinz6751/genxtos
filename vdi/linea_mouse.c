@@ -49,6 +49,17 @@ static void vbl_draw(void);
 #endif
 
 
+#if !WITH_AES
+/* The AES has all the mouse forms, which may even be customized.
+ * If it's there we use it otherwise we fallback on the default arrow cursor
+ * provided by the Line-A */
+
+#include "mform.h"
+
+#define default_mform() &arrow_mform
+#endif
+
+
 void linea_mouse_init(void)
 {    
     /* Mouse settings */
@@ -58,7 +69,7 @@ void linea_mouse_init(void)
     MOUSE_BT = 0;               /* clear the mouse button state */
     cur_ms_stat = 0;            /* clear the mouse status */
     mouse_shape_semaphore = 0;  /* clear the mouse flag */
-    linea_mouse_set_form(&arrow_mform);
+    linea_mouse_set_form(default_mform());
 
     /* Mouse event handlers */
     user_cur = linea_user_cur; /* display handler*/
