@@ -159,13 +159,8 @@ void screen_init_address(void)
     v_bas_ad = screen_start;
     KDEBUG(("v_bas_ad = %p, vram_size = %lu\n", v_bas_ad, vram_size));
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-    /* We use a shadow framebuffer, and have code in place to copy it to the VRAM */
-    screen_setphys((const UBYTE *)VRAM_Bank0);
-#else
     /* correct physical address */
     screen_setphys(screen_start);
-#endif
 }
 
 /*

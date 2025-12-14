@@ -727,6 +727,9 @@
 # ifndef CONF_VRAM_ADDRESS
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
+# ifndef CONF_READONLY_VRAM
+#  define CONF_READONLY_VRAM 1
+# endif
 #endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
@@ -802,6 +805,9 @@
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
 #endif
+# ifndef CONF_READONLY_VRAM
+#  define CONF_READONLY_VRAM 1
+# endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
@@ -879,6 +885,9 @@
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
 #endif
+# ifndef CONF_READONLY_VRAM
+#  define CONF_READONLY_VRAM 1
+# endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
@@ -954,6 +963,9 @@
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
 #endif
+# ifndef CONF_READONLY_VRAM
+#  define CONF_READONLY_VRAM 1
+# endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
@@ -1444,6 +1456,17 @@
 #ifndef CONF_VRAM_ADDRESS
 # define CONF_VRAM_ADDRESS 0
 #endif
+
+/*
+ * Some video system may allow writting to, but not read from video memory.
+ * In this case, some replacement modes cannot function correctly.
+ * To avoid this, we can manage a frame buffer in system RAM, and any
+ * write we make there, we write as well to the video RAM.
+ */
+#ifndef CONF_READONLY_VRAM
+# define CONF_READONLY_VRAM 0
+#endif
+
 
 /*
  * Set CONF_WITH_MEGARTC to 1 to enable MegaST real-time clock support

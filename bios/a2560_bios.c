@@ -124,6 +124,21 @@ void a2560_bios_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16
 }
 
 
+uint8_t *a2560_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
+
+
+void a2560_setphys(const uint8_t *address)
+{
+    a2560_bios_vram_fb = (uint8_t*)address;
+    /* TODO: this is a simplified setup. We always write to the beginning of VICKY's bitmap memory,
+     * regardless of 'address'. But if the program uses different screen buffers, we're screwed.
+     * This works enough if no double/triple buffering is used.
+     * Ideally, we would use different zones of the VRAM for different 'address' values. If we have
+     * as much VRAM as system RAM, we could easily do that but it's not the case. */
+    vicky2_set_bitmap_address(vicky, 0, (uint8_t*)VRAM_Bank0);
+}
+
+
 uint8_t *a2560_bios_physbase(void)
 {
     KDEBUG(("a2560_bios_physbase: %p\n", vicky2_get_bitmap_address(vicky, 0) + VRAM_Bank0));

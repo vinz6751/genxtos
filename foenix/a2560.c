@@ -118,18 +118,6 @@ void a2560_init(bool cold_boot)
 }
 
 
-/* Video  ********************************************************************/
-
-uint8_t *a2560_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
-
-
-void a2560_setphys(const uint8_t *address)
-{
-    a2560_bios_vram_fb = (uint8_t*)address;
-    vicky2_set_bitmap_address(vicky, 0, (uint8_t*)((uint32_t)address - (uint32_t)VRAM_Bank0));
-}
-
-
 /* Serial port support *******************************************************/
 
 void a2560_irq_com1(void); /* Event handler in a2560_s.S */

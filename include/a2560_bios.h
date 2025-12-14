@@ -34,7 +34,10 @@ void     a2560_bios_init(void);
 void a2560_bios_enable_irqs(void);
 
 /* Screen & video */
+extern uint8_t *a2560_bios_vram_fb; /* Address of framebuffer in video ram (from CPU's perspective) */
+
 void     a2560_bios_screen_init(void);
+void     a2560_setphys(const uint8_t *address); /* Set physical address from the CPU's perspective */
 void     a2560_bios_get_current_mode_info(uint16_t *planes, uint16_t *hz_rez, uint16_t *vt_rez);
 void     a2560_bios_setrez(int16_t rez, int16_t mode);
 int16_t  a2560_bios_vmontype(void);

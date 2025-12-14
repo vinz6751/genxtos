@@ -20,7 +20,7 @@
 
 #include "emutos.h"
 
-#ifdef MACHINE_A2560U
+#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include "asm.h"
 #include "lineavars.h"
@@ -48,9 +48,23 @@ static void init(const Fonthead *font)
 }
 
 
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+static UBYTE* charaddr_to_vram_address(CHAR_ADDR c)
+{
+  return (UBYTE*)((ULONG)c.pxaddr. - (ULONG)v_bas_ad + (ULONG)a2560_bios_vram_fb);
+}
+#endif
+
+
+static __inline__ CHARADDR cell_offset(UWORD x, UWORD y)
+{
+  return (CHAR_ADDR)((ULONG)v_cel_wr * y + x * 8 + v_cur_of);
+}
+
+
 static CHAR_ADDR cell_addr(UWORD x, UWORD y)
 {
-    return (CHAR_ADDR)(v_bas_ad + (ULONG)v_cel_wr * y + x * 8 + v_cur_of);
+  return (CHAR_ADDR)(v_bas_ad + cell_offset(x, y));
 }
 
 
@@ -65,6 +79,8 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
 {    
     UWORD fg;
     UWORD bg;
+	UWORD font_width;
+	font_width = 8;
 
     /* check for reversed foreground and background colors */
     if (v_stat_0 & M_REVID) {
@@ -80,36 +96,30 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
     UBYTE bsrc;
     UBYTE *d = dst.pxaddr;
     /* precompute so we don't have to do that in the loop */
-    const UWORD v_lin_wr_advance = v_lin_wr - 8;
+    const UWORD v_lin_wr_advance = v_lin_wr - font_width;
     UWORD bgbg;
 
     /* We take the bet at least one line will be blank */
     ((UBYTE*)&bgbg)[0] = bg;
     ((UBYTE*)&bgbg)[1] = bg;
 
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+    /* Calculate the offset in VRAM */
+    UBYTE *vram_dst =  charaddr_to_vram_address(dst);
+#endif
+    
     for (j = v_cel_ht; --j>=0 ; )
     {
-        if ((bsrc = *(src.pxaddr))) {
+	    if ((bsrc = *(src.pxaddr))) {
         
-#if 0
         int i;
-        for (i = 0; i < 8/*font width*/; i++)
+        for (i = 0; i < font_width; i++)
         {                
-            dst.pxaddr[i] = bsrc & 0x80 ? fg : bg;
-            bsrc <<= 1;
-        }
-#elif 1
-        /* Faster version, for fixed 8-pixel font */
-        *d++ = bsrc & 0x80 ? fg : bg;
-        *d++ = bsrc & 0x40 ? fg : bg;
-        *d++ = bsrc & 0x20 ? fg : bg;
-        *d++ = bsrc & 0x10 ? fg : bg;
-        *d++ = bsrc & 0x08 ? fg : bg;
-        *d++ = bsrc & 0x04 ? fg : bg;
-        *d++ = bsrc & 0x02 ? fg : bg;
-        *d++ = bsrc & 0x01 ? fg : bg;
-        d += v_lin_wr_advance;
+            *d = bsrc & 0x80 ? fg : bg;
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+	        *vram_dst++ = *d++;
 #endif
+            bsrc <<= 1;
         }
         else {
             UWORD *e = (UWORD*)d;
@@ -118,42 +128,45 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
             *e++ = bgbg;
             *e++ = bgbg;
             *e++ = bgbg;
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+	        *vram_dst++ = bgbg;
+			*vram_dst++ = bgbg;
+			*vram_dst++ = bgbg;
+			*vram_dst++ = bgbg;
+#endif
             d += v_lin_wr;
         }
 
         src.pxaddr += v_fnt_wr;
     }
-
-#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560_sfb_mark_cell_dirty(dst.pxaddr);
-#endif
 }
 
 
 static void neg_cell(CHAR_ADDR cell)
 {
     const int inc = v_lin_wr - 3 * sizeof(UWORD);
-    int i;
+    int i,j;
+	UWORD *d = (UWORD*)cell.pxaddr;
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    UBYTE *c = cell.pxaddr;
+    /* Calculate the offset in VRAM */
+    UWORD *vram_dst =  (UWORD*)charaddr_to_vram_address(cell);
 #endif
 
     for (i = 0; i < v_cel_ht; i++)
     {
-        /* We process 2 bytes at a time and loop to render 8 pixels (width of the font), is unrolled for performance */
-        *((UWORD*)cell.pxaddr) = ~*((UWORD*)cell.pxaddr);
-        cell.pxaddr += sizeof(UWORD);
-        *((UWORD*)cell.pxaddr) = ~*((UWORD*)cell.pxaddr);
-        cell.pxaddr += sizeof(UWORD);
-        *((UWORD*)cell.pxaddr) = ~*((UWORD*)cell.pxaddr);
-        cell.pxaddr += sizeof(UWORD);
-        *((UWORD*)cell.pxaddr) = ~*((UWORD*)cell.pxaddr);
-        cell.pxaddr += inc;
-    }
-
+	  for (j=0; j<4; j++)
+		{
+		  /* We process 2 bytes (=pixels) at a time */
+		  d[j] = ~d[j];
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560_sfb_mark_cell_dirty(c);
+		  vram_dst[j] = d[j];
 #endif
+		}
+        d += v_lin_wr;
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+		vram_dst += v_lin_wr;
+#endif
+    }
 }
 
 
@@ -167,8 +180,14 @@ static void blank_out(int topx, int topy, int botx, int boty)
 {
     UWORD color = v_col_bg;             /* bg color value */
     int pair, pairs, row, rows, offs;
-    UBYTE * addr = cell_addr(topx, topy).pxaddr;   /* running pointer to screen */
+	CHARADDR first_cell = cell_addr(topx, topy);
+    UBYTE * addr = first_cell.pxaddr;   /* running pointer to screen */
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+    /* Calculate the offset in VRAM */
+    UBYTE *vram_dst =  charaddr_to_vram_address(first_cell);
+#endif
 
+	
     /*
     * # of cell-pairs per row in region - 1
     *
@@ -211,16 +230,21 @@ static void blank_out(int topx, int topy, int botx, int boty)
         /* loop through all cell pairs */
         for (pair = pairs; pair--;) {
             for (i = 0; i < v_planes / 2; i++) {
-                *(ULONG*)addr = pair_planes[i];
+               *(ULONG*)addr = pair_planes[i];
                 addr += sizeof(ULONG);
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+				/* We can only write words, not longs :( */
+				*vram_dst = ((UWORD*)(&(pair_planes[i])))[0];
+				*vram_dst = ((UWORD*)(&(pair_planes[i])))[1];
+				vram_dst += sizeof(ULONG);
+#endif
             }
         }
         addr += offs;       /* skip non-region area with stride advance */
-    }
-
 #if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
-    a2560_sfb_mark_screen_dirty();
-#endif
+		vram_dst += offs;
+#endif		
+    }
 }
 
 
@@ -228,9 +252,13 @@ static void scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
 {
     /* move BYTEs of memory*/
     memmove(dst.pxaddr, src.pxaddr, count);
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+    memmove(charaddr_to_vram_address(dst), charaddr_to_vram_address(src), count);
+#endif
 
     /* exit thru blank out, bottom line cell address y to top/left cell */
     blank_out(0, v_cel_my , v_cel_mx, v_cel_my);
+
 }
 
 
@@ -238,7 +266,10 @@ static void scroll_down(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD st
 {
     /* move BYTEs of memory*/
     memmove(dst.pxaddr, src.pxaddr, count);
-
+#if CONF_WITH_A2560U_SHADOW_FRAMEBUFFER
+    memmove(charaddr_to_vram_address(dst), charaddr_to_vram_address(src), count);
+#endif
+	
     /* exit thru blank out */
     blank_out(0, start_line , v_cel_mx, start_line);
 }

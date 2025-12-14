@@ -49,10 +49,6 @@ void a2560_disk_led(bool on);
 
 void a2560_system_info(struct foenix_system_info_t *result);
 
-/* Video */
-void a2560_setphys(const uint8_t *address);
-
-
 void a2560_clock_init(void);
 uint32_t a2560_getdt(void);
 void a2560_setdt(uint32_t datetime);
