@@ -53,13 +53,17 @@ static void screen_init_services(UWORD planes, UWORD xrez, UWORD yrez);
  #define screen_driver screen_driver_amiga
 #elif defined(MACHINE_LISA)
  #define screen_driver screen_driver_lisa
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K)
  extern const SCREEN_DRIVER a2560_screen_driver_vicky2;
  #define screen_driver a2560_screen_driver_vicky2
 #elif defined(MACHINE_A2560M)
  extern const SCREEN_DRIVER a2560_screen_driver_vicky3;
  #define screen_driver a2560_screen_driver_vicky3
-#endif
+#elif defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+ extern const SCREEN_DRIVER a2560_screen_driver_1bpp;
+ #define screen_driver a2560_screen_driver_1bpp
+ #endif
+
 
 void screen_init(void) {
     /* Initialize the video mode and palette. The video memory address will be done later. */
@@ -72,6 +76,7 @@ void screen_init(void) {
     setup_video_ram();
 
     /* Make the video hardware use that video REM */
+    KDEBUG(("screen_setphys(%p)\n",video_ram_addr));
     screen_setphys(video_ram_addr);
 }
 
@@ -131,7 +136,7 @@ static void setup_video_ram(void)
 
     /* set the v_bas_ad system variable */
     v_bas_ad = video_ram_addr;
-    KDEBUG(("v_bas_ad = %p, vram_size = %p\n", v_bas_ad, video_ram_addr));
+    KDEBUG(("v_bas_ad = %p, vram_size = %ld\n", v_bas_ad, vram_size));
 }
 
 /*

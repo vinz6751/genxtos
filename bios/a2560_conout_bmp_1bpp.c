@@ -53,7 +53,6 @@ static void init(const Fonthead *font)
 
 	// Met le mode vidéo et active VICKY3
 	R32(0xFC000000L) = 1 + (4 << 1);
-    for(;;);
 #endif
 }
 

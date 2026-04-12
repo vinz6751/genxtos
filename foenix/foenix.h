@@ -279,6 +279,7 @@
   #define INT_TIMER1          0x19    /* Timer 1, Clocked with the CPU Clock */
   #define INT_TIMER2          0x1A    /* Timer 2, Clocked with the CPU Clock */
   #define INT_TIMER3          0x1B    /* Timer 3, Clocked with the SOF Channel A */
+  /* TODO: check if this is correct */
   #define INT_TIMER4          0x1C    /* Timer 4, Clocked with the SOF Channel B */
   #define INT_RTC             0x1F    /* Real Time Clock */
 #endif /* defined(MACHINE_A2560M) */

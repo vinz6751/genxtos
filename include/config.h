@@ -960,9 +960,9 @@
  * No graphics possible. */
 #define CONF_WITH_A2560_TEXT_MODE 1
 /* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
-#define CONF_WITH_A2560_SHADOW_FRAMEBUFFER 1
+#define CONF_WITH_A2560_SHADOW_FRAMEBUFFER 0
 # ifndef CONF_WITH_FORCE_8x8_FONT
-#  define CONF_WITH_FORCE_8x8_FONT 1
+#  define CONF_WITH_FORCE_8x8_FONT 0
 # endif
 # ifndef ALWAYS_SHOW_INITINFO
 #  define ALWAYS_SHOW_INITINFO 1 /* So we can get into EmuCON */

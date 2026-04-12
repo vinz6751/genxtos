@@ -30,7 +30,8 @@ static void screen_vicky2_screen_init(void)
     a2560_sfb_init();
 #endif
 
-    a2560_irq_set_handler(INT_SOF_A, int_vbl);
+    // TODO on the A2560U, are we using channel A since there is no channel B?
+    a2560_irq_set_handler(INT_SOF_B, int_vbl);
     KDEBUG(("screen_vicky2_screen_init exiting\n"));
 }
 

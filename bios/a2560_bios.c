@@ -76,7 +76,8 @@ void a2560_bios_init(void)
 void a2560_bios_enable_irqs(void)
 {
     a2560_timer_enable(HZ200_TIMER_NUMBER,true);
-    a2560_irq_enable(INT_SOF_A);
+    /* Enable VBL interrupt on the main display */
+    a2560_irq_enable(INT_SOF_B);
 }
 
 /* Video  ********************************************************************/

@@ -82,8 +82,8 @@ vicky_irq_done:
 _a2560_irq_vicky_b: // VICKY channel B autovector interrupt handler
     // Handlers can use d0 and a0 without saving them.
     movem.l d0-d1/a0-a1,-(sp)
-    lea     _a2560_irq_vectors,a0
-    move.w   #0x0100,d0         // We must clear the MSb of the MSB because that's how we exit the loop after 7 shifts
+    lea     _a2560_irq_vectors+8*4,a0  // Group0 bits 8..15 -> [0][8]..[0][15]
+    move.w   #0x0100,d0         // Bit 8 (INT_SOF_B); shift until MSB of high byte leaves d0
 vicky_irq_b_loop:
     move.w  IRQ_PENDING_GRP0,d1 // Is it ok to read in each iteration ? if not we'd have to save d1
     and.w   d0,d1

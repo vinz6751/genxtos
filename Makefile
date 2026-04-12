@@ -311,7 +311,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c bios.c xbios
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c iorec.c \
              keyboard.c keyboard_mouse_emulation.c kprint.c kprintasm.S machine.c \
              mfp.c mfp68901.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
-             parport.c screen.c screen_atari.c screen_tt.c  screen_vicky2.c screen_vicky3.c \
+             parport.c screen.c screen_atari.c screen_tt.c  screen_vicky2.c screen_vicky3.c screen_1bpp.c \
              serport.c sound.c videl.c vt52.c xhdi.c \
              pmmu030.c 68040_pmmu.S \
              amiga.c amiga2.S spi_vamp.c \
