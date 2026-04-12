@@ -51,6 +51,15 @@ void linea_resolution_changed(void)
     KDEBUG(("linea_resolution_changed v_bas_ad:%p\n", v_bas_ad));
 
 #if CONF_WITH_CHUNKY8
+# if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+    /*
+     * These machines normally use chunky 8bpp framebuffers, but the TOS-graph
+     * bring-up path uses a packed 1bpp framebuffer on VICKY B.
+     */
+    if (v_planes == 1)
+        BYTES_LIN = v_lin_wr = V_REZ_HZ / 8;
+    else
+# endif
     BYTES_LIN = v_lin_wr = V_REZ_HZ; /* 1 byte per pixel makes it easy */
 # if (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) && CONF_WITH_A2560_SHADOW_FRAMEBUFFER
     a2560_bios_sfb_setup(v_bas_ad, v_cel_ht);

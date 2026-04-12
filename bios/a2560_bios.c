@@ -317,8 +317,8 @@ void a2560_bios_sfb_setup(uint8_t *addr, uint16_t text_cell_height)
 
 extern const CONOUT_DRIVER a2560_conout_text;
 extern const CONOUT_DRIVER a2560_conout_bmp;
-#if defined(MACHINE_A2560M)
-extern const CONOUT_DRIVER a2560_conout_bmp_1bpp;;
+#if defined(MACHINE_A2560M) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+extern const CONOUT_DRIVER a2560_conout_bmp_1bpp;
 #endif
 
 CONOUT_DRIVER *a2560_bios_get_conout(void)
@@ -338,8 +338,8 @@ CONOUT_DRIVER *a2560_bios_get_conout(void)
     else
     {
         a2560_debugnl("a2560_bios_get_conout selected the BITMAP driver %p", v_bas_ad);
-        /* Use the shadow framebuffer */
-#if defined(MACHINE_A2560M)
+        /* 1bpp packed framebuffer (TOS graph) vs 8bpp bitmap */
+#if defined(MACHINE_A2560M) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
         driver = (CONOUT_DRIVER*)&a2560_conout_bmp_1bpp;
 #else
         driver = (CONOUT_DRIVER*)&a2560_conout_bmp;

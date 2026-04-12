@@ -34,6 +34,9 @@
 #include "videl.h"
 #include "xbiosbind.h" /* for Srealloc, which is a layering breakage ! (BIOS calling BDOS */
 #include "a2560_bios.h"
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+#include "../foenix/foenix.h"
+#endif
 
 #define HAS_VIDEO_HARDWARE (defined(MACHINE_AMIGA) || CONF_WITH_ATARI_VIDEO || defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX))
 
@@ -53,15 +56,15 @@ static void screen_init_services(UWORD planes, UWORD xrez, UWORD yrez);
  #define screen_driver screen_driver_amiga
 #elif defined(MACHINE_LISA)
  #define screen_driver screen_driver_lisa
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K)
+#elif defined(MACHINE_A2560U)
  extern const SCREEN_DRIVER a2560_screen_driver_vicky2;
  #define screen_driver a2560_screen_driver_vicky2
+#elif defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+ extern const SCREEN_DRIVER a2560_screen_driver_1bpp;
+ #define screen_driver a2560_screen_driver_1bpp
 #elif defined(MACHINE_A2560M)
  extern const SCREEN_DRIVER a2560_screen_driver_vicky3;
  #define screen_driver a2560_screen_driver_vicky3
-#elif defined(MACHINE_A2560X) || defined(MACHINE_GENX)
- extern const SCREEN_DRIVER a2560_screen_driver_1bpp;
- #define screen_driver a2560_screen_driver_1bpp
  #endif
 
 
@@ -122,7 +125,13 @@ static void setup_video_ram(void)
     UBYTE *vram_address;
     MAYBE_UNUSED(vram_size);
 
-#if CONF_VRAM_ADDRESS
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+    /* TOS graph on A2560K/X/GenX always scans VRAM bank 0 directly.
+     * This keeps v_bas_ad coherent with the hardware, but it also means
+     * Srealloc() cannot grow/shrink screen memory contiguously in STRAM. */
+    vram_size = calc_vram_size();
+    vram_address = (UBYTE *)VRAM_Bank0;
+#elif CONF_VRAM_ADDRESS
     vram_size = VIDEO_RAM_SIZE_UNSPECIFIED;
     vram_address = (UBYTE *)CONF_VRAM_ADDRESS;
 #else

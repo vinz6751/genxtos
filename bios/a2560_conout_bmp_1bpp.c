@@ -1,22 +1,28 @@
-/* A2560 Bitmap console driver when using the 1 bit per pixel mode */
+/*
+ * a2560_conout_bmp_1bpp.c - A2560 packed 1bpp console driver
+ *
+ * Copyright (C) 2026 The EmuTOS development team
+ *
+ * Authors:
+ *  VB      Vincent Barrilliot
+ *
+ * This file is distributed under the GPL, version 2 or at your
+ * option any later version.  See doc/license.txt for details.
+ */
 
-#define ENABLE_KDEBUG
+// #define ENABLE_KDEBUG
 
 #include "emutos.h"
 
-#if defined(MACHINE_A2560M)
+#if defined(MACHINE_A2560M) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include "asm.h"
 #include "lineavars.h"
 #include "tosvars.h"            /* for v_bas_ad */
-#include "sound.h"              /* for bell() */
 #include "string.h"
 #include "conout.h"
 #include "font.h"
 #include "a2560_bios.h"
-#include "../vdi/vdi_defs.h"    /* for phys_work stuff */
-
-#include "../foenix/regutils.h" /* pour debug */
 
 static void init(const Fonthead *font)
 {
@@ -28,32 +34,6 @@ static void init(const Fonthead *font)
 
     KDEBUG(("a2560_conout_bmp_1bpp.init V_REZ_HZ: %d V_REZ_VT:%d  v_lin_wr=%d, v_cel_mx:%d  v_cel_my:%d  v_cel_wr:%d v_bas_ad:%p\n",
         V_REZ_HZ, V_REZ_VT, v_lin_wr, v_cel_mx, v_cel_my, v_cel_wr, v_bas_ad));
-#if 0
-	// Désactive VICKY2 (valeur qui marche : 0x81)
-	R32(VICKY2) = 0x80;
-
-	// Désactive l'écran
-	R32(VICKY3) = 0;
-
-	// VICKY3 bitmap address, start of DDR3 (just above the 8MB of RAM) */
-	const uint8_t *fb = (uint8_t*)0x0c000000;
-	R32(VICKY3+0x4) = ((uint32_t)fb)/sizeof(uint32_t); // This is expressed in longs
-
-	// Couleurs des pixels en mode 1 bit par pixel
-	R32(VICKY3+0x8) = 0x00ffffL;
-
-    // Couleur du fond
-    R32(VICKY3+0x2000+0*4) = 0x000088;
-
-	uint8_t *lfb = (uint8_t*)fb;
-    int32_t i;
-	for (i=0; i<(1024L*768); i++) {
-		*lfb++ = 0x0;
-	}
-
-	// Met le mode vidéo et active VICKY3
-	R32(0xFC000000L) = 1 + (4 << 1);
-#endif
 }
 
 
@@ -75,6 +55,9 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
     ULONG disx, disy;
     KDEBUG(("a2560_conout_bmp_1bpp.cell_addr\n"));
 
+    /* One 8-pixel text cell maps to one packed framebuffer byte. */
+    disx = x;
+
     /* Y displacement = Y // cell conversion factor */
     disy = (ULONG)v_cel_wr * y;
 
@@ -82,7 +65,7 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
      * cell address = screen base address + Y displacement
      * + X displacement + offset from screen-begin (fix)
      */
-    return (CHAR_ADDR)(v_bas_ad + disy + (x>>3) + v_cur_of);
+    return (CHAR_ADDR)(v_bas_ad + disy + disx + v_cur_of);
 }
 
 
@@ -121,11 +104,6 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
     line_wr = v_lin_wr;
 
     KDEBUG(("a2560_conout_bmp_1bpp.cell_xfer\n"));
-
-#if 0
-a2560_debug("v_cel_mx=%d",v_cel_mx);
-a2560_debug("v_lin_wr=%d",v_lin_wr);
-#endif
 
     /* check for reversed foreground and background colors */
     if (v_stat_0 & M_REVID) {
@@ -270,6 +248,7 @@ static void blank_out(int topx, int topy, int botx, int boty)
      */
     pairs = (botx - topx + 1) / 2;      /* pairs of characters */
 
+    /* Packed 1bpp path: two character cells fill one UWORD when v_planes == 1. */
     /* calculate the BYTE offset from the end of one row to next start */
     offs = v_lin_wr - pairs * 2 * v_planes;
 

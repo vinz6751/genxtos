@@ -63,6 +63,13 @@
   #define VICKY_B         0xFEC80000
   #define VICKY_FONT_B    (VICKY_B+VICKY_FONT_MEM_OFFSET)
   #define VICKY_TEXT_B    (VICKY_B+VICKY_TEXT_MEM_OFFSET)
+  #define VICKY_B_CTRL_MODE0      0x00000100  /* Channel B mode bit 0, used with the HiRes DIP */
+  #define VICKY_B_CTRL_TOS_GRAPH  0x00100000  /* Atari/TOS-style 1bpp scanout enable */
+  #define VICKY_B_TOSGRAPH_CTRL   (VICKY_B+0x17000)
+  #define VICKY_B_TOSGRAPH_MODE   (VICKY_B_TOSGRAPH_CTRL+0x00)
+  #define VICKY_B_TOSGRAPH_COLOR0 (VICKY_B_TOSGRAPH_CTRL+0x10)
+  #define VICKY_B_TOSGRAPH_COLOR1 (VICKY_B_TOSGRAPH_CTRL+0x14)
+    #define VICKY_B_TOSGRAPH_1BPP 0x00000001
   
   /* Convenience, we treat the most feature-full screen as main screen (so to share code with the U which only has 1 screen) */
   #define VICKY VICKY_B

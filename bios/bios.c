@@ -918,7 +918,7 @@ void biosmain(void)
         pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
         pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+#if 0 && (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX))
         // We don't have GEM/desktop yet.
         pd->p_tbase = (UBYTE *) coma_start;
 #else

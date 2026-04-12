@@ -298,7 +298,7 @@ void conout_ascii_out(int ch)
 
         /* perform cell line feed. */
         if (y < v_cel_my) {
-            cell = conout->cell_addr(0, y + v_cel_wr); /* move down one cell */
+            cell = conout->cell_addr(0, y + 1); /* move down one cell */
             v_cur_cy = y + 1;           /* update cursor's y coordinate */
         }
         else {
