@@ -31,11 +31,15 @@ static __inline__ UWORD *get_start_addr(const WORD x, const WORD y)
     addr = v_bas_ad;                    /* start of screen */
 
 #if CONF_WITH_CHUNKY8
-    addr += x;
-#else
-    WORD x2 = x & 0xfff0;               /* ensure that value to be shifted remains signed! */
-    addr += x2 >> v_planes_shift;       /* add x coordinate part of addr */
+    /* chunky 8bpp: one framebuffer byte per horizontal pixel (addr += x) */
+    if (v_planes == 8)
+        addr += x;
+    else
 #endif
+    {
+        WORD x2 = x & 0xfff0;          /* ensure that value to be shifted remains signed! */
+        addr += x2 >> v_planes_shift;  /* add x coordinate part of addr */
+    }
 
     addr += muls(y, v_lin_wr);          /* add y coordinate part of addr */
 

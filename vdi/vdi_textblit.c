@@ -866,8 +866,14 @@ void direct_screen_blit(WORD count, WORD *str)
 #endif
 
     dst = (UBYTE *)get_start_addr(DESTX, DESTY);
+
     if (DESTX & 0x0008)
-        dst++;
+    {
+        /** Packed 1bpp (v_planes==1) already has the correct byte in get_start_addr(); adding
+        * one here would skip a cell (8 px) between strings e.g. menu titles. */
+        if (v_planes != 1)
+            dst++;
+    }
 
     for ( ; count > 0; count--)
     {
