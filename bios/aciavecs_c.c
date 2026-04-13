@@ -79,12 +79,7 @@ void init_acia_vecs(void) {
     kbdvecs.vkbderr = (void (*)(UBYTE))just_rts;
     kbdvecs.vmiderr = (void (*)(UBYTE))just_rts;
     kbdvecs.statvec = (void (*)(UBYTE*))just_rts;
-
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
-    // The mousevec vector is already installed when initializing the screen/line-A
-#else
     kbdvecs.mousevec = (void(*)(UBYTE*))just_rts;
-#endif
 
 #if CONF_WITH_IKBD_CLOCK
     kbdvecs.clockvec = clockvec;

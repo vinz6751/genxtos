@@ -1,6 +1,8 @@
-/* ps2_mouse_a2560 - PS/2 mouse driver for A2560U Foenix
- * This is really a bridge between the PS/2, OS and VICKY mouse handling
- * 
+/* ps2_mouse_a2560 - PS/2 mouse driver for A2560 Foenix
+ * This is really a bridge between the PS/2, OS and VICKY mouse handling.
+ * The PS/2 controller asks this driver if it suppose the mouse (ps2_device_type[0]) and if so,
+ * it will call the process() function when a byte is received.
+ *
  * Author:
  *	Vincent Barrilliot
  *
@@ -15,7 +17,7 @@
 #include "a2560.h"
 
 /* Settings */
-#define MAXIMUM_TOS_COMPATIBILITY 1
+#define MAXIMUM_TOS_COMPATIBILITY 0
 
  /* Prototypes */
 static const char driver_name[] = "A2560 PS/2 Mouse";
@@ -23,7 +25,7 @@ static bool init(struct ps2_driver_api_t *api);
 static bool can_drive(const uint8_t ps2_device_type[]);
 static void process(struct ps2_driver_api_t *api, uint8_t byte);
 
-/* Driver itself */
+/* The PS/2 driver itself */
 const struct ps2_driver_t ps2_mouse_driver_a2560u =
 {
     .name = driver_name,
@@ -33,12 +35,16 @@ const struct ps2_driver_t ps2_mouse_driver_a2560u =
 };
 
  /* Important states the mouse state machine can be in */
-#define SM_IDLE 0
-#define SM_RECEIVED 3
+ #define SM_IDLE 0
+ #define SM_RECEIVED 3
+
+struct __attribute__((packed)) ps2_mouse_local_t  {
+    uint8_t packet[3];
+    uint8_t state;
+}; /* Must be 4 bytes maximum  !! */
 
 /* Convenience */
-#define DRIVER_DATA ((struct ps2_mouse_local_t*)api->driver_data)
-#define VICKY_MOUSE ((volatile struct vicky_mouse_t *const)VICKY_MOUSE_X)
+#define DRIVER_DATA ((struct ps2_mouse_local_t*)&(api->driver_data))
 
 static void on_change(const vicky_mouse_event_t *event);
 
@@ -65,6 +71,7 @@ static bool can_drive(const uint8_t ps2_device_type[])
 	}
 }
 
+/* Callback from VICKY mouse driver to notify the PS/2 driver that the mouse has moved. */
 static void on_change(const vicky_mouse_event_t *event)
 {
     struct ps2_driver_api_t *api = (struct ps2_driver_api_t *)event->user_data;
@@ -76,11 +83,12 @@ static void on_change(const vicky_mouse_event_t *event)
     int8_t *packet = (int8_t*)event->ps2packet;
     ikbd_packet[0] = 0xf8 | (*packet++ & 3);
     ikbd_packet[1] = *packet++;
-    ikbd_packet[2] = *packet++;
+    /* The mouse moves in the opposite direction of the packet */
+    ikbd_packet[2] = -(*packet++);
     api->callbacks.on_mouse(ikbd_packet);
 }
 
-
+/* Process a byte received from the PS/2 port. */
 void process(struct ps2_driver_api_t *api, uint8_t byte)
 {
 #if MAXIMUM_TOS_COMPATIBILITY
@@ -90,59 +98,16 @@ void process(struct ps2_driver_api_t *api, uint8_t byte)
     
     vicky_mouse_ps2(byte);
 #else
-    /* This is maximum speed setup. The IKBD handling stuff (mousevec) is bypassed, we directly update line-A variables
-     * and call vectors.
-     * So if apps hook into the XBIOS (mousevec) they won't receive anything. But if they hook at the line-A / VDI level
-     * they're ok. */
-    volatile uint16_t * const packet = (uint16_t*)VICKY_MOUSE_PACKET;
-    packet[DRIVER_DATA++] = (uint16_t)byte;
-    if (DRIVER_DATA >= SM_RECEIVED)
-    {
-        DRIVER_DATA = SM_IDLE;
-
-        uint16_t new_cur_ms_stat;
-        uint16_t x,y;
-        uint16_t buttons;
-
-        x = R16(VICKY_MOUSE_X);
-        y = R16(VICKY_MOUSE_Y);
-        buttons = packet[0] & 3;
+    /* Receive a byte from the PS/2 port and store it in the packet. */
+    uint8_t *packet = DRIVER_DATA->packet;
+    uint8_t *state = &(DRIVER_DATA->state);
+    packet[(*state)++] = byte;
     
-        /* Update cur_ms_stat flags:
-         * 0x01 Left mouse button status  (0=up)
-         * 0x02 Right mouse button status (0=up)
-         * 0x04 Reserved
-         * 0x08 Reserved
-         * 0x10 Reserved
-         * 0x20 Mouse move flag (1=moved)
-         * 0x40 Right mouse button status flag (0=hasn't changed)
-         *  0x80 Left mouse button status flag  (0=hasn't changed) */
-        if (GCURX != x || GCURY != y)
-            new_cur_ms_stat = 0x20; /* Mouse moved flag */
-        else
-            new_cur_ms_stat = 0;
-
-        if ((buttons & 2) != (cur_ms_stat & 2))
-            new_cur_ms_stat |= 0x40; /* Right button changed */
-
-        if ((buttons & 1) != (cur_ms_stat & 1))
-            new_cur_ms_stat |= 0x80; /* Left button changed */
-
-        new_cur_ms_stat |= buttons;
-
-        /* Update Line-A variables */
-        GCURX = R16(VICKY_MOUSE_X);
-        /* Note: for VICKY, mouse (0,0) top is top left of the screen, while for VDI it's bottom left */
-        GCURY = linea_max_y - R16(VICKY_MOUSE_Y);
-        MOUSE_BT = (MOUSE_BT & 0xfffc) | buttons;
-        cur_ms_stat = new_cur_ms_stat;
-        
-        /* Fire callbacks */
-        if (cur_ms_stat & (0x40|0x80))
-            user_but();
-        if (cur_ms_stat & 0x20)
-            user_mot();
-        /* user_cur is not supported since VICKY is in charge of drawing */
+    /* Packet complete */
+    if (*state >= SM_RECEIVED)
+    {
+        *state = SM_IDLE;
+        api->callbacks.on_mouse(packet);
    }
 #endif
 }

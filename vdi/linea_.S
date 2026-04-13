@@ -15,6 +15,7 @@
 
 /* #define ENABLE_KDEBUG */
 
+#include "config.h"
 #include "asmdefs.h"
 
 // ==== References ===========================================================
@@ -170,8 +171,7 @@ hide_mouse:
 
 undraw_sprite:
         move.l  a2,-(sp)        /* save area ptr */
-#ifdef MACHINE_A2560U
-#else        
+#if CONF_WITH_SOFTWARE_MOUSE_RENDERING
         jsr     _linea_sprite_hide_atari
 #endif
         addq.l  #4,sp
@@ -182,8 +182,7 @@ draw_sprite:
         move.w  d0,-(sp)        /* x coord */
         move.l  a2,-(sp)        /* save area ptr */
         move.l  a0,-(sp)        /* new sprite */
-#ifdef MACHINE_A2560U
-#else
+#if CONF_WITH_SOFTWARE_MOUSE_RENDERING
         jsr     _linea_sprite_show_atari
 #endif        
         lea     12(sp),sp

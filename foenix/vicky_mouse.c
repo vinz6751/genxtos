@@ -38,7 +38,7 @@ void vicky_mouse_init(void (*on_change)(const vicky_mouse_event_t *), void *user
 void vicky_mouse_state(vicky_mouse_event_t *ret)
 {
     ret->x = R16(VICKY_MOUSE_X);
-    ret->y = R16(VICKY_MOUSE_X);
+    ret->y = R16(VICKY_MOUSE_Y);
 }
 
 
@@ -58,6 +58,10 @@ void vicky_mouse_ps2(int8_t byte)
 {
     // Process an incoming PS2 byte and fire the on_change callback
 
+    /* Recover from any desync before touching the 3-byte packet buffer. */
+    if (mouse.state >= SM_RECEIVED)
+        mouse.state = SM_IDLE;
+
     if (mouse.state == SM_IDLE && (byte & 0x08) != 0x08)
         return; /* We're lost. Ignore the packet. This is not even safe because if the packet contains a 08 we're fooled. */
 
@@ -68,7 +72,7 @@ void vicky_mouse_ps2(int8_t byte)
     int8_t *packet = mouse.event.ps2packet;
     packet[mouse.state++] = (int8_t)byte;
     
-    if (mouse.state >= SM_RECEIVED)
+    if (mouse.state == SM_RECEIVED)
     {
         mouse.state = SM_IDLE;
         
@@ -82,18 +86,18 @@ void vicky_mouse_ps2(int8_t byte)
         // Detect what's changed
         vicky_mouse_event_t *ev = &mouse.event;
         mouse.event.changed = 0;
-        if (ev->x == R16(VICKY_MOUSE_X))
-            ev->changed = 1;
-        if (ev->y == R16(VICKY_MOUSE_Y))
-            ev->changed = 2;
-        if ((ev->buttons & 1) == (packet[0] & 1))
-            ev->changed = 4;
-        if ((ev->buttons & 2) == (packet[0] & 2))
-            ev->changed = 8;
+        if (ev->x != R16(VICKY_MOUSE_X))
+            ev->changed |= 1;
+        if (ev->y != R16(VICKY_MOUSE_Y))
+            ev->changed |= 2;
+        if ((ev->buttons & 1) != (packet[0] & 1))
+            ev->changed |= 8;
+        if ((ev->buttons & 2) != (packet[0] & 2))
+            ev->changed |= 4;
 
         // Update state
         ev->x = R16(VICKY_MOUSE_X);
-        ev->y = R16(VICKY_MOUSE_X);
+        ev->y = R16(VICKY_MOUSE_Y);
         ev->buttons = packet[0] & 3;
 
         if (mouse.on_change)

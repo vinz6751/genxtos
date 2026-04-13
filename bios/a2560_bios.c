@@ -250,6 +250,7 @@ void a2560_bios_xbtimer(uint16_t timer, uint16_t control, uint16_t data, void *v
 /* PS/2 setup  ***************************************************************/
 
 #include "../foenix/trap_bindings.h"
+static void ps2_to_ikbd_packet_adapter(int8_t *packet);
 
 void a2560_bios_kbd_init(void)
 {
@@ -259,9 +260,25 @@ void a2560_bios_kbd_init(void)
     fnx_kbd_init((uint32_t*)&frclock, 60);
     fnx_ps2_set_key_up_handler(kbd_int);
     fnx_ps2_set_key_down_handler(kbd_int);
-    fnx_ps2_set_mouse_handler(call_mousevec);
+    fnx_ps2_set_mouse_handler(ps2_to_ikbd_packet_adapter);
 }
 
+/* Called by the PS/2 driver to convert a PS/2 packet to an IKBD packet and process it using the 
+ * KBDVECS.mousevec vector like if came from a real IKBD. */
+static void ps2_to_ikbd_packet_adapter(int8_t *packet)
+{    
+    // The buttons are in reverse order
+    uint8_t buttons = packet[0] & 3;
+    packet[0] = 0xf8;
+    if (buttons & 1)
+        packet[0] |= 0x02;
+    if (buttons & 2)
+        packet[0] |= 0x01;
+    // The y distance is inverted
+    packet[2] = -packet[2];
+    //a2560_debugnl("%02x %02x %02x", packet[0], packet[1], packet[2]);
+    call_mousevec(packet);
+}
 
 /* SD Card: the driver is in spi_gavin */
 

@@ -1,9 +1,9 @@
 /*
- * linea_mouse_a2560u.c - A2560U Foenix-specific mouse support
+ * linea_mouse_a2560u.c - A2560 Foenix-specific mouse support
  *
  * Copyright 1982 by Digital Research Inc.  All rights reserved.
  * Copyright 1999 by Caldera, Inc. and Authors:
- * Copyright 2002-2022 by The EmuTOS development team
+ * Copyright 2002-2026 by The EmuTOS development team
  *
  * This file is distributed under the GPL, version 2 or at your
  * option any later version.  See doc/license.txt for details.
@@ -13,7 +13,7 @@
 #include "asm.h"
 
 
-#if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+#if !CONF_WITH_SOFTWARE_MOUSE_RENDERING
 
 #include "linea.h"
 #include "a2560_bios.h"

@@ -952,6 +952,9 @@
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
 #endif
+# ifndef CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#  define CONF_WITH_SOFTWARE_MOUSE_RENDERING 1
+# endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
@@ -1952,6 +1955,14 @@
 /****************************************************
  *  S O F T W A R E   S E C T I O N   -   V D I     *
  ****************************************************/
+
+ /*
+  * Set CONF_WITH_SOFTWARE_MOUSE_RENDERING to 1 to use software rendering for the mouse.
+  * This is useful for machines that don't have hardware mouse support (like the Atari).
+  */
+#ifndef CONF_WITH_SOFTWARE_MOUSE_RENDERING
+# define CONF_WITH_SOFTWARE_MOUSE_RENDERING 1
+#endif
 
 /*
  * Set CONF_WITH_GDOS to 1 to generate code within vst_load_fonts() and

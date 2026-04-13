@@ -72,6 +72,8 @@ static void init(void)
     cpu_set_vector(INT_VICKYII_A, (uint32_t)a2560_irq_vicky_a);
     cpu_set_vector(INT_VICKYII_B, (uint32_t)a2560_irq_vicky_b);
 
+    /* Disable border */
+    R32(VICKY_B+4) = 0x00000000;
 
     apply_resolution_bits();
     apply_tosgraph_palette();
