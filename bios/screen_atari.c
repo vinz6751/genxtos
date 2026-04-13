@@ -338,7 +338,7 @@ void atari_setphys(const UBYTE *addr)
 }
 
 
-const UBYTE *atari_physbase(void)
+UBYTE *atari_physbase(void)
 {
     ULONG addr;
 
@@ -800,7 +800,7 @@ const SCREEN_DRIVER screen_driver_atari = {
     atari_physbase,
     atari_setscreen,
     atari_setcolor,
-    screen_vicky2_set_palette
+    atari_set_palette
 };
 
 #endif

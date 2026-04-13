@@ -38,7 +38,7 @@ WORD shifter_get_monitor_type(void);
 void atari_setrez(WORD rez, WORD videlmode);
 WORD atari_getrez(void);
 void atari_setphys(const UBYTE *addr);
-const UBYTE *atari_physbase(void);
+UBYTE *atari_physbase(void);
 ULONG atari_calc_vram_size(void);
 void atari_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez);
 
