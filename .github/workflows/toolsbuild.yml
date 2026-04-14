@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install SSH keys
       env:
         SSH_ID: ${{ secrets.SSH_ID }}
@@ -57,7 +57,7 @@ jobs:
         cd tools
         scp -o StrictHostKeyChecking=no *.tar.gz $SSH_USER@$SSH_HOST:$SSH_PATH
 #    - name: Save binaries as build artifacts
-#      uses: actions/upload-artifact@v4
+#      uses: actions/upload-artifact@v6
 #      with:
 #        name: tools-${{github.job}}-${{env.VERSION}}
 #        path: tools/*.tar.gz
@@ -68,7 +68,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install SSH keys
       env:
         SSH_ID: ${{ secrets.SSH_ID }}
@@ -103,7 +103,7 @@ jobs:
         cd tools
         scp -o StrictHostKeyChecking=no *.zip $SSH_USER@$SSH_HOST:$SSH_PATH
 #    - name: Save binaries as build artifacts
-#      uses: actions/upload-artifact@v4
+#      uses: actions/upload-artifact@v6
 #      with:
 #        name: tools-${{github.job}}-${{env.VERSION}}
 #        path: tools/*.zip
@@ -114,7 +114,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install SSH keys
       env:
         SSH_ID: ${{ secrets.SSH_ID }}
@@ -125,12 +125,18 @@ jobs:
         echo VERSION=$VERSION >> $GITHUB_ENV
         echo VERSION=$VERSION
         cd tools
-        # macOS native x86_64
+        # macOS x86_64
         make clean
-        make install ARCH=macos-intel
+        make install ARCH=macos-intel CFLAGS='-target x86_64-apple-macos'
         # macOS Aarch64 / Apple Silicon
         make clean
         make install ARCH=macos-aarch64 CFLAGS='-target arm64-apple-macos'
+        # fat binaries
+        cd dist/macos-aarch64
+        mkdir ../macos
+        for bin in *; do lipo "$bin" "../macos-intel/$bin"  -create -output "../macos/$bin"; done
+        cd ../..
+        rm -rf dist/macos-aarch64/ dist/macos-intel/
     - name: Display resulting tree
       run: ls -lR tools/dist/
     - name: Package binaries
@@ -143,7 +149,7 @@ jobs:
         cd tools
         scp -o StrictHostKeyChecking=no *.tar.gz $SSH_USER@$SSH_HOST:$SSH_PATH
 #    - name: Save binaries as build artifacts
-#      uses: actions/upload-artifact@v4
+#      uses: actions/upload-artifact@v6
 #      with:
 #        name: tools-${{github.job}}-${{env.VERSION}}
 #        path: tools/*.tar.gz
