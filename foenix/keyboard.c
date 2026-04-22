@@ -113,7 +113,7 @@ mouse_packet_handler_t a2560_ps2_set_mouse_handler(void (*handler)(int8_t *packe
     return previous;
 }
 
-
+#if defined(MACHINE_A2560K)
 void __attribute__((interrupt_handler))  maurice_irq_handler(void) {
     uint32_t data;
 
@@ -132,3 +132,4 @@ void __attribute__((interrupt_handler))  maurice_irq_handler(void) {
         }
     } while ((data & 0x00ff0000) != 0);
 }
+#endif
