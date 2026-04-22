@@ -1,6 +1,6 @@
-/* Controller of the A2560M's SD Card */
+/* Controller of the A2560's SD Card */
 
-#if defined(MACHINE_A2560M) || defined(MACHINE_A2560X)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 
 #include <stdint.h>
 #include "asm.h" /* just_rts */

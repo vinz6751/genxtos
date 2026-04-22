@@ -9,10 +9,13 @@
 #include "ps2.h"
 #include "ps2_keyboard.h"
 #include "ps2_mouse_a2560.h"
+#include "regutils.h"
 
 /* The IRQ handlers */
 void a2560_irq_ps2kbd(void);
 void a2560_irq_ps2mouse(void);
+void maurice_irq_handler(void);
+
 
 static void do_nothing(uint8_t dummy) {
 }
@@ -38,6 +41,9 @@ void a2560_kbd_init(const uint32_t *counter, uint16_t counter_freq)
     /* Disable IRQ while we're configuring */
     a2560_irq_disable(INT_KBD_PS2);
     a2560_irq_disable(INT_MOUSE);
+#if defined(MACHINE_A2560K)
+    a2560_irq_disable(INT_MAURICE);
+#endif
 
     /* Explain our setup to the PS/2 subsystem */
     ps2_config.counter      = counter;
@@ -62,15 +68,27 @@ void a2560_kbd_init(const uint32_t *counter, uint16_t counter_freq)
     /* Register GAVIN interrupt handlers */
     cpu_set_vector(INT_PS2KBD_VECN, (uint32_t)a2560_irq_ps2kbd);
     cpu_set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560_irq_ps2mouse);
+#if defined(MACHINE_A2560K)
+    cpu_set_vector(INT_MAURICE_VECN, (uint32_t)maurice_irq_handler);
+#endif
+
 
     /* Acknowledge any pending interrupt */
     a2560_irq_acknowledge(INT_KBD_PS2);
     a2560_irq_acknowledge(INT_MOUSE);
+#if defined(MACHINE_A2560K)
+    a2560_irq_acknowledge(INT_MAURICE);
+#endif
+
 
     /* Go ! */
     a2560_debugnl("Enabling GAVIN PS2/mouse irqs");
     a2560_irq_enable(INT_KBD_PS2);
     a2560_irq_enable(INT_MOUSE);
+#if defined(MACHINE_A2560K)
+    a2560_irq_enable(INT_MAURICE);
+#endif
+
 }
 
 
@@ -93,4 +111,24 @@ mouse_packet_handler_t a2560_ps2_set_mouse_handler(void (*handler)(int8_t *packe
     mouse_packet_handler_t previous = ps2_config.callbacks.on_mouse;
     ps2_config.callbacks.on_mouse = handler;
     return previous;
+}
+
+
+void __attribute__((interrupt_handler))  maurice_irq_handler(void) {
+    uint32_t data;
+
+    a2560_irq_acknowledge(INT_MAURICE);
+
+    /* While there is data in the buffer ... */
+    do {
+        data = R32(MAURICE_BASE);
+        /* Read and throw out the scan codes */
+        uint16_t scancode = data & 0xffff;
+        if ((scancode & 0x7fff) != 0) {
+            if (scancode & 0x80)
+                ps2_config.callbacks.on_key_up((uint8_t)scancode);
+            else
+                ps2_config.callbacks.on_key_down((uint8_t)scancode);
+        }
+    } while ((data & 0x00ff0000) != 0);
 }

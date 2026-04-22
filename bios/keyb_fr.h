@@ -30,7 +30,7 @@ static const UBYTE keytbl_fr_norm[] = {
      '8',  '9',  '4',  '5',  '6',  '1',  '2',  '3',
      '0',  '.', 0x0d,    0,    0,    0,    0,    0,
        0,    0,    0,    0,    0,    0,    0,    0,
-#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
+#elif defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_A2560M)
        0, 0x1b,  '&', 0x82, '\"', '\'',  '(', '-', /* 0x00... */
     0x8a,  '_', 0x87, 0x85,  ')',  '=',    8, 0x09,
      'a',  'z',  'e',  'r',  't',  'y',  'u',  'i', /* 0x10... */

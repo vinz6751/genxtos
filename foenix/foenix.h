@@ -124,6 +124,11 @@
 #define PS2_BASE       (SUPERIO_BASE+0x60)
 #endif
 
+/* Maurice keyboard */
+#ifdef MACHINE_A2560K
+#define MAURICE_BASE  (GAVIN+0x0040)
+#endif
+
 /* IDE and SDCard */
 #if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX) || defined(MACHINE_A2560U)
 #define IDE_BASE       (GAVIN+0x400)
@@ -134,7 +139,7 @@
 #endif
 
 /* SD card present / write-protected */
-#if defined(MACHINE_A2560X) || defined(MACHINE_GENX)
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
 #define SDC_STATE      (GAVIN+0x51a) /* Read 16 bits */
 #elif defined(MACHINE_A2560K) || defined(MACHINE_A2560M)
 #define SDC_STATE      (GAVIN+0x518) /* Read as 32bits on the M (don't know on the K) */
@@ -272,7 +277,7 @@
   /* Interrupt group 1 */
   #define INT_KBD_PS2         0x10    /* PS/2 Keyboard */
   #if defined(MACHINE_A2560K)
-    #define INT_MAURICE_PS2   0x11    /* Maurice (A2560K keyboard controller) */
+    #define INT_MAURICE       0x11    /* Maurice (A2560K keyboard controller) */
   #endif
   #define INT_MOUSE           0x12    /* PS/2 Mouse */
   #define INT_COM1            0x13    /* COM1 */

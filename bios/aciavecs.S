@@ -130,7 +130,7 @@ _int_acia:
 #endif /* CONF_WITH_IKBD_ACIA || CONF_WITH_MIDI_ACIA */
 
 
-_call_kbdint: // call the C routine in ikbd.c to do the work.
+_call_kbdint: // call the C routine in keyboard.c to do the work.
         move.w  d0,-(sp)
         jsr     _kbd_int
         addq.l  #2,sp

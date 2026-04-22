@@ -411,6 +411,8 @@ static void setvalue_mch(void)
         cookie_mch = MCH_ST;
 #elif defined(MACHINE_A2560U)
     cookie_mch = MCH_A2560U;
+#elif defined(MACHINE_A2560K)
+    cookie_mch = MCH_A2560K;
 #elif defined(MACHINE_A2560X)
     cookie_mch = MCH_A2560X;
 #elif defined(MACHINE_A2560M)

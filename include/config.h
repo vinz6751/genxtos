@@ -762,7 +762,7 @@
  */
 #ifdef MACHINE_A2560K
 # ifndef MACHINE_A2560_DEBUG
-#  define MACHINE_A2560_DEBUG 0
+#  define MACHINE_A2560_DEBUG 1
 # endif
 # ifndef FOENIX_CHANNEL_A_DEBUG_PRINT
 #  define FOENIX_CHANNEL_A_DEBUG_PRINT 0
@@ -802,6 +802,9 @@
 #  define CONF_VRAM_ADDRESS 0x00c00000 /* VRAM is at a special location */
 # endif
 #endif
+# ifndef CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#  define CONF_WITH_SOFTWARE_MOUSE_RENDERING 1
+# endif
 # ifndef CONF_WITH_CHUNKY8
 #  define CONF_WITH_CHUNKY8 1
 # endif
@@ -812,7 +815,7 @@
 /* Shadow framebuffer support (e.g. for rendering 8x16). Safe/recommended to leave enabled. */
 #define CONF_WITH_A2560_SHADOW_FRAMEBUFFER 0
 # ifndef CONF_WITH_FORCE_8x8_FONT
-#  define CONF_WITH_FORCE_8x8_FONT 1
+#  define CONF_WITH_FORCE_8x8_FONT 0
 # endif
 # ifndef ALWAYS_SHOW_INITINFO
 #  define ALWAYS_SHOW_INITINFO 1 /* So we can get into EmuCON */
@@ -827,7 +830,7 @@
 #endif
 #ifdef MACHINE_A2560_DEBUG
 # define CONF_WITH_EXTENDED_MOUSE 0 /* Not supported (yet?) */
-# define RS232_DEBUG_PRINT 0
+# define RS232_DEBUG_PRINT 1
 #endif
 #endif
 
