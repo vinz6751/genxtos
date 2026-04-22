@@ -188,8 +188,12 @@ LONG ret;
 UBYTE *p = buf;
 int i;
 SPI_DRIVER *spi_driver;
-struct cardinfo *card = &cards[dev];
+struct cardinfo *card;
 
+    if ((UWORD)dev >= ARRAY_SIZE(cards))
+        return EUNDEV;
+
+    card = &cards[dev];
     spi_driver = card->spi_driver;
     if (spi_driver == NULL)
         return EUNDEV;
@@ -258,10 +262,15 @@ SPI_DRIVER *spi_driver;
 
     KDEBUG(("sd_ioctl(%d,%d)\n",drv,ctrl));
 
+    if (drv >= ARRAY_SIZE(cards)) {
+        KDEBUG(("Invalid device %d (out of range)\n", drv));
+        return EUNDEV;
+    }
+
     card = &cards[drv];
     spi_driver = card->spi_driver;
 
-    if (spi_driver == NULL || drv >= ARRAY_SIZE(cards)) {
+    if (spi_driver == NULL) {
         KDEBUG(("Invalid device %d (driver:%p)\n", drv, spi_driver));
         return EUNDEV;
     }

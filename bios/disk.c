@@ -220,10 +220,8 @@ static void disk_init_one(UWORD unit,LONG *devices_available)
         {
             /* identify valid devices by reading root sector */
             rc = disk_rw(unit, RW_READ, 0, 1, dskbufp);
-            if (rc == 0) {
-                punit->valid = 1;
+            if (rc == 0)
                 break;
-            }
         }
         /* if disk_rw failed with 'unknown device' there is no point in continuing */
         if (rc == EUNDEV) {
@@ -234,6 +232,7 @@ static void disk_init_one(UWORD unit,LONG *devices_available)
         rc = internal_inquire(unit, NULL, &device_flags, productname, sizeof productname);
         if (rc) {
             KDEBUG(("disk_init_one(): internal_inquire(%d) returned %ld\n",unit,rc));
+            punit->valid = 0;
             return;
         }
         KINFO(("unit %d is managed by EmuTOS internal drivers: %s\n", unit, productname));
@@ -244,6 +243,7 @@ static void disk_init_one(UWORD unit,LONG *devices_available)
     shift = get_shift(blocksize);
     if (shift < 0) {    /* if blksize not a power of 2, ignore */
         KDEBUG(("disk_init_one(): invalid blocksize (%lu)\n",blocksize));
+        punit->valid = 0;
         return;
     }
 
