@@ -1,4 +1,4 @@
-#
+g2#
 # Makefile - the EmuTOS overbloated Makefile
 #
 # Copyright (C) 2001-2025 The EmuTOS development team.
@@ -833,7 +833,7 @@ A2560K_DEFS =
 NODEP += a2560k
 a2560k: UNIQUE = $(COUNTRY)
 a2560k: OPTFLAGS = $(SMALL_OPTFLAGS)
-a2560k: CPUFLAGS = -m68040
+a2560k: CPUFLAGS = -m68060
 a2560k: override DEF += -DTARGET_A2560K_ROM -DMACHINE_A2560K $(A2560K_DEFS)
 a2560k: foenix/libfoenix-a2560k.a
 	@echo "# Building A2560K Foenix EmuTOS into $(ROM_MACHINE_A2560K)"
