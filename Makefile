@@ -1,4 +1,4 @@
-g2#
+#
 # Makefile - the EmuTOS overbloated Makefile
 #
 # Copyright (C) 2001-2025 The EmuTOS development team.
