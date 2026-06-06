@@ -66,27 +66,30 @@ void a2560_kbd_init(const uint32_t *counter, uint16_t counter_freq)
     ps2_init();
 
     /* Register GAVIN interrupt handlers */
-    cpu_set_vector(INT_PS2KBD_VECN, (uint32_t)a2560_irq_ps2kbd);
     cpu_set_vector(INT_PS2MOUSE_VECN, (uint32_t)a2560_irq_ps2mouse);
 #if defined(MACHINE_A2560K)
     cpu_set_vector(INT_MAURICE_VECN, (uint32_t)maurice_irq_handler);
+#else
+    cpu_set_vector(INT_PS2KBD_VECN, (uint32_t)a2560_irq_ps2kbd);
 #endif
 
 
     /* Acknowledge any pending interrupt */
-    a2560_irq_acknowledge(INT_KBD_PS2);
     a2560_irq_acknowledge(INT_MOUSE);
 #if defined(MACHINE_A2560K)
     a2560_irq_acknowledge(INT_MAURICE);
+#else
+    a2560_irq_acknowledge(INT_KBD_PS2);
 #endif
 
 
     /* Go ! */
     a2560_debugnl("Enabling GAVIN PS2/mouse irqs");
-    a2560_irq_enable(INT_KBD_PS2);
     a2560_irq_enable(INT_MOUSE);
 #if defined(MACHINE_A2560K)
     a2560_irq_enable(INT_MAURICE);
+#else
+    a2560_irq_enable(INT_KBD_PS2);
 #endif
 
 }
@@ -116,7 +119,7 @@ mouse_packet_handler_t a2560_ps2_set_mouse_handler(void (*handler)(int8_t *packe
 
 #if defined(MACHINE_A2560K)
 
-void __attribute__((interrupt_handler))  maurice_irq_handler(void) {
+void __attribute__((interrupt_handler)) maurice_irq_handler(void) {
     uint32_t data;
 
     a2560_irq_acknowledge(INT_MAURICE);
@@ -126,11 +129,14 @@ void __attribute__((interrupt_handler))  maurice_irq_handler(void) {
         data = R32(MAURICE_BASE);
         /* Read and throw out the scan codes */
         uint16_t scancode = data & 0xffff;
+
         if ((scancode & 0x7fff) != 0) {
-            if (scancode & 0x80)
-                ps2_config.callbacks.on_key_up((uint8_t)scancode);
-            else
-                ps2_config.callbacks.on_key_down((uint8_t)scancode);
+	  if (scancode & 0x80) {
+	    ps2_config.callbacks.on_key_up((uint8_t)scancode);
+	  }
+	  else {
+	    ps2_config.callbacks.on_key_down((uint8_t)scancode);
+	  }
         }
     } while ((data & 0x00ff0000) != 0);
 }
