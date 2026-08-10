@@ -9,7 +9,6 @@
 #include "iorec.h"
 #include "mfp.h"
 #include "midi.h"
-#include "string.h"
 
 /* #define ENABLE_KDEBUG */
 
@@ -93,7 +92,8 @@ void init_acia_vecs(void) {
 
     // Initialize the IOREC circular buffers that store incoming data from the IKBD and MIDI
     // FIXME: this initialization should be done by the data segment if EmuTOS had a functional one
-    memmove(&ikbdiorec, iorec_templates, sizeof(iorec_templates));
+    ikbdiorec = iorec_templates[0];
+    midiiorec = iorec_templates[1];
 
     // Initialise state machines
     in_packet = FALSE;

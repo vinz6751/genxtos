@@ -20,6 +20,7 @@
 #include "gemerror.h"
 #include "pghdr.h"
 #include "string.h"
+#include "../bios/bios.h"
 
 
 /*
@@ -87,8 +88,6 @@ LONG kpgmld(PD *p, FH h, PGMHDR01 *hd)
     xclose(h);
     return r;
 }
-
-extern long os_header;
 
 /*
  * pgmld01 - oldest known gemdos load format
