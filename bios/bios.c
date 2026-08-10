@@ -416,7 +416,7 @@ static void bios_init(void)
      * Detect this situation and warn the user.
      * This method is ugly, but safe for releases as they are thoroughly tested.
      */
-    if (IS_ARANYM && ULONG_AT(0x00e80000) == 0)
+    if (IS_ARANYM && ((ULONG)_edata > 0x00e80000ul) && ULONG_AT(0x00e80000) == 0)
     {
         kcprintf(
             "\r\n"
@@ -540,12 +540,38 @@ static void bios_init(void)
 #if CONF_WITH_NOVA
     /* Detect and initialize a Nova card, skip if Ctrl is pressed */
     if (HAS_NOVA && !(kbshift(-1) & MODE_CTRL)) {
+        WORD cache_state = 0;
         KDEBUG(("init_nova()\n"));
+
+        /*
+         * On the Falcon, the Nova HW registers are in cached memory.
+         * Thus, initialization only works when cache is disabled.
+         */
+        if (HAS_VIDEL) {
+            cache_state = get_cache();
+            set_cache(0);
+        }
+
         if (init_nova()) {
-            screen_set_rez_hacked();   /* also reinitializes the vt52 console */
+#if CONF_WITH_BLITTER
+            /* On the Falcon, the Blitter cannot access Nova video memory.
+             * Therefore, disable the Blitter entirely, to prevent it from
+             * being used.
+             */
+            if (HAS_VIDEL) {
+                has_blitter = 0;
+            }
+#endif
+
+	    screen_set_rez_hacked();   /* also reinitializes the vt52 console */
+        }
+
+        /* Restore old cache state on the Falcon */
+        if (HAS_VIDEL) {
+            set_cache(cache_state);
         }
     }
-#endif
+#endif /* CONF_WITH_NOVA */
 
 #if CONF_WITH_NLS
     KDEBUG(("nls_init()\n"));
