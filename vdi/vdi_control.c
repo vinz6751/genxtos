@@ -12,6 +12,7 @@
 #include "emutos.h"
 #include "lineavars.h"
 #include "vdi_defs.h"
+#include "vdi_raster_driver.h"
 #include "biosbind.h"
 #include "xbiosbind.h"
 #include "biosext.h"
@@ -589,24 +590,7 @@ void vdi_v_clswk(Vwk * vwk)
  */
 void vdi_v_clrwk(Vwk * vwk)
 {
-    ULONG size;
-    UBYTE fill;
-
-    /* Calculate screen size */
-    size = (ULONG)v_lin_wr * V_REZ_VT;
-
-    /* clear the screen */
-#if CONF_WITH_VDI_16BIT
-    if (TRUECOLOR_MODE)
-    {
-        fill = 0xff;
-    }
-    else
-#endif
-    {
-        fill = 0x00;
-    }
-    memset(v_bas_ad, fill, size);
+    vdi_raster->clear_screen();
 }
 
 

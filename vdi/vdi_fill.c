@@ -16,7 +16,7 @@
 #include "intmath.h"
 #include "aesext.h"
 #include "vdi_defs.h"
-#include "vdi_raster_pixel.h"
+#include "vdi_raster_driver.h"
 #include "vdistub.h"
 #include "tosvars.h"
 #include "lineavars.h"
@@ -650,7 +650,7 @@ static WORD get_seed(const VwkAttrib *attr, const VwkClip *clip,
     SEGMENT *qhole;         /* an empty space in the queue */
     SEGMENT *qtmp;
 
-    if (end_pts(clip, xin, ABS(yin), search_color, seed_type,xleftout, xrightout)) {
+    if (vdi_raster->find_span(clip, xin, ABS(yin), search_color, seed_type, xleftout, xrightout)) {
         /* false if of search_color */
         for (qtmp = qbottom, qhole = NULL; qtmp < qtop; qtmp++) {
             /* skip holes, remembering the first hole we find */
@@ -728,7 +728,7 @@ void contourfill(const VwkAttrib * attr, const VwkClip *clip)
     search_color = INTIN[0];
 
     if ((WORD)search_color < 0) {
-        search_color = pixelread(xleft,oldy);
+        search_color = vdi_raster->get_pixel(xleft, oldy);
         seed_type = 1;
     } else {
         /* Range check the color and convert the index to a pixel value */
@@ -746,7 +746,7 @@ void contourfill(const VwkAttrib * attr, const VwkClip *clip)
     }
 
     /* check if anything to do */
-    if (!end_pts(clip, xleft, oldy, search_color, seed_type, &oldxleft, &oldxright))
+    if (!vdi_raster->find_span(clip, xleft, oldy, search_color, seed_type, &oldxleft, &oldxright))
         return;
 
     /*
@@ -858,7 +858,7 @@ void vdi_v_get_pixel(Vwk * vwk)
     const WORD y = PTSIN[1];       /* fetch y coord. */
 
     /* Get the requested pixel */
-    pel = (WORD)pixelread(x,y);
+    pel = (WORD)vdi_raster->get_pixel(x, y);
 
 #if CONF_WITH_VDI_16BIT
     if (TRUECOLOR_MODE)
@@ -888,24 +888,12 @@ WORD
 get_pix(void)
 {
     /* return the composed color value */
-    return pixelread(PTSIN[0], PTSIN[1]);
+    return vdi_raster->get_pixel(PTSIN[0], PTSIN[1]);
 }
 
 
 /*
  * put_pix - plot a pixel (just for line-A)
- *
- * NOTE: this does not work for Truecolor modes in TOS4 due to a bug.
- * Register a4 is used to reference the lineA pointer table, but has
- * never been set; the code should be using a1 instead.  So we can
- * safely assume that no existing program is expecting this to work.
- *
- * However, because EmuTOS aims to be better than TOS, a functioning
- * Truecolor mode has been implemented.  The EmuTOS Truecolor code
- * is based on what TOS4 apparently intends to do, i.e. just stores
- * the word passed in INTIN[0] as-is.  This also meshes with the
- * operation of linea2 in TOS4 Truecolor modes, which just retrieves
- * the word at the specified address.
  *
  * input:
  *     INTIN(0) = pixel value.
@@ -915,5 +903,5 @@ get_pix(void)
  void
  put_pix(void)
  {
-    pixelput(PTSIN[0], PTSIN[1]);
+    vdi_raster->put_pixel(PTSIN[0], PTSIN[1], INTIN[0]);
  }

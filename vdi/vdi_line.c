@@ -20,7 +20,7 @@
 #include "tosvars.h"
 #include "biosext.h"    /* for cache control routines */
 #include "lineavars.h"
-#include "vdi_raster_line.h"
+#include "vdi_raster_driver.h"
 #include "vdi_inline.h"
 
 
@@ -143,26 +143,10 @@ void vdi_vql_attributes(Vwk * vwk)
 
 /*
  * draw_rect_common - draw one or more horizontal lines
- *
- * calls the hardware or software blitter code to perform the blit
  */
 void draw_rect_common(const VwkAttrib *attr, const Rect *rect)
 {
-#if CONF_WITH_VDI_16BIT
-    if (TRUECOLOR_MODE)
-        swblit_rect_common16(attr, rect);
-    else
-#endif
-#if CONF_WITH_BLITTER
-    if (blitter_is_enabled)
-    {
-        hwblit_rect_common(attr, rect);
-    }
-    else
-#endif
-    {
-        swblit_rect_common(attr, rect);
-    }
+    vdi_raster->fill_rect(attr, rect);
 }
 
 
@@ -1000,26 +984,8 @@ void abline(const Line *line, const WORD wrt_mode, UWORD color)
      * optimize drawing of vertical lines
      */
     if (line->x1 == line->x2) {
-#if CONF_WITH_VDI_16BIT
-        if (TRUECOLOR_MODE)
-        {
-            swblit_vertical_line16(line, wrt_mode, color);
-            return;
-        }
-        else
-#endif
-#if CONF_WITH_BLITTER
-        if (blitter_is_enabled)
-        {
-            hwblit_vertical_line(line, wrt_mode, color);
-            return;
-        }
-        else
-#endif
-        {
-            vertical_line(line, wrt_mode, color);
-            return;
-        }
+        vdi_raster->draw_vertical_line(line, wrt_mode, color);
+        return;
     }
 #endif
 
@@ -1080,12 +1046,7 @@ void abline(const Line *line, const WORD wrt_mode, UWORD color)
     ordered.y1 = y1;
     ordered.x2 = x2;
     ordered.y2 = y2;
-#if CONF_WITH_VDI_16BIT
-    if (TRUECOLOR_MODE)
-        draw_line16(&ordered, wrt_mode, color);
-    else
-#endif
-    draw_line(&ordered, wrt_mode, color);
+    vdi_raster->draw_line(&ordered, wrt_mode, color);
 }
 
 /*

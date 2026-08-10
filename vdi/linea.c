@@ -18,6 +18,7 @@
 #include "linea.h"
 #include "lineavars.h"
 #include "tosvars.h"
+#include "vdi_raster_driver.h"
 #include "a2560_bios.h"
 
 
@@ -75,6 +76,9 @@ void linea_resolution_changed(void)
     static const UBYTE shift_offset[5] = {0, 3, 2, 0, 1};
     /* Helps speed up get_start_addr */
     v_planes_shift = (v_planes > 4) ? 0 : shift_offset[v_planes];
+
+    /* the framebuffer format may have changed, so re-select the raster driver */
+    vdi_raster_select();
 
     if (linea_on_resolution_changed)
         linea_on_resolution_changed();

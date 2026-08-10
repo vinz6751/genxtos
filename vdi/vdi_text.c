@@ -15,6 +15,7 @@
 #include "string.h"
 #include "aesext.h"
 #include "vdi_defs.h"
+#include "vdi_raster_driver.h"
 #include "vdistub.h"
 #include "lineavars.h"
 #include "biosext.h"
@@ -449,7 +450,7 @@ static void output_text(Vwk *vwk, WORD count, WORD *str, WORD width, JUSTINFO *j
      */
     if (ok_for_direct_blit(vwk, width, justified))
     {
-        direct_screen_blit(count, str);
+        vdi_raster->blit_string(count, str);
         return;
     }
 #endif

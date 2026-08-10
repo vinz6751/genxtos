@@ -51,6 +51,19 @@ If you have the shadow framebuffer enabled and not forcing the 8x8 font with CON
 There is a bit mixup in the original TOS and even EmuTOS as to how to handle the low level graphics. In GenxTOS, the design decision was made that the Line-A belongs to the BIOS. Refactoring was done accordingly. Likewize, mouse rendering belonw to the Line-A. The VDI can of course override things if it wishes so.
 This is because the VDI is not available yet, but Line-A variables are needed by the BIOS and text rendering things (conout, vt-52).
 
+### The three layers of graphics abstraction
+Low level graphics is now split into three replaceable pieces, so that supporting a new machine or a new framebuffer format does not mean touching the whole VDI:
+
+1. **BIOS `SCREEN_DRIVER`** (`bios/screen.h`) - video *mode* handling: setting and querying a resolution, VRAM size and address, palette. It knows nothing about drawing.
+2. **VDI `VDI_RASTER_DRIVER`** (`vdi/vdi_raster_driver.h`) - the *pixel layout*: everything that knows how a pixel is stored in the framebuffer. Pixels, spans and patterned fills, lines, raster copies, form transforms, glyph output, screen clear. In GDOS terms this is the "screen driver": `ASSIGN.SYS` devices 01-04 are screen drivers, flagged permanent with the placeholder name `SCREEN.SYS`, because on the ST the ROM VDI *is* the screen driver. Implementations:
+   * `vdi_raster_bitplane` - Atari interleaved bitplanes (ST/STe/TT, and the Falcon palette modes). Also used for any single-plane packed framebuffer, including the VICKY B 1bpp bring-up mode. This is the historical ST screen driver, reconstructed as an explicit component; it owns the hardware blitter paths, since the Atari blitter is a bitplane accelerator rather than a separate format.
+   * `vdi_raster_truecolor` - Falcon packed 16-bit pixels (`CONF_WITH_VDI_16BIT`).
+   * `vdi_raster_chunky8` - Foenix chunky 8bpp (`CONF_WITH_CHUNKY8`).
+   The active driver is selected by `vdi_raster_select()` on every mode change, and only the drivers a given target can use are linked in.
+3. **Device-independent VDI** - everything above the raster driver: opcode dispatch, clipping, GDPs, polygons, wide lines, fonts, attributes, colour tables. It must make no assumption about pixel layout.
+
+Mouse rendering is a fourth, parallel driver (`LINEA_MOUSE_RENDERER`, see below) and deliberately does *not* go through the raster driver: hardware cursors bypass the framebuffer entirely. Note that `linea_sprite_atari.c` walks bitplanes directly for that reason.
+
 ## Mouse
 The Foenix has support for hardware mouse cursor. And if we want the mouse to work with the text mode (no frame buffer), that's what we must use. To enable that, I introduced the LINEA_MOUSE_RENDERER, which is an abstraction of something that can draw the mouse. There is:
 * An implementation that is ripped from EmuTOS, ie will work with the Atari Shifter (linea_mouse_atari)
@@ -87,7 +100,7 @@ EmuTOS doesn't have PS/2 support so it was introduced as a separate subsystem wh
 [ ] PSG SN76489 some code written but no API
 [ ] SID
 [ ] YM262 OPL3 some defines written but no API
-[ ] VDI. Reviewing options, like fVDI, oVDI, and started writting Vvdi
+[~] VDI. The framebuffer-format-dependent half is now isolated behind `VDI_RASTER_DRIVER` (see above), with bitplane, Falcon 16-bit and Foenix chunky 8bpp implementations. The chunky driver still describes forms as planar for the raster-copy entries (`vro_cpyfm`/`vrt_cpyfm`), which is the next piece of work.
 [ ] AES. Requies the VDI first.
 
 

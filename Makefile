@@ -356,7 +356,10 @@ vdi_src = vdi_asm.S vdi_bezier.c vdi_col.c vdi_control.c vdi_esc.c \
           vdi_fill.c vdi_gdp.c vdi_input.c vdi_line.c vdi_main.c \
           vdi_marker.c vdi_misc.c vdi_mouse.c vdi_raster.c vdi_text.c \
           vdi_textblit.c vdi_locator.c \
-          vdi_raster_line.c vdi_raster_pixel.c \
+          vdi_raster_driver.c \
+          vdi_raster_bitplane.c vdi_raster_bitplane_line.c \
+          vdi_raster_bitplane_pixel.c \
+          vdi_raster_truecolor.c vdi_raster_chunky8.c \
 		  mform.c \
 		  linea_.S linea.c lineavars.S \
 		  linea_mouse.c linea_mouse_.S \

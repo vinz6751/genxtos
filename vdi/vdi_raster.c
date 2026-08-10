@@ -1,6 +1,17 @@
 /*
  * vdi_raster.c - Blitting routines
  *
+ * This file holds the device-independent part of the VDI raster calls
+ * (vro_cpyfm, vrt_cpyfm, vr_trnfm and their line-A equivalents): argument
+ * decoding, clipping and pattern setup.  The pixel layout is described to
+ * it by the screen raster driver (see vdi_raster_driver.h).
+ *
+ * It also holds the word-oriented blit engine, bit_blt()/do_blit(), plus
+ * the hardware blitter interface.  Those are shared rather than being
+ * part of a driver: they are driven entirely by the offsets in the
+ * blit_frame (next word, next line, next plane), which is what the
+ * driver's setup_forms() entry fills in.
+ *
  * Copyright 2002 Joachim Hoenig (blitter)
  * Copyright 2003-2025 The EmuTOS development team
  *
@@ -14,6 +25,8 @@
 #include "asm.h"
 #include "vdi_defs.h"
 #include "vdistub.h"
+#include "vdi_blit.h"
+#include "vdi_raster_driver.h"
 #include "blitter.h"
 #include "biosext.h"    /* for cache control routines */
 #include "lineavars.h"
@@ -21,12 +34,6 @@
 #include "has.h"        /* for blitter-related items */
 #include "string.h"     /* for bzero() */
 #include "gemdos.h"     /* for mem alloc & free */
-
-#ifdef __mcoldfire__
-#define ASM_BLIT_IS_AVAILABLE   0   /* assembler routine does not support ColdFire */
-#else
-#define ASM_BLIT_IS_AVAILABLE   1   /* may use m68k assembler fast_bit_blt routine */
-#endif
 
 
 #if CONF_WITH_BLITTER || !ASM_BLIT_IS_AVAILABLE
@@ -91,27 +98,6 @@ static const UBYTE skew_flags[8] = {
 #endif
 
 
-/* bitblt modes */
-#define BM_ALL_WHITE   0
-#define BM_S_AND_D     1
-#define BM_S_AND_NOTD  2
-#define BM_S_ONLY      3
-#define BM_NOTS_AND_D  4
-#define BM_D_ONLY      5
-#define BM_S_XOR_D     6
-#define BM_S_OR_D      7
-#define BM_NOT_SORD    8
-#define BM_NOT_SXORD   9
-#define BM_NOT_D      10
-#define BM_S_OR_NOTD  11
-#define BM_NOT_S      12
-#define BM_NOTS_OR_D  13
-#define BM_NOT_SANDD  14
-#define BM_ALL_BLACK  15
-
-/* flag:1 SOURCE and PATTERN   flag:0 SOURCE only */
-#define PAT_FLAG        16
-
 /* PTSIN ARRAY OFFSETs */
 #define XMIN_S  0       /* x of upper left of source rectangle */
 #define YMIN_S  1       /* y of upper left of source rectangle */
@@ -124,175 +110,27 @@ static const UBYTE skew_flags[8] = {
 #define YMAX_D  7       /* y of lower right of destination rectangle */
 
 
-/* 76-byte line-A BITBLT struct passing parameters to bitblt */
-struct blit_frame {
-    WORD b_wd;          /* +00 width of block in pixels */
-    WORD b_ht;          /* +02 height of block in pixels */
-    WORD plane_ct;      /* +04 number of consecutive planes to blt */
-    UWORD fg_col;       /* +06 foreground color (logic op table index:hi bit) */
-    UWORD bg_col;       /* +08 background color (logic op table index:lo bit) */
-    UBYTE op_tab[4];    /* +10 logic ops for all fore and background combos */
-    WORD s_xmin;        /* +14 minimum X: source */
-    WORD s_ymin;        /* +16 minimum Y: source */
-    UWORD * s_form;     /* +18 source form base address */
-    WORD s_nxwd;        /* +22 offset to next word in line  (in bytes) */
-    WORD s_nxln;        /* +24 offset to next line in plane (in bytes) */
-    WORD s_nxpl;        /* +26 offset to next plane from start of current plane */
-    WORD d_xmin;        /* +28 minimum X: destination */
-    WORD d_ymin;        /* +30 minimum Y: destination */
-    UWORD * d_form;     /* +32 destination form base address */
-    WORD d_nxwd;        /* +36 offset to next word in line  (in bytes) */
-    WORD d_nxln;        /* +38 offset to next line in plane (in bytes) */
-    WORD d_nxpl;        /* +40 offset to next plane from start of current plane */
-    UWORD * p_addr;     /* +42 address of pattern buffer   (0:no pattern) */
-    WORD p_nxln;        /* +46 offset to next line in pattern  (in bytes) */
-    WORD p_nxpl;        /* +48 offset to next plane in pattern (in bytes) */
-    WORD p_mask;        /* +50 pattern index mask */
-
-    /* these frame parameters are internally set */
-    WORD p_indx;        /* +52 initial pattern index */
-    UWORD * s_addr;     /* +54 initial source address */
-    WORD s_xmax;        /* +58 maximum X: source */
-    WORD s_ymax;        /* +60 maximum Y: source */
-    UWORD * d_addr;     /* +62 initial destination address */
-    WORD d_xmax;        /* +66 maximum X: destination */
-    WORD d_ymax;        /* +68 maximum Y: destination */
-    WORD inner_ct;      /* +70 blt inner loop initial count */
-    WORD dst_wr;        /* +72 destination form wrap (in bytes) */
-    WORD src_wr;        /* +74 source form wrap (in bytes) */
-};
-
-/* Raster definitions */
-typedef struct {
-    void *fd_addr;
-    WORD fd_w;
-    WORD fd_h;
-    WORD fd_wdwidth;
-    WORD fd_stand;
-    WORD fd_nplanes;
-    WORD fd_r1;
-    WORD fd_r2;
-    WORD fd_r3;
-} MFDB;
-
-
-#if ASM_BLIT_IS_AVAILABLE
-void fast_bit_blt(struct blit_frame *blit_info);    /* defined in vdi_blit.S */
-#endif
-
 /* holds VDI internal info for bit_blt(), fast_bit_blt() */
 static struct blit_frame vdi_info;
 
-#if CONF_WITH_VDI_16BIT
-/*
- * convert between 16-bit standard format and Truecolor device-dependent format
- */
-static void vr_trnfm16(MFDB *src_mfdb, MFDB *dst_mfdb)
-{
-    WORD *src, *dst, *work, *tempbuf = NULL;
-    LONG i, planesize, formsize;
-    UWORD src_mask, dst_mask;
-
-    src = src_mfdb->fd_addr;
-    dst = dst_mfdb->fd_addr;
-    planesize = (LONG)src_mfdb->fd_h * src_mfdb->fd_wdwidth;    /* in words */
-    formsize = planesize * sizeof(WORD) * 16;   /* in bytes */
-
-    /*
-     * for now, if 'in place' we actually do a normal transform to a temp buf.
-     * the only problem with this is that we fail silently if memory is tight.
-     */
-    if (src == dst)
-    {
-        tempbuf = dos_alloc_anyram(formsize);
-        if (!tempbuf)
-        {
-            KDEBUG(("Cannot allocate temp buf for vr_trnfm()\n"));
-            return;
-        }
-        dst = tempbuf;
-    }
-
-    bzero(dst, formsize);   /* clear out the output */
-
-    if (src_mfdb->fd_stand) /* handle standard -> device-dependent */
-    {
-        for (dst_mask = 0x8000, work = dst; dst_mask; dst_mask >>= 1, work = dst)
-        {
-            for (i = 0; i < planesize; i++, src++)
-            {
-                for (src_mask = 0x8000; src_mask; src_mask >>= 1, work++)
-                {
-                    if (*src & src_mask)
-                    {
-                        *work |= dst_mask;
-                    }
-                }
-            }
-        }
-    }
-    else                    /* handle device-dependent -> standard */
-    {
-        for (src_mask = 0x8000, work = src; src_mask; src_mask >>= 1, work = src)
-        {
-            for (i = 0; i < planesize; i++, dst++)
-            {
-                for (dst_mask = 0x8000; dst_mask; dst_mask >>= 1, work++)
-                {
-                    if (*work & src_mask)
-                    {
-                        *dst |= dst_mask;
-                    }
-                }
-            }
-        }
-    }
-
-    if (tempbuf)
-    {
-        memcpy(dst_mfdb->fd_addr, tempbuf, formsize);
-        dos_free(tempbuf);
-    }
-}
-#endif
 
 /*
- * vdi_vr_trnfm - transform screen bitmaps
+ * vdi_transform_form_planar - convert between standard and interleaved forms
  *
- * Convert device-independent bitmaps to device-dependent and vice versa
+ * In the device-independent ("standard") form the planes are consecutive,
+ * while in the Atari device-dependent form they are interleaved.
  *
- * The major difference between the two formats is that, in the device-
- * independent ("standard") form, the planes are consecutive, while on
- * the Atari screen they are interleaved (for 1-8 planes) or pixel-packed
- * (Falcon Truecolor mode).
+ * Note that this works purely from the MFDB contents and never looks at
+ * the screen, so it is used by every driver whose device-dependent form
+ * is planar - which includes the Truecolor driver, because TOS4 falls
+ * back to a planar transform for forms of 8 planes or fewer.
  */
-void vdi_vr_trnfm(Vwk * vwk)
+void vdi_transform_form_planar(MFDB *src_mfdb, MFDB *dst_mfdb)
 {
-    MFDB *src_mfdb, *dst_mfdb;
     WORD *src, *dst, *work;
     WORD planes;
     BOOL inplace;
     LONG size, inner, outer, i, j;
-
-    /* Get the pointers to the MFDBs */
-    src_mfdb = *(MFDB **)&CONTRL[7];
-    dst_mfdb = *(MFDB **)&CONTRL[9];
-
-#if CONF_WITH_VDI_16BIT
-    /*
-     * handle an undocumented feature of TOS4 VDI: you must be in a
-     * Truecolor mode to get Truecolor device-dependent output from a
-     * 16-bit standard form.
-     *
-     * if the current mode is NOT Truecolor, TOS4 will transform a
-     * 16-bit standard form to a 16-bitplane device-dependent form (!).
-     */
-    if (TRUECOLOR_MODE && (src_mfdb->fd_nplanes > 8))
-    {
-        vr_trnfm16(src_mfdb, dst_mfdb);
-        return;
-    }
-#endif
 
     src = src_mfdb->fd_addr;
     dst = dst_mfdb->fd_addr;
@@ -353,6 +191,61 @@ void vdi_vr_trnfm(Vwk * vwk)
         }
         src = work;
     }
+}
+
+
+/*
+ * vdi_copy_raster_{opaque,transparent}_planar - VDI_RASTER_DRIVER entries
+ *
+ * These dispatch on the plane count of the forms being copied rather than
+ * on the current screen mode, because a copy need not involve the screen
+ * at all: a Truecolor screen can be blitted to a planar memory form, and a
+ * planar screen to a 16-bit one.  Both bitplane and Truecolor drivers
+ * therefore share these entries.
+ */
+void vdi_copy_raster_opaque_planar(struct blit_frame *info)
+{
+#if CONF_WITH_VDI_16BIT
+    if (info->plane_ct > 8)
+    {
+        vro_cpyfm16(info);
+        return;
+    }
+#endif
+
+    blit_frame_copy(info);
+}
+
+
+void vdi_copy_raster_transparent_planar(struct blit_frame *info)
+{
+#if CONF_WITH_VDI_16BIT
+    if (info->plane_ct > 8)
+    {
+        vrt_cpyfm16(info);
+        return;
+    }
+#endif
+
+    blit_frame_copy(info);
+}
+
+
+/*
+ * vdi_vr_trnfm - transform bitmaps
+ *
+ * Convert device-independent bitmaps to device-dependent and vice versa.
+ * What "device-dependent" means is up to the screen raster driver.
+ */
+void vdi_vr_trnfm(Vwk * vwk)
+{
+    MFDB *src_mfdb, *dst_mfdb;
+
+    /* Get the pointers to the MFDBs */
+    src_mfdb = *(MFDB **)&CONTRL[7];
+    dst_mfdb = *(MFDB **)&CONTRL[9];
+
+    vdi_raster->transform_form(src_mfdb, dst_mfdb);
 }
 
 
@@ -585,7 +478,7 @@ do_blit(BLITVARS * blt)
  * blitter document, with the addition that source and destination are
  * allowed to overlap.  Original source code comments are mostly preserved.
  */
-static void bit_blt(struct blit_frame *blit_info)
+void bit_blt(struct blit_frame *blit_info)
 {
     WORD plane;
     UWORD s_xmin, s_xmax;
@@ -774,6 +667,32 @@ static void bit_blt(struct blit_frame *blit_info)
 #endif
 
 
+/*
+ * blit_frame_copy - perform a blit using the fastest available implementation
+ *
+ * we call the assembler version if we're not on ColdFire and either
+ * (a) the blitter isn't configured, or
+ * (b) it's configured but not available.
+ */
+void blit_frame_copy(struct blit_frame *info)
+{
+#if ASM_BLIT_IS_AVAILABLE
+#if CONF_WITH_BLITTER
+    if (blitter_is_enabled)
+    {
+        bit_blt(info);
+    }
+    else
+#endif
+    {
+        fast_bit_blt(info);
+    }
+#else
+    bit_blt(info);
+#endif
+}
+
+
 /* common settings needed both by VDI and line-A raster
  * operations, but being given through different means.
  */
@@ -900,21 +819,20 @@ dont_clip (struct blit_frame * info)
 }
 
 /*
- * setup_info - fill the info structure with MFDB values
+ * vdi_setup_forms_planar - describe planar source & destination forms
  *
- * returns TRUE iff there is nothing to do (everything is clipped away,
- *              or the destination plane plane count is invalid)
+ * This is the VDI_RASTER_DRIVER setup_forms() entry used by every driver
+ * whose device-dependent form is planar, i.e. the plane data of a group
+ * of 16 pixels sits in consecutive WORDs (offset 2 to the next plane) and
+ * a whole pixel occupies nplanes WORDs.
+ *
+ * A NULL fd_addr means the screen, in which case the layout comes from
+ * the line-A variables instead of from the MFDB.
+ *
+ * returns TRUE iff the resulting plane count cannot be handled.
  */
-static BOOL
-setup_info (struct raster_t *raster, struct blit_frame * info)
+BOOL vdi_setup_forms_planar(struct blit_frame *info, const MFDB *src, const MFDB *dst)
 {
-    MFDB *src,*dst;
-    BOOL use_clip = FALSE;
-
-    /* Get the pointers to the MFDBs */
-    src = *(MFDB **)&CONTRL[7]; /* a5, source MFDB */
-    dst = *(MFDB **)&CONTRL[9]; /* a4, destination MFDB */
-
     /* setup plane info for source MFDB */
     if ( src->fd_addr ) {
         /* for a positive source address */
@@ -943,18 +861,7 @@ setup_info (struct raster_t *raster, struct blit_frame * info)
         info->plane_ct = v_planes;
         info->d_nxwd = v_planes * 2;
         info->d_nxln = v_lin_wr;
-
-        /* check if clipping is enabled, when destination is screen */
-        if (raster->clip)
-            use_clip = TRUE;
     }
-
-    if (use_clip) {
-        if (do_clip(raster->clipper, info))
-            return TRUE;        /* clipping took away everything */
-    }
-    else
-        dont_clip(info);
 
     info->s_nxpl = 2;           /* next plane offset (source) */
     info->d_nxpl = 2;           /* next plane offset (destination) */
@@ -966,365 +873,36 @@ setup_info (struct raster_t *raster, struct blit_frame * info)
 #endif
 }
 
-#if CONF_WITH_VDI_16BIT
+
 /*
- * vro_cpyfm16() - handle vro_cpyfm() for 16-bit graphics
+ * setup_info - fill the info structure with MFDB values
  *
- * the logic ops all act literally on the pixels (words) concerned
+ * returns TRUE iff there is nothing to do (everything is clipped away,
+ *              or the destination plane plane count is invalid)
  */
-static void vro_cpyfm16(struct blit_frame *info)
+static BOOL
+setup_info (struct raster_t *raster, struct blit_frame * info)
 {
-    UWORD *src, *dst, *p, *q;
-    WORD src_width, dst_width, next_pixel;
-    WORD mode, rows, cols;
+    MFDB *src,*dst;
 
-    mode = INTIN[0];
+    /* Get the pointers to the MFDBs */
+    src = *(MFDB **)&CONTRL[7]; /* a5, source MFDB */
+    dst = *(MFDB **)&CONTRL[9]; /* a4, destination MFDB */
 
-    /*
-     * init pointers & increments
-     */
-    src_width = info->s_nxln / sizeof(WORD);
-    dst_width = info->d_nxln / sizeof(WORD);
-    next_pixel = 1;
-    src = info->s_form + ((LONG)info->s_ymin * src_width) + info->s_xmin;
-    dst = info->d_form + ((LONG)info->d_ymin * dst_width) + info->d_xmin;
+    if (vdi_raster->setup_forms(info, src, dst))
+        return TRUE;            /* plane count is invalid */
 
-    /*
-     * adjust if potential overlap
-     */
-    if (src < dst) {
-        src = info->s_form + ((LONG)info->s_ymax * src_width) + info->s_xmax;
-        dst = info->d_form + ((LONG)info->d_ymax * dst_width) + info->d_xmax;
-        src_width = -src_width;
-        dst_width = -dst_width;
-        next_pixel = -1;
+    /* clipping only applies when the destination is the screen */
+    if (!dst->fd_addr && raster->clip) {
+        if (do_clip(raster->clipper, info))
+            return TRUE;        /* clipping took away everything */
     }
+    else
+        dont_clip(info);
 
-    p = src;
-    q = dst;
-
-    rows = info->s_ymax - info->s_ymin + 1;
-
-    switch(mode) {
-    case BM_ALL_WHITE:  /* D1 = 0 */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = 0;
-                q += next_pixel;
-            }
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_S_AND_D:    /* D1 = S AND D */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = *p & *q;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_S_AND_NOTD: /* D1 = S AND (NOT D) */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = *p & ~*q;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_S_ONLY:     /* D1 = S */                /* replace */
-        /*
-         * this is the common case, so we optimize a bit
-         */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            if (src < dst) {
-                while(cols-- > 0) {
-                    *q-- = *p--;
-                }
-            } else {
-                while(cols-- > 0) {
-                    *q++ = *p++;
-                }
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_NOTS_AND_D: /* D1 = (NOT S) AND D */    /* erase */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = ~*p & *q;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_D_ONLY:     /* D1 = D */
-        /* nothing to do */
-        break;
-    case BM_S_XOR_D:    /* D1 = S XOR D */          /* XOR */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = *p ^ *q;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_S_OR_D:     /* D1 = S OR D */           /* transparent */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = *p | *q;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_NOT_SORD:   /* D1 = NOT (S OR D) */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = ~(*p | *q);
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_NOT_SXORD:  /* D1 = NOT (S XOR D) */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = ~(*p ^ *q);
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_NOT_D:      /* D1 = NOT D */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = ~*q;
-                q += next_pixel;
-            }
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_S_OR_NOTD:  /* D1 = S OR (NOT D) */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = *p | ~*q;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_NOT_S:      /* D1 = NOT S */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = ~*p;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_NOTS_OR_D:  /* D1 = (NOT S) OR D */     /* reverse transparent */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = ~*p | *q;
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_NOT_SANDD:  /* D1 = NOT (S AND D) */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = ~(*p & *q);
-                p += next_pixel;
-                q += next_pixel;
-            }
-            src += src_width;
-            p = src;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    case BM_ALL_BLACK:  /* D1 = 1 */
-        while(rows-- > 0) {
-            cols = info->s_xmax - info->s_xmin + 1;
-            while(cols-- > 0) {
-                *q = 0xffff;
-                q += next_pixel;
-            }
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-    }
+    return FALSE;
 }
 
-/*
- * vrt_cpyfm16() - handle vrt_cpyfm() for 16-bit graphics
- */
-static void vrt_cpyfm16(struct blit_frame *info)
-{
-    UWORD *src, *dst, *p, *q;
-    WORD mode, src_width, src_off, dst_width, x, y;
-    UWORD *palette, src_mask, bit_mask, fgcol, bgcol;
-
-    mode = INTIN[0];
-
-    palette = CUR_WORK->ext->palette;
-    fgcol = palette[info->fg_col];
-    bgcol = palette[info->bg_col];
-
-    /*
-     * init source area variables
-     */
-    src_width = info->s_nxln / sizeof(WORD);/* width in words */
-    src_off = info->s_xmin >> 4;            /* starting x offset in words */
-    bit_mask = src_mask = 0x8000U >> (info->s_xmin&0x000f); /* starting bit mask */
-    p = src = info->s_form + ((LONG)info->s_ymin * src_width) + src_off;
-
-    /*
-     * init destination area variables
-     */
-    dst_width = info->d_nxln / sizeof(WORD);    /* in words */
-    q = dst = info->d_form + ((LONG)info->d_ymin * dst_width) + info->d_xmin;
-
-    switch(mode) {
-    case MD_ERASE:
-        for (y = info->s_ymin; y <= info->s_ymax; y++) {
-            for (x = info->s_xmin; x <= info->s_xmax; x++, q++) {
-                if (!(*p & bit_mask))
-                    *q = bgcol;
-                rorw1(bit_mask);
-                if (bit_mask & 0x8000)
-                    p++;
-            }
-            src += src_width;
-            p = src;
-            bit_mask = src_mask;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-
-    case MD_XOR:
-        for (y = info->s_ymin; y <= info->s_ymax; y++) {
-            for (x = info->s_xmin; x <= info->s_xmax; x++, q++) {
-                if (*p & bit_mask)
-                    *q = ~*q;
-                rorw1(bit_mask);
-                if (bit_mask & 0x8000)
-                    p++;
-            }
-            src += src_width;
-            p = src;
-            bit_mask = src_mask;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-
-    case MD_TRANS:
-        for (y = info->s_ymin; y <= info->s_ymax; y++) {
-            for (x = info->s_xmin; x <= info->s_xmax; x++, q++) {
-                if (*p & bit_mask)
-                    *q = fgcol;
-                rorw1(bit_mask);
-                if (bit_mask & 0x8000)
-                    p++;
-            }
-            src += src_width;
-            p = src;
-            bit_mask = src_mask;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-
-    case MD_REPLACE:
-        for (y = info->s_ymin; y <= info->s_ymax; y++) {
-            for (x = info->s_xmin; x <= info->s_xmax; x++, q++) {
-                if (*p & bit_mask)
-                    *q = fgcol;
-                else
-                    *q = bgcol;
-                rorw1(bit_mask);
-                if (bit_mask & 0x8000)
-                    p++;
-            }
-            src += src_width;
-            p = src;
-            bit_mask = src_mask;
-            dst += dst_width;
-            q = dst;
-        }
-        break;
-
-    default:
-        return;                     /* unsupported mode */
-    }
-}
-#endif
 
 /* common functionality for vdi_vro_cpyfm, vdi_vrt_cpyfm, linea_raster */
 static void
@@ -1364,13 +942,8 @@ cpy_raster(struct raster_t *raster, struct blit_frame *info)
         info->bg_col = 0;       /* bg:0 & fg:0 => only first OP_TAB */
         info->fg_col = 0;       /* entry will be referenced */
 
-#if CONF_WITH_VDI_16BIT
-        if (info->plane_ct > 8)
-        {
-            vro_cpyfm16(info);          /* 16-bit version */
-            return;
-        }
-#endif
+        vdi_raster->copy_raster_opaque(info);
+        return;
 
     } else {
 
@@ -1429,36 +1002,8 @@ cpy_raster(struct raster_t *raster, struct blit_frame *info)
             return;                     /* unsupported mode */
         }
 
-#if CONF_WITH_VDI_16BIT
-        if (info->plane_ct > 8)
-        {
-            vrt_cpyfm16(info);          /* 16-bit version */
-            return;
-        }
-#endif
-
+        vdi_raster->copy_raster_transparent(info);
     }
-
-    /*
-     * call assembler blit routine or C-implementation.  we call the
-     * assembler version if we're not on ColdFire and either
-     * (a) the blitter isn't configured, or
-     * (b) it's configured but not available.
-     */
-#if ASM_BLIT_IS_AVAILABLE
-#if CONF_WITH_BLITTER
-    if (blitter_is_enabled)
-    {
-        bit_blt(info);
-    }
-    else
-#endif
-    {
-        fast_bit_blt(info);
-    }
-#else
-    bit_blt(info);
-#endif
 }
 
 /*
@@ -1528,24 +1073,5 @@ void linea_blit(struct blit_frame *info)
     info->d_xmax = info->d_xmin + info->b_wd - 1;
     info->d_ymax = info->d_ymin + info->b_ht - 1;
 
-    /*
-     * call assembler blit routine or C-implementation.  we call the
-     * assembler version if we're not on ColdFire and either
-     * (a) the blitter isn't configured, or
-     * (b) it's configured but not available.
-     */
-#if ASM_BLIT_IS_AVAILABLE
-#if CONF_WITH_BLITTER
-    if (blitter_is_enabled)
-    {
-        bit_blt(info);
-    }
-    else
-#endif
-    {
-        fast_bit_blt(info);
-    }
-#else
-    bit_blt(info);
-#endif
+    vdi_raster->blit(info);
 }
