@@ -56,9 +56,9 @@ Low level graphics is now split into three replaceable pieces, so that supportin
 
 1. **BIOS `SCREEN_DRIVER`** (`bios/screen.h`) - video *mode* handling: setting and querying a resolution, VRAM size and address, palette. It knows nothing about drawing.
 2. **VDI `VDI_RASTER_DRIVER`** (`vdi/vdi_raster_driver.h`) - the *pixel layout*: everything that knows how a pixel is stored in the framebuffer. Pixels, spans and patterned fills, lines, raster copies, form transforms, glyph output, screen clear. In GDOS terms this is the "screen driver": `ASSIGN.SYS` devices 01-04 are screen drivers, flagged permanent with the placeholder name `SCREEN.SYS`, because on the ST the ROM VDI *is* the screen driver. Implementations:
-   * `vdi_raster_bitplane` - Atari interleaved bitplanes (ST/STe/TT, and the Falcon palette modes). Also used for any single-plane packed framebuffer, including the VICKY B 1bpp bring-up mode. This is the historical ST screen driver, reconstructed as an explicit component; it owns the hardware blitter paths, since the Atari blitter is a bitplane accelerator rather than a separate format.
-   * `vdi_raster_truecolor` - Falcon packed 16-bit pixels (`CONF_WITH_VDI_16BIT`).
-   * `vdi_raster_chunky8` - Foenix chunky 8bpp (`CONF_WITH_CHUNKY8`).
+   * `raster_driver_atari_bitplanes` - Atari interleaved bitplanes (ST/STe/TT, and the Falcon palette modes). Also used for any single-plane packed framebuffer, including the VICKY B 1bpp bring-up mode. This is the historical ST screen driver, reconstructed as an explicit component; it owns the hardware blitter paths, since the Atari blitter is a bitplane accelerator rather than a separate format.
+   * `raster_driver_atari_truecolor` - Falcon packed 16-bit pixels (`CONF_WITH_VDI_16BIT`).
+   * `raster_driver_chunky8` - Foenix chunky 8bpp (`CONF_WITH_CHUNKY8`).
    The active driver is selected by `vdi_raster_select()` on every mode change, and only the drivers a given target can use are linked in.
 3. **Device-independent VDI** - everything above the raster driver: opcode dispatch, clipping, GDPs, polygons, wide lines, fonts, attributes, colour tables. It must make no assumption about pixel layout.
 
