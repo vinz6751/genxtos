@@ -18,8 +18,9 @@
 #include "vdi_raster_driver.h"
 #include "vdistub.h"
 #include "lineavars.h"
+#include "tosvars.h"
+#include "vdi_inline.h"
 #include "biosext.h"
-
 
 /*
  * start of calculations extracted from vdi_tblit.S
@@ -450,7 +451,21 @@ static void output_text(Vwk *vwk, WORD count, WORD *str, WORD width, JUSTINFO *j
      */
     if (ok_for_direct_blit(vwk, width, justified))
     {
-        vdi_raster->blit_string(count, str);
+#if CONF_WITH_VDI_16BIT
+        if (TRUECOLOR_MODE)
+            vdi_raster->blit_string(count, str);
+        else
+#endif
+#if CONF_WITH_CHUNKY8
+        if (v_planes == 8)
+            vdi_raster->blit_string(count, str);
+        else
+#endif
+        {
+            WORD bp_count = count;
+            WORD *bp_str = str;
+#include "vdi_raster_bitplane_blit_string_body.c"
+        }
         return;
     }
 #endif

@@ -539,7 +539,11 @@ static WORD convert_scancode(UBYTE *scancodeptr)
      * the main keyboard tables are used (these are all 128-byte direct
      * scancode lookup tables).
      */
+#if defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     if (shifty & MODE_ALTGR) {
+#else
+    if (shifty & MODE_ALT) {
+#endif
         if (shifty & MODE_SHIFT) {
             a = current_keytbl.shft;
         } else if (shifty & MODE_CAPS) {
