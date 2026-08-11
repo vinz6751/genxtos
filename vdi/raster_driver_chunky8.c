@@ -1,12 +1,12 @@
 /*
- * vdi_raster_chunky8.c - VDI screen raster driver for chunky 8bpp
+ * raster_driver_chunky8.c - VDI screen raster driver for chunky 8bpp
  *
  * This is the Foenix (A2560U/K/X, GenX) implementation of
  * VDI_RASTER_DRIVER: one byte per pixel holding a palette index, so
  * there are neither bitplanes to walk nor a palette lookup to do when
  * writing - the colour index *is* the pixel value.
  *
- * It is structurally the same as vdi_raster_truecolor.c (which is also
+ * It is structurally the same as raster_driver_atari_truecolor.c (which is also
  * a packed format) with UBYTE in place of UWORD.
  *
  * Not yet chunky-aware: the raster copy entries.  A memory MFDB is
@@ -428,7 +428,7 @@ static void ch8_blit_glyph(LOCALVARS *vars)
     skew_mask = (UWORD)vars->skew_msk;
     skew_start = vars->height;
 
-    /* see the equivalent code in vdi_raster_truecolor.c for the rationale */
+    /* see the equivalent code in raster_driver_atari_truecolor.c for the rationale */
     if (skew && (vars->STYLE&F_OUTLINE))
     {
         if (SOURCEX)
@@ -526,9 +526,8 @@ static void ch8_clear_screen(void)
  * engine of its own.  Everything the desktop draws itself now goes through
  * the chunky entries above; this is the remaining piece of work.
  */
-const VDI_RASTER_DRIVER vdi_raster_chunky8 = {
+const VDI_RASTER_DRIVER raster_driver_chunky8 = {
     .name = "Foenix chunky 8bpp",
-    .resolution_changed = NULL,
     .get_pixel = ch8_get_pixel,
     .put_pixel = ch8_put_pixel,
     .fill_rect = ch8_fill_rect,

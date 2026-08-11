@@ -1,8 +1,8 @@
 /*
- * vdi_raster_bitplane_pixel.c - pixel operations for Atari bitplanes
+ * raster_driver_atari_bitplanes_pixel.c - pixel operations for Atari bitplanes
  *
  * Part of the interleaved-bitplane implementation of VDI_RASTER_DRIVER;
- * see vdi_raster_bitplane.c and vdi_raster_driver.h.
+ * see raster_driver_atari_bitplanes.c and vdi_raster_driver.h.
  *
  * In an interleaved-bitplane framebuffer a single pixel is spread over
  * v_planes consecutive WORDs, one bit per plane, so reading or writing a
@@ -28,7 +28,7 @@
 #include "tosvars.h"
 #include "lineavars.h"
 #include "vdi_inline.h"
-#include "vdi_raster_bitplane.h"
+#include "raster_driver_atari_bitplanes.h"
 
 /*
  * get_color - Get color value of requested pixel.

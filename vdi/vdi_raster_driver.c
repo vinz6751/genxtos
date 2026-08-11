@@ -43,18 +43,15 @@ void vdi_raster_select(void)
      * 1bpp bring-up mode on VICKY B, which is a single bitplane
      */
     if (v_planes == 8)
-        vdi_raster = &vdi_raster_chunky8;
+        vdi_raster = &raster_driver_chunky8;
     else
 #endif
 #if CONF_WITH_VDI_16BIT
     if (TRUECOLOR_MODE)
-        vdi_raster = &vdi_raster_truecolor;
+        vdi_raster = &raster_driver_atari_truecolor;
     else
 #endif
-        vdi_raster = &vdi_raster_bitplane;
+        vdi_raster = &raster_driver_atari_bitplanes;
 
     KDEBUG(("VDI raster driver: %s (%d planes)\n", vdi_raster->name, v_planes));
-
-    if (vdi_raster->resolution_changed)
-        vdi_raster->resolution_changed();
 }

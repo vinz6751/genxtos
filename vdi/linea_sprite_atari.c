@@ -14,7 +14,6 @@
 #include "linea.h"
 #include "lineavars.h"
 /* get_start_addr() uses these: */
-#include "biosext.h" /* for video_ram_size */
 #include "intmath.h" /* for muls() */
 #include "tosvars.h" /* for v_bas_ad, v_lin_wr */
 #include "vdi_inline.h"
@@ -33,41 +32,6 @@ static void cur_replace16(MCS *mcs);
 
 
 static void paint_clipped_sprite(WORD op, MCDB *sprite, MCS *mcs, UWORD *mask_start, UWORD shft);
-static BOOL sprite_span_is_valid(const UWORD *addr, WORD row_count, WORD words_per_row);
-
-
-/*
- * Validate the destination span before touching screen memory.
- * This turns a bad geometry/base-address combination into a skipped cursor
- * update instead of corrupting nearby state and faulting later.
- */
-static BOOL sprite_span_is_valid(const UWORD *addr, WORD row_count, WORD words_per_row)
-{
-    ULONG screen_size;
-    const UBYTE *base, *start, *last, *limit;
-    ULONG last_offset;
-
-    if ((row_count <= 0) || (words_per_row <= 0))
-        return FALSE;
-
-    base = v_bas_ad;
-    start = (const UBYTE *)addr;
-    if (start < base)
-        return FALSE;
-
-    screen_size = (video_ram_size > 0) ? (ULONG)video_ram_size : (ULONG)V_REZ_VT * (ULONG)v_lin_wr;
-    if (!screen_size)
-        return FALSE;
-
-    limit = base + screen_size;
-    last_offset = (ULONG)(row_count - 1) * (ULONG)v_lin_wr + (ULONG)words_per_row * sizeof(UWORD) - 1UL;
-    last = start + last_offset;
-
-    if (last < start)
-        return FALSE;
-
-    return last < limit;
-}
 
 
 /*
@@ -110,13 +74,14 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
     mcs->stat = 0x00;           /* reset status of save buffer */
 
     /*
-     * clip x axis
+     * clip x axis — use linea_max_* (same bounds as mouse motion), not DEV_TAB
+     * xres/yres, so a lagging DEV_TAB cannot skip bottom/right clip.
      */
     if (x < 0) {            /* clip left */
         x += 16;                /* get address of right word */
         op = 1;                 /* remember we're clipping left */
     }
-    else if (x >= (xres-15)) {  /* clip right */
+    else if (x >= (linea_max_x - 15)) {  /* clip right */
         op = 2;                 /* remember we're clipping right */
     }
     else {                  /* no clipping */
@@ -133,8 +98,8 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
         mask_start -= y << 1;   /* point to first visible row of MASK/FORM */
         y = 0;                  /* and reset starting row */
     }
-    else if (y > (yres-15)) {   /* clip bottom */
-        row_count = yres - y + 1;
+    else if (y > (linea_max_y - 15)) {   /* clip bottom */
+        row_count = linea_max_y - y + 1;
     }
     else {
         row_count = 16;
@@ -147,10 +112,6 @@ void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y)
     addr = get_start_addr(x, y);
     shft = 16 - (x&0x0f);       /* amount to shift forms by */
 
-#if 0
-    if (!sprite_span_is_valid(addr, row_count, op ? v_planes : 2 * v_planes))
-        return;
-#endif        
     /*
      *  Store values required by cur_replace()
      */
@@ -351,8 +312,8 @@ static void cur_display16(MCDB *sprite, MCS *mcs, WORD x, WORD y)
         rows = y + MOUSE_HEIGHT;
         mask_start -= y * sizeof(UWORD);
         y = 0;
-    } else if (y > (yres + 1 - MOUSE_HEIGHT)) {
-        rows = yres + 1 - y;
+    } else if (y > (linea_max_y + 1 - MOUSE_HEIGHT)) {
+        rows = linea_max_y + 1 - y;
     } else {
         rows = MOUSE_HEIGHT;
     }
@@ -362,8 +323,8 @@ static void cur_display16(MCDB *sprite, MCS *mcs, WORD x, WORD y)
         width = x + MOUSE_WIDTH;
         shift = -x;
         x = 0;
-    } else if (x > (xres + 1 - MOUSE_WIDTH)) {
-        width = xres + 1 - x;
+    } else if (x > (linea_max_x + 1 - MOUSE_WIDTH)) {
+        width = linea_max_x + 1 - x;
     } else {
         width = MOUSE_WIDTH;
     }
@@ -441,9 +402,6 @@ void linea_sprite_hide_atari(MCS *mcs)
     mcs->stat &= ~MCS_VALID;        /* yes but (like TOS) don't allow reuse */
 
     addr = mcs->addr;
-    if (!sprite_span_is_valid(addr, mcs->len, (mcs->stat & MCS_LONGS) ? 2 * v_planes : v_planes))
-        return;
-
     src = (UWORD *)mcs->area;
 
     /*

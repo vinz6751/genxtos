@@ -38,12 +38,6 @@
 
 
 /*
- * ptr to current mouse cursor save area, based on v_planes
- */
-MCS *mcs_ptr;
-
-
-/*
  * entry n in the following array points to the Vwk corresponding to
  * VDI handle n.  entry 0 is unused.
  */
@@ -203,6 +197,9 @@ void vdi_resolution_changed(void)
 
     INQ_TAB[4] = v_planes;
     INQ_TAB[5] = ((v_planes == 16) || (get_monitor_type() == MON_MONO)) ? 0 : 1;
+
+    /* keep software mouse save-area selection in sync with v_planes */
+    mouse_display_driver.resolution_changed();
 }
 
 

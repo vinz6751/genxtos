@@ -16,10 +16,13 @@
 
 #include "emutos.h"
 
-#ifdef __mcoldfire__
-#define ASM_BLIT_IS_AVAILABLE   0   /* assembler routine does not support ColdFire */
-#else
-#define ASM_BLIT_IS_AVAILABLE   1   /* may use m68k assembler fast_bit_blt routine */
+#ifndef ASM_BLIT_IS_AVAILABLE
+ #ifdef __mcoldfire__
+  #undef ASM_BLIT_IS_AVAILABLE
+  #define ASM_BLIT_IS_AVAILABLE   0   /* assembler routine does not support ColdFire */
+ #else
+  #define ASM_BLIT_IS_AVAILABLE   1   /* may use m68k assembler fast_bit_blt routine */
+ #endif
 #endif
 
 /* bitblt modes */
@@ -121,7 +124,7 @@ void vdi_copy_raster_opaque_planar(struct blit_frame *info);
 void vdi_copy_raster_transparent_planar(struct blit_frame *info);
 
 #if CONF_WITH_VDI_16BIT
-/* packed 16-bit raster copy, in vdi_raster_truecolor.c */
+/* packed 16-bit raster copy, in raster_driver_atari_truecolor.c */
 void vro_cpyfm16(struct blit_frame *info);
 void vrt_cpyfm16(struct blit_frame *info);
 #endif

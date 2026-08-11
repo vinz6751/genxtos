@@ -1,13 +1,13 @@
 /*
- * vdi_raster_bitplane.h - internals of the Atari bitplane raster driver
+ * raster_driver_atari_bitplanes.h - internals of the Atari bitplane raster driver
  *
  * These are the primitives that make up the interleaved-bitplane
  * implementation of VDI_RASTER_DRIVER.  They are split over several
  * source files purely for readability:
  *
- *  vdi_raster_bitplane.c       driver structure, text output, misc
- *  vdi_raster_bitplane_line.c  lines, rectangles, patterned fills
- *  vdi_raster_bitplane_pixel.c pixels and flood-fill probing
+ *  raster_driver_atari_bitplanes.c       driver structure, text output, misc
+ *  raster_driver_atari_bitplanes_line.c  lines, rectangles, patterned fills
+ *  raster_driver_atari_bitplanes_pixel.c pixels and flood-fill probing
  *
  * Nothing outside those files (and vdi_raster_driver.c) should call these
  * directly: the rest of the VDI goes through the driver structure.
@@ -18,8 +18,8 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#ifndef _VDI_RASTER_BITPLANE_H
-#define _VDI_RASTER_BITPLANE_H
+#ifndef _RASTER_DRIVER_ATARI_BITPLANES_H
+#define _RASTER_DRIVER_ATARI_BITPLANES_H
 
 #include "emutos.h"
 #include "vdi_defs.h"
@@ -48,4 +48,4 @@ UWORD search_to_left(const VwkClip *clip, WORD x, UWORD mask, const UWORD search
 WORD end_pts(const VwkClip *clip, WORD x, WORD y, UWORD search_color, BOOL seed_type,
              WORD *xleftout, WORD *xrightout);
 
-#endif /* _VDI_RASTER_BITPLANE_H */
+#endif /* _RASTER_DRIVER_ATARI_BITPLANES_H */

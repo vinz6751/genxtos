@@ -889,7 +889,7 @@ setup_info (struct raster_t *raster, struct blit_frame * info)
     src = *(MFDB **)&CONTRL[7]; /* a5, source MFDB */
     dst = *(MFDB **)&CONTRL[9]; /* a4, destination MFDB */
 
-    if (vdi_raster->setup_forms(info, src, dst))
+    if (vdi_setup_forms_planar(info, src, dst))
         return TRUE;            /* plane count is invalid */
 
     /* clipping only applies when the destination is the screen */
@@ -942,7 +942,12 @@ cpy_raster(struct raster_t *raster, struct blit_frame *info)
         info->bg_col = 0;       /* bg:0 & fg:0 => only first OP_TAB */
         info->fg_col = 0;       /* entry will be referenced */
 
-        vdi_raster->copy_raster_opaque(info);
+        /*
+         * All current drivers share the planar copy entry, so call it
+         * directly.  A vtable hop here was a large fraction of the cost
+         * of small vro_cpyfm blits.
+         */
+        vdi_copy_raster_opaque_planar(info);
         return;
 
     } else {
@@ -1002,7 +1007,7 @@ cpy_raster(struct raster_t *raster, struct blit_frame *info)
             return;                     /* unsupported mode */
         }
 
-        vdi_raster->copy_raster_transparent(info);
+        vdi_copy_raster_transparent_planar(info);
     }
 }
 
@@ -1073,5 +1078,6 @@ void linea_blit(struct blit_frame *info)
     info->d_xmax = info->d_xmin + info->b_wd - 1;
     info->d_ymax = info->d_ymin + info->b_ht - 1;
 
-    vdi_raster->blit(info);
+    /* see cpy_raster(): every driver currently uses the same entry */
+    blit_frame_copy(info);
 }

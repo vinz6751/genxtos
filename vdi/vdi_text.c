@@ -451,21 +451,7 @@ static void output_text(Vwk *vwk, WORD count, WORD *str, WORD width, JUSTINFO *j
      */
     if (ok_for_direct_blit(vwk, width, justified))
     {
-#if CONF_WITH_VDI_16BIT
-        if (TRUECOLOR_MODE)
-            vdi_raster->blit_string(count, str);
-        else
-#endif
-#if CONF_WITH_CHUNKY8
-        if (v_planes == 8)
-            vdi_raster->blit_string(count, str);
-        else
-#endif
-        {
-            WORD bp_count = count;
-            WORD *bp_str = str;
-#include "vdi_raster_bitplane_blit_string_body.c"
-        }
+        vdi_raster->blit_string(count, str);
         return;
     }
 #endif

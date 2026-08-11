@@ -1,10 +1,10 @@
 /*
- * vdi_raster_truecolor.c - VDI screen raster driver for packed 16-bit pixels
+ * raster_driver_atari_truecolor.c - VDI screen raster driver for packed 16-bit pixels
  *
  * This is the Falcon Truecolor implementation of VDI_RASTER_DRIVER: each
  * pixel is a single 16-bit word holding an RGB value, so there are no
  * bitplanes to walk.  See vdi_raster_driver.h for the interface, and
- * vdi_raster_bitplane.c for the Atari interleaved-bitplane driver.
+ * raster_driver_atari_bitplanes.c for the Atari interleaved-bitplane driver.
  *
  * The bodies below were previously the "*16" branches of the shared VDI
  * raster code, selected at each call site by testing TRUECOLOR_MODE.
@@ -120,7 +120,7 @@ static WORD end_pts16(const VwkClip *clip, WORD x, WORD y, UWORD search_color, B
  * swblit_rect_common16 - draw one or more horizontal lines via software, 16-bit mode
  *
  * this is much simpler than the corresponding bitplane code
- * (see swblit_rect_common() in vdi_raster_bitplane_line.c)
+ * (see swblit_rect_common() in raster_driver_atari_bitplanes_line.c)
  *
  * FIXME: notes to self
  * . do we need OPTIMIZE_SMALL?
@@ -233,7 +233,7 @@ static void OPTIMIZE_SMALL swblit_rect_common16(const VwkAttrib *attr, const Rec
 /*
  * draw_line16 - draw a line (general purpose) in 16-bit graphics
  *
- * see draw_line() in vdi_raster_bitplane_line.c for further info
+ * see draw_line() in raster_driver_atari_bitplanes_line.c for further info
  */
 static void draw_line16(const Line *line, WORD wrt_mode, UWORD color)
 {
@@ -1295,9 +1295,8 @@ static void tc_clear_screen(void)
 }
 
 
-const VDI_RASTER_DRIVER vdi_raster_truecolor = {
+const VDI_RASTER_DRIVER raster_driver_atari_truecolor = {
     .name = "Falcon 16-bit",
-    .resolution_changed = NULL,
     .get_pixel = tc_get_pixel,
     .put_pixel = tc_put_pixel,
     .fill_rect = swblit_rect_common16,

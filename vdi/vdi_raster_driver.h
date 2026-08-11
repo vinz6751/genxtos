@@ -34,9 +34,6 @@
 typedef struct {
     const char *name;               /* for KDEBUG only */
 
-    /* called after v_planes / v_lin_wr / v_bas_ad have been updated; may be NULL */
-    void (*resolution_changed)(void);
-
     /* --- pixels --- */
     UWORD (*get_pixel)(WORD x, WORD y);
     void (*put_pixel)(WORD x, WORD y, UWORD color);
@@ -96,12 +93,12 @@ extern const VDI_RASTER_DRIVER *vdi_raster;
 void vdi_raster_select(void);
 
 /* the available implementations */
-extern const VDI_RASTER_DRIVER vdi_raster_bitplane;
+extern const VDI_RASTER_DRIVER raster_driver_atari_bitplanes;
 #if CONF_WITH_VDI_16BIT
-extern const VDI_RASTER_DRIVER vdi_raster_truecolor;
+extern const VDI_RASTER_DRIVER raster_driver_atari_truecolor;
 #endif
 #if CONF_WITH_CHUNKY8
-extern const VDI_RASTER_DRIVER vdi_raster_chunky8;
+extern const VDI_RASTER_DRIVER raster_driver_chunky8;
 #endif
 
 #endif /* _VDI_RASTER_DRIVER_H */

@@ -1,8 +1,8 @@
 /*
- * vdi_raster_bitplane_line.c - line & rectangle drawing for Atari bitplanes
+ * raster_driver_atari_bitplanes_line.c - line & rectangle drawing for Atari bitplanes
  *
  * Part of the interleaved-bitplane implementation of VDI_RASTER_DRIVER;
- * see vdi_raster_bitplane.c and vdi_raster_driver.h.
+ * see raster_driver_atari_bitplanes.c and vdi_raster_driver.h.
  *
  * Copyright 1982 by Digital Research Inc.  All rights reserved.
  * Copyright 1999 by Caldera, Inc. and Authors:
@@ -23,7 +23,7 @@
  #include "tosvars.h"
  #include "biosext.h"    /* for cache control routines */
  #include "lineavars.h"
- #include "vdi_raster_bitplane.h"
+ #include "raster_driver_atari_bitplanes.h"
  #include "vdi_inline.h"
 
  /*

@@ -113,7 +113,7 @@ void linea_mouse_deinit(void)
  */
 void linea_mouse_force_show(void)
 {
-    if (!INTIN[0])
+    if (!INTIN[0] && HIDE_CNT)
         HIDE_CNT = 1;           /* reset cursor to on */
 
     linea_mouse_show();
