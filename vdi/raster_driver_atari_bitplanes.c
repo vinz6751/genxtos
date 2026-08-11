@@ -80,6 +80,7 @@ static void bitplanes_blit_string(WORD count, WORD *str)
         {
             src = (UBYTE *)FBASE + *str++;
             save_dst = dst;
+	    /* We've got this fast track thing for mono chrome (only one plane, no need to look at color bits) */
             if (v_planes == 1)
             {
                 fc = TEXTFG;
@@ -164,9 +165,40 @@ static void bitplanes_blit_string(WORD count, WORD *str)
 }
 #endif
 
-static void bitplanes_blit_glyph(LOCALVARS *bitplanes_vars)
+static void bitplanes_blit_glyph(LOCALVARS *vars)
 {
-#include "raster_driver_atari_bitplanes_blit_glyph_body.c"
+    LONG offset;
+
+    vars->forecol = TEXTFG;
+    vars->ambient = 0;          /* logically TEXTBG, but that isn't set up by the VDI */
+    vars->nbrplane = v_planes;
+    vars->nextwrd = vars->nbrplane * (WORD)sizeof(WORD);
+    vars->height = vars->DELY;
+    vars->width = vars->DELX;
+
+    /*
+     * calculate the starting address for the character to be copied
+     */
+    vars->tsdad = SOURCEX & 0x000f; /* source dot address */
+    offset = (SOURCEY+vars->DELY-1) * (LONG)vars->s_next
+             + ((SOURCEX >> 3) & ~1);
+    vars->sform += offset;
+    vars->s_next = -vars->s_next;   /* we draw from the bottom up */
+
+    /*
+     * calculate the screen address
+     *
+     * note that the casts below allow the compiler to generate a mulu
+     * instruction rather than calling _mulsi3(): this by itself speeds
+     * up plain text output by about 3% ...
+     */
+    vars->tddad = vars->DESTX & 0x000f;
+    vars->dform = v_bas_ad;
+    vars->dform += (vars->DESTX&0xfff0)>>v_planes_shift; /* add x coordinate part of addr */
+    vars->dform += (UWORD)(vars->DESTY+vars->DELY-1) * (ULONG)v_lin_wr; /* add y coordinate part of addr */
+    vars->d_next = -v_lin_wr;
+
+    normal_blit(vars+1, vars->sform, vars->dform);
 }
 
 

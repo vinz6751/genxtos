@@ -826,24 +826,7 @@ void text_blt(void)
 
     if (do_clip(&vars) == 0)
     {
-        /*
-         * Bitplane: include body fragment here (hot path).  Other formats
-         * use the vtable.
-         */
-#if CONF_WITH_VDI_16BIT
-        if (TRUECOLOR_MODE)
-            vdi_raster->blit_glyph(&vars);
-        else
-#endif
-#if CONF_WITH_CHUNKY8
-        if (v_planes == 8)
-            vdi_raster->blit_glyph(&vars);
-        else
-#endif
-        {
-            LOCALVARS *bitplanes_vars = &vars;
-#include "raster_driver_atari_bitplanes_blit_glyph_body.c"
-        }
+        vdi_raster->blit_glyph(&vars);
     }
 
 upda_dst:
