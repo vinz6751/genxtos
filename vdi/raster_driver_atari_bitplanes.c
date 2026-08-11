@@ -42,6 +42,17 @@
 
 #if CONF_WITH_VDI_TEXT_SPEEDUP
 /*
+ * advance destination pointer to the next character cell
+ */
+static UBYTE *blit_string_next_dst(UBYTE *save_dst, UBYTE *dst)
+{
+    dst = save_dst + 1;
+    if (!IS_ODD_POINTER(dst))   /* must go to next screen word */
+        dst += (v_planes - 1) * sizeof(WORD);
+    return dst;
+}
+
+/*
  * output a character string directly to the screen
  *
  * fast path for a monospaced 8-pixel-wide mono font output byte-aligned
@@ -49,12 +60,12 @@
  */
 static void bitplanes_blit_string(WORD count, WORD *str)
 {
-    WORD forecol, height, mode, n, planes;
-    WORD src_width, dst_width;
-    UBYTE *src, *dst, *save_dst;
+    WORD height, src_width, dst_width, n, planes;
+    UBYTE *src, *dst, *save_dst, *p, *q, *qrow;
+    UBYTE glyph;
+    WORD fc;
 
     height = DELY;
-    mode = WRT_MODE;
     src_width = FWIDTH;
     dst_width = v_lin_wr;
 
@@ -63,92 +74,92 @@ static void bitplanes_blit_string(WORD count, WORD *str)
     if ((DESTX & 0x0008) && (v_planes != 1))
         dst++;
 
-    for ( ; count > 0; count--)
-    {
-        src = (UBYTE *)FBASE + *str++;
-        save_dst = dst;
-        forecol = TEXTFG;
-        for (planes = v_planes; planes > 0; planes--)
+    switch (WRT_MODE) {
+    default:    /* WM_REPLACE */
+        for ( ; count > 0; count--)
         {
-            UBYTE *p, *q;
-
-            switch(mode) {
-            default:    /* WM_REPLACE */
-                if (forecol & 1)
+            src = (UBYTE *)FBASE + *str++;
+            save_dst = dst;
+            if (v_planes == 1)
+            {
+                fc = TEXTFG;
+                for (n = height, p = src, qrow = save_dst; n > 0; n--, p += src_width, qrow += dst_width)
                 {
-                    for (n = height, p = src, q = dst; n > 0; n--)
-                    {
-                        *q = *p;
-                        p += src_width;
-                        q += dst_width;
-                    }
+                    glyph = *p;
+                    *qrow = (fc & 1) ? glyph : 0;
                 }
-                else
-                {
-                    for (n = height, q = dst; n > 0; n--)
-                    {
-                        *q = 0;
-                        q += dst_width;
-                    }
-                }
-                break;
-            case WM_TRANS:
-                if (forecol & 1)
-                {
-                    for (n = height, p = src, q = dst; n > 0; n--)
-                    {
-                        *q |= *p;
-                        p += src_width;
-                        q += dst_width;
-                    }
-                }
-                else
-                {
-                    for (n = height, p = src, q = dst; n > 0; n--)
-                    {
-                        *q &= ~*p;
-                        p += src_width;
-                        q += dst_width;
-                    }
-                }
-                break;
-            case WM_XOR:
-                for (n = height, p = src, q = dst; n > 0; n--)
-                {
-                    *q ^= *p;
-                    p += src_width;
-                    q += dst_width;
-                }
-                break;
-            case WM_ERASE:
-                if (forecol & 1)
-                {
-                    for (n = height, p = src, q = dst; n > 0; n--)
-                    {
-                        *q |= ~*p;
-                        p += src_width;
-                        q += dst_width;
-                    }
-                }
-                else
-                {
-                    for (n = height, p = src, q = dst; n > 0; n--)
-                    {
-                        *q &= *p;
-                        p += src_width;
-                        q += dst_width;
-                    }
-                }
-                break;
             }
-            dst += sizeof(WORD);    /* next plane */
-            forecol >>= 1;
+            else
+            {
+                for (n = height, p = src, qrow = save_dst; n > 0; n--, p += src_width, qrow += dst_width)
+                {
+                    glyph = *p;
+                    q = qrow;
+                    fc = TEXTFG;
+                    for (planes = v_planes; planes > 0; planes--, q += sizeof(WORD), fc >>= 1)
+                        *q = (fc & 1) ? glyph : 0;
+                }
+            }
+            dst = blit_string_next_dst(save_dst, dst);
         }
-        dst = save_dst + 1;
-        if (!IS_ODD_POINTER(dst))   /* must go to next screen word */
+        break;
+    case WM_TRANS:
+        for ( ; count > 0; count--)
         {
-            dst += (v_planes-1)*sizeof(WORD);
+            src = (UBYTE *)FBASE + *str++;
+            save_dst = dst;
+            for (n = height, p = src, qrow = save_dst; n > 0; n--, p += src_width, qrow += dst_width)
+            {
+                glyph = *p;
+                q = qrow;
+                fc = TEXTFG;
+                for (planes = v_planes; planes > 0; planes--, q += sizeof(WORD), fc >>= 1)
+                {
+                    if (fc & 1)
+                        *q |= glyph;
+                    else
+                        *q &= ~glyph;
+                }
+            }
+            dst = blit_string_next_dst(save_dst, dst);
         }
+        break;
+    case WM_XOR:
+        for ( ; count > 0; count--)
+        {
+            src = (UBYTE *)FBASE + *str++;
+            save_dst = dst;
+            for (n = height, p = src, qrow = save_dst; n > 0; n--, p += src_width, qrow += dst_width)
+            {
+                glyph = *p;
+                q = qrow;
+                for (planes = v_planes; planes > 0; planes--, q += sizeof(WORD))
+                    *q ^= glyph;
+            }
+            dst = blit_string_next_dst(save_dst, dst);
+        }
+        break;
+    case WM_ERASE:
+        for ( ; count > 0; count--)
+        {
+            src = (UBYTE *)FBASE + *str++;
+            save_dst = dst;
+            for (n = height, p = src, qrow = save_dst; n > 0; n--, p += src_width, qrow += dst_width)
+            {
+                glyph = *p;
+                q = qrow;
+                fc = TEXTFG;
+                for (planes = v_planes; planes > 0; planes--, q += sizeof(WORD), fc >>= 1)
+                {
+                    if (fc & 1)
+                        *q |= ~glyph;
+                    else
+                        *q &= glyph;
+                }
+            }
+            dst = blit_string_next_dst(save_dst, dst);
+        }
+        break;
     }
 }
 #endif
