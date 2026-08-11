@@ -39,7 +39,6 @@ void wheel_int(void);           /* wheel interrupt routine */
 void call_user_but(WORD status);/* call user_but from C */
 void call_user_wheel(WORD wheel_number, WORD wheel_amount); /* call user_wheel from C */
 static void vdi_mousex_handler (WORD scancode);
-void vdi_vex_wheelv(Vwk * vwk);
 
 /* pointers to callbacks called from vdi_asm.S */
 PFVOID user_wheel;  /* user mouse wheel vector provided by vdi_vex_wheelv() */

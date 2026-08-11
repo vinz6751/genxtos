@@ -26,6 +26,9 @@
 #include "lineavars.h"
 #include "mfp.h"
 #include "nvram.h"
+#if CONF_WITH_NOVA
+#include "nova.h"
+#endif
 #include "screen.h"
 #include "screen_atari.h"
 #include "screen_tt.h"
