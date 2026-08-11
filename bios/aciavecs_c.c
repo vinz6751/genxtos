@@ -3,6 +3,7 @@
 #include "acia.h"
 #include "aciavecs.h"
 #include "amiga.h"
+#include "biosext.h"
 #include "bios.h"
 #include "clock.h"
 #include "ikbd.h"
@@ -54,10 +55,6 @@ const UBYTE kbdlength_table[] = { 7, 5, 2, 2, 2, 2, 6, 2, 1, 1 };
 
 static void ikbdsys_handler(void);
 void call_kbdint(UBYTE data);
-
-#if CONF_WITH_EXTENDED_MOUSE
-    void *mousexvec(void); // mouse-routine for additional buttons
-#endif
 
 // Called to handle a single byte packet (typically a key up/down message) from the IKBD
 

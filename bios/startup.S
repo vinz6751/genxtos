@@ -83,7 +83,7 @@ amiga_main:
  */
 
 _os_header:
-os_entry:    bra.s   _main       // branch to _main
+os_entry:    bra.s   _main       // MUST be first: OSHEADER ABI (do not insert code here)
 os_version:  .dc.w   TOS_VERSION // TOS version
 reseth:      .dc.l   _main       // pointer to reset handler
 // The 3-long structure here is actually the default GEM_MUPB.
@@ -136,6 +136,15 @@ _realmain:
         // this is useless on cold boot, but it matters for software reset
         move    #0x2700,sr
     
+#if defined(MACHINE_AMIGA) && !EMUTOS_LIVES_IN_RAM
+        .extern _amiga_startup
+        // Mandatory early Amiga hardware init while address 0 still maps ROM.
+        // Must run before any writes to low memory exception vectors.
+        lea     amiga_startup_ret,a6
+        jmp     _amiga_startup
+amiga_startup_ret:
+#endif
+
         // Initialize an early stack to a valid write address.
         // We use early exceptions for 2 reasons:
         // - detect CPU type and features with illegal instructions

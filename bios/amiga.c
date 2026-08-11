@@ -699,8 +699,8 @@ void amiga_screen_init(void)
     COP1LCH = copper_list;
     COPJMP1 = 0;
 
-    /* Enable VBL interrupt */
-    setexc(VEC_LEVEL3/4, (LONG)amiga_vbl);
+    /* Enable VBL interrupt (upstream-style: poke vector slot directly) */
+    *(volatile PFVOID *)VEC_LEVEL3 = amiga_vbl;
     INTENA = SETBITS | INTEN | VERTB;
 
     /* Start the DMA, with bit plane and Copper */
@@ -2234,7 +2234,7 @@ void amiga_rs232_init(void)
 {
 #if CONF_SERIAL_IKBD
     SERPER = SERPER_8BIT | SERPER_BAUD(IKBD_BAUD);
-    setexc(VEC_LEVEL5/4, (LONG)amiga_int_5);
+    *(volatile PFVOID *)VEC_LEVEL5 = amiga_int_5;
     INTENA = SETBITS | RBF; /* Enable RBF interrupt */
 #endif
 }

@@ -1845,6 +1845,23 @@
 #endif
 
 /*
+ * MPS build flags (see localconf.vb.h). Default off when localconf.h is absent;
+ * required because sources use #if MPS_* with -Werror=undef.
+ */
+#ifndef MPS_STF
+# define MPS_STF 0
+#endif
+#ifndef MPS_STE
+# define MPS_STE 0
+#endif
+#ifndef MPS_BLITTER_ALWAYS_ON
+# define MPS_BLITTER_ALWAYS_ON 0
+#endif
+#ifndef MPS_STE_SOUND_ONLY
+# define MPS_STE_SOUND_ONLY 0
+#endif
+
+/*
  * Set CONF_WITH_FRB to 1 to automatically enable the _FRB cookie when required
  */
 #ifndef CONF_WITH_FRB

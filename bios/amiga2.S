@@ -47,7 +47,7 @@ delay:  subq.l  #1,D0                   // Delay loop.
         move.w  d0,0x96(a0)             // Disable all DMA.
         bclr.b  #7,0xdaa000             // Disable Gayle interrupts (IDE)
 
-        rts
+        jmp     (a6)                    // Return to caller (address in a6)
 
 /******************************************************************************/
 /* memconf                                                                    */

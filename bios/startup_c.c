@@ -52,8 +52,11 @@ void startup(void) {
     coldfire_early_init(); // TODO: what is this, and where does it really belong ?
 #endif
 
-    // Reset the VBR, it may have been modified before emutos-ram or soft reset
+#if !defined(MACHINE_LISA)
+    // Reset the VBR, it may have been modified before emutos-ram or soft reset.
+    // Safe on 68000: MOVEC is illegal and ignored via exception catcher.
     m68k_set_vbr((void*)0L);
+#endif
 
     // Reset the external hardware
     reset_cpu_peripherals();
@@ -78,12 +81,7 @@ void startup(void) {
 // So functions must jump back to the address provided in a6
 static ALWAYS_INLINE void asap(void) {
     KDEBUG(("asap()\n"));
-
-#ifdef MACHINE_AMIGA
-    // It is *mandatory* to call this as soon as possible, to do early initialization of the Amiga hardware.
-    // On cold boot, address 0 points to the ROM. After that, it will point to the RAM, as expected.
-    jmp_to_with_return_address_in_a6(amiga_startup);
-#endif
+    /* Amiga early init is done from startup.S (_realmain). */
 }
 
 
@@ -170,7 +168,7 @@ static void reset_cpu_peripherals(void) {
 
 static void initialize_cpu(void) {
     KDEBUG(("initialize_cpu()\n"));
-#if !defined(__mcoldfire__) && !defined(MACHINE_LISA)
+#if !defined(__mcoldfire__) && !defined(MACHINE_LISA) && !defined(MACHINE_AMIGA)
     m68k_do_ignoring_exceptions(m68k_disable_caches);
     m68k_disable_mmu();
 #endif
