@@ -221,6 +221,24 @@ static const WORD st2vdi_lookup_table[8] =
     { 0, 142, 285, 428, 571, 714, 857, 1000 };
 
 
+#ifdef MACHINE_AMIGA
+/*
+ * Amiga COLOR00..COLOR31 are linear 12-bit RGB (4 bits/component), same
+ * encoding as the TT palette.  Without this path, set_color() falls through
+ * to the plain-ST 3-bit converter and white becomes 0x0777 (gray).
+ */
+static int vdi2amiga(int col)
+{
+    return (col * 15 + 500) / 1000;
+}
+
+#define amiga2vdi(col) amiga2vdi_lookup_table[(col)&0x0f]
+static const WORD amiga2vdi_lookup_table[16] =
+    { 0, 67, 133, 200, 267, 333, 400, 467,
+      533, 600, 667, 733, 800, 867, 933, 1000 };
+#endif
+
+
 #if CONF_WITH_STE_SHIFTER
 /* Create an STe color value from VDI color */
 static int vdi2ste(int col)
@@ -565,6 +583,11 @@ static void set_color(WORD colnum, WORD *rgb)
         b = rgb[2];
     }
 
+#ifdef MACHINE_AMIGA
+    r = vdi2amiga(r);
+    g = vdi2amiga(g);
+    b = vdi2amiga(b);
+#else
 #if CONF_WITH_STE_SHIFTER
     if (has_ste_shifter)
     {
@@ -579,6 +602,7 @@ static void set_color(WORD colnum, WORD *rgb)
         g = vdi2st(g);
         b = vdi2st(b);
     }
+#endif
 
     Setcolor(hwreg, (r << 8) | (g << 4) | b);
 }
@@ -917,19 +941,31 @@ void vdi_vq_color(Vwk *vwk)
         return;
     }
 #endif
-#if CONF_WITH_STE_SHIFTER
+#ifdef MACHINE_AMIGA
+    c = Setcolor(hwreg, -1);
+    INTOUT[1] = amiga2vdi(c >> 8);
+    INTOUT[2] = amiga2vdi(c >> 4);
+    INTOUT[3] = amiga2vdi(c);
+#elif CONF_WITH_STE_SHIFTER
     if (has_ste_shifter)
     {
         c = Setcolor(hwreg, -1);
         INTOUT[1] = ste2vdi(c >> 8);
         INTOUT[2] = ste2vdi(c >> 4);
         INTOUT[3] = ste2vdi(c);
-        return;
     }
-#endif
+    else
+    {
+        c = Setcolor(hwreg, -1);
+        INTOUT[1] = st2vdi(c >> 8);
+        INTOUT[2] = st2vdi(c >> 4);
+        INTOUT[3] = st2vdi(c);
+    }
+#else
     /* ST shifter */
     c = Setcolor(hwreg, -1);
     INTOUT[1] = st2vdi(c >> 8);
     INTOUT[2] = st2vdi(c >> 4);
     INTOUT[3] = st2vdi(c);
+#endif
 }

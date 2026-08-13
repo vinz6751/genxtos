@@ -11,7 +11,7 @@
 
 #include "emutos.h"
 
-#if CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#if CONF_WITH_SOFTWARE_MOUSE_RENDERING && !defined(MACHINE_AMIGA)
 
 #include "linea.h"
 #include "lineavars.h"

@@ -889,7 +889,9 @@ setup_info (struct raster_t *raster, struct blit_frame * info)
     src = *(MFDB **)&CONTRL[7]; /* a5, source MFDB */
     dst = *(MFDB **)&CONTRL[9]; /* a4, destination MFDB */
 
-    if (vdi_setup_forms_planar(info, src, dst))
+    /* screen layout comes from the active raster driver (Atari interleaved
+     * vs Amiga separate planes); memory MFDBs stay Atari-style */
+    if (vdi_raster->setup_forms(info, src, dst))
         return TRUE;            /* plane count is invalid */
 
     /* clipping only applies when the destination is the screen */
@@ -931,11 +933,20 @@ cpy_raster(struct raster_t *raster, struct blit_frame *info)
         return;
 
     if (!raster->transparent) {
+        MFDB *src = *(MFDB **)&CONTRL[7];
+        MFDB *dst = *(MFDB **)&CONTRL[9];
+        WORD s_planes = src->fd_addr ? src->fd_nplanes : v_planes;
+        WORD d_planes = dst->fd_addr ? dst->fd_nplanes : v_planes;
 
         /* COPY RASTER OPAQUE */
 
-        /* planes of source and destination equal in number? */
-        if (info->s_nxwd != info->d_nxwd)
+        /*
+         * Same plane count required.  Do not compare s_nxwd/d_nxwd: on Amiga
+         * the screen is non-interleaved (nxwd=2) while memory MFDBs stay
+         * Atari-interleaved (nxwd=nplanes*2); bit_blt still handles that via
+         * s_nxpl/d_nxpl from setup_forms.
+         */
+        if (s_planes != d_planes)
             return;
 
         info->op_tab[0] = mode; /* fg:0 bg:0 */

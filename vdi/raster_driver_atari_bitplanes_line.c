@@ -13,6 +13,9 @@
  */
 
  #include "emutos.h"
+
+#if !defined(MACHINE_AMIGA)
+
  #include "has.h"        /* for blitter-related items */
  #include "intmath.h"
  #include "asm.h"
@@ -968,3 +971,5 @@ void vertical_line(const Line *line, WORD wrt_mode, UWORD color)
     LN_MASK = linemask;
 }
 #endif
+
+#endif /* !MACHINE_AMIGA */

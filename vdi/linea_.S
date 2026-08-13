@@ -39,8 +39,13 @@
         .extern _linea_blit
         .extern _text_blt
 
+#if defined(MACHINE_AMIGA)
+        .extern _linea_sprite_hide_amiga
+        .extern _linea_sprite_show_amiga
+#else
         .extern _linea_sprite_hide_atari
         .extern _linea_sprite_show_atari
+#endif
         .extern _linea_raster
         .extern _linea_fill
 
@@ -172,7 +177,11 @@ hide_mouse:
 undraw_sprite:
         move.l  a2,-(sp)        /* save area ptr */
 #if CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#if defined(MACHINE_AMIGA)
+        jsr     _linea_sprite_hide_amiga
+#else
         jsr     _linea_sprite_hide_atari
+#endif
 #endif
         addq.l  #4,sp
         rts
@@ -183,8 +192,12 @@ draw_sprite:
         move.l  a2,-(sp)        /* save area ptr */
         move.l  a0,-(sp)        /* new sprite */
 #if CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#if defined(MACHINE_AMIGA)
+        jsr     _linea_sprite_show_amiga
+#else
         jsr     _linea_sprite_show_atari
-#endif        
+#endif
+#endif
         lea     12(sp),sp
         rts
 

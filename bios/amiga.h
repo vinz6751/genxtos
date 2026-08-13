@@ -47,10 +47,16 @@ extern const UBYTE scancode_atari_from_amiga[128];
 extern UWORD amiga_screen_width;
 extern UWORD amiga_screen_width_in_bytes;
 extern UWORD amiga_screen_height;
+extern UWORD amiga_screen_planes;
+extern ULONG amiga_plane_size;
+extern UWORD amiga_screen_lace;
 extern const UBYTE *amiga_screenbase;
 extern const SCREEN_DRIVER screen_driver_amiga;
 extern UWORD *copper_list;
+extern UWORD amiga_palette[16];
 extern int has_gayle;
+
+UBYTE *amiga_plane_base(WORD plane);
 
 void amiga_startup(void);
 void amiga_machine_detect(void);

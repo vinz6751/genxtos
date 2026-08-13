@@ -94,6 +94,9 @@ void vdi_raster_select(void);
 
 /* the available implementations */
 extern const VDI_RASTER_DRIVER raster_driver_atari_bitplanes;
+#if defined(MACHINE_AMIGA)
+extern const VDI_RASTER_DRIVER raster_driver_amiga_bitplanes;
+#endif
 #if CONF_WITH_VDI_16BIT
 extern const VDI_RASTER_DRIVER raster_driver_atari_truecolor;
 #endif

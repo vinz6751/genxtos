@@ -20,6 +20,9 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
+
+#if CONF_WITH_ATARI_VIDEO
+
 #include "asm.h"
 #include "intmath.h"
 #include "aesext.h"
@@ -197,3 +200,5 @@ end_pts(const VwkClip *clip, WORD x, WORD y, UWORD search_color, BOOL seed_type,
     }
     return seed_type ^ 0;       /* return segment is of search color */
 }
+
+#endif /* CONF_WITH_ATARI_VIDEO */

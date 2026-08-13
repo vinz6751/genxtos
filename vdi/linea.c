@@ -65,6 +65,9 @@ void linea_resolution_changed(void)
 # if (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)) && CONF_WITH_A2560_SHADOW_FRAMEBUFFER
     a2560_bios_sfb_setup(v_bas_ad, v_cel_ht);
 # endif
+#elif defined(MACHINE_AMIGA)
+    /* Amiga planar: stride is bytes per scanline within one plane */
+    BYTES_LIN = v_lin_wr = V_REZ_HZ / 8;
 #else
     BYTES_LIN = v_lin_wr = V_REZ_HZ / 8 * v_planes;
 #endif

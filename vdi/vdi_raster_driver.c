@@ -37,6 +37,9 @@ const VDI_RASTER_DRIVER *vdi_raster;
  */
 void vdi_raster_select(void)
 {
+#if defined(MACHINE_AMIGA)
+    vdi_raster = &raster_driver_amiga_bitplanes;
+#else /* !MACHINE_AMIGA */
 #if CONF_WITH_CHUNKY8
     /*
      * these machines use a chunky 8bpp framebuffer, except for the packed
@@ -52,6 +55,7 @@ void vdi_raster_select(void)
     else
 #endif
         vdi_raster = &raster_driver_atari_bitplanes;
+#endif /* MACHINE_AMIGA */
 
     KDEBUG(("VDI raster driver: %s (%d planes)\n", vdi_raster->name, v_planes));
 }

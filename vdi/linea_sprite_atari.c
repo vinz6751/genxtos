@@ -11,6 +11,8 @@
 
 #include "emutos.h"
 
+#if !defined(MACHINE_AMIGA)
+
 #include "linea.h"
 #include "lineavars.h"
 /* get_start_addr() uses these: */
@@ -463,3 +465,5 @@ static void cur_replace16(MCS *mcs)
     }
 }
 #endif
+
+#endif /* !MACHINE_AMIGA */

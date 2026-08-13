@@ -45,6 +45,10 @@ WORD linea_validate_color_index(WORD colnum);
 /* Sprite support */
 void linea_sprite_show_atari(MCDB *sprite, MCS *mcs, WORD x, WORD y);
 void linea_sprite_hide_atari(MCS *mcs);
+#if defined(MACHINE_AMIGA)
+void linea_sprite_show_amiga(MCDB *sprite, MCS *mcs, WORD x, WORD y);
+void linea_sprite_hide_amiga(MCS *mcs);
+#endif
 
 #endif
 

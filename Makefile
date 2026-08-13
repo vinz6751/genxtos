@@ -335,7 +335,7 @@ bios_src += lowstram.c
 # Other BIOS sources can be put in any order
 bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c bios.c xbios.c xbios_tt.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
-             conout.c conout_atarifb.c \
+             conout.c conout_atarifb.c conout_amiga.c \
              cartridge_atari.S country.c \
              disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c iorec.c \
              keyboard.c keyboard_mouse_emulation.c kprint.c kprintasm.S machine.c \
@@ -386,12 +386,13 @@ vdi_src = vdi_asm.S vdi_bezier.c vdi_col.c vdi_control.c vdi_esc.c \
           vdi_raster_driver.c \
           raster_driver_atari_bitplanes.c raster_driver_atari_bitplanes_line.c \
           raster_driver_atari_bitplanes_pixel.c \
+          raster_driver_amiga_bitplanes.c raster_driver_amiga_bitplanes_pixel.c \
           raster_driver_atari_truecolor.c raster_driver_chunky8.c \
 		  mform.c \
 		  linea_.S linea.c lineavars.S \
 		  linea_mouse.c linea_mouse_.S \
-		  linea_mouse_atari.c linea_mouse_a2560u.c \
-		  linea_sprite_atari.c
+		  linea_mouse_atari.c linea_mouse_amiga.c linea_mouse_a2560u.c \
+		  linea_sprite_atari.c linea_sprite_amiga.c
 
 ifeq (1,$(COLDFIRE))
 vdi_src += vdi_tblit_cf.S

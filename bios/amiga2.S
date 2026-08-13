@@ -248,16 +248,25 @@ amiga_int_5_end:
 /******************************************************************************/
 
         .extern _copper_list
+        .extern _amiga_screen_planes
+        .extern _amiga_plane_size
+        .extern _amiga_screen_lace
 
         .globl  _amiga_vbl
 _amiga_vbl:
-        movem.l d0-d1/a0-a1,-(sp)
+        movem.l d0-d2/a0-a1,-(sp)
 
         move.w  0xdff01e,d0             // INTREQR
         btst    #5,d0                   // VBL interrupt?
         jeq     amivblend
 
         move.l  _amiga_screenbase,d0    // Video Base address
+
+        // Only laced modes use the LOF field offset.  In progressive
+        // modes LOF still toggles, and applying the offset shifts the
+        // display by one line and bleeds the next plane into the bottom.
+        tst.w   _amiga_screen_lace
+        jeq     setcopper
 
         tst.w   0xdff004                // VPOSR: Test bit 15 = LOF bit
         jmi     setcopper               // LOF = 1, odd field: start at line 1
@@ -268,9 +277,20 @@ _amiga_vbl:
 
 setcopper:
         move.l  _copper_list,a0
-        move.w  d0,10(a0)               // BPL1PTL
+        move.w  _amiga_screen_planes,d2 // plane count
+        move.l  _amiga_plane_size,d1
+        lea     6(a0),a0                // -> BPL1PTH value
+vbl_plane_loop:
+        move.l  d0,a1
+        move.l  d0,d0
         swap    d0
-        move.w  d0,6(a0)                // BPL1PTH
+        move.w  d0,(a0)                 // BPLnPTH
+        move.l  a1,d0
+        move.w  d0,4(a0)                // BPLnPTL
+        add.l   d1,d0                   // next plane
+        lea     8(a0),a0
+        subq.w  #1,d2
+        jne     vbl_plane_loop
 
         jbsr    _int_vbl                // Call the standard VBL handler
 
@@ -281,7 +301,7 @@ setcopper:
         move.w  #0x0020,0xdff09c        // Twice for compatibility
 
 amivblend:
-        movem.l (sp)+,d0-d1/a0-a1
+        movem.l (sp)+,d0-d2/a0-a1
         rte
 
 #endif /* MACHINE_AMIGA */

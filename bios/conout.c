@@ -32,7 +32,9 @@
 /* Driver in use for outputing text */
 static CONOUT_DRIVER * conout;
 
-#if !(defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX))
+#if defined(MACHINE_AMIGA)
+extern const CONOUT_DRIVER conout_amiga;
+#elif !(defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX))
 extern const CONOUT_DRIVER conout_atarifb;
 #endif
 
@@ -43,6 +45,8 @@ void conout_init(const Fonthead *font)
 
 #if defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
     conout = a2560_bios_get_conout();
+#elif defined(MACHINE_AMIGA)
+    conout = (CONOUT_DRIVER *)&conout_amiga;
 #else
     conout = (CONOUT_DRIVER *)&conout_atarifb;
 #endif

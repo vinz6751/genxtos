@@ -24,6 +24,9 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
+
+#if CONF_WITH_ATARI_VIDEO
+
 #include "asm.h"
 #include "intmath.h"
 #include "aesext.h"
@@ -71,7 +74,8 @@ static void bitplanes_blit_string(WORD count, WORD *str)
 
     dst = (UBYTE *)get_start_addr(DESTX, DESTY);
 
-    if ((DESTX & 0x0008) && (v_planes != 1))
+    /* get_start_addr() is word-aligned; the odd byte holds pixels 8-15 */
+    if (DESTX & 0x0008)
         dst++;
 
     switch (WRT_MODE) {
@@ -270,3 +274,5 @@ const VDI_RASTER_DRIVER raster_driver_atari_bitplanes = {
 #endif
     .clear_screen = bitplanes_clear_screen,
 };
+
+#endif /* CONF_WITH_ATARI_VIDEO */
