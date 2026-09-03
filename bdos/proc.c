@@ -20,6 +20,7 @@
 #include "fs.h"
 #include "mem.h"
 #include "proc.h"
+#include "bdosstub.h"
 #include "gemerror.h"
 #include "biosbind.h"
 #include "string.h"
@@ -44,12 +45,6 @@ static void init_pd_files(PD *p);
 static char *alloc_env(ULONG flags, char *v);
 static UBYTE *alloc_tpa(ULONG flags,LONG needed,LONG *avail);
 static void __attribute__((noinline, optimize("O0"))) proc_go(PD *p);
-
-/*
- * global variables
- */
-
-PD      *run;           /* ptr to PD for current process */
 
 /*
  * internal variables
@@ -553,10 +548,7 @@ proc_go(PD *p)
     KDEBUG(("retaddr: %p, sr=%04x\n", (void*)sp->retaddr, sp->sr));
 
     /* the other stack is the supervisor stack (gouser() reads this in asm) */
-    {
-        volatile LONG *other = &sp->other_sp;
-        *other = (long) &supstk[SUPSIZ];
-    }
+    sp->other_sp = (long)(supstk + SUPSIZ);
     KDEBUG(("other_sp: %p\n", (void*)sp->other_sp));
 
     /* store this new stack in the saved a7 field of the PD */
@@ -614,7 +606,8 @@ void GEMDOS_API xterm(UWORD rc)
     userterm = (PFVOID)Setexc(0x102, (long)-1L);  /* get user term handler address */
     protect_v((PFLONG)userterm);    /* call it, protecting d2/a2 from modification */
 
-    run = run->p_parent;
+    if (run->p_parent)
+        run = run->p_parent;
     ixterm(p);
     /* gouser() will store the current value of D0 in the active PD
      * so it cannot be used here. See proc_go() above.

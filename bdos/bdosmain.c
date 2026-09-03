@@ -75,7 +75,14 @@ static long GEMDOS_API xgetver(void);
  * this used to be obtained via MGET, but that was a bit pointless,
  * since it was never freed
  */
-static PD initial_basepage;
+PD initial_basepage;
+
+/*
+ * Current process PD.  Lives in bdosmain.o (not proc.o) so the linker
+ * does not place it between supstk[] and rwa.o fstrt[], where deep
+ * GEMDOS supervisor-stack use would overwrite it.
+ */
+PD *run;
 
 /* initial environment string */
 static const char double_nul[2] __attribute__ ((aligned (2))) = { 0, 0 };
@@ -337,6 +344,7 @@ void osinit_after_xmaddalt(void)
 {
     /* Set up initial process. Required by Malloc() */
     run = &initial_basepage;
+    initial_basepage.p_parent = &initial_basepage;
     run->p_flags = PF_STANDARD;
     run->p_env = CONST_CAST(char *,double_nul);
 
