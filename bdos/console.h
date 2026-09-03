@@ -13,6 +13,8 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include "portab.h"
+
 /******************************************
 **
 ** BDOS level character device file handles
@@ -40,21 +42,21 @@
 void stdhdl_init(void);
 signed char get_default_handle(int stdh);
 
-long xconstat(void);
-long xconostat(void);
-long xprtostat(void);
-long xauxistat(void);
-long xauxostat(void);
-long xconout(int ch);
-long xauxout(int ch);
-long xprtout(int ch);
-long xrawcin(void);
-long xconin(void);
-long xnecin(void);
-long xauxin(void);
-long xrawio(int parm);
-void xconws(char *p);
-void xconrs(char *p);
+long GEMDOS_API xconstat(void);
+long GEMDOS_API xconostat(void);
+long GEMDOS_API xprtostat(void);
+long GEMDOS_API xauxistat(void);
+long GEMDOS_API xauxostat(void);
+long GEMDOS_API xconout(int ch);
+long GEMDOS_API xauxout(int ch);
+long GEMDOS_API xprtout(int ch);
+long GEMDOS_API xrawcin(void);
+long GEMDOS_API xconin(void);
+long GEMDOS_API xnecin(void);
+long GEMDOS_API xauxin(void);
+long GEMDOS_API xrawio(int parm);
+void GEMDOS_API xconws(char *p);
+void GEMDOS_API xconrs(char *p);
 int cgets(int h, int maxlen, char *buf);
 long conin(int h);
 void tabout(int h, int ch);

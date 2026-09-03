@@ -38,9 +38,9 @@ void tt_mfpint(WORD num, LONG vector);
 
 /*==== Xbios functions ====================================================*/
 
-void mfpint(WORD num, LONG vector);
-void jdisint(WORD num);
-void jenabint(WORD num);
+void ARGS_ON_STACK mfpint(WORD num, LONG vector);
+void ARGS_ON_STACK jdisint(WORD num);
+void ARGS_ON_STACK jenabint(WORD num);
 
 /*==== internal functions =================================================*/
 

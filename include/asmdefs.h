@@ -79,3 +79,22 @@
 /* Pseudo-ops not yet understood by gas */
 #define jhs jcc
 #define jlo jcs
+
+/*
+ * FASTCALL_BUILD: when set, C callers pass the first integers in d0-d2,
+ * first pointers in a0-a1 (m68k-atari-mint -mfastcall). Assembly stubs
+ * that receive arguments from C should use these patterns only when the C
+ * prototype is marked ARGS_ON_STACK (cdecl).  Writing to 4(sp) without
+ * allocating a stack frame clobbers the caller under -mfastcall.
+ */
+#ifdef FASTCALL_BUILD
+/* Legacy helpers when C callers use cdecl but FASTCALL_BUILD asm is compiled */
+#define FC_STORE_A0_4SP         move.l  a0,4(sp)
+#define FC_STORE_A0_D0_8SP      move.l  a0,4(sp); move.l  d0,8(sp)
+#define FC_STORE_A0_A1_D0_12SP  move.l  a0,4(sp); move.l  a1,8(sp); move.l  d0,12(sp)
+#define FC_STORE_A0_D0_W6SP     move.l  a0,4(sp); move.w  d0,6(sp)
+#define FC_STORE_A0_D0_D1_12SP  move.l  a0,4(sp); move.l  d0,8(sp); move.l  d1,12(sp)
+#define FC_STORE_D0_W4SP        move.w  d0,4(sp)
+#define FC_STORE_D0_D1_8SP      move.w  d0,4(sp); move.w  d1,6(sp)
+#define FC_STORE_D0_D1_D2_12SP  move.w  d0,4(sp); move.w  d1,6(sp); move.w  d2,8(sp)
+#endif

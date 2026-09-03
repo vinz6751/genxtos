@@ -31,12 +31,12 @@ void xbiostrap(void);
 void just_rte(void);
 
 #if CONF_WITH_BUS_ERROR
-long check_read_byte(long);
+long ARGS_ON_STACK check_read_byte(long);
 #endif
 
 
 /* */
-LONG default_etv_critic(WORD err,WORD dev);
+LONG ARGS_ON_STACK default_etv_critic(WORD err,WORD dev);
 void int_illegal(void);
 void int_priv(void);
 void int_unimpint(void);

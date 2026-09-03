@@ -7,19 +7,28 @@
 # (GenX, A2560M) can have different processors or flavors of it...
 CPUFLAGS=-m68060
 
-TOOLCHAIN=m68k-atari-mint-
-CC=$(TOOLCHAIN)gcc
-AS=$(TOOLCHAIN)as
-AR=$(TOOLCHAIN)ar
-RANLIB=$(TOOLCHAIN)ranlib
-STRIP=$(TOOLCHAIN)strip
+TOOLCHAIN_PREFIX ?= m68k-atari-mint-
+MINTELF ?= 0
+FASTCALL ?= 0
+CC=$(TOOLCHAIN_PREFIX)gcc
+AS=$(TOOLCHAIN_PREFIX)as
+AR=$(TOOLCHAIN_PREFIX)ar
+RANLIB=$(TOOLCHAIN_PREFIX)ranlib
+STRIP=$(TOOLCHAIN_PREFIX)strip
+
+ifeq (1,$(FASTCALL))
+FASTCALLFLAGS = -mfastcall
+else
+FASTCALLFLAGS =
+endif
+
 # We do -std=c99 so we can use "for(int x;...)" without problems
 # -mshort is really only for 68k targets, others have a 32bit data bus so there's no performance to gain from that
 #  EmuTOS uses that so we're doing it too.
 # -msoft-float is because my A2560M has a 68EC060 with no FPU. Without this option, the "interrupt_handler"
 #  function would try to save FPU register and it'd crash. If the machine does have a FPU and it is used,
 #  this option should be removed.
-CFLAGS=-mshort -fomit-frame-pointer -Os -std=c99 -D$(MACHINE_NAME) $(CPUFLAGS) -msoft-float
+CFLAGS=-mshort -fomit-frame-pointer -Os -std=c99 -D$(MACHINE_NAME) $(CPUFLAGS) -msoft-float $(FASTCALLFLAGS) -I../include
 
 SRC_C=a2560.c a2560_debug.c bq4802ly.c cpu.c interrupts.c mpu401.c \
 	keyboard.c ps2_keyboard.c ps2_mouse_a2560.c ps2.c \
@@ -34,6 +43,10 @@ OBJ_C=$(SRC_C:.c=.o)
 OBJ_S=$(SRC_S:.S=.o)
 OBJ=$(OBJ_C) $(OBJ_S)
 DEP=$(SRC_C:.c=.d)
+
+# trap_bindings.S is the user-facing trap #15 API (stack args)
+TRAP_BINDINGS_OBJ=trap_bindings.o
+TRAP_BINDINGS_FLAGS=$(filter-out $(FASTCALLFLAGS),$(CFLAGS))
 
 .PHONY: default
 default:
@@ -55,8 +68,8 @@ libfoenix-a2560k.a libfoenix-a2560m.a u.a libfoenix-a2560x.a libfoenix-genx.a: $
 %.o: %.S
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-
-.PHONY: clean mrproper
+$(TRAP_BINDINGS_OBJ): trap_bindings.S
+	$(CC) -o $@ -c $< $(TRAP_BINDINGS_FLAGS)
 
 clean:
 	@rm -rf *.o *.a *.d *~

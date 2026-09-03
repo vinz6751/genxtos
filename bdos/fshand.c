@@ -29,7 +29,7 @@
  * Error returns:
  *     EIHNDL
  */
-long xforce(int std, int h)
+long GEMDOS_API xforce(int std, int h)
 {
     return ixforce(std,h,run);
 }
@@ -90,7 +90,7 @@ long ixforce(int std, int h, PD *p)
  *     ENHNDL
  *
  */
-long xdup(int h)
+long GEMDOS_API xdup(int h)
 {
     int i;
 

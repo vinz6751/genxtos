@@ -131,9 +131,13 @@ _int_acia:
 
 
 _call_kbdint: // call the C routine in keyboard.c to do the work.
+#ifdef FASTCALL_BUILD
+        jbsr    _kbd_int
+#else
         move.w  d0,-(sp)
         jsr     _kbd_int
         addq.l  #2,sp
+#endif
         rts
 
 

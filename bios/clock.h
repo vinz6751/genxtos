@@ -15,7 +15,7 @@
 
 #include "portab.h"
 
-void clockvec(UBYTE *buf);
+void ARGS_ON_STACK clockvec(UBYTE *buf);
 
 /* interface for machine.c */
 
@@ -37,7 +37,7 @@ void clock_init(void);
 
 /* xbios functions */
 
-void settime(LONG time);
-LONG gettime(void);
+void ARGS_ON_STACK settime(LONG time);
+LONG ARGS_ON_STACK gettime(void);
 
 #endif /* CLOCK_H */

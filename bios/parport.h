@@ -17,5 +17,5 @@ LONG bconout0(WORD dev, WORD c);
 void parport_init(void);
 
 #if CONF_WITH_PRINTER_PORT
-WORD setprt(WORD config);
+WORD ARGS_ON_STACK setprt(WORD config);
 #endif

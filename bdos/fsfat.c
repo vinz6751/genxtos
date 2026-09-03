@@ -334,7 +334,7 @@ static CLNO countfree16(DMD *dm)
         complex, since the entry for a cluster can span logical records,
         and therefore we do it the old, slow way.
 */
-long xgetfree(long *buf, int drv)
+long GEMDOS_API xgetfree(long *buf, int drv)
 {
     CLNO i, free;
     WORD n;

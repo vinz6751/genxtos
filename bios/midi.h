@@ -23,6 +23,6 @@ LONG bcostat3(void);
 LONG bconout3(WORD dev, WORD c);
 
 /* some xbios functions */
-void midiws(WORD cnt, const UBYTE *ptr);
+void ARGS_ON_STACK midiws(WORD cnt, const UBYTE *ptr);
 
 #endif /* MIDI_H */

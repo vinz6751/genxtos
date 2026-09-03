@@ -110,15 +110,15 @@ LONG disk_rw(UWORD unit, UWORD rw, ULONG sector, UWORD count, UBYTE *buf);
 
 /* xbios functions */
 
-LONG DMAread(LONG sector, WORD count, UBYTE *buf, WORD major);
-LONG DMAwrite(LONG sector, WORD count, const UBYTE *buf, WORD major);
+LONG ARGS_ON_STACK DMAread(LONG sector, WORD count, UBYTE *buf, WORD major);
+LONG ARGS_ON_STACK DMAwrite(LONG sector, WORD count, const UBYTE *buf, WORD major);
 
 /* partition detection */
 
 void disk_init_all(void);
 LONG disk_mediach(UWORD unit);
 void disk_rescan(UWORD unit);
-LONG disk_drvrem(void);
+LONG ARGS_ON_STACK disk_drvrem(void);
 
 void disk_try_dmaboot(void);
 

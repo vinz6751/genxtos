@@ -87,6 +87,32 @@ Exceptions to the 'leading underscore' rule are:
     } struct_a;
 
 
+(1b) Mixed fastcall builds (FASTCALL=1)
+-------------------------------------
+When the OS is compiled with -mfastcall, three calling conventions coexist:
+
+- Internal C code uses fastcall (d0-d2/a0-a1 for arguments; pointers
+  returned in a0).
+- Trap handlers dispatched from trap #13/#14 must use ARGS_ON_STACK
+  (__attribute__((cdecl))) because biosxbios in vectors.S calls them
+  with arguments on the trap stack.
+- User program interfaces are unchanged: traps, G_USERDEF draw routines,
+  and most KBDVECS hooks called via stack pushes from aciavecs_c.c.
+
+G_USERDEF (AES): user draw routine receives PARMBLK* on the stack
+(Pure-C convention). See call_usercode() in aes/gemoblib.c.
+
+KBDVECS: documented register conventions (d0/a0) apply, but the OS
+also pushes arguments on the stack when calling user vectors from
+aciavecs_c.c for Pure-C compatibility. The alternate mousevec path in
+aciavecs.S uses register-only calling (packet in a0).
+
+VDI Line-A mouse vectors (user_but/mot/cur/wheel): register-based;
+user_but also receives an undocumented word on the stack.
+
+See doc/fastcall-inline-asm-audit.md for the full inline-asm checklist.
+
+
 (2) Processor compatibility
 ---------------------------
 Assembler code must be capable of running on all 680x0 processors.

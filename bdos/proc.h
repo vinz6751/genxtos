@@ -14,6 +14,7 @@
 #define PROC_H
 
 #include "pghdr.h"
+#include "portab.h"
 
 /*
  *  process management
@@ -23,10 +24,10 @@
  * in proc.c
  */
 
-long xexec(WORD, char *, char *, char *);
-void x0term(void);
-void xterm(UWORD rc)  NORETURN ;
-WORD xtermres(long blkln, WORD rc);
+long GEMDOS_API xexec(WORD, char *, char *, char *);
+void GEMDOS_API x0term(void);
+void GEMDOS_API xterm(UWORD rc)  NORETURN ;
+WORD GEMDOS_API xtermres(long blkln, WORD rc);
 
 /*
  * in kpgmld.c

@@ -1091,7 +1091,7 @@ void init_serport(void)
 #endif
 }
 
-LONG bconmap(WORD dev)
+LONG ARGS_ON_STACK bconmap(WORD dev)
 {
 #if BCONMAP_AVAILABLE
     MAPTAB *maptabptr;

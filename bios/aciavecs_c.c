@@ -3,6 +3,7 @@
 #include "acia.h"
 #include "aciavecs.h"
 #include "amiga.h"
+#include "asm.h"
 #include "biosext.h"
 #include "bios.h"
 #include "clock.h"
@@ -13,15 +14,14 @@
 
 /* #define ENABLE_KDEBUG */
 
-void just_rts(void);
 void int_acia(void);   // ACIA interrupt handler
 void int_acia_c(void); // C portion of the ACIA interrupt handler
 void callKbdvecs_wrapper(void); // Wrapper for do_callKbdvecs, saving all registers that could be clobbered by the vectors
 void callKbdvecs(void); // Called from callKbdvecs_wrapper
 
 // Vectors from KBDVECS have to be called with data in registers, so these are the adapters
-static void call_kbdvecs_b(void (*vector)(UBYTE), UBYTE);   // Call the given vector with the given byte in d0
-static void call_kbdvecs_p(void (*vector)(UBYTE*), UBYTE*); // Call the given vector with the given pointer in d0
+static void call_kbdvecs_b(KBDVEC_B_fn vector, UBYTE);   // Call the given vector with the given byte in d0
+static void call_kbdvecs_p(KBDVEC_P_fn vector, UBYTE*); // Call the given vector with the given pointer in d0
 static void call_kbdvecs_bp(void *vector, UBYTE byte, void *ptr); // Call the given vector with the given byte in d0 and given pointer in a0
 
 // MIDI stuff
@@ -32,7 +32,7 @@ static void call_kbdvecs_bp(void *vector, UBYTE byte, void *ptr); // Call the gi
 #define MIDI_BUFSIZE 128
 UBYTE midiibufbuf[MIDI_BUFSIZE];
 IOREC midiiorec;
-static void midisys_handler(void);
+static void ARGS_ON_STACK midisys_handler(void);
 
 // Keyboard stuff*
 #if CONF_WITH_IKBD_ACIA
@@ -53,7 +53,7 @@ static BOOL in_packet;
 // Message length per message type (first entry = length of 0xf6 message)
 const UBYTE kbdlength_table[] = { 7, 5, 2, 2, 2, 2, 6, 2, 1, 1 };
 
-static void ikbdsys_handler(void);
+static void ARGS_ON_STACK ikbdsys_handler(void);
 void call_kbdint(UBYTE data);
 
 // Called to handle a single byte packet (typically a key up/down message) from the IKBD
@@ -71,19 +71,19 @@ void init_acia_vecs(void) {
 #endif
 
     kbdvec = (void (*)(UBYTE,IOREC*))call_kbdint;
-    kbdvecs.midivec = (void (*)(UBYTE))just_rts;
-    kbdvecs.vkbderr = (void (*)(UBYTE))just_rts;
-    kbdvecs.vmiderr = (void (*)(UBYTE))just_rts;
-    kbdvecs.statvec = (void (*)(UBYTE*))just_rts;
-    kbdvecs.mousevec = (void(*)(UBYTE*))just_rts;
+    kbdvecs.midivec = kbdvec_nop_b;
+    kbdvecs.vkbderr = kbdvec_nop_b;
+    kbdvecs.vmiderr = kbdvec_nop_b;
+    kbdvecs.statvec = kbdvec_nop_p;
+    kbdvecs.mousevec = kbdvec_nop_p;
 
 #if CONF_WITH_IKBD_CLOCK
     kbdvecs.clockvec = clockvec;
 #else
-    kbdvecs.clockvec = (void(*)(UBYTE*))just_rts;
+    kbdvecs.clockvec = kbdvec_nop_p;
 #endif
 
-    kbdvecs.joyvec = (void(*)(UBYTE*))just_rts;
+    kbdvecs.joyvec = kbdvec_nop_p;
     kbdvecs.midisys = midisys_handler;
     kbdvecs.ikbdsys = ikbdsys_handler;
 
@@ -135,7 +135,7 @@ void int_acia_c(void) {
 
 
 // Handle MIDI interrupt
-static void midisys_handler(void) {
+static void ARGS_ON_STACK midisys_handler(void) {
 #if CONF_WITH_MIDI_ACIA
     SBYTE status = *((UBYTE*)MIDI_ACIA_CTRL);
 
@@ -154,7 +154,7 @@ static void midisys_handler(void) {
 
 
 // Handle keyboard/mouse interrupt
-static void ikbdsys_handler(void) {
+static void ARGS_ON_STACK ikbdsys_handler(void) {
 #if CONF_WITH_IKBD_ACIA
     SBYTE status = *((UBYTE*)IKBD_ACIA_CTRL);
 
@@ -249,9 +249,9 @@ void callKbdvecs(void) {
 
 
 // Call the vector with the byte in d0 and the vector in a1
-static ALWAYS_INLINE void call_kbdvecs_b(void (*vector)(UBYTE),UBYTE byte) {
+static ALWAYS_INLINE void call_kbdvecs_b(KBDVEC_B_fn vector, UBYTE byte) {
     register const UBYTE regbyte __asm__("d0") = byte;
-    register void (*regvector)(UBYTE)  __asm__("a1") = vector;
+    register KBDVEC_B_fn regvector __asm__("a1") = vector;
     __asm__ volatile (
        "\n\tmove.w %1,-(sp)"
        "\n\tjsr (%0)"
@@ -280,9 +280,9 @@ static ALWAYS_INLINE void call_kbdvecs_bp(void *vector, UBYTE byte, void *ptr) {
 
 
 // Call the vector with the pointer in a0 and the vector in a1
-static ALWAYS_INLINE void call_kbdvecs_p(void (*vector)(UBYTE*),UBYTE *byte) {
+static ALWAYS_INLINE void call_kbdvecs_p(KBDVEC_P_fn vector, UBYTE *byte) {
     register const UBYTE *regbyte __asm__("a0") = byte;
-    register void (*regvector)(UBYTE*)  __asm__("a1") = vector;
+    register KBDVEC_P_fn regvector __asm__("a1") = vector;
     __asm__ volatile (
        "\n\tmove.l a0,-(sp)"
        "\n\tjsr (a1)"

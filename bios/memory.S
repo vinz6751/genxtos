@@ -144,6 +144,7 @@ memchk:
         // They will stay in safe place in case we clear the sysvars.
         move.b  memctrl.w, d6
         move.l  _phystop.w, d5
+        jeq     memconf                 // phystop=0 is invalid; redetect RAM
 
 #if CONF_WITH_TTRAM
         move.l  _ramvalid.w, d3

@@ -223,7 +223,8 @@ systk:
         move.l  sp,P_A7SAVE(a6) // update saved stack pointer
         lea     50(sp),a0
         move.l  #fstrt,sp
-callos: move.l  a0,-(sp)        // push parm pointer
+callos:
+        move.l  a0,-(sp)        // push parm pointer (osif is ARGS_ON_STACK/cdecl)
         jsr     _osif
         addq.l  #4,sp
 

@@ -50,7 +50,7 @@ PFVOID old_trap2; /* Old trap #2 handler, also used by rwa.S */
  */
 
 static long ni(void);
-static long xgetver(void);
+static long GEMDOS_API xgetver(void);
 
 
 /*
@@ -295,7 +295,7 @@ static const FND funcs[] =
  *  xgetver -
  *      return current version number
  */
-static long xgetver(void)
+static long GEMDOS_API xgetver(void)
 {
     return (long)GEMDOS_VERSION;
 }
@@ -427,8 +427,8 @@ static void mark_bcbs_invalid(int drv)
 /*
  *  osif - C implementation of trap #1. Called by _enter.
  */
-long osif(short *pw);   /* called only from rwa.S */
-long osif(short *pw)
+long ARGS_ON_STACK osif(short *pw);   /* called only from rwa.S */
+long ARGS_ON_STACK osif(short *pw)
 {
     char **pb, *pb2, *p, ctmp;
     BPB *b;

@@ -15,6 +15,7 @@
 #define MEM_H
 
 #include "bdosdefs.h"
+#include "portab.h"
 
 
 /*
@@ -61,17 +62,17 @@ void osmem_init(void);
  */
 
 /* allocate memory */
-void *xmalloc(long amount);
+void GEMDOS_API *xmalloc(long amount);
 /* mfree */
-long xmfree(void *addr);
+long GEMDOS_API xmfree(void *addr);
 /* mshrink */
-long xsetblk(int n, void *blk, long len);
+long GEMDOS_API xsetblk(int n, void *blk, long len);
 /* mxalloc */
-void *xmxalloc(long amount, int mode);
+void GEMDOS_API *xmxalloc(long amount, int mode);
 
 #if CONF_WITH_VIDEL
 /* srealloc */
-void *srealloc(long amount);
+void GEMDOS_API *srealloc(long amount);
 #endif
 
 /* init user memory */

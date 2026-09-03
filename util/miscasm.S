@@ -164,6 +164,22 @@ _just_rts:
  */
         .globl  _mul_div_round
 _mul_div_round:
+#ifdef FASTCALL_BUILD
+        move.w  d1,-(sp)        // save mult2
+        move.w  d0,d1           // mult1
+        move.w  (sp)+,d0        // mult2
+        add.w   d0,d0
+        muls.w  d1,d0
+        divs.w  d2,d0
+        jmi     mdrminus_fc
+        addq.w  #1,d0
+        asr.w   #1,d0
+        rts
+mdrminus_fc:
+        subq.w  #1,d0
+        asr.w   #1,d0
+        rts
+#else
 #ifdef __mcoldfire__
         moveq.l #0,d0
         move.w  6(sp),d0        // d0 = mult2
@@ -192,6 +208,7 @@ mdrminus:
         subq.w  #1,d0           // d0 = (mult1 * mult2 * 2) / divisor - 1
         asr.w   #1,d0           // d0 = ((mult1 * mult2 * 2) / divisor - 1) / 2
         rts
+#endif
 #endif
 
 /* ==== Glue for external vectors ===========================================

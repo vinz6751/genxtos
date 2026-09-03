@@ -21,8 +21,12 @@
  */
 
 _strlencpy:
+#ifdef FASTCALL_BUILD
+        exg     a0,a1
+#else
         movea.l 8(sp),a0
         movea.l 4(sp),a1
+#endif
         moveq   #0,d0
 lstcpy_loop:
 #ifdef __mcoldfire__
@@ -46,8 +50,12 @@ lstcpy_loop:
  */
 
 _strchr:
+#ifdef FASTCALL_BUILD
+        move.w  d0,d1
+#else
         move.l  4(sp),a0
         move.w  8(sp),d1
+#endif
 strchr_loop:
         move.b  (a0)+,d0
         jeq     strchr_null

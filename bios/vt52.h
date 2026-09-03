@@ -17,7 +17,7 @@
 #define VT52_H
 
 void vt52_init(void);               /* initialize the vt52 console */
-WORD cursconf(WORD, WORD);          /* XBIOS cursor configuration */
+WORD ARGS_ON_STACK cursconf(WORD, WORD);          /* XBIOS cursor configuration */
 void cputc(WORD);
 
 #endif /* VT52_H */

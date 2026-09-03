@@ -57,7 +57,7 @@ WORD get_cache(void);
 #endif
 
 /* bios allocation of ST-RAM */
-UBYTE *balloc_stram(ULONG size, BOOL top);
+UBYTE * ARGS_ON_STACK balloc_stram(ULONG size, BOOL top);
 
 /* print a panic message both via kprintf and cprintf, then halt */
 void panic(const char *fmt, ...) PRINTF_STYLE NORETURN;

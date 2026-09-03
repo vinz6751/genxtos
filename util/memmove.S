@@ -65,25 +65,54 @@
 // void * memcpy(void * RESTRICT dst, void * RESTRICT src, size_t length);
 // moves length bytes from src to dst. returns dst as passed.
 // the behaviour is undefined if the two regions overlap.
+//
+// FASTCALL_BUILD: a0=dst, a1=src, d0=length (gcc register calls).
 
 _memcpy:
 #ifndef __mcoldfire__
+#ifdef FASTCALL_BUILD
+        move.l   a0,-(sp)        // a0=dst,a1=src; swap without clobbering a2/d1
+        move.l   a1,a0
+        move.l   (sp)+,a1
+        cmpi.l   #BREAKEVEN,d0   // is it worth doing the complicated version?
+        jge      fc_memcpy_large // yes, branch
+        jra      sdecr
+#else
         move.l   8(sp),a0        // load source pointer
         move.l   4(sp),a1        // load destination pointer
         move.l   12(sp),d0       // get length
         cmpi.l   #BREAKEVEN,d0   // is it worth doing the complicated version?
         jge      memmove         // yes, branch
         jra      sdecr
+#endif
 sloop:
         move.b   (a0)+,(a1)+
 sdecr:
         dbra     d0,sloop
-        move.l   4(sp),d0        // return destination pointer
+#ifdef FASTCALL_BUILD
+        jra      fc_ret_memcpy
+#else
+        jra      return_dst
+#endif
+#ifdef FASTCALL_BUILD
+fc_ret_memcpy:
+        move.l   a1,d0           // return dst (no length saved on stack)
         rts
+fc_memcpy_large:
+        move.l   d0,-(sp)        // save length (d2 is clobbered by copy loops)
+        jra      memmove
+#endif
 #endif
 _memmove:
+#ifdef FASTCALL_BUILD
+        move.l   a0,-(sp)        // a0=dst,a1=src; swap without clobbering a2/d1
+        move.l   a1,a0
+        move.l   (sp)+,a1
+        move.l   d0,-(sp)        // save length (d2 is clobbered by copy loops)
+#else
         move.l   8(sp),a0        // load source pointer
         move.l   4(sp),a1        // load destination pointer
+#endif
 memmove:
         cmp.l    a1,a0
         jgt      memcopy         // if src > dst, copy will do fine.
@@ -98,7 +127,11 @@ memmove:
 #endif
         btst     #0,d0           // pointers mutually aligned?
         jne      back1
+#ifdef FASTCALL_BUILD
+        move.l   (sp),d0           // size
+#else
         move.l   12(sp),d0       // size
+#endif
         jeq      end             // if size == 0, nothing to do
         add.l    d0,a0
         add.l    d0,a1
@@ -226,12 +259,22 @@ bend1:
         dbra     d0,bloop1              // decrement count, test and loop
 #endif
 end:
+return_dst:
+#ifdef FASTCALL_BUILD
+        move.l   a1,d0               // return destination pointer
+        addq.l   #4,sp               // pop saved length
+#else
         move.l   4(sp),d0               // return destination pointer
+#endif
         rts
 
 // backwards, when pointers are not aligned.
 back1:
+#ifdef FASTCALL_BUILD
+        move.l   (sp),d0       // size
+#else
         move.l   12(sp),d0       // size
+#endif
         jeq      end             // if size == 0, nothing to do
 // backwards, but 16 bytes by 16 bytes forward.
         add.l    d0,a0
@@ -291,7 +334,11 @@ memcopy:
 #endif
         btst     #0,d0                 // pointers mutually aligned?
         jne      copy1                 // +
+#ifdef FASTCALL_BUILD
+        move.l   (sp),d0             // +
+#else
         move.l   12(sp),d0             // +
+#endif
         jeq      end                   // if cnt == 0 && pointers both odd ...
         btst     #0,d1                 // pointers aligned, but odd?
         jeq      check64               // no
@@ -421,11 +468,14 @@ end1:
 #else
         dbra     d0,loop1              // decrement count, test and loop
 #endif
-        move.l   4(sp),d0              // return destination pointer
-        rts
+        jra      return_dst
 
 copy1:
+#ifdef FASTCALL_BUILD
+        move.l   (sp),d0
+#else
         move.l   12(sp),d0
+#endif
                                        // count can be big; test on it !
         move.l   #16,d1                // == moveq; 4
         cmp.l    d1,d0                 // 6

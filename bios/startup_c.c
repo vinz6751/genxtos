@@ -66,13 +66,8 @@ void startup(void) {
     initialize_cpu();
 
     run_user_reset_code();
-	
-    meminit(startup_stage2);
-    // meminit returns into startup_stage2 in a hardcoded way, because we can't rely on the stack or 
-    // registes to remember a return address: all the memory is clobbererd and registers as well.
-    // Note: I tried using the blitter's halftone memory as temporary memory but that didn't work.
 
-    // IE DONT PUT ANYTHING HERE BECAUSE IT WILL NEVER BE CALLED !
+    /* _meminit is invoked from startup.S after _startup returns. */
 }
 
 // This is run first thing, and can be used to initialize stuff that must be as very top priority.

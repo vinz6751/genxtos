@@ -18,10 +18,10 @@
 #define GIACCESS_READ  0x00
 #define GIACCESS_WRITE 0x80
 
-LONG giaccess(WORD data, WORD reg);
-void ongibit(WORD value);
-void offgibit(WORD value);
-LONG dosound(const UBYTE *table);
+LONG ARGS_ON_STACK giaccess(WORD data, WORD reg);
+void ARGS_ON_STACK ongibit(WORD value);
+void ARGS_ON_STACK offgibit(WORD value);
+LONG ARGS_ON_STACK dosound(const UBYTE *table);
 
 /* internal routines */
 

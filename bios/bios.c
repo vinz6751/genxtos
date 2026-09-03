@@ -1011,7 +1011,7 @@ static void bios_0(MEMORY_PARTITION_BLOCK *mpb)
  *   0  device is not ready
  */
 
-LONG bconstat(WORD handle)        /* GEMBIOS character_input_status */
+LONG ARGS_ON_STACK bconstat(WORD handle)        /* GEMBIOS character_input_status */
 {
 #if BCONMAP_AVAILABLE
     WORD map_index;
@@ -1055,7 +1055,7 @@ static LONG bios_1(WORD handle)
  * returns the character in the low byte.
  */
 
-LONG bconin(WORD handle)
+LONG ARGS_ON_STACK bconin(WORD handle)
 {
 #if BCONMAP_AVAILABLE
     WORD map_index;
@@ -1088,7 +1088,7 @@ static LONG bios_2(WORD handle)
  * bconout  - Print character to output device
  */
 
-LONG bconout(WORD handle, WORD what)
+LONG ARGS_ON_STACK bconout(WORD handle, WORD what)
 {
 #if BCONMAP_AVAILABLE
     WORD map_index;
@@ -1142,7 +1142,7 @@ void bconout_str(WORD handle, const char* str)
  * drive = drive #: 0 = A:, 1 = B:, etc
  */
 
-LONG lrwabs(WORD r_w, UBYTE *adr, WORD numb, WORD first, WORD drive, LONG lfirst)
+LONG ARGS_ON_STACK lrwabs(WORD r_w, UBYTE *adr, WORD numb, WORD first, WORD drive, LONG lfirst)
 {
     return protect_wlwwwl((PFLONG)hdv_rw, r_w, (LONG)adr, numb, first, drive, lfirst);
 }
@@ -1167,7 +1167,7 @@ static LONG bios_4(WORD r_w, UBYTE *adr, WORD numb, WORD first, WORD drive, LONG
  *
  */
 
-LONG setexc(WORD num, LONG vector)
+LONG ARGS_ON_STACK setexc(WORD num, LONG vector)
 {
     LONG oldvector;
     LONG *addr = (LONG *) (4L * num);
@@ -1193,7 +1193,7 @@ static LONG bios_5(WORD num, LONG vector)
  * tickcal - Time between two systemtimer calls
  */
 
-LONG tickcal(void)
+LONG ARGS_ON_STACK tickcal(void)
 {
     return(20L);        /* system timer is 50 Hz so 20 ms is the period */
 }
@@ -1217,7 +1217,7 @@ static LONG bios_6(void)
  *  drive - drive  (0 = A:, 1 = B:, etc)
  */
 
-LONG getbpb(WORD drive)
+LONG ARGS_ON_STACK getbpb(WORD drive)
 {
     return protect_w(hdv_bpb, drive);
 }
@@ -1240,7 +1240,7 @@ static LONG bios_7(WORD drive)
 
 /* handle  = 0:PRT 1:AUX 2:CON 3:MID 4:KEYB */
 
-LONG bcostat(WORD handle)       /* GEMBIOS character_output_status */
+LONG ARGS_ON_STACK bcostat(WORD handle)       /* GEMBIOS character_output_status */
 {
 #if BCONMAP_AVAILABLE
     WORD map_index;
@@ -1281,7 +1281,7 @@ static LONG bios_8(WORD handle)
  * where "changed" = "removed"
  */
 
-LONG mediach(WORD drv)
+LONG ARGS_ON_STACK mediach(WORD drv)
 {
     return protect_w(hdv_mediach, drv);
 }
@@ -1304,7 +1304,7 @@ static LONG bios_9(WORD drv)
  * present.
  */
 
-LONG drvmap(void)
+LONG ARGS_ON_STACK drvmap(void)
 {
     return blkdev_drvmap();
 }

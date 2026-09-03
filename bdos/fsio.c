@@ -318,7 +318,7 @@ long eof(int h)
  *      ixlseek()
  */
 
-long xlseek(long n, int h, int flg)
+long GEMDOS_API xlseek(long n, int h, int flg)
 {
     OFD *f;
 
@@ -437,7 +437,7 @@ long ixlseek(OFD *p,long n)
  *   bios()
  */
 
-long xread(int h, long len, void *ubufr)
+long GEMDOS_API xread(int h, long len, void *ubufr)
 {
     OFD *p;
     long ret;
@@ -525,7 +525,7 @@ long ixread(OFD *p, long len, void *ubufr)
  *   bios()
  */
 
-long xwrite(int h, long len, void *ubufr)
+long GEMDOS_API xwrite(int h, long len, void *ubufr)
 {
     OFD *p;
     long ret;

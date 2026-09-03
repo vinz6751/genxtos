@@ -96,7 +96,7 @@ static int msec;
 /*
  * xgetdate - Function 0x2A:  Get date
  */
-long xgetdate(void)
+long GEMDOS_API xgetdate(void)
 {
     return current_date;
 }
@@ -105,7 +105,7 @@ long xgetdate(void)
 /*
  * xsetdate - Function 0x2B:  Set date
  */
-long xsetdate(UWORD d)
+long GEMDOS_API xsetdate(UWORD d)
 {
     UWORD curmo, day;
     const UBYTE *nday = IS_A_LEAP_YEAR(d) ? nday_leap : nday_norm;
@@ -129,7 +129,7 @@ long xsetdate(UWORD d)
 /*
  * xgettime - Function 0x2C:  Get time
  */
-long xgettime(void)
+long GEMDOS_API xgettime(void)
 {
     return current_time;
 }
@@ -139,7 +139,7 @@ long xgettime(void)
 /*
  * xsettime - Function 0x2D:  Set time
  */
-long xsettime(UWORD t)
+long GEMDOS_API xsettime(UWORD t)
 {
     if (((t & SEC_BM) >= 30)                /* 30 "double-seconds" per minute */
      || ((t & MIN_BM) >= (60U << MIN_SHIFT))    /* 60 minutes per hour */

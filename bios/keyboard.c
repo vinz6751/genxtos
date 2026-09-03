@@ -119,7 +119,7 @@ static union {
     } k;
 } kb_last;
 static UBYTE kb_last_actual;    /* actual last scancode */
-static PFVOID kb_last_ikbdsys;  /* ikbdsys when kb_last was set */
+static KBDVEC_V_fn kb_last_ikbdsys;  /* ikbdsys when kb_last was set */
 
 static void key_repeat_init(void);
 static void key_repeat_stop(void);
@@ -379,7 +379,7 @@ void kbd_int(UBYTE scancode)
 
 /*=== Keymaps handling (xbios) =======================================*/
 
-LONG keytbl(const UBYTE* norm, const UBYTE* shft, const UBYTE* caps)
+LONG ARGS_ON_STACK keytbl(const UBYTE* norm, const UBYTE* shft, const UBYTE* caps)
 {
     if (norm != (UBYTE*)-1) {
         current_keytbl.norm = norm;
@@ -393,14 +393,14 @@ LONG keytbl(const UBYTE* norm, const UBYTE* shft, const UBYTE* caps)
     return (LONG) & current_keytbl;
 }
 
-void bioskeys(void)
+void ARGS_ON_STACK bioskeys(void)
 {
     /* ask country.c for the default key table of the current country */
     current_keytbl = *get_keytbl();
 }
 
 
-LONG kbshift(WORD flag)
+LONG ARGS_ON_STACK kbshift(WORD flag)
 {
     WORD oldshifty = shifty;
 
@@ -633,7 +633,7 @@ static void key_repeat_init(void) {
     kb_repeat = KB_REPEAT;
 }
 
-WORD kbrate(WORD initial, WORD repeat)
+WORD ARGS_ON_STACK kbrate(WORD initial, WORD repeat)
 {
     WORD ret = MAKE_UWORD(kb_initial_delay, kb_repeat);
 

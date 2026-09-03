@@ -5,14 +5,14 @@
 
 #if CONF_WITH_TT_SHIFTER
 
-WORD esetshift(WORD mode);
-WORD egetshift(void);
-WORD esetbank(WORD bank);
-WORD esetcolor(WORD index,UWORD color);
-WORD esetpalette(WORD index,WORD count,UWORD *rgb);
-WORD egetpalette(WORD index,WORD count,UWORD *rgb);
-WORD esetgray(WORD mode);
-WORD esetsmear(WORD mode);
+WORD ARGS_ON_STACK esetshift(WORD mode);
+WORD ARGS_ON_STACK egetshift(void);
+WORD ARGS_ON_STACK esetbank(WORD bank);
+WORD ARGS_ON_STACK esetcolor(WORD index,UWORD color);
+WORD ARGS_ON_STACK esetpalette(WORD index,WORD count,UWORD *rgb);
+WORD ARGS_ON_STACK egetpalette(WORD index,WORD count,UWORD *rgb);
+WORD ARGS_ON_STACK esetgray(WORD mode);
+WORD ARGS_ON_STACK esetsmear(WORD mode);
 
 #endif /* CONF_WITH_TT_SHIFTER */
 

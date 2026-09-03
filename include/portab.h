@@ -259,4 +259,25 @@ typedef LONG LONG_ALIAS MAY_ALIAS;
 # define OPTIMIZE_O3
 #endif
 
+/*
+ * Calling convention markers for mixed fastcall/cdecl builds.
+ * When the OS is compiled with -mfastcall, user-visible trap handlers
+ * and stack-based callbacks must opt out via ARGS_ON_STACK (cdecl).
+ */
+#if defined(__GNUC__) && defined(__MINT__)
+# define ARGS_ON_STACK  __attribute__((cdecl))
+# define FASTCALL_ATTR  __attribute__((fastcall))
+#else
+# define ARGS_ON_STACK
+# define FASTCALL_ATTR
+#endif
+
+#if defined(FASTCALL_BUILD)
+# define FP_CALLBACK ARGS_ON_STACK
+# define GEMDOS_API    ARGS_ON_STACK
+#else
+# define FP_CALLBACK
+# define GEMDOS_API
+#endif
+
 #endif /* PORTAB_H */

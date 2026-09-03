@@ -47,7 +47,7 @@ static ULONG last_timeout;
 /*
  * implements xbios_21 - Set/get the desktop printer configuration word
  */
-WORD setprt(WORD config)
+WORD ARGS_ON_STACK setprt(WORD config)
 {
     WORD old_config = printer_config;
 

@@ -113,7 +113,7 @@ WORD get_shift(ULONG blocksize);
 int add_partition(UWORD unit, LONG *devices_available, char id[], ULONG start, ULONG size);
 
 /* critical error handling */
-LONG call_etv_critic(WORD error,WORD device);   /* in vectors.S */
+LONG ARGS_ON_STACK call_etv_critic(WORD error,WORD device);   /* in vectors.S */
 
 
 /*

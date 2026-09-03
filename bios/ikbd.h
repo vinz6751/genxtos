@@ -33,7 +33,7 @@ void ikbd_reset(void);
 
 LONG bcostat4(void);
 LONG bconout4(WORD dev, WORD c);
-void ikbdws(WORD cnt, const UBYTE *ptr);
+void ARGS_ON_STACK ikbdws(WORD cnt, const UBYTE *ptr);
 void ikbd_writeb(UBYTE b);
 void ikbd_writew(WORD w);
 

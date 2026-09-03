@@ -213,6 +213,9 @@ ELF = 0
 # Unlike the default m68k-atari-mint one, it is recent enough to support LTO.
 MINTELF = 0
 
+# Override with 1 to compile internal OS code with -mfastcall (requires MINTELF=1 or ELF=1).
+FASTCALL = 0
+
 ifeq (1,$(MINTELF))
 ELF_TOOLCHAIN_PREFIX = m68k-atari-mintelf-
 else
@@ -229,6 +232,18 @@ TOOLCHAIN_PREFIX = m68k-atari-mint-
 TOOLCHAIN_CFLAGS =
 endif
 
+ifeq (1,$(FASTCALL))
+ifneq (,$(filter 1,$(ELF) $(MINTELF)))
+FASTCALLFLAGS = -mfastcall -fno-builtin-memset -fno-builtin-memcpy -fno-builtin-memmove -fno-optimize-sibling-calls
+else
+$(warning FASTCALL=1 requires ELF=1 or MINTELF=1)
+FASTCALLFLAGS =
+endif
+else
+FASTCALLFLAGS =
+endif
+TOOLCHAIN_CFLAGS += $(FASTCALLFLAGS)
+
 # indent flags
 INDENT = indent -kr
 
@@ -239,7 +254,7 @@ ARFLAGS = rc
 # Linker with relocation information and binary output (image)
 LD = $(CC) $(MULTILIBFLAGS) -nostartfiles -nostdlib
 LIBS = -lgcc
-LDFLAGS = -Wl,-T,obj/emutospp.ld
+LDFLAGS = -Wl,-T,obj/emutospp.ld $(FASTCALLFLAGS)
 PCREL_LDFLAGS = -Wl,--oformat=binary,-Ttext=0,--entry=0
 
 # C compiler
@@ -283,6 +298,11 @@ endif
 endif
 
 DEFINES = $(LOCALCONF) -DWITH_AES=$(WITH_AES) -DWITH_CLI=$(WITH_CLI) $(DEF)
+ifeq (1,$(FASTCALL))
+ifneq (,$(filter 1,$(ELF) $(MINTELF)))
+DEFINES += -DFASTCALL_BUILD
+endif
+endif
 CFLAGS_COMPILE = $(TOOLCHAIN_CFLAGS) $(OPTFLAGS) $(OTHERFLAGS) $(WARNFLAGS)
 CFLAGS = $(MULTILIBFLAGS) $(CFLAGS_COMPILE) $(INC) $(DEFINES)
 
@@ -333,7 +353,7 @@ bios_src = startup.S
 bios_src += lowstram.c
 
 # Other BIOS sources can be put in any order
-bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c bios.c xbios.c xbios_tt.c acsi.c \
+bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c kbdvec_stubs.c bios.c xbios.c xbios_tt.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
              conout.c conout_atarifb.c conout_amiga.c \
              cartridge_atari.S country.c \
@@ -570,7 +590,7 @@ endif
 FOENIX_SRC = $(wildcard foenix/*.c foenix/*.h foenix/*.S)
 
 foenix/libfoenix-%.a: $(FOENIX_SRC) foenix/Makefile
-	$(MAKE) -C foenix libfoenix-$*.a CPUFLAGS='$(CPUFLAGS)'
+	$(MAKE) -C foenix libfoenix-$*.a CPUFLAGS='$(CPUFLAGS)' MINTELF='$(MINTELF)' FASTCALL='$(FASTCALL)' TOOLCHAIN_PREFIX='$(TOOLCHAIN_PREFIX)'
 
 #
 # Padded Image
@@ -1440,6 +1460,9 @@ obj/%.o : %.c
 
 obj/%.o : %.S
 	$(CC) $(SFILE_FLAGS) -c $< -o $@
+
+# conout_atarifb.c: FP_CALLBACK driver methods use ARGS_ON_STACK; exported
+# conout_atari_* entry points use -mfastcall like the rest of the FASTCALL build.
 
 #
 # version string

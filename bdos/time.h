@@ -10,10 +10,12 @@
 #ifndef TIME_H
 #define TIME_H
 
-long xgetdate(void);
-long xsetdate(UWORD d);
-long xgettime(void);
-long xsettime(UWORD t);
+#include "portab.h"
+
+long GEMDOS_API xgetdate(void);
+long GEMDOS_API xsetdate(UWORD d);
+long GEMDOS_API xgettime(void);
+long GEMDOS_API xsettime(UWORD t);
 
 /* called to initialize the module */
 void time_init(void);

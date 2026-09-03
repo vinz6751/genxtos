@@ -113,7 +113,7 @@ static MEMORY_PARTITION_BLOCK *find_mpb(void *addr)
 /*
  *  xmalloc - Function 0x48 (Malloc)
  */
-void *xmalloc(long amount)
+void *GEMDOS_API xmalloc(long amount)
 {
     void *rc;
 
@@ -132,7 +132,7 @@ void *xmalloc(long amount)
 /*
  *  xmfree - Function 0x49 (Mfree)
  */
-long xmfree(void *addr)
+long GEMDOS_API xmfree(void *addr)
 {
     MEMORY_DESCRIPTOR *p;
     MEMORY_PARTITION_BLOCK *mpb;
@@ -167,7 +167,7 @@ long xmfree(void *addr)
  *  blk - addr of block to free
  *  len - length of block to free
  */
-long xsetblk(int n, void *blk, long len)
+long GEMDOS_API xsetblk(int n, void *blk, long len)
 {
     MEMORY_DESCRIPTOR *p;
     MEMORY_PARTITION_BLOCK *mpb;
@@ -231,7 +231,7 @@ long xsetblk(int n, void *blk, long len)
 /*
  *  xmxalloc - Function 0x44 (Mxalloc)
  */
-void *xmxalloc(long amount, int mode)
+void *GEMDOS_API xmxalloc(long amount, int mode)
 {
     MEMORY_DESCRIPTOR *m;
     void *ret_value;
@@ -355,7 +355,7 @@ ret:
  *      allocation in other versions of TOS.
  */
 #define FREESPACE_KLUDGE    256     /* see code below */
-void *srealloc(long amount)
+void *GEMDOS_API srealloc(long amount)
 {
     MEMORY_DESCRIPTOR *md, *last;
     LONG available;
@@ -458,7 +458,7 @@ extern UBYTE _static_altram_end[];
  * to specifically request alternative RAM.
  */
 
-long xmaddalt(UBYTE *start, LONG size)
+long GEMDOS_API xmaddalt(UBYTE *start, LONG size)
 {
     MEMORY_DESCRIPTOR *md, *p;
 

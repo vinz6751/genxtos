@@ -43,7 +43,7 @@ static void init_pd_fields(PD *p, char *tail, long max, char *envptr);
 static void init_pd_files(PD *p);
 static char *alloc_env(ULONG flags, char *v);
 static UBYTE *alloc_tpa(ULONG flags,LONG needed,LONG *avail);
-static void proc_go(PD *p);
+static void __attribute__((noinline, optimize("O0"))) proc_go(PD *p);
 
 /*
  * global variables
@@ -176,7 +176,7 @@ static WORD envsize(char *env)
  */
 static PD *cur_p;
 
-long xexec(WORD flag, char *path, char *tail, char *env)
+long GEMDOS_API xexec(WORD flag, char *path, char *tail, char *env)
 {
     PD *p, *owner;
     PGMHDR01 hdr;
@@ -533,7 +533,8 @@ struct gouser_stack {
   PD * basepage;   /* ... upon startup the basepage is in 4(sp) */
 };
 
-static void proc_go(PD *p)
+static void __attribute__((noinline, optimize("O0")))
+proc_go(PD *p)
 {
     struct gouser_stack *sp;
 
@@ -551,8 +552,11 @@ static void proc_go(PD *p)
     sp->sr = get_sr() & 0x0700;  /* the process will start in user mode, same IPL */    
     KDEBUG(("retaddr: %p, sr=%04x\n", (void*)sp->retaddr, sp->sr));
 
-    /* the other stack is the supervisor stack */
-    sp->other_sp = (long) &supstk[SUPSIZ];
+    /* the other stack is the supervisor stack (gouser() reads this in asm) */
+    {
+        volatile LONG *other = &sp->other_sp;
+        *other = (long) &supstk[SUPSIZ];
+    }
     KDEBUG(("other_sp: %p\n", (void*)sp->other_sp));
 
     /* store this new stack in the saved a7 field of the PD */
@@ -589,7 +593,7 @@ static void proc_go(PD *p)
  * terminates the calling process and returns to the parent process
  * with a return code of zero
  */
-void x0term(void)
+void GEMDOS_API x0term(void)
 {
     xterm(0);
 }
@@ -602,7 +606,7 @@ void x0term(void)
  *
  * Function 0x4C        p_term
  */
-void xterm(UWORD rc)
+void GEMDOS_API xterm(UWORD rc)
 {
     PFVOID userterm;
     PD *p = run;
@@ -625,7 +629,7 @@ void xterm(UWORD rc)
 /*
  * xtermres - Function 0x31 (Ptermres)
  */
-WORD xtermres(long blkln, WORD rc)
+WORD GEMDOS_API xtermres(long blkln, WORD rc)
 {
     xsetblk(0,run,blkln);
 

@@ -129,6 +129,6 @@ extern BCONMAP bconmap_root;
 /*
  * function prototypes
  */
-LONG bconmap(WORD);
+LONG ARGS_ON_STACK bconmap(WORD);
 
 #endif  /* _SERPORT_H */

@@ -410,7 +410,7 @@ void ob_format(WORD just, char *raw_str, char *tmpl_str, char *fmt_str)
 
 static __inline__ WORD call_usercode(USERBLK *ub, PARMBLK *pb)
 {
-    register WORD (*ub_code)(PARMBLK *parmblock) __asm__("a0") = ub->ub_code;
+    register WORD (ARGS_ON_STACK *ub_code)(PARMBLK *parmblock) __asm__("a0") = ub->ub_code;
     register WORD retvalue __asm__("d0");
 
     __asm__ volatile

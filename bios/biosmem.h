@@ -24,6 +24,6 @@ void bmem_init(void);
 
 /* BIOS functions */
 
-void getmpb(MEMORY_PARTITION_BLOCK *mpb);
+void ARGS_ON_STACK getmpb(MEMORY_PARTITION_BLOCK *mpb);
 
 #endif /* BIOSMEM_H */

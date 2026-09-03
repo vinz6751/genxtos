@@ -25,7 +25,7 @@
 
 
 /* handle incomming MIDI byte */
-static void midivec(UBYTE data);
+static void ARGS_ON_STACK midivec(UBYTE data);
 
 
 /*==== midi_init - initialize the MIDI ==================*/
@@ -49,7 +49,7 @@ void midi_init(void)
 
 
 /*==== midivec handles an incomming MIDI byte ==================*/
-static void midivec(UBYTE data)
+static void ARGS_ON_STACK midivec(UBYTE data)
 {
     /* Store the data in the circular buffer, if not full */
     //KDEBUG(("midivec called\n"));
@@ -128,7 +128,7 @@ LONG bconout3(WORD dev, WORD c)
  * Note: this effectively treats the cnt argument as unsigned, just like
  * Atari TOS does.
  */
-void midiws(WORD cnt, const UBYTE *ptr)
+void ARGS_ON_STACK midiws(WORD cnt, const UBYTE *ptr)
 {
     do
     {

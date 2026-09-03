@@ -110,7 +110,7 @@ extern void (*bell_hook)(void);
 extern void (*kcl_hook)(void);
 
 extern ETV_TIMER_T etv_timer;
-extern LONG (*etv_critic)(WORD err,WORD dev);
+extern LONG (ARGS_ON_STACK *etv_critic)(WORD err,WORD dev);
 extern void (*etv_term)(void);
 
 extern void (*swv_vec)(void);

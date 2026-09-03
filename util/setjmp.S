@@ -35,7 +35,7 @@ _setjmp:
 
 _longjmp:
         move.l  4(sp),a0                // jmp_buf
-        move.w  8(sp),d0                // requested setjmp() return value
+        move.w  8(sp),d0                 // requested setjmp() return value
         jne     nonzero
         moveq   #1,d0                   // if was 0, force it to 1
 nonzero:

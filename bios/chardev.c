@@ -61,8 +61,32 @@ LONG charout_dummy(WORD dev,WORD b)
 
 /*==== BIOS device vector initialization =============================*/
 
+#if defined(FASTCALL_BUILD)
+/*
+ * With -mfastcall, gcc may turn the vector init loop into jsr (a2) calls
+ * that reuse a2 as &memcpy.  memcpy leaves a2 equal to the destination
+ * pointer, so the next jsr (a2) executes sysvar data (e.g. 0x51e).
+ */
+static void __attribute__((noinline, optimize("O0")))
+chardev_init_vecs(void)
+{
+    int i;
+
+    for (i = 0; i < NUM_CHAR_VECS; i++)
+    {
+        bconstat_vec[i] = bconstat_init[i];
+        bconin_vec[i] = bconin_init[i];
+        bcostat_vec[i] = bcostat_init[i];
+        bconout_vec[i] = bconout_init[i];
+    }
+}
+#endif
+
 void chardev_init(void)
 {
+#if defined(FASTCALL_BUILD)
+    chardev_init_vecs();
+#else
     int i;
 
     /* initialise bios device vectors */
@@ -73,6 +97,7 @@ void chardev_init(void)
         bcostat_vec[i] = bcostat_init[i];
         bconout_vec[i] = bconout_init[i];
     }
+#endif
 
     /* setup serial output functions */
     aux_stat = just_rts;

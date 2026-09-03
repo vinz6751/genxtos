@@ -78,7 +78,7 @@ static long opnfil(FCB *f, DND *dn, int mod);
  *
  *  Error returns   EPTHNF, EACCDN, ENHNDL
  */
-long xcreat(char *name, UBYTE attr)
+long GEMDOS_API xcreat(char *name, UBYTE attr)
 {
     long rc;
 
@@ -218,7 +218,7 @@ long ixcreat(char *name, UBYTE attr)
  *
  *  +ve return      file handle
  */
-long xopen(char *name, int mod)
+long GEMDOS_API xopen(char *name, int mod)
 {
     long rc;
 
@@ -423,7 +423,7 @@ static void sftdel(FTAB *sftp)
  *          operations inside the 'if' statement following the invocation
  *          of ixclose(), but I am leaving the flow of control intact.
  */
-long xclose(int h)
+long GEMDOS_API xclose(int h)
 {
     FTAB *ftab;
     OFD *fd;
@@ -620,7 +620,7 @@ static long ixunlink(char *name)
  *
  *  returns     EFILNF, EACCDN
  */
-long xunlink(char *name)
+long GEMDOS_API xunlink(char *name)
 {
     long rc;
 

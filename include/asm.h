@@ -37,6 +37,8 @@
 
 /* External function doing nothing */
 extern void just_rts(void);
+void ARGS_ON_STACK kbdvec_nop_b(UBYTE data);
+void ARGS_ON_STACK kbdvec_nop_p(UBYTE *buf);
 
 /* Wrapper around the STOP instruction. This preserves SR. */
 extern void stop_until_interrupt(void);
@@ -45,10 +47,10 @@ extern void stop_until_interrupt(void);
 WORD mul_div_round(WORD mult1, WORD mult2, WORD divisor);
 
 /* protect d2/a2 when calling external user-supplied code */
-LONG protect_v(LONG (*func)(void));
-LONG protect_w(LONG (*func)(WORD), WORD);
-LONG protect_ww(LONG (*func)(void), WORD, WORD);
-LONG protect_wlwwwl(LONG (*func)(void), WORD, LONG, WORD, WORD, WORD, LONG);
+LONG ARGS_ON_STACK protect_v(LONG (*func)(void));
+LONG ARGS_ON_STACK protect_w(LONG (*func)(WORD), WORD);
+LONG ARGS_ON_STACK protect_ww(LONG (*func)(void), WORD, WORD);
+LONG ARGS_ON_STACK protect_wlwwwl(LONG (*func)(void), WORD, LONG, WORD, WORD, WORD, LONG);
 
 /*
  * Push/Pop registers from stack, with ColdFire support.

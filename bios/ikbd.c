@@ -248,7 +248,7 @@ LONG bconout4(WORD dev, WORD c)
  * ridiculously small stack (sp == 0x22), so keep stack usage as small as
  * possible here.
  */
-void ikbdws(WORD cnt, const UBYTE *ptr)
+void ARGS_ON_STACK ikbdws(WORD cnt, const UBYTE *ptr)
 {
     do
     {

@@ -36,21 +36,21 @@
 #define RGB_WHITE     0x0fff
 
 typedef struct {
-    void (*init)(void); /* Most basic setup */
-    ULONG (*calc_vram_size)(void); /* Calculate the size of the video ram */
-    WORD (*check_moderez)(WORD moderez);
-    void (*initialise_palette_registers)(WORD rez, WORD mode);
-    WORD (*can_change_resolution)(void);
-    void (*get_current_mode_info)(UWORD *planes, UWORD *width, UWORD *height);
-    void (*setphys)(const UBYTE *addr);
-    WORD (*get_monitor_type)(void);
-    WORD (*get_number_of_colors_nuances)(void);
-    void (*get_pixel_size)(WORD *width,WORD *height);
-    UBYTE *(*physbase)(void);
+    void (FP_CALLBACK *init)(void); /* Most basic setup */
+    ULONG (FP_CALLBACK *calc_vram_size)(void); /* Calculate the size of the video ram */
+    WORD (FP_CALLBACK *check_moderez)(WORD moderez);
+    void (FP_CALLBACK *initialise_palette_registers)(WORD rez, WORD mode);
+    WORD (FP_CALLBACK *can_change_resolution)(void);
+    void (FP_CALLBACK *get_current_mode_info)(UWORD *planes, UWORD *width, UWORD *height);
+    void (FP_CALLBACK *setphys)(const UBYTE *addr);
+    WORD (FP_CALLBACK *get_monitor_type)(void);
+    WORD (FP_CALLBACK *get_number_of_colors_nuances)(void);
+    void (FP_CALLBACK *get_pixel_size)(WORD *width,WORD *height);
+    UBYTE *(FP_CALLBACK *physbase)(void);
     /* Try behave like SetScreen but may behave video-hardware specific based on rez/videomode (as CT60/Milan overloads of this) */
-    WORD (*setscreen)(UBYTE *logical, const UBYTE *physical, WORD rez, WORD videlmode);
-    WORD (*setcolor)(WORD colorNum, WORD color);
-    void (*set_palette)(const UWORD *new_palette); /* Colors are 4bits (Atari STe-compatible .... rRRR gGGG bBBB  ) */
+    WORD (FP_CALLBACK *setscreen)(UBYTE *logical, const UBYTE *physical, WORD rez, WORD videlmode);
+    WORD (FP_CALLBACK *setcolor)(WORD colorNum, WORD color);
+    void (FP_CALLBACK *set_palette)(const UWORD *new_palette); /* Colors are 4bits (Atari STe-compatible .... rRRR gGGG bBBB  ) */
 } SCREEN_DRIVER;
 
 /* This flag indicate that an emulator (like hatari or STEEm) have manipulated the Line-A variables to simulate a bigger screen than what the Atari hardware can support */
@@ -70,12 +70,12 @@ void screen_do_set_palette(const UWORD *new_palette);
 void get_std_pixel_size(WORD *width,WORD *height);
 
 /* hardware-independent xbios routines */
-const UBYTE *physbase(void);
-UBYTE *logbase(void);
-WORD getrez(void);
-WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode);
-void setpalette(const UWORD *palettePtr);
-WORD setcolor(WORD colorNum, WORD color);
-void vsync(void);
+const UBYTE * ARGS_ON_STACK physbase(void);
+UBYTE * ARGS_ON_STACK logbase(void);
+WORD ARGS_ON_STACK getrez(void);
+WORD ARGS_ON_STACK setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode);
+void ARGS_ON_STACK setpalette(const UWORD *palettePtr);
+WORD ARGS_ON_STACK setcolor(WORD colorNum, WORD color);
+void ARGS_ON_STACK vsync(void);
 
 #endif /* SCREEN_H */
