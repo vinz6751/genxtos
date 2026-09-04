@@ -29,6 +29,7 @@
 
 #if CONF_AES_INPROCESS
 #include "../aes/gemsuper.h"
+#include "super.h"
 void mn_bar(OBJECT *tree, WORD showit);   /* aes/gemmnlib.c */
 void ob_draw(OBJECT *tree, WORD obj, WORD depth);  /* aes/gemoblib.c */
 void gsx_sclip(const GRECT *pt);                   /* aes/gemgraf.c */
@@ -114,6 +115,24 @@ static WORD gem_if(UWORD ctrlcode)
     return (WORD)RET_CODE;
 #endif
 }
+
+
+#if CONF_AES_INPROCESS
+/*
+ * Blocking AES (evnt_*): run on AES SSP via Super(0).  See evnt_multi.
+ */
+static WORD gem_if_block(UWORD ctrlcode)
+{
+    char *ssp;
+    WORD ret;
+
+    gem_if0(ctrlcode);
+    ssp = (char *)Super(0L);
+    ret = aes_inprocess_call((AESPB *)&gb);
+    SuperToUser(ssp);
+    return ret;
+}
+#endif
 
 
 /*
@@ -202,7 +221,11 @@ WORD evnt_button(WORD clicks, UWORD mask, UWORD state,
     B_CLICKS = clicks;
     B_MASK = mask;
     B_STATE = state;
+#if CONF_AES_INPROCESS
+    gem_if_block(AES_CTRL_CODE(EVNT_BUTTON, 3, 5, 0));
+#else
     gem_if(AES_CTRL_CODE(EVNT_BUTTON, 3, 5, 0));
+#endif
     *pmx = EV_MX;
     *pmy = EV_MY;
     *pmb = EV_MB;
@@ -278,7 +301,15 @@ WORD evnt_multi(UWORD flags, UWORD bclk, UWORD bmsk, UWORD bst,
 
     gem_if0(AES_CTRL_CODE(EVNT_MULTI, 0, 7, 1));
     control[1] = 16;
+#if CONF_AES_INPROCESS
+    {
+        char *ssp = (char *)Super(0L);
+        aes_inprocess_call((AESPB *)&gb);
+        SuperToUser(ssp);
+    }
+#else
     gem(&gb);
+#endif
 
     *pmx = EV_MX;
     *pmy = EV_MY;

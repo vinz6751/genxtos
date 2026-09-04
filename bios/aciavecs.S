@@ -146,7 +146,10 @@ _call_kbdint: // call the C routine in keyboard.c to do the work.
 /******************************************************************************/
 
 _call_mousevec:
+        /* C callers: packet pointer in a0 under FASTCALL_BUILD, else 4(sp). */
+#ifndef FASTCALL_BUILD
         move.l  4(sp),a0
+#endif
         move.l  mousevec,a1
 #ifdef __mcoldfire__
         lea     -44(sp),sp
@@ -206,7 +209,10 @@ _callKbdvecs_wrapper:
 
         .globl  _call_joyvec
 _call_joyvec:
+        /* C callers: packet pointer in a0 under FASTCALL_BUILD, else 4(sp). */
+#ifndef FASTCALL_BUILD
         move.l  4(sp),a0
+#endif
         move.l  joyvec,a1
 #ifdef __mcoldfire__
         lea     -44(sp),sp

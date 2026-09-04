@@ -363,7 +363,7 @@ bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c kbdvec_stubs
              biosmem.c blkdev.c chardev.c clock.c \
              conout.c conout_atarifb.c conout_amiga.c \
              cartridge_atari.S country.c \
-             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c iorec.c \
+             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c ikbd_inject.c initinfo.c iorec.c \
              keyboard.c keyboard_mouse_emulation.c kprint.c kprintasm.S machine.c \
              mfp.c mfp68901.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c screen_atari.c screen_tt.c  screen_vicky2.c screen_vicky3.c screen_1bpp.c \

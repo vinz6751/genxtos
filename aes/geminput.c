@@ -113,6 +113,8 @@ static WORD chk_ctrl(WORD mx, WORD my)
  */
 void b_click(WORD state)
 {
+    NFDBG(("b_click state=%d true=%d dely=%d pend=%d\n",
+           state, gl_btrue, gl_bdely, gl_bpend));
     /* ignore it unless it represents a change */
     if (state != gl_btrue)
     {

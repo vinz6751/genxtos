@@ -2140,6 +2140,20 @@ BOOL deskmain(void)
 
     DESK_BOOT_MS(34, "main loop enter");
 
+#ifdef NATFEAT_DEBUG
+    /*
+     * Feed synthetic IKBD mouse packets through ikbdraw (same path as
+     * ACIA ikbdsys → KBDVECS.mousevec) before the first evnt_multi so
+     * move vs button crashes can be bisected under Hatari without a
+     * physical click.
+     */
+    {
+        extern void ikbd_inject_selftest(void);
+        ikbd_inject_selftest();
+        DESK_BOOT_MS(35, "after ikbd_inject_selftest");
+    }
+#endif
+
     /* loop handling user input until done */
     while(!done)
     {
