@@ -1,8 +1,9 @@
 #!/bin/sh
 # Run Hatari with debugger scripts that use CPU breakpoints correctly.
 #
-# Breakpoint scripts must use ":file" to run dump commands on hit, and the
-# entry script must end with "c" only (no "quit") so --run-vbls can run.
+# Breakpoint scripts must use ":trace :once :file" so Hatari runs dump commands
+# on hit without opening the interactive debugger (which reads stdin for "c").
+# The entry script must end with "c" only (no "quit") so --run-vbls can run.
 #
 # Usage:
 #   tools/hatari-debug.sh [vbl_budget] [debugger.ini]

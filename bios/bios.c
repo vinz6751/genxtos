@@ -664,16 +664,29 @@ static void bootstrap(void)
     PD *pd;
     LONG length;
     LONG r;
+    LONG rc;
     char args[128];
+
+    if (!has_nf_bootstrap()) {
+        NFDBG(("bootstrap: skipped, BOOTSTRAP natfeat unavailable\n"));
+        return;
+    }
 
     args[0] = '\0';
     nf_getbootstrap_args(args, sizeof(args));
 
     /* allocate space */
-    pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char*)PF_STANDARD, args, default_env);
+    rc = Pexec(PE_BASEPAGEFLAGS, (char*)PF_STANDARD, args, default_env);
+    NFDBG(("bootstrap: PE_BASEPAGEFLAGS rc=%ld\n", rc));
+    if (rc < 0) {
+        NF_TRACE(("bootstrap: basepage alloc failed, GEMDOS error %ld\n", rc));
+        return;
+    }
+    pd = (PD *)rc;
 
     /* get the TOS executable from the emulator */
     length = nf_bootstrap(pd->p_lowtpa + sizeof(PD), pd->p_hitpa - pd->p_lowtpa);
+    NFDBG(("bootstrap: nf_bootstrap length=%ld\n", length));
 
     /* free the allocated space if something is wrong */
     if (length <= 0)
@@ -681,6 +694,7 @@ static void bootstrap(void)
 
     /* relocate the loaded executable */
     r = Pexec(PE_RELOCATE, (char *)length, (char *)pd, default_env);
+    NFDBG(("bootstrap: PE_RELOCATE rc=%ld pd=%p\n", r, pd));
     if (r != (LONG)pd)
         goto err;
 
@@ -689,8 +703,10 @@ static void bootstrap(void)
 
     /* execute the relocated process */
     Pexec(PE_GO, "", (char *)pd, default_env);
+    return;
 
 err:
+    NF_TRACE(("bootstrap: failed, cleaning up pd=%p\n", pd));
     Mfree(pd->p_env); /* Mfree() the environment */
     Mfree(pd); /* Mfree() the process area */
 }
@@ -762,11 +778,19 @@ static void run_reset_resident(void)
  * to use GEMDOS calls here!
  */
 
-static void run_auto_program(const char* filename)
+static void run_auto_program(WORD drive, const char* filename)
 {
-    char path[30];
+    char path[32];
 
+#if DETECT_NATIVE_FEATURES
+    /* Hatari/ARAnyM GEMDOS resolves paths on the current Dsetdrv() drive. */
     strcpy(path, "\\AUTO\\");
+#else
+    if (drive >= NUMFLOPPIES)
+        strcpy(path, "C:\\AUTO\\");
+    else
+        strcpy(path, "\\AUTO\\");
+#endif
     strcat(path, filename);
 
     KDEBUG(("Loading %s ...\n", path));
@@ -774,11 +798,54 @@ static void run_auto_program(const char* filename)
     KDEBUG(("[OK]\n"));
 }
 
-static void autoexec(void)
+static void autoexec_drive(WORD drive)
 {
     DTA dta;
     WORD err;
+    WORD olddrv;
+    const char *pattern;
 
+    if (drive < NUMFLOPPIES && !blkdev_avail(drive))
+        return;
+
+    olddrv = Dgetdrv();
+    Dsetdrv(drive);
+
+#if DETECT_NATIVE_FEATURES
+    /* Hatari/ARAnyM GEMDOS: use drive-relative paths after Dsetdrv(). */
+    pattern = "\\AUTO\\*.PRG";
+#else
+    pattern = (drive >= NUMFLOPPIES) ? "C:\\AUTO\\*.PRG" : "\\AUTO\\*.PRG";
+#endif
+
+    Fsetdta(&dta);
+    KDEBUG(("autoexec drv=%d Fsfirst starting --------------\n", drive));
+    err = Fsfirst((char *)pattern, 7);
+    KDEBUG(("autoexec drv=%d Fsfirst: %d--------------------\n", drive, err));
+    while(err == 0) {
+#ifdef TARGET_PRG
+        if (!strncmp(dta.d_fname, "EMUTOS", 6))
+        {
+            KDEBUG(("Skipping %s from AUTO folder\n", dta.d_fname));
+        }
+        else
+#endif
+        {
+            run_auto_program(drive, dta.d_fname);
+
+            /* Setdta. BetaDOS corrupted the AUTO load if the Setdta
+             * not repeated here */
+            Fsetdta(&dta);
+        }
+
+        err = Fsnext();
+    }
+
+    Dsetdrv(olddrv);
+}
+
+static void autoexec(void)
+{
     KDEBUG(("autoexec\n"));
 
     /* check if the user does not want to run AUTO programs */
@@ -789,31 +856,9 @@ static void autoexec(void)
     bootstrap();                        /* try to boot the new OS kernel directly */
 #endif
 
-    if(!blkdev_avail(bootdev))          /* check, if bootdev available */
-        return;
-
-    Fsetdta(&dta);
-    KDEBUG(("autoexec Fsfirst starting --------------\n"));
-    err = Fsfirst("\\AUTO\\*.PRG", 7);
-    KDEBUG(("autoexec Fsfirst: %d--------------------\n",err));
-    while(err == 0) {
-#ifdef TARGET_PRG
-        if (!strncmp(dta.d_fname, "EMUTOS", 6))
-        {
-            KDEBUG(("Skipping %s from AUTO folder\n", dta.d_fname));
-        }
-        else
-#endif
-        {
-            run_auto_program(dta.d_fname);
-
-            /* Setdta. BetaDOS corrupted the AUTO load if the Setdta
-             * not repeated here */
-            Fsetdta(&dta);
-        }
-
-        err = Fsnext();
-    }
+    autoexec_drive(bootdev);
+    if (bootdev != HARDDISK_BOOTDEV)
+        autoexec_drive(HARDDISK_BOOTDEV);
 
     KDEBUG(("autoexec exiting\n"));
 }
@@ -883,8 +928,14 @@ void biosmain(void)
      * this allows a boot device that was selected via the welcome
      * screen to persist across warm boots.
      */
-    if (FIRST_BOOT)
+    if (FIRST_BOOT) {
+        WORD hostdev = bootdev;
+
         bootdev = blkdev_avail(DEFAULT_BOOTDEV) ? DEFAULT_BOOTDEV : FLOPPY_BOOTDEV;
+        /* Hatari (and similar hosts) may preset 0x446 to boot GEMDOS HD */
+        if (hostdev >= NUMFLOPPIES)
+            bootdev = hostdev;
+    }
 
 #if INITINFO_DURATION == 0
     show_initinfo = FALSE;
@@ -933,9 +984,42 @@ void biosmain(void)
     }
 #endif
 
+#ifdef NATFEAT_DEBUG
+    /*
+     * In-ROM GEMDOS heap smoke test (before AUTO/AES).  AUTO Pexec of a
+     * host PRG is currently unreliable under FASTCALL (Fsfirst OSM loop),
+     * so report Mxalloc/Malloc here via NF_STDERR.
+     */
+    {
+        void *p_mx, *p_ml;
+        long free_st = (long)Mxalloc(-1L, 0);
+        long free_pref = (long)Mxalloc(-1L, 3);
+        long free_ml = (long)Malloc(-1L);
+
+        NF_TRACE(("MALTEST-MS phystop=%p membot=%p memtop=%p end_os=%p\n",
+                  phystop, membot, memtop, end_os));
+        NF_TRACE(("MALTEST-MS free Mxalloc(ST)=%ld Mxalloc(prefTT)=%ld Malloc=%ld\n",
+                  free_st, free_pref, free_ml));
+
+        p_mx = (void *)Mxalloc(896L, 3);
+        NF_TRACE(("MALTEST-MS Mxalloc(896,prefTT)=%p %s\n",
+                  p_mx, p_mx ? "OK" : "FAIL"));
+        if (p_mx)
+            Mfree(p_mx);
+
+        p_ml = (void *)Malloc(896L);
+        NF_TRACE(("MALTEST-MS Malloc(896)=%p %s\n",
+                  p_ml, p_ml ? "OK" : "FAIL"));
+        if (p_ml)
+            Mfree(p_ml);
+    }
+#endif
+
     autoexec();                 /* autoexec PRGs from AUTO folder */
     char *the_env = *((char**)0x4be);
     /* clear commandline */
+
+    NFDBG(("biosmain: cmdload=%d exec_os=%p the_env=%p\n", cmdload, exec_os, the_env));
 
     if(cmdload != 0) {
         /*
@@ -946,7 +1030,17 @@ void biosmain(void)
     }
     else {
         PD *pd;
-        pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
+        LONG rc;
+
+        rc = Pexec(PE_BASEPAGEFLAGS, (char *)PF_STANDARD, "", the_env);
+        NFDBG(("biosmain: PE_BASEPAGEFLAGS rc=%ld env=%p exec_os=%p\n",
+               rc, the_env, exec_os));
+        if (rc < 0) {
+            NF_TRACE(("biosmain: desktop launch failed, GEMDOS error %ld\n", rc));
+            kcprintf(_("Cannot launch desktop: error %ld\n"), rc);
+            halt();
+        }
+        pd = (PD *)rc;
         pd->p_tlen = pd->p_dlen = pd->p_blen = 0;
 
 #if 0 && (defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX))

@@ -19,4 +19,8 @@ typedef struct aespb {
     LONG *addrout;
 } AESPB;
 
+#if CONF_AES_INPROCESS
+WORD aes_inprocess_call(AESPB *pb);
+#endif
+
 #endif

@@ -98,6 +98,8 @@ When the OS is compiled with -mfastcall, three calling conventions coexist:
   with arguments on the trap stack.
 - User program interfaces are unchanged: traps, G_USERDEF draw routines,
   and most KBDVECS hooks called via stack pushes from aciavecs_c.c.
+- Variadic functions (kprintf, cprintf, panic, sprintf, …) use VARARGS
+  (cdecl): va_start does not work with -mfastcall.
 
 G_USERDEF (AES): user draw routine receives PARMBLK* on the stack
 (Pure-C convention). See call_usercode() in aes/gemoblib.c.

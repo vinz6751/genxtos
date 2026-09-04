@@ -15,11 +15,13 @@
 #define DESKSTACKSIZE   2560    /* in bytes: must be multiple of 4 */
 
         .globl  _deskstart
+        .globl  _desk_run_inprocess
 #if CONF_DEBUG_DESK_STACK
         .globl  _deskstackbottom
 #endif
 
         .extern _deskmain
+        .extern _desk_boot_enter
 
         .text
 
@@ -57,6 +59,38 @@ restart:
 
         clr.w   -(sp)
         trap    #1                      // Pterm
+
+/*
+ * Run deskmain on the desktop user stack in user mode.
+ * Used when CONF_AES_INPROCESS skips Pexec/deskstart but still
+ * needs a valid USP for AES trap #2 (menu_bar etc.).
+ */
+_desk_run_inprocess:
+restart_ip:
+        // USP only — do not touch a7/SSP while still in supervisor.
+        // Setting SSP=deskustack made VDI trap #2 frames share the desk
+        // user stack and smash everyobj/objc_draw return addresses
+        // (especially on deep TEXTBLT paths). Same idea as gotopgm().
+        movea.l #deskustack,a0
+        move.l  a0,usp
+        // Enter user mode but keep current IPL (same as gotopgm).
+        // move.w #0,sr also forces IPL0 and has raced with DESK-MS/natfeat.
+#ifdef __mcoldfire__
+        move.w  sr,d0
+        bclr    #13,d0
+        move.w  d0,sr
+#else
+        andi.w  #0xdfff,sr              // user mode (SSP preserved)
+#endif
+        jsr     _desk_boot_enter
+        jsr     _deskmain
+        tst.w   d0
+        jeq     restart_ip
+        clr.l   -(sp)                   // Super(0): back to supervisor
+        move.w  #0x20,-(sp)
+        trap    #1
+        addq.l  #6,sp
+        rts
 
 .bss
 

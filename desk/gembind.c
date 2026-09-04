@@ -27,6 +27,13 @@
 #include "aesbind.h"
 #include <stdarg.h>
 
+#if CONF_AES_INPROCESS
+#include "../aes/gemsuper.h"
+void mn_bar(OBJECT *tree, WORD showit);   /* aes/gemmnlib.c */
+void ob_draw(OBJECT *tree, WORD obj, WORD depth);  /* aes/gemoblib.c */
+void gsx_sclip(const GRECT *pt);                   /* aes/gemgraf.c */
+#endif
+
 
 /*
  * opcode ranges from 10 - 127
@@ -100,8 +107,12 @@ static void gem_if0(UWORD ctrlcode)
 static WORD gem_if(UWORD ctrlcode)
 {
     gem_if0(ctrlcode);
+#if CONF_AES_INPROCESS
+    return aes_inprocess_call((AESPB *)&gb);
+#else
     gem(&gb);
     return (WORD)RET_CODE;
+#endif
 }
 
 
@@ -292,9 +303,16 @@ WORD evnt_dclick(WORD rate, WORD setit)
  */
 WORD menu_bar(OBJECT *tree, WORD showit)
 {
+#if CONF_AES_INPROCESS
+    DESK_BOOT_MSF(30, "menu_bar tree=%p showit=%d", tree, (int)showit);
+    /* Avoid nested trap #2 from the AES shell process (pid 0). */
+    mn_bar(tree, showit);
+    return 1;
+#else
     MM_ITREE = (LONG)tree;
     SHOW_IT = showit;
     return gem_if(AES_CTRL_CODE(MENU_BAR, 1, 1, 1));
+#endif
 }
 
 
@@ -371,6 +389,26 @@ WORD objc_delete(OBJECT *tree, WORD delob)
 WORD objc_draw(OBJECT *tree, WORD drawob, WORD depth, WORD xc, WORD yc,
                WORD wc, WORD hc)
 {
+#if CONF_AES_INPROCESS
+    GRECT clip;
+
+    /*
+     * Call AES draw primitives directly.  Going through aes_inprocess_call
+     * → crysbind.isra under -mfastcall was delivering depth=0 (only ROOT
+     * drawn) and then corrupting the return path.
+     */
+    clip.g_x = xc;
+    clip.g_y = yc;
+    clip.g_w = wc;
+    clip.g_h = hc;
+    DESK_BOOT_MSF(261, "objc_draw direct depth=%d clip=%d,%d %dx%d",
+                  depth, xc, yc, wc, hc);
+    gsx_sclip(&clip);
+    DESK_BOOT_MS(262, "objc_draw after gsx_sclip");
+    ob_draw(tree, drawob, depth);
+    DESK_BOOT_MS(263, "objc_draw after ob_draw");
+    return 1;
+#else
     OB_TREE = (LONG)tree;
     OB_DRAWOB = drawob;
     OB_DEPTH = depth;
@@ -379,6 +417,7 @@ WORD objc_draw(OBJECT *tree, WORD drawob, WORD depth, WORD xc, WORD yc,
     OB_WCLIP = wc;
     OB_HCLIP = hc;
     return gem_if(AES_CTRL_CODE(OBJC_DRAW, 6, 1, 1));
+#endif
 }
 
 

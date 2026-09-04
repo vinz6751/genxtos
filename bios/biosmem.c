@@ -62,6 +62,10 @@ void bmem_init(void)
     KDEBUG(("       stktop = %p\n", stktop));
     KDEBUG(("_end_os_stram = %p\n", _end_os_stram));
 
+#if CONF_WITH_BUS_ERROR && CONF_ATARI_HARDWARE
+    stram_fixup_phystop();
+#endif
+
     /* Start of available ST-RAM */
     end_os = _end_os_stram;
     membot = end_os;

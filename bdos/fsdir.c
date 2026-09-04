@@ -449,7 +449,7 @@ long GEMDOS_API xchmod(char *p, int wrt, UBYTE mod)
  *  returns:
  *      error code.
  */
-long ixsfirst(char *name, WORD att, DTAINFO *addr)
+long GEMDOS_API ixsfirst(char *name, WORD att, DTAINFO *addr)
 {
     const char *s;              /*  M01.01.03                   */
     DND *dn;

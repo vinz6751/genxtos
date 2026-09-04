@@ -78,9 +78,15 @@ _normal_blit:
 |;;   movem.l   d2-d7/a2-a6,-(sp)      | [36]
 	lea      -44(%a7),%a7
 	movem.l  %d2-%d7/%a2-%a6,(%a7)
+#ifdef FASTCALL_BUILD
+	move.l   %a0,%a6                   | vars
+	move.l   %a1,%a0                   | src
+	movea.l  (44+4,%a7),%a1            | dst (only stacked arg)
+#else
       movea.l  (44+4,%a7),%a6          | [37]
       movea.l  (44+8,%a7),%a0          | [38]
       movea.l  (44+12,%a7),%a1         | [39]
+#endif
       jbsr     norm_blt                | [40]
 |;;   movem.l   (sp)+,d2-d7/a2-a6      | [41]
 	movem.l  (%a7),%d2-%d7/%a2-%a6

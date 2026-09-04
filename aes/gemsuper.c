@@ -74,7 +74,7 @@ static void aestrace(const char* message)
 #define aestrace(a)
 #endif
 
-static UWORD crysbind(WORD opcode, AESGLOBAL *pglobal, WORD control[], WORD int_in[], WORD int_out[], LONG addr_in[])
+static UWORD __attribute__((noinline)) crysbind(WORD opcode, AESGLOBAL *pglobal, WORD control[], WORD int_in[], WORD int_out[], LONG addr_in[])
 {
     LONG    count, buparm;
     OBJECT  *tree;
@@ -446,6 +446,37 @@ static void xif(AESPB *pcrys_blk)
     if (OP_CODE == RSRC_GADDR)
         pcrys_blk->addrout[0] = (LONG)ad_rso;
 }
+
+
+#if CONF_AES_INPROCESS
+/*
+ * Direct AES dispatch for in-process EmuDesk: same as trap #2/xif but
+ * without dsptch(), which never returns to synchronous shell code.
+ */
+WORD aes_inprocess_call(AESPB *pcrys_blk)
+{
+    WORD    control[C_SIZE];
+    WORD    int_in[I_SIZE];
+    WORD    int_out[O_SIZE];
+    LONG    addr_in[AI_SIZE];
+
+    memcpy(control, pcrys_blk->control, C_SIZE*sizeof(WORD));
+    if (IN_LEN)
+        memcpy(int_in, pcrys_blk->intin, min(IN_LEN,I_SIZE)*sizeof(WORD));
+    if (AIN_LEN)
+        memcpy(addr_in, pcrys_blk->addrin, min(AIN_LEN,AI_SIZE)*sizeof(LONG));
+
+    int_out[0] = crysbind(OP_CODE, (AESGLOBAL *)pcrys_blk->global, control, int_in, int_out,
+                                addr_in);
+
+    if (OUT_LEN)
+        memcpy(pcrys_blk->intout, int_out, OUT_LEN*sizeof(WORD));
+    if (OP_CODE == RSRC_GADDR)
+        pcrys_blk->addrout[0] = (LONG)ad_rso;
+
+    return int_out[0];
+}
+#endif
 
 
 /*

@@ -21,6 +21,7 @@ extern UBYTE dskbuf[DSKBUF_SIZE]; /* In ST-RAM */
 
 /* Prototypes */
 void bmem_init(void);
+void stram_fixup_phystop(void);
 
 /* BIOS functions */
 

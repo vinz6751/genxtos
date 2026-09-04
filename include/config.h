@@ -451,7 +451,17 @@
 #endif
 
 /*
- * Defaults for the diagnostic cartridge target (maximum size 128K).
+ * Small ST ROM images (256K/512K padded) lack room for extra GEMDOS
+ * subprocesses after AES init; run accdesk and desktop in-process.
+ */
+#if defined(TARGET_256) || defined(TARGET_512)
+# define CONF_AES_INPROCESS 1
+#endif
+#ifndef CONF_AES_INPROCESS
+# define CONF_AES_INPROCESS 0
+#endif
+
+/*
  * When this is selected, the Makefile excludes AES support in order
  * to reduce ROM size.  However this is still insufficient, so we
  * need to exclude some feature(s).  The cartridge will still run on

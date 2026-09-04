@@ -54,12 +54,23 @@ _trap1_pexec:
 #else
         movem.l d2/a2,-(sp)
 #endif
-        move.l  22(sp),-(sp)    // Push parameter on the stack again for pexec
-        move.l  22(sp),-(sp)
-        move.l  22(sp),-(sp)
-        move.w  24(sp),-(sp)
+#ifdef FASTCALL_BUILD
+        /*
+         * GCC mfastcall: d0=mode, a0=path, a1=tail, env on caller stack at 12(sp)
+         * after the movem prologue (4(sp) above return address).
+         */
+        move.l  12(sp),-(sp)    /* env */
+        move.l  a1,-(sp)        /* tail */
+        move.l  a0,-(sp)        /* path */
+        move.w  d0,-(sp)        /* mode */
+#else
+        move.l  22(sp),-(sp)    /* env */
+        move.l  18(sp),-(sp)    /* tail */
+        move.l  14(sp),-(sp)    /* path */
+        move.w  12(sp),-(sp)    /* mode */
+#endif
         move.w  #0x4b,-(sp)
-        trap    #1              // Pexec
+        trap    #1              /* Pexec */
         lea     16(sp),sp
 #ifdef __mcoldfire__
         move.l  (sp)+,d2

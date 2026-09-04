@@ -96,14 +96,14 @@ WORD ckdrv(int d, BOOL checkrem)
         b = (BPB *) Getbpb(d);
 
         if (!b)
-            return (mask&Bdrvrem()) ? EPTHNF : EDRIVE;
+            return (mask & drvrem) ? EPTHNF : EDRIVE;
 
         if (log_media(b,d))
             return ENSMEM;
 
         drvsel |= mask;
     }
-    else if (checkrem && (mask & Bdrvrem()))   /* handle removable media */
+    else if (checkrem && (mask & drvrem))   /* handle removable media */
     {
         if (Mediach(d))
         {

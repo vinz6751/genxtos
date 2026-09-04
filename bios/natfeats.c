@@ -20,6 +20,9 @@ static BOOL hasNF;
 
 static long nfid_name;
 static long nfid_stderr;
+static long nfid_debugger;
+static long nfid_cycles;
+static long nfid_exit;
 static long nfid_xhdi;
 static long nfid_shutdown;
 static long bootstrap_id;
@@ -36,6 +39,9 @@ void natfeat_init(void)
     if (hasNF) {
         nfid_name = NFID("NF_NAME");
         nfid_stderr = NFID("NF_STDERR");
+        nfid_debugger = NFID("NF_DEBUGGER");
+        nfid_cycles = NFID("NF_CYCLES");
+        nfid_exit = NFID("NF_EXIT");
         nfid_xhdi = NFID("XHDI");
         nfid_shutdown = NFID("NF_SHUTDOWN");
         bootstrap_id = NFID("BOOTSTRAP");
@@ -44,6 +50,9 @@ void natfeat_init(void)
     else {
         nfid_name = 0;
         nfid_stderr = 0;
+        nfid_debugger = 0;
+        nfid_cycles = 0;
+        nfid_exit = 0;
         nfid_xhdi = 0;
         nfid_shutdown = 0;
         bootstrap_id = 0;
@@ -84,6 +93,38 @@ long nfStdErr(const char *text)
     }
 }
 
+BOOL has_nf_debugger(void)
+{
+    return nfid_debugger > 0;
+}
+
+void nf_debugger(void)
+{
+    if (nfid_debugger) {
+        NFCall(nfid_debugger);
+    }
+}
+
+unsigned long nf_cycles(void)
+{
+    if (nfid_cycles) {
+        return (unsigned long)NFCall(nfid_cycles);
+    }
+    return 0;
+}
+
+BOOL has_nf_exit(void)
+{
+    return nfid_exit > 0;
+}
+
+void nf_exit(long exitval)
+{
+    if (nfid_exit) {
+        NFCall(nfid_exit, exitval);
+    }
+}
+
 long get_xhdi_nfid(void)
 {
     return nfid_xhdi;
@@ -103,6 +144,11 @@ void nf_shutdown(void)
 BOOL has_nf_shutdown(void)
 {
     return nfid_shutdown > 0;
+}
+
+BOOL has_nf_bootstrap(void)
+{
+    return bootstrap_id > 0;
 }
 
 /* load a new OS kernel into memory at 'addr' ('size' bytes available) */

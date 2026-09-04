@@ -791,9 +791,17 @@ f2op_15:
 // It emulates the link opcode by setting a6 to FRAME_LEN plus the passed
 // address.  That way the rest of the assembler stuff can stay as
 // it is for now - some of it is also used for text blitting.
+//
+// C prototype: void fast_bit_blt(struct blit_frame *blit_info);
+// cdecl:    4(sp)=blit_info
+// fastcall: a0=blit_info
 _fast_bit_blt:
         // A wrapper, so save and set up registers
+#ifdef FASTCALL_BUILD
+        // a0 already holds blit_info from C
+#else
         movea.l 4(sp),a0                // a0 -> start of frame
+#endif
         movem.l d2-d7/a2-a6,-(sp)
 
         lea     FRAME_LEN(a0),a6        // emulate link opcode

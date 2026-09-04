@@ -1343,9 +1343,11 @@ void app_blddesk(void)
     ICONBLK *pic;
 
     /* free all this window's kids and set size  */
+    DESK_BOOT_MS(247, "app_blddesk: before obj_wfree");
     obj_wfree(DROOT, 0, 0, gl_width, gl_height);
 
     /* set background pattern/colours */
+    DESK_BOOT_MS(248, "app_blddesk: before set_background");
     set_background();
 
     /*
@@ -1353,8 +1355,10 @@ void app_blddesk(void)
      * allocated in the same sequence as they appear on the desktop.
      * this is important for 'Show info'.
      */
+    DESK_BOOT_MS(249, "app_blddesk: before app_revit");
     app_revit();
 
+    DESK_BOOT_MS(250, "app_blddesk: before icon alloc loop");
     for(pa = G.g_ahead; pa; pa = pa->a_next)
     {
         if (pa->a_flags & AF_ISDESK)
@@ -1398,9 +1402,12 @@ void app_blddesk(void)
         }
     }
 
+    DESK_BOOT_MS(251, "app_blddesk: before app_revit#2");
     app_revit();    /* back to normal ... */
 
+    DESK_BOOT_MS(252, "app_blddesk: before do_wredraw");
     do_wredraw(DESKWH, &G.g_desk);
+    DESK_BOOT_MS(253, "app_blddesk: after do_wredraw");
 }
 
 

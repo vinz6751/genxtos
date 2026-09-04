@@ -31,7 +31,7 @@ int strncmp(const char *a, const char *b, size_t n);
 int strncasecmp(const char *a, const char *b, size_t n);
 char *strchr(const char *s, int c);
 int toupper(int c);
-int sprintf(char *RESTRICT str, const char *RESTRICT fmt, ...) SPRINTF_STYLE;
+int VARARGS sprintf(char *RESTRICT str, const char *RESTRICT fmt, ...) SPRINTF_STYLE;
 
 
 /* Inline string routines: */

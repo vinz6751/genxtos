@@ -40,7 +40,7 @@
 void wheel_change(WORD wheel_number, WORD wheel_amount);    /* called only from aes/gemdosif.S */
 #endif
 void b_click(WORD state);   /* called only from aes/gemdosif.S */
-void b_delay(WORD amnt);    /* called only from aes/gemdosif.S */
+void FP_CALLBACK b_delay(WORD amnt);    /* called only from aes/gemdosif.S */
 
 
 #define MB_DOWN 0x01
@@ -152,7 +152,7 @@ void b_click(WORD state)
  *  Button delay code that is called from the tick interrupt code
  *  with interrupts off
  */
-void b_delay(WORD amnt)
+void FP_CALLBACK b_delay(WORD amnt)
 {
     WORD forkq_calls;
 

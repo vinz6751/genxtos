@@ -60,7 +60,7 @@ WORD get_cache(void);
 UBYTE * ARGS_ON_STACK balloc_stram(ULONG size, BOOL top);
 
 /* print a panic message both via kprintf and cprintf, then halt */
-void panic(const char *fmt, ...) PRINTF_STYLE NORETURN;
+void VARARGS panic(const char *fmt, ...) PRINTF_STYLE NORETURN;
 
 /* halt the machine */
 void halt(void) NORETURN;

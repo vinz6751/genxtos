@@ -29,6 +29,36 @@
 
 #define ZONECOUNT   32      /* for memory test */
 
+#if CONF_WITH_BUS_ERROR && CONF_ATARI_HARDWARE
+/*
+ * Hatari and similar hosts may reuse memvalid/phystop from a prior session
+ * with a different --mem amount.  Probe top-of-RAM and shrink phystop when
+ * the cached value points past accessible memory.
+ */
+void stram_fixup_phystop(void)
+{
+    ULONG top = (ULONG)phystop;
+
+    if (top <= 0x20000UL)
+        return;
+
+    while (top > 0x20000UL && !check_read_byte((long)(top - 1)))
+        top -= 0x20000UL;
+
+    if (top != (ULONG)phystop)
+    {
+        KDEBUG(("stram_fixup_phystop: %p -> %p\n", phystop, (void *)top));
+        NFDBG(("stram_fixup_phystop: %p -> %p\n", phystop, (void *)top));
+        phystop = (UBYTE *)top;
+        memvalid = 0;
+    }
+}
+#else
+void stram_fixup_phystop(void)
+{
+}
+#endif /* CONF_WITH_BUS_ERROR && CONF_ATARI_HARDWARE */
+
 UBYTE meminit_flags;
 
 #if CONF_WITH_TTRAM

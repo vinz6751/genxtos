@@ -431,7 +431,9 @@ typedef struct {
     int boty;
 } BLANK_RECT;
 
-static void __attribute__((noinline)) conout_atari_blank_out_impl(const BLANK_RECT *rect)
+void conout_atari_blank_out_impl(const BLANK_RECT *rect);
+
+void __attribute__((noinline)) conout_atari_blank_out_impl(const BLANK_RECT *rect)
 {
     int topx = rect->topx;
     int topy = rect->topy;

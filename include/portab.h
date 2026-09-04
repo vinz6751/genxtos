@@ -275,9 +275,11 @@ typedef LONG LONG_ALIAS MAY_ALIAS;
 #if defined(FASTCALL_BUILD)
 # define FP_CALLBACK ARGS_ON_STACK
 # define GEMDOS_API    ARGS_ON_STACK
+# define VARARGS       ARGS_ON_STACK  /* kprintf, panic, sprintf, … */
 #else
 # define FP_CALLBACK
 # define GEMDOS_API
+# define VARARGS
 #endif
 
 #endif /* PORTAB_H */

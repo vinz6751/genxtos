@@ -42,7 +42,7 @@ extern void takeerr(void);
 extern void giveerr(void);
 extern void retake(void);
 
-extern void drawrat(WORD newx, WORD newy);
+extern void FP_CALLBACK drawrat(WORD newx, WORD newy);
 extern void tikcod(void);
 
 #endif

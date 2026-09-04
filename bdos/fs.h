@@ -450,7 +450,7 @@ long ixwrite(OFD *p, long len, void *ubufr);
 long GEMDOS_API xmkdir(char *s);
 long GEMDOS_API xrmdir(char *p);
 long GEMDOS_API xchmod(char *p, int wrt, UBYTE mod);
-long ixsfirst(char *name, WORD att, DTAINFO *addr);
+long GEMDOS_API ixsfirst(char *name, WORD att, DTAINFO *addr);
 long GEMDOS_API xsfirst(char *name, int att);
 long GEMDOS_API xsnext(void);
 long GEMDOS_API xgsdtof(DOSTIME *buf, int h, int wrt);

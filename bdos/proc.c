@@ -52,6 +52,7 @@ static void __attribute__((noinline, optimize("O0"))) proc_go(PD *p);
 
 static WORD    supstk[SUPSIZ]; /* common sup stack for all processes */
 static jmp_buf bakbuf;         /* longjmp buffer */
+static char    null_env[2];    /* not in pmd; for PE_BASEPAGE when env is NULL */
 
 
 /*
@@ -182,6 +183,8 @@ long GEMDOS_API xexec(WORD flag, char *path, char *tail, char *env)
     FH fh;
 
     KDEBUG(("BDOS xexec: flag or mode = %d\n",flag));
+    NF_TRACE(("xexec flag=%u path=%p tail=%p env=%p\n",
+              (unsigned)flag, path, tail, env));
 
     /* first branch - actions that do not require loading files */
     switch(flag) {
@@ -207,15 +210,17 @@ long GEMDOS_API xexec(WORD flag, char *path, char *tail, char *env)
         FALLTHROUGH;
     case PE_BASEPAGEFLAGS:      /* create a basepage, respecting the flags */
         hdrflags = (ULONG)path;
-        env_ptr = alloc_env(hdrflags, env);
-        if (env_ptr == NULL) {
+        if (env == NULL)
+            env_ptr = null_env;
+        else if ((env_ptr = alloc_env(hdrflags, env)) == NULL) {
             KDEBUG(("BDOS xexec: no memory for environment\n"));
             return ENSMEM;
         }
         p = (PD *)alloc_tpa((ULONG)path,sizeof(PD),&max);
 
         if (p == NULL) {    /* not even enough memory for basepage */
-            xmfree(env_ptr);
+            if (env_ptr != null_env)
+                xmfree(env_ptr);
             KDEBUG(("BDOS xexec: No memory for basepage\n"));
             return ENSMEM;
         }

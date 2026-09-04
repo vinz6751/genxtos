@@ -45,7 +45,7 @@ void warm_reset(void) NORETURN;
 void cold_reset(void) NORETURN;
 
 /* display information found in 0x380 and halt */
-void dopanic(const char *fmt, ...) PRINTF_STYLE NORETURN;
+void VARARGS dopanic(const char *fmt, ...) PRINTF_STYLE NORETURN;
 
 /* misc BIOS variables */
 extern const OSHEADER os_header;

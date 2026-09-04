@@ -216,6 +216,9 @@ MINTELF = 0
 # Override with 1 to compile internal OS code with -mfastcall (requires MINTELF=1 or ELF=1).
 FASTCALL = 0
 
+# Override with 1 to enable NFDBG() trace macros (NF_STDERR via kprintf under Hatari).
+NATFEAT_DEBUG = 0
+
 ifeq (1,$(MINTELF))
 ELF_TOOLCHAIN_PREFIX = m68k-atari-mintelf-
 else
@@ -262,7 +265,7 @@ CC = $(TOOLCHAIN_PREFIX)gcc
 CPP = $(CC) -E
 CPUFLAGS = -m68000
 MULTILIBFLAGS = $(CPUFLAGS) -mshort
-INC = -Iinclude
+INC = -Iinclude -Ibios
 OTHERFLAGS = -fomit-frame-pointer -fno-common
 
 # VASM for .asm files
@@ -302,6 +305,9 @@ ifeq (1,$(FASTCALL))
 ifneq (,$(filter 1,$(ELF) $(MINTELF)))
 DEFINES += -DFASTCALL_BUILD
 endif
+endif
+ifeq (1,$(NATFEAT_DEBUG))
+DEFINES += -DNATFEAT_DEBUG
 endif
 CFLAGS_COMPILE = $(TOOLCHAIN_CFLAGS) $(OPTFLAGS) $(OTHERFLAGS) $(WARNFLAGS)
 CFLAGS = $(MULTILIBFLAGS) $(CFLAGS_COMPILE) $(INC) $(DEFINES)

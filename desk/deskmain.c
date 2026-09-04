@@ -49,6 +49,17 @@
 
 #include "aesbind.h"
 #include "desksupp.h"
+
+#if CONF_AES_INPROCESS
+void wm_inprocess_reset(void);
+void wm_inprocess_lock(void);
+void wm_inprocess_unlock(void);
+#define desk_begin_update() wm_inprocess_lock()
+#define desk_end_update()   wm_inprocess_unlock()
+#else
+#define desk_begin_update() wind_update(BEG_UPDATE)
+#define desk_end_update()   wind_update(END_UPDATE)
+#endif
 #include "deskins.h"
 #include "deskinf.h"
 #include "deskdir.h"
@@ -59,6 +70,7 @@
 #include "deskobj.h"
 #include "deskrez.h"
 #include "deskmain.h"
+#include "deskstub.h"
 #include "scancode.h"
 
 /* structure pointed to by return value from Keytbl() */
@@ -1932,6 +1944,12 @@ void static close_desktop_windows(void)
 #endif
 
 
+void desk_boot_enter(void)
+{
+    DESK_BOOT_MS(11, "desk_run_inprocess user mode");
+}
+
+
 /*
  *  Run desktop
  */
@@ -1946,28 +1964,39 @@ BOOL deskmain(void)
     restart_desktop = FALSE;
 #endif
 
+    DESK_BOOT_MS(12, "deskmain enter");
+
     /* remember start drive */
     G.g_stdrv = dos_gdrv();
+    DESK_BOOT_MSF(13, "after dos_gdrv stdrv=%u", (unsigned)G.g_stdrv);
 
     /* initialize libraries */
     gl_apid = appl_init();
+    DESK_BOOT_MSF(14, "after appl_init apid=%d", (int)gl_apid);
 
     /* get GEM's gsx handle */
     gl_handle = graf_handle(&gl_wchar, &gl_hchar, &gl_wbox, &gl_hbox);
+    DESK_BOOT_MSF(15, "after graf_handle hchar=%u hbox=%u", (unsigned)gl_hchar, (unsigned)gl_hbox);
 
     /* get desktop work area coordinates */
     wind_get_grect(DESKWH, WF_WXYWH, &G.g_desk);
+    DESK_BOOT_MSF(16, "after wind_get_grect desk=%d,%d,%d,%d",
+                  G.g_desk.g_x, G.g_desk.g_y, G.g_desk.g_w, G.g_desk.g_h);
 
     /* initialize mouse     */
-    wind_update(BEG_UPDATE);
+    desk_begin_update();
     desk_busy_on();
-    wind_update(END_UPDATE);
+    desk_end_update();
+    DESK_BOOT_MS(17, "after initial desk_begin/end update");
 
     /* detect optional features */
     detect_features();
+    DESK_BOOT_MS(18, "after detect_features");
 
     /* allocate desktop context save area */
+    DESK_BOOT_MSF(19, "free ram %ld need %lu", dos_avail_anyram(), (unsigned long)sizeof(CSAVE));
     G.g_cnxsave = dos_alloc_anyram(sizeof(CSAVE));
+    DESK_BOOT_MSF(20, "cnxsave alloc %p", G.g_cnxsave);
     if (!G.g_cnxsave)
     {
         KDEBUG(("insufficient memory for desktop prefs save area (need %ld bytes)\n",
@@ -1983,11 +2012,13 @@ BOOL deskmain(void)
                 (LONG)RS_NOBS*sizeof(OBJECT)));
         nomem_alert();              /* infinite loop */
     }
+    DESK_BOOT_MS(21, "after desk_rs_init");
     if (desk_xlate_fix() < 0)       /* translates & fixes desktop */
     {
         KDEBUG(("insufficient memory for desktop strings\n"));
         nomem_alert();          /* infinite loop */
     }
+    DESK_BOOT_MS(22, "after desk_xlate_fix");
 
     /* initialize menus and dialogs */
     for (ii = 0; ii < RS_NTREE; ii++)
@@ -2016,6 +2047,7 @@ BOOL deskmain(void)
      * or builtin defaults
      */
     app_start();
+    DESK_BOOT_MS(23, "after app_start");
 
     /*
      * install the keyboard shortcuts in the menu strings
@@ -2031,29 +2063,39 @@ BOOL deskmain(void)
                 (LONG)NUM_WNODES*sizeof(WNODE)));
         nomem_alert();              /* infinite loop */
     }
+    DESK_BOOT_MS(24, "after win_start");
 
     desk_verify(DESKWH, FALSE);     /* initialise g_croot, g_cwin, g_wlastsel  */
+    DESK_BOOT_MS(241, "after desk_verify");
 
     /* establish menu items */
     menutree = desk_rs_trees[ADMENU];
+    DESK_BOOT_MSF(242, "before menu_icheck view=%d sort=%d", (int)G.g_iview, (int)G.g_isort);
     menu_icheck(menutree, ICONITEM+G.g_iview, 1);
+    DESK_BOOT_MS(243, "after menu_icheck view");
     menu_icheck(menutree, NAMEITEM+G.g_isort, 1);
+    DESK_BOOT_MS(244, "after menu_icheck sort");
 #if CONF_WITH_SIZE_TO_FIT
     menu_icheck(menutree, FITITEM, G.g_ifit);
+    DESK_BOOT_MS(245, "after menu_icheck fit");
 #endif
 
     /* initialize desktop and its objects */
+    DESK_BOOT_MS(246, "before app_blddesk");
     app_blddesk();
+    DESK_BOOT_MS(25, "after app_blddesk");
 
     /* Take over the desktop */
     wind_set(DESKWH, WF_NEWDESK, G.g_screen, 1, 0);
+    DESK_BOOT_MSF(26, "after WF_NEWDESK screen=%p", G.g_screen);
 
     /* establish desktop's state from info found in app_start,
      * open windows
      */
-    wind_update(BEG_UPDATE);
+    desk_begin_update();
     cnx_get();
-    wind_update(END_UPDATE);
+    desk_end_update();
+    DESK_BOOT_MS(27, "after cnx_get");
 
 #if CONF_WITH_BLITTER
     /*
@@ -2067,12 +2109,27 @@ BOOL deskmain(void)
 #endif
 
     men_update();
+    DESK_BOOT_MS(28, "after men_update");
 
     /* menu is initialised - display menu bar & set mouse to arrow */
+#if CONF_AES_INPROCESS
+    /*
+     * Direct mn_bar() via menu_bar() avoids nested AES trap issues from
+     * the shell process; skip wind_update() here so we cannot block on
+     * wind_spb while ctlmgr still owns the screen lock.
+     */
+    DESK_BOOT_MSF(29, "before menu_bar tree=%p", menutree);
+    menu_bar(menutree, 1);
+    desk_busy_off();
+    DESK_BOOT_MS(33, "after menu_bar");
+#else
+    DESK_BOOT_MSF(29, "before menu_bar tree=%p", menutree);
     wind_update(BEG_UPDATE);
     menu_bar(menutree, 1);
     desk_busy_off();
     wind_update(END_UPDATE);
+    DESK_BOOT_MS(33, "after menu_bar");
+#endif
 
     /* get ready for main loop */
     flags = MU_BUTTON | MU_MESAG | MU_KEYBD;
@@ -2080,6 +2137,8 @@ BOOL deskmain(void)
 
     /* enable graphical critical error handler */
     enable_ceh = TRUE;
+
+    DESK_BOOT_MS(34, "main loop enter");
 
     /* loop handling user input until done */
     while(!done)
@@ -2091,7 +2150,7 @@ BOOL deskmain(void)
                                 &mx, &my, &button, &kstate, &kret, &bret);
 
         /* grab the screen */
-        wind_update(BEG_UPDATE);
+        desk_begin_update();
 
         /* handle keybd message */
         if (ev_which & MU_KEYBD)
@@ -2118,7 +2177,7 @@ BOOL deskmain(void)
         }
 
         /* free the screen      */
-        wind_update(END_UPDATE);
+        desk_end_update();
     }
 
     /*

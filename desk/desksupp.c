@@ -216,19 +216,28 @@ void do_wredraw(WORD w_handle, GRECT *gptr)
         root = pw->w_root;
     }
 
+    DESK_BOOT_MS(254, "do_wredraw: before Supexec idt");
     G.g_idt = Supexec((LONG)get_idt_cookie);    /* current _IDT for format_fnode() */
+    DESK_BOOT_MS(255, "do_wredraw: after Supexec idt");
 
     graf_mouse(M_OFF, NULL);
+    DESK_BOOT_MS(256, "do_wredraw: after graf_mouse OFF");
 
     wind_get_grect(w_handle, WF_FIRSTXYWH, &t);
+    DESK_BOOT_MSF(257, "do_wredraw: first rect %d,%d %d,%d", t.g_x, t.g_y, t.g_w, t.g_h);
     while(t.g_w && t.g_h)
     {
         if (rc_intersect(&clip_r, &t))
+        {
+            DESK_BOOT_MS(258, "do_wredraw: before objc_draw");
             objc_draw(G.g_screen, root, MAX_DEPTH, t.g_x, t.g_y, t.g_w, t.g_h);
+            DESK_BOOT_MS(259, "do_wredraw: after objc_draw");
+        }
         wind_get_grect(w_handle, WF_NEXTXYWH, &t);
     }
 
     graf_mouse(M_ON, NULL);
+    DESK_BOOT_MS(260, "do_wredraw: after graf_mouse ON");
 }
 
 

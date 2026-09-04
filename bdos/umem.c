@@ -564,6 +564,8 @@ void umem_init(void)
     start_stram = pmd.mp_mfl->m_start;
     end_stram = start_stram + pmd.mp_mfl->m_length;
     KDEBUG(("umem_init(): start_stram=%p, end_stram=%p\n",start_stram,end_stram));
+    NFDBG(("umem_init: TPA %p-%p (%lu bytes)\n",
+           start_stram, end_stram, (unsigned long)pmd.mp_mfl->m_length));
 
 #if CONF_WITH_ALT_RAM
     /* there is no known alternative RAM initially */
