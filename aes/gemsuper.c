@@ -74,7 +74,13 @@ static void aestrace(const char* message)
 #define aestrace(a)
 #endif
 
-static UWORD __attribute__((noinline)) crysbind(WORD opcode, AESGLOBAL *pglobal, WORD control[], WORD int_in[], WORD int_out[], LONG addr_in[])
+/*
+ * noinline: keep a single frame for AES dispatch.
+ * noclone:  GCC IPA-SRA otherwise builds crysbind.isra.* under -mfastcall,
+ *           remapping the many pointer parameters; OBJC_DRAW then saw
+ *           depth=0 (only ROOT drawn) and could corrupt the return path.
+ */
+static UWORD __attribute__((noinline, noclone)) crysbind(WORD opcode, AESGLOBAL *pglobal, WORD control[], WORD int_in[], WORD int_out[], LONG addr_in[])
 {
     LONG    count, buparm;
     OBJECT  *tree;

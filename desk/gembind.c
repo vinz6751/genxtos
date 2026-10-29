@@ -31,8 +31,6 @@
 #include "../aes/gemsuper.h"
 #include "super.h"
 void mn_bar(OBJECT *tree, WORD showit);   /* aes/gemmnlib.c */
-void ob_draw(OBJECT *tree, WORD obj, WORD depth);  /* aes/gemoblib.c */
-void gsx_sclip(const GRECT *pt);                   /* aes/gemgraf.c */
 #endif
 
 
@@ -433,26 +431,6 @@ WORD objc_delete(OBJECT *tree, WORD delob)
 WORD objc_draw(OBJECT *tree, WORD drawob, WORD depth, WORD xc, WORD yc,
                WORD wc, WORD hc)
 {
-#if CONF_AES_INPROCESS
-    GRECT clip;
-
-    /*
-     * Call AES draw primitives directly.  Going through aes_inprocess_call
-     * → crysbind.isra under -mfastcall was delivering depth=0 (only ROOT
-     * drawn) and then corrupting the return path.
-     */
-    clip.g_x = xc;
-    clip.g_y = yc;
-    clip.g_w = wc;
-    clip.g_h = hc;
-    DESK_BOOT_MSF(261, "objc_draw direct depth=%d clip=%d,%d %dx%d",
-                  depth, xc, yc, wc, hc);
-    gsx_sclip(&clip);
-    DESK_BOOT_MS(262, "objc_draw after gsx_sclip");
-    ob_draw(tree, drawob, depth);
-    DESK_BOOT_MS(263, "objc_draw after ob_draw");
-    return 1;
-#else
     OB_TREE = (LONG)tree;
     OB_DRAWOB = drawob;
     OB_DEPTH = depth;
@@ -461,7 +439,6 @@ WORD objc_draw(OBJECT *tree, WORD drawob, WORD depth, WORD xc, WORD yc,
     OB_WCLIP = wc;
     OB_HCLIP = hc;
     return gem_if(AES_CTRL_CODE(OBJC_DRAW, 6, 1, 1));
-#endif
 }
 
 
