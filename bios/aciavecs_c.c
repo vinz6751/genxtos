@@ -263,18 +263,25 @@ static ALWAYS_INLINE void call_kbdvecs_b(KBDVEC_B_fn vector, UBYTE byte) {
 }
 
 
-// Call the vector with the byte in d0, the pointer in a0 and the vector in a1
+/*
+ * Call joyvec-style hooks: packet pointer in a0 and on the stack (cdecl /
+ * ARGS_ON_STACK), last data byte in d0.b (TOS undocumented), vector in a1.
+ *
+ * Must push the pointer (like call_kbdvecs_p), not the data byte as a word:
+ * joyvec is KBDVEC_P_fn.  Under -mfastcall the fixed d0/a0/a1 locals keep the
+ * register ABI stable when this is inlined into callKbdvecs().
+ */
 static ALWAYS_INLINE void call_kbdvecs_bp(void *vector, UBYTE byte, void *ptr) {
     register const UBYTE regbyte __asm__("d0") = byte;
     register void *regptr __asm__("a0") = ptr;
     register void *regvector __asm__("a1") = vector;
     __asm__ volatile (
-       "\n\tmove.w %1,-(sp)"
+       "\n\tmove.l %2,-(sp)"
        "\n\tjsr (%0)"
-       "\n\taddq.l #2,sp"
-        : // No output
-        : "a"(regvector), "d" (regbyte), "a" (regptr) // Keep that here otherwize things will be optimized out
-        : "d1","d2","a2"
+       "\n\taddq.l #4,sp"
+        : /* no output */
+        : "a"(regvector), "d"(regbyte), "a"(regptr)
+        : "d1", "d2", "a2", "memory", "cc"
         );
 }
 
