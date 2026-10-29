@@ -470,9 +470,19 @@ WORD do_diropen(WNODE *pw, WORD new_win, WORD curr_icon,
      */
     desk_verify(pw->w_id, TRUE);
 
-    /* make it redraw */
-    if (redraw && !new_win)
-        fun_msg(WM_REDRAW, pw->w_id, pt->g_x, pt->g_y, pt->g_w, pt->g_h);
+    /*
+     * Always queue a redraw after the view exists.  For new windows AES
+     * already sent WM_REDRAW from wind_open — but that was *before*
+     * desk_verify built the icon tree; if that message was dropped
+     * (e.g. open faulted in user-mode wm_update), the work area stayed blank.
+     */
+    if (redraw)
+    {
+        GRECT work;
+
+        wind_get_grect(pw->w_id, WF_WXYWH, &work);
+        fun_msg(WM_REDRAW, pw->w_id, work.g_x, work.g_y, work.g_w, work.g_h);
+    }
 
     desk_busy_off();
 

@@ -26,6 +26,9 @@
 #include "gemdosif.h"
 #include "gemasm.h"
 #include "gemflag.h"
+#if CONF_AES_INPROCESS
+#include "gemsuper.h"
+#endif
 
 
 
@@ -131,7 +134,22 @@ void unsync(SPB *sy)
             /* restart counting semaphore */
             sy->sy_tas = 1;
             azombie(p, 0);
-            dsptch();
+            /*
+             * If the in-process desk itself is releasing (rlr ==
+             * aes_inprocess_pd), do not dsptch(): that would never return
+             * to deskmain, so the event loop never starts and queued
+             * WM_REDRAWs leave window interiors blank.  The waiter is
+             * already on the drl and runs at the next natural dsptch
+             * (evnt_multi).
+             *
+             * If another PD (ctlmgr) is releasing while the desk is
+             * blocked in mwait inside aes_inprocess_call, dsptch is
+             * still required so the desk resumes.
+             */
+#if CONF_AES_INPROCESS
+            if (!(aes_inprocess_depth && rlr == aes_inprocess_pd))
+#endif
+                dsptch();
         }
         else
             sy->sy_owner = NULL;    /* reset owner field */

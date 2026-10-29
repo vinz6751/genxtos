@@ -587,6 +587,8 @@ void run_accs_and_desktop(void)
     fm_init();
     mn_init();
     gl_mowner = ctl_pd = iprocess("SCRENMGR", ctlmgr);
+    /* iprocess/pstart must not leave us "running" as SCRENMGR */
+    rlr = pd_index(0);
 
     /* load gem resource and fix it up before we go */
     gem_rsc_init();
@@ -845,6 +847,10 @@ void gem_main(void)
         rlr = pd_index(i);
         rlr->p_msg.action = -1;
     }
+    /* The loop leaves rlr on the last PD.  With totpds==2 that is the
+     * SCRENMGR slot — iprocess() would then alias rlr and ctl_pd, and
+     * sh_ldapp's rlr=pd0 would orphan the screen manager. */
+    rlr = pd_index(0);
 
     /* restart the tick (p0 stack and p_msg must be ready first) */
     enable_interrupts();

@@ -38,6 +38,17 @@
 
 #define PLANE_OFFSET    2       /* interleaved planes */
 
+/*
+ * conout_atari_* helpers are only part of the public ABI under
+ * FASTCALL_BUILD (see conout.h).  On classic stack builds they stay
+ * file-local so -Werror=missing-prototypes stays happy on GCC 4.x.
+ */
+#if defined(FASTCALL_BUILD)
+# define CONOUT_ATARI_DEF(ret) ret FASTCALL_ATTR
+#else
+# define CONOUT_ATARI_DEF(ret) static ret
+#endif
+
 #define FALCON_BLACK    0x0000
 #define FALCON_WHITE    0xffbf
 
@@ -86,7 +97,7 @@ void FASTCALL_ATTR conout_atari_init(const Fonthead *font)
  * returns pointer to first byte of cell
  */
 
-UBYTE * FASTCALL_ATTR conout_atari_cell_addr(UWORD x, UWORD y)
+CONOUT_ATARI_DEF(UBYTE *) conout_atari_cell_addr(UWORD x, UWORD y)
 {
     ULONG disx, disy;
 
@@ -189,7 +200,7 @@ static void cell_xfer16(UBYTE *src, UBYTE *dst)
  * a4      points to byte below this cell's bottom
  */
 
-void FASTCALL_ATTR conout_atari_blit_char(UBYTE *src, UBYTE *dst)
+CONOUT_ATARI_DEF(void) conout_atari_blit_char(UBYTE *src, UBYTE *dst)
 {
     UBYTE * src_sav, * dst_sav;
     UWORD fg;
@@ -289,7 +300,7 @@ static void FP_CALLBACK cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
  * out:
  */
 
-void FASTCALL_ATTR conout_atari_neg_cell(UBYTE *px)
+CONOUT_ATARI_DEF(void) conout_atari_neg_cell(UBYTE *px)
 {
     CHAR_ADDR cell;
     int len;
@@ -340,7 +351,7 @@ static void FP_CALLBACK neg_cell(CHAR_ADDR cell)
  *     true  - CR LF required (position has not been updated)
  */
 
-void FASTCALL_ATTR conout_atari_next_cell(void)
+CONOUT_ATARI_DEF(void) conout_atari_next_cell(void)
 {
 #if CONF_WITH_VIDEL
     if (TRUECOLOR_MODE) {               /* chunky pixels */
@@ -520,13 +531,6 @@ void FASTCALL_ATTR conout_atari_blank_out(int topx, int topy, int botx, int boty
         "rts"
     );
 }
-#else
-void FASTCALL_ATTR conout_atari_blank_out(int topx, int topy, int botx, int boty)
-{
-    BLANK_RECT rect = { topx, topy, botx, boty };
-
-    conout_atari_blank_out_impl(&rect);
-}
 #endif
 
 static void FP_CALLBACK blank_out(int topx, int topy, int botx, int boty)
@@ -556,7 +560,7 @@ static void FP_CALLBACK blank_out(int topx, int topy, int botx, int boty)
  *   top_line - cell y of cell line to be used as top line in scroll
  */
 
-void FASTCALL_ATTR conout_atari_scroll_up(UBYTE *src, UBYTE *dst, ULONG count)
+CONOUT_ATARI_DEF(void) conout_atari_scroll_up(UBYTE *src, UBYTE *dst, ULONG count)
 {
     memmove(dst, src, count);
 #if defined(FASTCALL_BUILD)
@@ -570,7 +574,10 @@ void FASTCALL_ATTR conout_atari_scroll_up(UBYTE *src, UBYTE *dst, ULONG count)
         : "m"(v_cel_mx), "m"(v_cel_my)
         : "d0", "d1", "d2", "d3", "memory");
 #else
-    conout_atari_blank_out(0, v_cel_my, v_cel_mx, v_cel_my);
+    {
+        BLANK_RECT rect = { 0, v_cel_my, v_cel_mx, v_cel_my };
+        conout_atari_blank_out_impl(&rect);
+    }
 #endif
 }
 
@@ -585,7 +592,7 @@ static void FP_CALLBACK scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG coun
  * scroll_down - Scroll (partially) downwards
  */
 
-void FASTCALL_ATTR conout_atari_scroll_down(UBYTE *src, UBYTE *dst, LONG count, UWORD start_line)
+CONOUT_ATARI_DEF(void) conout_atari_scroll_down(UBYTE *src, UBYTE *dst, LONG count, UWORD start_line)
 {
     memmove(dst, src, count);
 #if defined(FASTCALL_BUILD)
@@ -599,7 +606,10 @@ void FASTCALL_ATTR conout_atari_scroll_down(UBYTE *src, UBYTE *dst, LONG count, 
         : "m"(v_cel_mx), "m"(start_line)
         : "d0", "d1", "d2", "d3", "memory");
 #else
-    conout_atari_blank_out(0, start_line, v_cel_mx, start_line);
+    {
+        BLANK_RECT rect = { 0, start_line, v_cel_mx, start_line };
+        conout_atari_blank_out_impl(&rect);
+    }
 #endif
 }
 
@@ -609,7 +619,7 @@ static void FP_CALLBACK scroll_down(const CHAR_ADDR src, CHAR_ADDR dst, LONG cou
 }
 
 
-void FASTCALL_ATTR conout_atari_paint_cursor(void)
+CONOUT_ATARI_DEF(void) conout_atari_paint_cursor(void)
 {
     conout_atari_neg_cell(v_cur_ad.pxaddr);
 }

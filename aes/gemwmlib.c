@@ -1895,26 +1895,16 @@ void wm_new(void)
 
 #if CONF_AES_INPROCESS
 /*
- * In-process EmuDesk runs as AES shell (pid 0).  wind_update() can block
- * forever on wind_spb because ctlmgr owns the lock and the dispatcher is
- * not always active while sh_ldapp runs deskmain synchronously.
+ * Clear wind_spb before in-process desk starts.  Do not use this while
+ * anyone may be blocked on sy_wait — that requires unsync()/azombie().
+ * Screen locking from EmuDesk must go through wind_update() so ctlmgr
+ * can take BEG_UPDATE after MU_M1 (menu hover).
  */
 void wm_inprocess_reset(void)
 {
     wind_spb.sy_tas = 0;
     wind_spb.sy_owner = NULL;
     wind_spb.sy_wait = 0;
-}
-
-void wm_inprocess_lock(void)
-{
-    wind_spb.sy_tas = 1;
-    wind_spb.sy_owner = rlr;
-}
-
-void wm_inprocess_unlock(void)
-{
-    wm_inprocess_reset();
 }
 #endif
 

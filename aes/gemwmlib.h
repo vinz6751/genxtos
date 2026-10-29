@@ -47,8 +47,6 @@ void wm_new(void);
 
 #if CONF_AES_INPROCESS
 void wm_inprocess_reset(void);
-void wm_inprocess_lock(void);
-void wm_inprocess_unlock(void);
 #endif
 
 #if CONF_WITH_3D_OBJECTS

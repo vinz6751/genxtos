@@ -216,6 +216,9 @@ _dos_exec:
         // to a multiple of 4 bytes; so, for safety, you should increase
         // the minimum adjustment by two bytes on ColdFire systems.
 
+        // FP_CALLBACK / ARGS_ON_STACK: C always passes args on the stack
+        // (see gemdos.h), even in a FASTCALL_BUILD.
+
         jsr     _disable_interrupts
         movea.l _rlr,a0
         movea.l PD_UDA(a0),a0
@@ -247,6 +250,7 @@ _dos_exec:
         movem.l (sp)+,d2/a2
 #endif
         rts
+
 
 .bss
 

@@ -32,7 +32,11 @@ _cartridge_atari_boot:
  */
     .globl  _run_cartridge_applications
 _run_cartridge_applications:
+#ifdef FASTCALL_BUILD
+        /* typebit already in d0 from C (-mfastcall / -mshort) */
+#else
         move.w  4(sp),d0                // application bit number
+#endif
         lea     CARTRIDGE_BASE, a0
 #ifdef __mcoldfire__
         move.l  #0xABCDEF42, d1

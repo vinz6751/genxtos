@@ -152,7 +152,16 @@ WORD appl_init(void)
 
 WORD appl_exit(void)
 {
+    /*
+     * ap_exit() -> wait_for_accs() -> all_run() -> dsptch(), which needs
+     * supervisor mode (ori to SR).  Same Super() rule as evnt_multi /
+     * wind_update under CONF_AES_INPROCESS.
+     */
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(APPL_EXIT, 0, 1, 0));
+#else
     return gem_if(AES_CTRL_CODE(APPL_EXIT, 0, 1, 0));
+#endif
 }
 
 
@@ -266,7 +275,11 @@ WORD evnt_timer(UWORD locnt, UWORD hicnt)
 {
     T_LOCOUNT = locnt;
     T_HICOUNT = hicnt;
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(EVNT_TIMER, 2, 1, 0));
+#else
     return gem_if(AES_CTRL_CODE(EVNT_TIMER, 2, 1, 0));
+#endif
 }
 
 
@@ -523,7 +536,15 @@ WORD form_do(OBJECT *form, WORD start)
 {
     FM_FORM = (LONG)form;
     FM_START = start;
+    /*
+     * fm_do() → ev_multi() → mwait() → dsptch(); needs supervisor under
+     * CONF_AES_INPROCESS (same Super() rule as evnt_multi / wind_update).
+     */
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(FORM_DO, 1, 1, 1));
+#else
     return gem_if(AES_CTRL_CODE(FORM_DO, 1, 1, 1));
+#endif
 }
 
 
@@ -547,7 +568,12 @@ WORD form_alert(WORD defbut, const char *astring)
 {
     FM_DEFBUT = defbut;
     FM_ASTRING = (LONG)astring;
+    /* Builds a form and runs fm_do(); see form_do Super() note. */
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(FORM_ALERT, 1, 1, 1));
+#else
     return gem_if(AES_CTRL_CODE(FORM_ALERT, 1, 1, 1));
+#endif
 }
 
 
@@ -559,7 +585,11 @@ WORD form_alert(WORD defbut, const char *astring)
 WORD form_error(WORD errnum)
 {
     FM_ERRNUM = errnum;
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(FORM_ERROR, 1, 0, 0));
+#else
     return gem_if(AES_CTRL_CODE(FORM_ERROR, 1, 0, 0));
+#endif
 }
 #endif
 
@@ -615,7 +645,12 @@ WORD graf_rubbox(WORD xorigin, WORD yorigin, WORD wmin, WORD hmin,
     GR_I2 = yorigin;
     GR_I3 = wmin;
     GR_I4 = hmin;
+    /* gr_wait → gr_stilldn → dsptch(); needs Super under CONF_AES_INPROCESS. */
+#if CONF_AES_INPROCESS
+    gem_if_block(AES_CTRL_CODE(GRAF_RUBBOX, 4, 3, 0));
+#else
     gem_if(AES_CTRL_CODE(GRAF_RUBBOX, 4, 3, 0));
+#endif
     *pwend = GR_O1;
     *phend = GR_O2;
     return (WORD)RET_CODE;
@@ -666,7 +701,12 @@ WORD graf_growbox_grect(GRECT *from, GRECT *to)
     GR_I6 = to->g_y;
     GR_I7 = to->g_w;
     GR_I8 = to->g_h;
+    /* Grow animation uses wm_update + XOR; keep Super for safety. */
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(GRAF_GROWBOX, 8, 1, 0));
+#else
     return gem_if(AES_CTRL_CODE(GRAF_GROWBOX, 8, 1, 0));
+#endif
 }
 
 
@@ -680,7 +720,11 @@ WORD graf_shrinkbox_grect(GRECT *from, GRECT *to)
     GR_I6 = to->g_y;
     GR_I7 = to->g_w;
     GR_I8 = to->g_h;
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(GRAF_SHRINKBOX, 8, 1, 0));
+#else
     return gem_if(AES_CTRL_CODE(GRAF_SHRINKBOX, 8, 1, 0));
+#endif
 }
 
 
@@ -774,7 +818,12 @@ WORD fsel_exinput(char *pipath, char *pisel, WORD *pbutton, const char *title)
     FS_IPATH = (LONG)pipath;
     FS_ISEL = (LONG)pisel;
     FS_TITLE = (LONG)title;
+    /* File selector runs fm_do(); needs Super() under CONF_AES_INPROCESS. */
+#if CONF_AES_INPROCESS
+    gem_if_block(AES_CTRL_CODE(FSEL_EXINPUT, 0, 2, 3));
+#else
     gem_if(AES_CTRL_CODE(FSEL_EXINPUT, 0, 2, 3));
+#endif
     *pbutton = FS_BUTTON;
     return (WORD)RET_CODE;
 }
@@ -873,7 +922,17 @@ WORD wind_find(WORD mx, WORD my)
 WORD wind_update(WORD beg_update)
 {
     WM_BEGUP = beg_update;
+    /*
+     * WIND_UPDATE may block on wind_spb (ev_block/mwait/dsptch).  Under
+     * CONF_AES_INPROCESS that must run in supervisor via gem_if_block —
+     * same reason as evnt_multi — or UDA_SPSUPER is corrupted and/or
+     * ctlmgr never wakes when the desk releases the screen.
+     */
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(WIND_UPDATE, 1, 1, 0));
+#else
     return gem_if(AES_CTRL_CODE(WIND_UPDATE, 1, 1, 0));
+#endif
 }
 
 
@@ -897,7 +956,11 @@ WORD wind_calc_grect(WORD wctype, UWORD kind, GRECT *in, GRECT *out)
 #if CONF_WITH_READ_INF
 WORD wind_new(void)
 {
+#if CONF_AES_INPROCESS
+    return gem_if_block(AES_CTRL_CODE(WIND_NEW, 0, 1, 0));
+#else
     return gem_if(AES_CTRL_CODE(WIND_NEW, 0, 1, 0));
+#endif
 }
 #endif
 

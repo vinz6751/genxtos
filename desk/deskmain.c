@@ -50,16 +50,14 @@
 #include "aesbind.h"
 #include "desksupp.h"
 
-#if CONF_AES_INPROCESS
-void wm_inprocess_reset(void);
-void wm_inprocess_lock(void);
-void wm_inprocess_unlock(void);
-#define desk_begin_update() wm_inprocess_lock()
-#define desk_end_update()   wm_inprocess_unlock()
-#else
+/*
+ * Always use real wind_update.  The old wm_inprocess_lock/unlock helpers
+ * stole wind_spb and reset sy_wait without azombie/dsptch, which left
+ * ctlmgr blocked forever on MU_MUTEX — menus never dropped on hover.
+ * Blocking WIND_UPDATE is safe now via gem_if_block (Super+mwait).
+ */
 #define desk_begin_update() wind_update(BEG_UPDATE)
 #define desk_end_update()   wind_update(END_UPDATE)
-#endif
 #include "deskins.h"
 #include "deskinf.h"
 #include "deskdir.h"
@@ -1619,7 +1617,7 @@ static void adjust_menu(OBJECT *obj_array)
         OBJECT *item;
 
         /* find widest object under this menu heading */
-        for (k = dropbox->ob_head, item = OBJ(k); k <= dropbox->ob_tail; k++, item++)
+        for (k = dropbox->ob_head, item = OBJ(k); k != j; k = item->ob_next, item = OBJ(k))
         {
             int l = strlen((char *)item->ob_spec);
             if (m < l)
@@ -1628,11 +1626,15 @@ static void adjust_menu(OBJECT *obj_array)
         /* force byte alignment for faster display */
         dropbox->ob_x = (mbar->ob_x + title->ob_x) & 0x00ff;
 
-        /* set up separator lines */
-        for (k = dropbox->ob_head, item = OBJ(k), m++; k <= dropbox->ob_tail; k++, item++)
+        /* set up separator lines (clamp so pointer stays inside separator[]) */
+        m++;
         {
-            if (*(char *)(item->ob_spec) == '-')
-                item->ob_spec = (LONG)(separator+MAXLEN_SEPARATOR-m);
+            int sep_len = (m > MAXLEN_SEPARATOR) ? MAXLEN_SEPARATOR : m;
+            for (k = dropbox->ob_head, item = OBJ(k); k != j; k = item->ob_next, item = OBJ(k))
+            {
+                if (*(char *)(item->ob_spec) == '-')
+                    item->ob_spec = (LONG)(separator + MAXLEN_SEPARATOR - sep_len);
+            }
         }
 
         /* make sure the menu is not too far on the right of the screen */
@@ -1642,7 +1644,7 @@ static void adjust_menu(OBJECT *obj_array)
             m = (m-1) | ((CHAR_WIDTH-1)<<8);
         }
 
-        for (k = dropbox->ob_head, item = OBJ(k); k <= dropbox->ob_tail; k++, item++)
+        for (k = dropbox->ob_head, item = OBJ(k); k != j; k = item->ob_next, item = OBJ(k))
             item->ob_width = m;
         dropbox->ob_width = m;
 
@@ -2112,24 +2114,12 @@ BOOL deskmain(void)
     DESK_BOOT_MS(28, "after men_update");
 
     /* menu is initialised - display menu bar & set mouse to arrow */
-#if CONF_AES_INPROCESS
-    /*
-     * Direct mn_bar() via menu_bar() avoids nested AES trap issues from
-     * the shell process; skip wind_update() here so we cannot block on
-     * wind_spb while ctlmgr still owns the screen lock.
-     */
-    DESK_BOOT_MSF(29, "before menu_bar tree=%p", menutree);
-    menu_bar(menutree, 1);
-    desk_busy_off();
-    DESK_BOOT_MS(33, "after menu_bar");
-#else
     DESK_BOOT_MSF(29, "before menu_bar tree=%p", menutree);
     wind_update(BEG_UPDATE);
     menu_bar(menutree, 1);
     desk_busy_off();
     wind_update(END_UPDATE);
     DESK_BOOT_MS(33, "after menu_bar");
-#endif
 
     /* get ready for main loop */
     flags = MU_BUTTON | MU_MESAG | MU_KEYBD;

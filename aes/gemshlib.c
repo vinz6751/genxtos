@@ -46,6 +46,8 @@
 #include "geminit.h"
 #include "gemaplib.h"
 #include "gemmnlib.h"
+#include "geminput.h"
+#include "gemasm.h"
 
 #include "string.h"
 #include "miscutil.h"
@@ -573,9 +575,13 @@ static WORD sh_ldapp(SHELL *psh)
         p_setappdir(rlr, D.s_cmd);
 #if CONF_AES_INPROCESS
         /*
-         * EmuDesk shares the AES shell PD (pid 0).  rlr may still point at
-         * ctlmgr when sh_ldapp runs synchronously after the dispatcher.
+         * EmuDesk shares the AES shell PD (pid 0).  After startup dsptch(),
+         * ctlmgr may still be on the ready list.  One dsptch() lets it
+         * reach mwait (nrl); then set rlr to the shell for desk_run_inprocess().
+         * (Do not assign rlr=pd0 while ctlmgr is still linked on rlr — that
+         * orphans SCRENMGR and kills menu-bar MU_M1 hover.)
          */
+        dsptch();
         rlr = pd_index(0);
         wm_inprocess_reset();
         DESK_BOOT_MS(10, "before desk_run_inprocess");

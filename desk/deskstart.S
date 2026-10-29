@@ -86,10 +86,17 @@ restart_ip:
         jsr     _deskmain
         tst.w   d0
         jeq     restart_ip
+        //
+        // Super(0) from user: GEMDOS adopts USP as the new SSP and returns
+        // the previous SSP in d0.  Our jsr return address still lives on that
+        // old SSP (AES supervisor stack from sh_ldapp).  Switching a7 back
+        // to it before rts is mandatory — addq/rts on the desk stack would
+        // pop garbage (seen as PC=$2 → Illegal at $c85d0 when launching apps).
+        //
         clr.l   -(sp)                   // Super(0): back to supervisor
         move.w  #0x20,-(sp)
-        trap    #1
-        addq.l  #6,sp
+        trap    #1                      // d0 = old SSP
+        movea.l d0,sp                   // AES SSP (return addr intact)
         rts
 
 .bss

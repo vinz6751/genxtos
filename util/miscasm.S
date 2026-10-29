@@ -64,10 +64,15 @@ _trap1_pexec:
         move.l  a0,-(sp)        /* path */
         move.w  d0,-(sp)        /* mode */
 #else
+        /*
+         * Stack ABI: each move.l xx(sp),-(sp) changes SP, so later args must
+         * use the post-push address of the same original slot (22/22/22 then
+         * 24 for the word-sized mode).  Fixed 22/18/14/12 offsets are wrong.
+         */
         move.l  22(sp),-(sp)    /* env */
-        move.l  18(sp),-(sp)    /* tail */
-        move.l  14(sp),-(sp)    /* path */
-        move.w  12(sp),-(sp)    /* mode */
+        move.l  22(sp),-(sp)    /* tail (was 18 before previous push) */
+        move.l  22(sp),-(sp)    /* path (was 14 before two pushes) */
+        move.w  24(sp),-(sp)    /* mode (was 12 before three long pushes) */
 #endif
         move.w  #0x4b,-(sp)
         trap    #1              /* Pexec */

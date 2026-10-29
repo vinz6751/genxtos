@@ -449,6 +449,9 @@ static void xif(AESPB *pcrys_blk)
 
 
 #if CONF_AES_INPROCESS
+WORD aes_inprocess_depth;
+AESPD *aes_inprocess_pd;
+
 /*
  * Direct AES dispatch for in-process EmuDesk: same as trap #2/xif but
  * without dsptch(), which never returns to synchronous shell code.
@@ -459,6 +462,11 @@ WORD aes_inprocess_call(AESPB *pcrys_blk)
     WORD    int_in[I_SIZE];
     WORD    int_out[O_SIZE];
     LONG    addr_in[AI_SIZE];
+    AESPD   *prev_pd;
+
+    prev_pd = aes_inprocess_pd;
+    aes_inprocess_pd = rlr;
+    aes_inprocess_depth++;
 
     memcpy(control, pcrys_blk->control, C_SIZE*sizeof(WORD));
     if (IN_LEN)
@@ -474,6 +482,8 @@ WORD aes_inprocess_call(AESPB *pcrys_blk)
     if (OP_CODE == RSRC_GADDR)
         pcrys_blk->addrout[0] = (LONG)ad_rso;
 
+    aes_inprocess_depth--;
+    aes_inprocess_pd = prev_pd;
     return int_out[0];
 }
 #endif
