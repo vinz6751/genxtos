@@ -6,8 +6,8 @@
 
 #ifndef NATFEAT_DEBUG
 
-/* Object file must exist when NATFEAT_DEBUG=0; API is header-gated. */
-void ikbd_inject_unused(void) {}
+/* Keep a non-empty translation unit when NATFEAT_DEBUG=0. */
+static void ikbd_inject_unused(void) {}
 
 #else
 
@@ -53,8 +53,9 @@ void ikbd_inject_key(UBYTE scancode)
 void ikbd_inject_selftest(void)
 {
     /*
-     * Default: left down/up only (reproduces desktop click path).
-     * Override at build time: -DIKBD_INJECT_MODE=0 move-only, 1 left, 2 full.
+     * Default: left down/up (desktop click path).
+     * Override: -DIKBD_INJECT_MODE=0 move-only, 1 left click, 2 full,
+     * 3 menu-bar hover (relative moves into a title).
      */
 #ifndef IKBD_INJECT_MODE
 #define IKBD_INJECT_MODE 1
@@ -62,6 +63,7 @@ void ikbd_inject_selftest(void)
     UBYTE left_down = (UBYTE)(MOUSE_REL_POS_REPORT | LEFT_BUTTON_DOWN);
     UBYTE right_down = (UBYTE)(MOUSE_REL_POS_REPORT | RIGHT_BUTTON_DOWN);
     UBYTE none = MOUSE_REL_POS_REPORT;
+    int i;
 
     NF_TRACE(("IKBD-INJECT selftest begin mode=%d\n", IKBD_INJECT_MODE));
 
@@ -73,6 +75,18 @@ void ikbd_inject_selftest(void)
     NF_TRACE(("IKBD-INJECT after left down\n"));
     ikbd_inject_mouse_rel(none, 0, 0);
     NF_TRACE(("IKBD-INJECT after left up\n"));
+#elif IKBD_INJECT_MODE == 3
+    /*
+     * Relative moves into a menu title (THEACTIVE), not empty bar.
+     * Stay under NFORKS (32).  Mid-screen x is often past the titles;
+     * go up then left toward Desk/File.
+     */
+    for (i = 0; i < 8; i++)
+        ikbd_inject_mouse_rel(none, 0, (SBYTE)-24);
+    NF_TRACE(("IKBD-INJECT after move-to-menubar\n"));
+    for (i = 0; i < 6; i++)
+        ikbd_inject_mouse_rel(none, (SBYTE)-40, 0);
+    NF_TRACE(("IKBD-INJECT after move-to-title\n"));
 #else
     ikbd_inject_mouse_rel(none, 1, 0);
     NF_TRACE(("IKBD-INJECT after move\n"));
@@ -88,6 +102,7 @@ void ikbd_inject_selftest(void)
     (void)left_down;
     (void)right_down;
     (void)none;
+    (void)i;
 
     NF_TRACE(("IKBD-INJECT selftest end\n"));
 }

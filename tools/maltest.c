@@ -11,16 +11,16 @@
  * Build: tools/build-maltest.sh
  */
 
-/* ---- TOS system variables ---- */
-#define PHYSTOP (*(void * const *)0x42eL)
-#define MEMBOT  (*(void * const *)0x432L)
-#define MEMTOP  (*(void * const *)0x436L)
-#define END_OS  (*(void * const *)0x4faL)
+/* ---- TOS system variables (supervisor-only: use Supexec) ---- */
+static void *g_phystop;
+static void *g_membot;
+static void *g_memtop;
+static void *g_end_os;
 
 /* sizeof(desk CSAVE) from DESK-MS 19 */
 #define TEST_SIZE 896L
 
-/* GEMDOS opcodes */
+/* GEMDOS / XBIOS opcodes */
 #define GEMDOS_PTERM0   0x0000
 #define GEMDOS_CRAWIN   0x0007
 #define GEMDOS_CCONWS   0x0009
@@ -32,6 +32,7 @@
 #define GEMDOS_MALLOC   0x0048
 #define GEMDOS_MFREE    0x0049
 #define GEMDOS_PTERM    0x004c
+#define XBIOS_SUPEXEC   38
 
 typedef long            LONG;
 typedef unsigned long   ULONG;
@@ -106,19 +107,20 @@ static LONG gemdos_lw(WORD op, LONG a, WORD b)
     return ret;
 }
 
-static LONG gemdos_llw(WORD op, LONG a, LONG b, WORD c)
+/* Fwrite(handle, count, buf): TOS stack is buf, count, handle, opcode. */
+static LONG gemdos_fwrite(WORD handle, LONG count, const void *buf)
 {
     register LONG ret __asm__("d0");
 
     __asm__ volatile (
-        "move.w %4,-(%%sp)\n\t"
         "move.l %3,-(%%sp)\n\t"
         "move.l %2,-(%%sp)\n\t"
         "move.w %1,-(%%sp)\n\t"
+        "move.w #0x40,-(%%sp)\n\t"
         "trap #1\n\t"
         "lea 12(%%sp),%%sp"
         : "=r" (ret)
-        : "g" (op), "g" (a), "g" (b), "g" (c)
+        : "g" (handle), "g" (count), "g" (buf)
         : "d1", "d2", "a0", "a1", "a2", "memory", "cc"
     );
     return ret;
@@ -146,7 +148,7 @@ static WORD Fcreate(const char *name, WORD attr)
 
 static LONG Fwrite(WORD handle, LONG count, const void *buf)
 {
-    return gemdos_llw(GEMDOS_FWRITE, (LONG) count, (LONG) buf, handle);
+    return gemdos_fwrite(handle, count, buf);
 }
 
 static WORD Fclose(WORD handle)
@@ -167,6 +169,31 @@ static void *Mxalloc(LONG bytes, WORD mode)
 static WORD Mfree(void *addr)
 {
     return (WORD) gemdos_l(GEMDOS_MFREE, (LONG) addr);
+}
+
+static LONG xbios_l(WORD op, LONG a)
+{
+    register LONG ret __asm__("d0");
+
+    __asm__ volatile (
+        "move.l %2,-(%%sp)\n\t"
+        "move.w %1,-(%%sp)\n\t"
+        "trap #14\n\t"
+        "addq.l #6,%%sp"
+        : "=r" (ret)
+        : "g" (op), "g" (a)
+        : "d1", "d2", "a0", "a1", "a2", "memory", "cc"
+    );
+    return ret;
+}
+
+static LONG read_tos_vars(void)
+{
+    g_phystop = *(void * const *) 0x42eL;
+    g_membot  = *(void * const *) 0x432L;
+    g_memtop  = *(void * const *) 0x436L;
+    g_end_os  = *(void * const *) 0x4faL;
+    return 0;
 }
 
 /* ---- tiny libc substitutes ---- */
@@ -261,16 +288,18 @@ static LONG query_malloc(void)      { return (LONG) Malloc(-1L); }
 
 static void show_tos_vars(void)
 {
-    cputs("phystop="); u32hex((ULONG) (ULONG) PHYSTOP);
-    cputs(" membot="); u32hex((ULONG) (ULONG) MEMBOT);
-    cputs(" memtop="); u32hex((ULONG) (ULONG) MEMTOP);
-    cputs("\r\nend_os="); u32hex((ULONG) (ULONG) END_OS);
+    (void) xbios_l(XBIOS_SUPEXEC, (LONG) read_tos_vars);
+
+    cputs("phystop="); u32hex((ULONG) g_phystop);
+    cputs(" membot="); u32hex((ULONG) g_membot);
+    cputs(" memtop="); u32hex((ULONG) g_memtop);
+    cputs("\r\nend_os="); u32hex((ULONG) g_end_os);
     cputs("\r\n");
 
-    if (MEMBOT && MEMTOP && MEMTOP > MEMBOT)
+    if (g_membot && g_memtop && g_memtop > g_membot)
     {
         cputs("memtop-membot (TPA span): ");
-        show_bytes((LONG) ((char *) MEMTOP - (char *) MEMBOT));
+        show_bytes((LONG) ((char *) g_memtop - (char *) g_membot));
     }
 }
 
