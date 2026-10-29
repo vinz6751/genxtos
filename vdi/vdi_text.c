@@ -219,9 +219,12 @@ static WORD calc_width(Vwk *vwk, WORD cnt, WORD *str)
  * the following must all be true:
  *  there are no effects
  *  there is no rotation
- *  the output is left-aligned
  *  the output is not justified
- *  the characters are byte-aligned
+ *  the characters are byte-aligned (a multiple of 8 pixels).
+ *  DESTX bit 3 (the odd byte of a 16-pixel word) is allowed; the
+ *  driver writes that half of each plane word.
+ *  horizontal alignment may be left, centre, or right: output_text()
+ *  has already turned that into the left edge in DESTX
  *  the font is monospace with a cell width of 8
  *  the font contains glyphs for all 256 characters
  *  the entire text string will not be clipped
@@ -231,7 +234,7 @@ static BOOL ok_for_direct_blit(Vwk *vwk, WORD width, JUSTINFO *justified)
     const Fonthead *fnt_ptr;
     WORD xmin, xmax, ymin, ymax;
 
-    if (vwk->style | vwk->chup | vwk->h_align)
+    if (vwk->style | vwk->chup)
         return FALSE;
 
     if (justified)
