@@ -410,7 +410,7 @@ LONG ARGS_ON_STACK kbshift(WORD flag)
     return oldshifty;
 }
 
-LONG bconstat2(void)
+LONG ARGS_ON_STACK bconstat2(void)
 {
 #if CONF_SERIAL_CONSOLE_POLLING_MODE
     /* Poll the serial port */
@@ -421,7 +421,7 @@ LONG bconstat2(void)
 #endif
 }
 
-LONG bconin2(void)
+LONG ARGS_ON_STACK bconin2(void)
 {
     ULONG value;
 #if CONF_SERIAL_CONSOLE_POLLING_MODE

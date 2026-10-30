@@ -302,7 +302,7 @@ static void flop_init(WORD dev)
 #endif
 }
 
-void flop_hdv_init(void)
+void ARGS_ON_STACK flop_hdv_init(void)
 {
     /* set floppy specific stuff */
     fverify = 0xff;

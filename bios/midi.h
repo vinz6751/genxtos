@@ -17,10 +17,10 @@
 void midi_init(void);
 
 /* some bios functions */
-LONG bconstat3(void);
-LONG bconin3(void);
-LONG bcostat3(void);
-LONG bconout3(WORD dev, WORD c);
+LONG ARGS_ON_STACK bconstat3(void);
+LONG ARGS_ON_STACK bconin3(void);
+LONG ARGS_ON_STACK bcostat3(void);
+LONG ARGS_ON_STACK bconout3(WORD dev, WORD c);
 
 /* some xbios functions */
 void ARGS_ON_STACK midiws(WORD cnt, const UBYTE *ptr);

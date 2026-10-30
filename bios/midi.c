@@ -71,13 +71,13 @@ static void ARGS_ON_STACK midivec(UBYTE data)
 
 /*==== MIDI bios functions =========================================*/
 
-LONG bconstat3(void)
+LONG ARGS_ON_STACK bconstat3(void)
 {
     return iorec_can_read(&midiiorec);
 }
 
 
-LONG bconin3(void)
+LONG ARGS_ON_STACK bconin3(void)
 {
     while(!bconstat3())
         ;
@@ -91,7 +91,7 @@ LONG bconin3(void)
 
 
 /* can we send a byte to the MIDI ? */
-LONG bcostat3(void)
+LONG ARGS_ON_STACK bcostat3(void)
 {
 #if CONF_WITH_MIDI_ACIA
     return (midi_acia.ctrl & ACIA_TDRE) ? -1 : 0;
@@ -104,7 +104,7 @@ LONG bcostat3(void)
 
 
 /* send a byte to the MIDI  */
-LONG bconout3(WORD dev, WORD c)
+LONG ARGS_ON_STACK bconout3(WORD dev, WORD c)
 {
     while(!bcostat3())
         ;

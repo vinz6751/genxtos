@@ -121,13 +121,13 @@ void parport_init(void)
 #endif
 }
 
-LONG bconin0(void)
+LONG ARGS_ON_STACK bconin0(void)
 {
     /* not implemented */
     return 0;
 }
 
-LONG bcostat0(void)
+LONG ARGS_ON_STACK bcostat0(void)
 {
 #if CONF_WITH_PRINTER_PORT
     MFP *mfp=MFP_BASE;
@@ -142,7 +142,7 @@ LONG bcostat0(void)
 #endif
 }
 
-LONG bconout0(WORD dev, WORD c)
+LONG ARGS_ON_STACK bconout0(WORD dev, WORD c)
 {
 #if CONF_WITH_PRINTER_PORT
     ULONG now = hz_200;

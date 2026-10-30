@@ -14,13 +14,17 @@
 #ifndef _CHARDEV_H
 #define _CHARDEV_H
 
-/* Prototypes */
-LONG bconout2(WORD, WORD);
-LONG bconout5(WORD, WORD);
-LONG bcostat2(void);
+/*
+ * These are installed in bcon*_vec[] and invoked via protect_w/protect_ww,
+ * which always pass arguments on the stack.  Under FASTCALL=1 they must be
+ * cdecl or trap #13 Bconout/Bconin see garbage (invisible console text).
+ */
+LONG ARGS_ON_STACK bconout2(WORD, WORD);
+LONG ARGS_ON_STACK bconout5(WORD, WORD);
+LONG ARGS_ON_STACK bcostat2(void);
 
-LONG char_dummy(void);
-LONG charout_dummy(WORD dev, WORD x);
+LONG ARGS_ON_STACK char_dummy(void);
+LONG ARGS_ON_STACK charout_dummy(WORD dev, WORD x);
 
 
 /* internal init routine */

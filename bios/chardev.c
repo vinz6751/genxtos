@@ -27,33 +27,33 @@
 
 #define NUM_CHAR_VECS   8
 
-static LONG (* const bconstat_init[NUM_CHAR_VECS])(void) =
+static LONG (ARGS_ON_STACK * const bconstat_init[NUM_CHAR_VECS])(void) =
     { char_dummy, bconstat1, bconstat2, bconstat3,
       char_dummy, char_dummy, char_dummy, char_dummy };
 
-static LONG (* const bconin_init[NUM_CHAR_VECS])(void) =
+static LONG (ARGS_ON_STACK * const bconin_init[NUM_CHAR_VECS])(void) =
     { bconin0, bconin1, bconin2, bconin3,
       char_dummy, char_dummy, char_dummy, char_dummy };
 
-static LONG (* const bcostat_init[NUM_CHAR_VECS])(void) =
+static LONG (ARGS_ON_STACK * const bcostat_init[NUM_CHAR_VECS])(void) =
     { bcostat0, bcostat1, bcostat2, bcostat4,
       /* note that IKBD and MIDI bcostat() are swapped! */
       bcostat3, char_dummy, char_dummy, char_dummy };
 
-static LONG (* const bconout_init[NUM_CHAR_VECS])(WORD,WORD) =
+static LONG (ARGS_ON_STACK * const bconout_init[NUM_CHAR_VECS])(WORD,WORD) =
     { bconout0, bconout1, bconout2, bconout3,
       bconout4, bconout5, charout_dummy, charout_dummy };
 
 /*
  * dummy - unimplemented functions
  */
-LONG char_dummy(void)
+LONG ARGS_ON_STACK char_dummy(void)
 {
     return 0L;
 }
 
 
-LONG charout_dummy(WORD dev,WORD b)
+LONG ARGS_ON_STACK charout_dummy(WORD dev,WORD b)
 {
     return 0L;
 }
@@ -112,7 +112,7 @@ void chardev_init(void)
 
 /* BIOS devices - bconout functions */
 
-LONG bconout2(WORD dev, WORD b)
+LONG ARGS_ON_STACK bconout2(WORD dev, WORD b)
 {
     cputc(b);
     return 1L;
@@ -120,7 +120,7 @@ LONG bconout2(WORD dev, WORD b)
 
 
 /* bconout5 - raw console output. */
-LONG bconout5(WORD dev, WORD ch)
+LONG ARGS_ON_STACK bconout5(WORD dev, WORD ch)
 {
 #if CONF_SERIAL_CONSOLE
     /* The terminal will interpret the control characters, anyway */
@@ -133,7 +133,7 @@ LONG bconout5(WORD dev, WORD ch)
 
 /* BIOS devices - bcostat functions */
 
-LONG bcostat2(void)
+LONG ARGS_ON_STACK bcostat2(void)
 {
 #if CONF_SERIAL_CONSOLE
     return bcostat(1);

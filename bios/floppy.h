@@ -22,7 +22,7 @@
  * are the implementation of these provided by floppy.c.
  */
 
-void flop_hdv_init(void);
+void ARGS_ON_STACK flop_hdv_init(void);
 WORD flop_boot_read(void);
 LONG flop_mediach(WORD dev);
 

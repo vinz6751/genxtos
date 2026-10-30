@@ -101,8 +101,8 @@ void kbd_int(UBYTE scancode);
 void key_repeat_tick(void);
 
 /* some bios functions */
-LONG bconstat2(void);
-LONG bconin2(void);
+LONG ARGS_ON_STACK bconstat2(void);
+LONG ARGS_ON_STACK bconin2(void);
 LONG ARGS_ON_STACK kbshift(WORD flag);
 
 /* some xbios functions */

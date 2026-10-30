@@ -216,7 +216,7 @@ void push_ascii_ikbdiorec(UBYTE ascii)
 /*=== ikbd acia stuff ==================================================*/
 
 /* can we send a byte to the ikbd ? */
-LONG bcostat4(void)
+LONG ARGS_ON_STACK bcostat4(void)
 {
 #if CONF_WITH_IKBD_ACIA
     if (ikbd_acia.ctrl & ACIA_TDRE) {
@@ -233,7 +233,7 @@ LONG bcostat4(void)
 }
 
 /* send a byte to the IKBD */
-LONG bconout4(WORD dev, WORD c)
+LONG ARGS_ON_STACK bconout4(WORD dev, WORD c)
 {
     ikbd_writeb((UBYTE)c);
     return 1L;

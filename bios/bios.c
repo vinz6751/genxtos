@@ -1119,11 +1119,11 @@ LONG ARGS_ON_STACK bconstat(WORD handle)        /* GEMBIOS character_input_statu
     if (map_index >= bconmap_root.maptabsize)
         return 0L;
     if (map_index >= 0)
-        return protect_v(bconmap_root.maptab[map_index].Bconstat);
+        return protect_v((PFLONG)bconmap_root.maptab[map_index].Bconstat);
 #endif
 
     if ((handle >= 0) && (handle <= 7))
-        return protect_v(bconstat_vec[handle]);
+        return protect_v((PFLONG)bconstat_vec[handle]);
     return 0L;
 }
 
@@ -1163,11 +1163,11 @@ LONG ARGS_ON_STACK bconin(WORD handle)
     if (map_index >= bconmap_root.maptabsize)
         return 0L;
     if (map_index >= 0)
-        return protect_v(bconmap_root.maptab[map_index].Bconin);
+        return protect_v((PFLONG)bconmap_root.maptab[map_index].Bconin);
 #endif
 
     if ((handle >= 0) && (handle <= 7))
-        return protect_v(bconin_vec[handle]);
+        return protect_v((PFLONG)bconin_vec[handle]);
     return 0L;
 }
 
@@ -1313,7 +1313,7 @@ static LONG bios_6(void)
 
 LONG ARGS_ON_STACK getbpb(WORD drive)
 {
-    return protect_w(hdv_bpb, drive);
+    return protect_w((PFLONG)hdv_bpb, drive);
 }
 
 #if DBGBIOS
@@ -1348,11 +1348,11 @@ LONG ARGS_ON_STACK bcostat(WORD handle)       /* GEMBIOS character_output_status
     if (map_index >= bconmap_root.maptabsize)
         return 0L;
     if (map_index >= 0)
-        return protect_v(bconmap_root.maptab[map_index].Bcostat);
+        return protect_v((PFLONG)bconmap_root.maptab[map_index].Bcostat);
 #endif
 
     if ((handle >= 0) && (handle <= 7))
-        return protect_v(bcostat_vec[handle]);
+        return protect_v((PFLONG)bcostat_vec[handle]);
     return 0L;
 }
 
@@ -1377,7 +1377,7 @@ static LONG bios_8(WORD handle)
 
 LONG ARGS_ON_STACK mediach(WORD drv)
 {
-    return protect_w(hdv_mediach, drv);
+    return protect_w((PFLONG)hdv_mediach, drv);
 }
 
 #if DBGBIOS

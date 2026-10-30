@@ -49,23 +49,23 @@ static void init_bconmap(void);
 #endif
 
 #if CONF_WITH_SCC
-static LONG bconstatA(void);
-static LONG bconinA(void);
-static LONG bcostatA(void);
-static LONG bconoutA(WORD,WORD);
+static LONG ARGS_ON_STACK bconstatA(void);
+static LONG ARGS_ON_STACK bconinA(void);
+static LONG ARGS_ON_STACK bcostatA(void);
+static LONG ARGS_ON_STACK bconoutA(WORD,WORD);
 static ULONG rsconfA(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr);
 
-static LONG bconstatB(void);
-static LONG bconinB(void);
-static LONG bcostatB(void);
+static LONG ARGS_ON_STACK bconstatB(void);
+static LONG ARGS_ON_STACK bconinB(void);
+static LONG ARGS_ON_STACK bcostatB(void);
 static ULONG rsconfB(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr);
 #endif  /* CONF_WITH_SCC */
 
 #if CONF_WITH_TT_MFP
-static LONG bconstatTT(void);
-static LONG bconinTT(void);
-static LONG bcostatTT(void);
-static LONG bconoutTT(WORD,WORD);
+static LONG ARGS_ON_STACK bconstatTT(void);
+static LONG ARGS_ON_STACK bconinTT(void);
+static LONG ARGS_ON_STACK bcostatTT(void);
+static LONG ARGS_ON_STACK bconoutTT(WORD,WORD);
 static ULONG rsconfTT(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr);
 #endif  /* CONF_WITH_TT_MFP */
 
@@ -253,12 +253,12 @@ static ULONG rsconf_mfp(MFP *mfp, EXT_IOREC *iorec, WORD baud, WORD ctrl, WORD u
 /*
  * MFP serial port i/o routines
  */
-LONG bconstat1(void)
+LONG ARGS_ON_STACK bconstat1(void)
 {
     return bconstat_iorec(&iorec1);
 }
 
-LONG bconin1(void)
+LONG ARGS_ON_STACK bconin1(void)
 {
     return bconin_iorec(&iorec1);
 }
@@ -269,7 +269,7 @@ LONG bconin1(void)
  * can cause complications (e.g. when panic() disables interrupts).
  * Therefore we avoid using interrupts in that situation.
  */
-LONG bcostat1(void)
+LONG ARGS_ON_STACK bcostat1(void)
 {
 #if CONF_WITH_COLDFIRE_RS232
     return coldfire_rs232_can_write() ? -1 : 0;
@@ -289,7 +289,7 @@ LONG bcostat1(void)
 #endif
 }
 
-LONG bconout1(WORD dev, WORD b)
+LONG ARGS_ON_STACK bconout1(WORD dev, WORD b)
 {
     WORD old_sr;
 
@@ -405,17 +405,17 @@ ULONG rsconf1(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr)
 /*
  * TT MFP i/o routines
  */
-static LONG bconstatTT(void)
+static LONG ARGS_ON_STACK bconstatTT(void)
 {
     return bconstat_iorec(&iorecTT);
 }
 
-static LONG bconinTT(void)
+static LONG ARGS_ON_STACK bconinTT(void)
 {
     return bconin_iorec(&iorecTT);
 }
 
-static LONG bcostatTT(void)
+static LONG ARGS_ON_STACK bcostatTT(void)
 {
     IOREC *out = &iorecTT.out;
 
@@ -423,7 +423,7 @@ static LONG bcostatTT(void)
     return (out->head == incr_tail(out)) ? 0L : -1L;
 }
 
-static LONG bconoutTT(WORD dev, WORD b)
+static LONG ARGS_ON_STACK bconoutTT(WORD dev, WORD b)
 {
     WORD old_sr;
 
@@ -504,17 +504,17 @@ static ULONG rsconfTT(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD s
 /*
  * SCC port A i/o routines
  */
-static LONG bconstatA(void)
+static LONG ARGS_ON_STACK bconstatA(void)
 {
     return bconstat_iorec(&iorecA);
 }
 
-static LONG bconinA(void)
+static LONG ARGS_ON_STACK bconinA(void)
 {
     return bconin_iorec(&iorecA);
 }
 
-static LONG bcostatA(void)
+static LONG ARGS_ON_STACK bcostatA(void)
 {
     IOREC *out = &iorecA.out;
 
@@ -522,7 +522,7 @@ static LONG bcostatA(void)
     return (out->head == incr_tail(out)) ? 0L : -1L;
 }
 
-static LONG bconoutA(WORD dev, WORD b)
+static LONG ARGS_ON_STACK bconoutA(WORD dev, WORD b)
 {
     SCC *scc = (SCC *)SCC_BASE;
     IOREC *out;
@@ -556,12 +556,12 @@ static LONG bconoutA(WORD dev, WORD b)
 /*
  * SCC port B i/o routines
  */
-static LONG bconstatB(void)
+static LONG ARGS_ON_STACK bconstatB(void)
 {
     return bconstat_iorec(&iorecB);
 }
 
-static LONG bconinB(void)
+static LONG ARGS_ON_STACK bconinB(void)
 {
     return bconin_iorec(&iorecB);
 }
@@ -571,7 +571,7 @@ static LONG bconinB(void)
  * (e.g. on a Falcon), using interrupts can cause complications.
  * So we avoid using interrupts in that situation.
  */
-static LONG bcostatB(void)
+static LONG ARGS_ON_STACK bcostatB(void)
 {
 #if SCC_DEBUG_PRINT
     SCC *scc = (SCC *)SCC_BASE;
@@ -590,7 +590,7 @@ static LONG bcostatB(void)
 }
 
 /* note that bconoutB() is global to support SCC_DEBUG_PRINT */
-LONG bconoutB(WORD dev, WORD b)
+LONG ARGS_ON_STACK bconoutB(WORD dev, WORD b)
 {
     SCC *scc = (SCC *)SCC_BASE;
     IOREC *out;

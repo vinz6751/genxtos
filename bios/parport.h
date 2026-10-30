@@ -10,9 +10,9 @@
  * option any later version.  See doc/licence.txt for details.
  */
 
-LONG bconin0(void);
-LONG bcostat0(void);
-LONG bconout0(WORD dev, WORD c);
+LONG ARGS_ON_STACK bconin0(void);
+LONG ARGS_ON_STACK bcostat0(void);
+LONG ARGS_ON_STACK bconout0(WORD dev, WORD c);
 
 void parport_init(void);
 

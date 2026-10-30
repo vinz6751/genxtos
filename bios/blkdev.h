@@ -104,7 +104,7 @@ void blkdev_init(void);
 
 /* general block device functions */
 LONG blkdev_boot(void);
-LONG blkdev_getbpb(WORD dev);
+LONG ARGS_ON_STACK blkdev_getbpb(WORD dev);
 LONG blkdev_drvmap(void);
 LONG blkdev_avail(WORD dev);
 UWORD compute_cksum(const UWORD *buf);

@@ -73,17 +73,17 @@ extern EXT_IOREC *rs232iorecptr;
 /*
  * function prototypes
  */
-LONG bconstat1(void);
-LONG bconin1(void);
-LONG bcostat1(void);
-LONG bconout1(WORD,WORD);
+LONG ARGS_ON_STACK bconstat1(void);
+LONG ARGS_ON_STACK bconin1(void);
+LONG ARGS_ON_STACK bcostat1(void);
+LONG ARGS_ON_STACK bconout1(WORD,WORD);
 ULONG rsconf1(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr);
 void init_serport(void);
 void push_serial_iorec(UBYTE data);
 
 #if CONF_WITH_SCC
 void scc_init(void);
-LONG bconoutB(WORD,WORD);
+LONG ARGS_ON_STACK bconoutB(WORD,WORD);
 void scc_rx_interrupt_handler(WORD portnum);
 void scc_tx_interrupt_handler(WORD portnum);
 void scc_es_interrupt_handler(WORD portnum);
@@ -104,10 +104,10 @@ void mfp_tt_tx_interrupt_handler(void);
  * Bconmap() stuff
  */
 typedef struct {        /* one per mappable device */
-    LONG (*Bconstat)(void);
-    LONG (*Bconin)(void);
-    LONG (*Bcostat)(void);
-    LONG (*Bconout)(WORD,WORD);
+    LONG (ARGS_ON_STACK *Bconstat)(void);
+    LONG (ARGS_ON_STACK *Bconin)(void);
+    LONG (ARGS_ON_STACK *Bcostat)(void);
+    LONG (ARGS_ON_STACK *Bconout)(WORD,WORD);
     ULONG (*Rsconf)(WORD,WORD,WORD,WORD,WORD,WORD);
     EXT_IOREC *Iorec;   /* points to IOREC and extended IOREC */
 } MAPTAB;

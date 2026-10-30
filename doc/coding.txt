@@ -96,6 +96,11 @@ When the OS is compiled with -mfastcall, three calling conventions coexist:
 - Trap handlers dispatched from trap #13/#14 must use ARGS_ON_STACK
   (__attribute__((cdecl))) because biosxbios in vectors.S calls them
   with arguments on the trap stack.
+- BIOS character-device vectors (bconout2/bconin2/… installed in
+  bcon*_vec[] and reached via protect_w/protect_ww) must likewise use
+  ARGS_ON_STACK: those helpers always push arguments on the stack.
+  Direct C calls (e.g. cprintf → bconout2) remain correct because the
+  cdecl attribute forces the caller to match.
 - User program interfaces are unchanged: traps, G_USERDEF draw routines,
   and most KBDVECS hooks called via stack pushes from aciavecs_c.c.
 - Variadic functions (kprintf, cprintf, panic, sprintf, …) use VARARGS
