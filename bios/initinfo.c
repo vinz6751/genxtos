@@ -268,7 +268,7 @@ static void cprintf_bytesize(ULONG bytes)
  *
  * returns the selected boot device
  */
-WORD initinfo(ULONG *pshiftbits)
+WORD OPTIMIZE_SMALL initinfo(ULONG *pshiftbits)
 {
     int screen_height = v_cel_my + 1;
     int initinfo_height = 19; /* Define ENABLE_KDEBUG to guess correct value */
@@ -486,7 +486,7 @@ WORD initinfo(ULONG *pshiftbits)
 #else    /* FULL_INITINFO */
 
 
-WORD initinfo(ULONG *pshiftbits)
+WORD OPTIMIZE_SMALL initinfo(ULONG *pshiftbits)
 {
     /* we already displayed a startup message */
 
@@ -498,7 +498,7 @@ WORD initinfo(ULONG *pshiftbits)
 #endif   /* FULL_INITINFO */
 
 
-void display_startup_msg(void)
+void OPTIMIZE_SMALL display_startup_msg(void)
 {
     cprintf("EmuTOS Version %s\r\n", version);
 }

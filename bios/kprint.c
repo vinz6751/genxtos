@@ -333,7 +333,7 @@ static const char *const exc_messages[] = {
     "Line F Emulator"
 };
 
-void VARARGS dopanic(const char *fmt, ...)
+void OPTIMIZE_SMALL VARARGS dopanic(const char *fmt, ...)
 {
     UWORD *pc = NULL;
     BOOL wrap;

@@ -418,6 +418,10 @@
 # ifndef CONF_WITH_SCSI
 #  define CONF_WITH_SCSI 0
 # endif
+# ifndef CONF_WITH_SCC
+/* MegaSTE has MFP UART only; SCC is TT/Falcon. */
+#  define CONF_WITH_SCC 0
+# endif
 # ifndef CONF_WITH_TT_MFP
 #  define CONF_WITH_TT_MFP 0
 # endif
@@ -2328,6 +2332,19 @@
 #endif
 #if CONF_DEBUG_DESK_STACK
 # define STACK_MARKER 0xdeadbeef
+#endif
+
+/*
+ * Set CONF_WITH_IKBD_INJECT to 1 to build the IKBD packet inject harness
+ * (bios/ikbd_inject.c) used by desktop self-tests under Hatari. Default
+ * off; NATFEAT_DEBUG builds enable it automatically.
+ */
+#ifndef CONF_WITH_IKBD_INJECT
+# ifdef NATFEAT_DEBUG
+#  define CONF_WITH_IKBD_INJECT 1
+# else
+#  define CONF_WITH_IKBD_INJECT 0
+# endif
 #endif
 
 /*

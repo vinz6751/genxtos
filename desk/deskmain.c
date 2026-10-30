@@ -2130,7 +2130,7 @@ BOOL deskmain(void)
 
     DESK_BOOT_MS(34, "main loop enter");
 
-#ifdef NATFEAT_DEBUG
+#if CONF_WITH_IKBD_INJECT
     /*
      * Feed synthetic IKBD mouse packets through ikbdraw (same path as
      * ACIA ikbdsys → KBDVECS.mousevec) before the first evnt_multi so

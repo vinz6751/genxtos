@@ -4,12 +4,7 @@
 
 #include "emutos.h"
 
-#ifndef NATFEAT_DEBUG
-
-/* Keep a non-empty translation unit when NATFEAT_DEBUG=0. */
-static void ikbd_inject_unused(void) {}
-
-#else
+#if CONF_WITH_IKBD_INJECT
 
 #include "aciavecs.h"
 #include "asm.h"
@@ -107,4 +102,4 @@ void ikbd_inject_selftest(void)
     NF_TRACE(("IKBD-INJECT selftest end\n"));
 }
 
-#endif /* NATFEAT_DEBUG */
+#endif /* CONF_WITH_IKBD_INJECT */
