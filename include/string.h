@@ -84,7 +84,8 @@ int memcmp(const void * s1, const void * s2, size_t n);
  * the behaviour is undefined if the two regions overlap.
  *
  * With FASTCALL_BUILD, util/memmove.S uses the register ABI (a0=dst,
- * a1=src, d0=len).  Without it, assembly uses the stack ABI (cdecl).
+ * a1=src, d0=len) and returns the destination pointer in a0.  Without
+ * it, assembly uses the stack ABI (cdecl) and returns in d0.
  */
 #if defined(FASTCALL_BUILD)
 void * memcpy(void * RESTRICT dst, const void * RESTRICT src, size_t length);

@@ -59,7 +59,7 @@ _memset:
         jra      memset
 end_fc:
         move.l   (sp)+,d7
-        move.l   a2,d0
+        move.l   a2,a0                 // pointer return in a0 (fastcall)
         rts
 #else
         move.l   4(sp),a0
@@ -198,7 +198,7 @@ end1:
 end:
         move.l   (sp)+,d7
 #ifdef FASTCALL_BUILD
-        move.l   a2,d0                 // return the address.
+        move.l   a2,a0                 // pointer return in a0 (fastcall)
 #else
         move.l   4(sp),d0              // return the address.
 #endif

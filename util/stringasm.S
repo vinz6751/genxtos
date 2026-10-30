@@ -62,8 +62,17 @@ strchr_loop:
         cmp.b   d1,d0
         jne     strchr_loop
         subq.l  #1,a0
+#ifdef FASTCALL_BUILD
+        rts                     // pointer return already in a0
+#else
         move.l  a0,d0
         rts
+#endif
 strchr_null:
+#ifdef FASTCALL_BUILD
+        suba.l  a0,a0           // return NULL in a0
+        rts
+#else
         moveq.l #0,d0
         rts
+#endif

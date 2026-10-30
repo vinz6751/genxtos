@@ -67,13 +67,14 @@
 // the behaviour is undefined if the two regions overlap.
 //
 // FASTCALL_BUILD: a0=dst, a1=src, d0=length (gcc register calls).
+// Pointer return value must be in a0 (see doc/coding.txt §1b).
 
 _memcpy:
 #ifndef __mcoldfire__
 #ifdef FASTCALL_BUILD
-        move.l   a0,-(sp)        // a0=dst,a1=src; swap without clobbering a2/d1
-        move.l   a1,a0
-        move.l   (sp)+,a1
+        move.l   a0,-(sp)        // save original dst for a0 return
+        move.l   a1,a0           // a0 = src
+        move.l   (sp),a1         // a1 = dst (kept on stack for return)
         cmpi.l   #BREAKEVEN,d0   // is it worth doing the complicated version?
         jge      fc_memcpy_large // yes, branch
         jra      sdecr
@@ -96,19 +97,19 @@ sdecr:
 #endif
 #ifdef FASTCALL_BUILD
 fc_ret_memcpy:
-        move.l   a1,d0           // return dst (no length saved on stack)
+        move.l   (sp)+,a0        // return original dst in a0
         rts
 fc_memcpy_large:
-        move.l   d0,-(sp)        // save length (d2 is clobbered by copy loops)
+        move.l   d0,-(sp)        // save length; stack: length, orig_dst
         jra      memmove
 #endif
 #endif
 _memmove:
 #ifdef FASTCALL_BUILD
-        move.l   a0,-(sp)        // a0=dst,a1=src; swap without clobbering a2/d1
-        move.l   a1,a0
-        move.l   (sp)+,a1
-        move.l   d0,-(sp)        // save length (d2 is clobbered by copy loops)
+        move.l   a0,-(sp)        // save original dst for a0 return
+        move.l   a1,a0           // a0 = src
+        move.l   (sp),a1         // a1 = dst (kept on stack for return)
+        move.l   d0,-(sp)        // save length; stack: length, orig_dst
 #else
         move.l   8(sp),a0        // load source pointer
         move.l   4(sp),a1        // load destination pointer
@@ -261,8 +262,8 @@ bend1:
 end:
 return_dst:
 #ifdef FASTCALL_BUILD
-        move.l   a1,d0               // return destination pointer
         addq.l   #4,sp               // pop saved length
+        move.l   (sp)+,a0            // return original dst in a0
 #else
         move.l   4(sp),d0               // return destination pointer
 #endif
