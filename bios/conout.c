@@ -37,7 +37,11 @@ static CONOUT_DRIVER * conout;
  * gcc mishandles forwarding of stack arguments to an indirect FP_CALLBACK.
  * Push explicit operands instead of reading 4(sp) from asm (broken if the
  * compiler adds a prologue before the asm block).
+ *
+ * Most helpers are only needed when CONOUT_ATARI_FASTPATH is off; the Atari
+ * fastpath calls the concrete conout_atari_* entry points instead.
  */
+#if !CONOUT_ATARI_FASTPATH
 static long char_addr_arg(CHAR_ADDR a)
 {
     long v;
@@ -173,6 +177,7 @@ static void fpcall_CCCi(void (FP_CALLBACK *fn)(const CHAR_ADDR, CHAR_ADDR, LONG,
         : "g"(s), "g"(d), "g"(count), "g"((long)start_line), "a"(fn)
         : "d0", "memory");
 }
+#endif /* !CONOUT_ATARI_FASTPATH */
 
 static void fpcall_v(void (FP_CALLBACK *fn)(void))
 {
@@ -271,8 +276,11 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
  *
  * input:
  *  cell    points to destination (1st plane, top of block)
+ *
+ * Currently unused: cursor paint/unpaint replaced the invert-cell path
+ * (#if 1 branches below). Kept for the legacy #else paths.
  */
-
+#if 0
 static void neg_cell(CHAR_ADDR cell)
 {
     v_stat_0 |= M_CRIT;                 /* start of critical section. */
@@ -287,6 +295,7 @@ static void neg_cell(CHAR_ADDR cell)
 
     v_stat_0 &= ~M_CRIT;                /* end of critical section. */
 }
+#endif
 
 
 /*

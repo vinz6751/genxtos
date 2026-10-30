@@ -21,8 +21,7 @@ extern PFVOID vbl_list[8]; /* Default array for the vblqueue TOS variable */
 
 // These are separate functions for clarity, but GCC will inline them.
 static void dump_screen(void);
-static void set_new_screen_address(void);
-static void process_vbl_queue(void);;
+static void process_vbl_queue(void);
 
 // Doesn't need to be shared with anything (i.e put in a .h file), that's only called from vectors.S
 void vbl_handler(void);

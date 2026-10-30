@@ -990,9 +990,6 @@ static void vertical_line_pattern(const Line *line, WORD wrt_mode, UWORD color)
     UWORD bit, bitcomp;
     WORD plane, loopcnt;
     UWORD linemask;
-    WORD bit_inverted_linemask;
-
-    //bit_inverted_linemask = ((1 << 16) - 1) ^ (WORD)LINEMASK;
 
     /* calculate increase value for y to add to actual address */
     dy = line->y2 - line->y1;

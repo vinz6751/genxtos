@@ -237,7 +237,7 @@ endif
 
 ifeq (1,$(FASTCALL))
 ifneq (,$(filter 1,$(ELF) $(MINTELF)))
-FASTCALLFLAGS = -mfastcall -fno-builtin-memset -fno-builtin-memcpy -fno-builtin-memmove -fno-optimize-sibling-calls
+FASTCALLFLAGS = -mfastcall -fno-builtin-memset -fno-builtin-memcpy -fno-builtin-memmove -fno-builtin-sprintf -fno-optimize-sibling-calls
 else
 $(warning FASTCALL=1 requires ELF=1 or MINTELF=1)
 FASTCALLFLAGS =
