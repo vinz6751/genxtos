@@ -761,9 +761,22 @@ void CONOUT_API conout_blink_cursor(void)
         conout->blink_cursor();
 #endif
     }
-    else if (CURSOR_IS_ENABLED && CURSOR_FLASH_ENABLE && (--v_cur_tim) == 0 )
+    else if (CURSOR_IS_ENABLED && CURSOR_FLASH_ENABLED && (--v_cur_tim) == 0)
     {
         v_cur_tim = v_period; /* reset timer */
-        CURSOR_FLASH_IS_UP ? conout_unpaint_cursor() : conout_paint_cursor(); /* toggle state*/ 
+        /*
+         * Paint and unpaint are symmetric (XOR). M_CSTATE must follow the
+         * pixels: move_cursor erases the old cell only when it thinks the
+         * cursor is painted. If the flag stays up while the cursor is
+         * blinked off, that erase draws a block at the old position.
+         */
+        if (CURSOR_FLASH_IS_UP) {
+            CURSOR_FLASH_DOWN;
+            conout_unpaint_cursor();
+        }
+        else {
+            CURSOR_FLASH_UP;
+            conout_paint_cursor();
+        }
     }
 }
