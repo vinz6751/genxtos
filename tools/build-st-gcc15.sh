@@ -18,10 +18,14 @@ set -eu
 
 ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
 
-exec distrobox enter st-gcc15 -- bash -lc \
-    "export PATH=/usr/bin:/usr/m68k-atari-mintelf/bin:\$PATH && cd '$ROOT' && make \"\$@\" && \
-     if [ -f emutos.map ] && { [ ! -f etos256us.sym ] || [ emutos.map -nt etos256us.sym ]; }; then \
-         ./tools/map2sym.sh emutos.map > etos256us.sym; \
-     fi" \
-    -- "$@"
+# Avoid bash -lc "..." nesting: distrobox mangles nested quotes and $@.
+# Pass make args as real argv; force a container PATH with host gcc 15 first.
+distrobox enter st-gcc15 -- \
+    env PATH="/usr/bin:/usr/m68k-atari-mintelf/bin:/usr/local/bin:/bin" \
+    make -C "$ROOT" "$@"
 
+if [ -f "$ROOT/emutos.map" ] && {
+    [ ! -f "$ROOT/etos256us.sym" ] || [ "$ROOT/emutos.map" -nt "$ROOT/etos256us.sym" ]
+}; then
+    "$ROOT/tools/map2sym.sh" "$ROOT/emutos.map" > "$ROOT/etos256us.sym"
+fi

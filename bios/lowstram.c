@@ -34,10 +34,12 @@ Vwk phys_work;
  *  2) to put it out of the way of any old games that might clobber the
  *     general BSS area.  Atari TOS also locates it in low memory.
  *
- * Note: Alignment on 4 bytes may be better,
- * but it is currently unsupported by GCC 4.6.4 (MiNT 20170417)
+ * Must be 4-byte aligned (emutos.ld ASSERT).  Do not rely on a separate
+ * unreferenced padding array for that: with -fdata-sections/--gc-sections
+ * the linker drops unused .bss.* sections, the old dskbuf_alignment[3]
+ * hack vanished, and dskbuf ended at 0x…02 (assert failed).
  */
-UBYTE dskbuf[DSKBUF_SIZE] __attribute__ ((aligned (2)));
+UBYTE dskbuf[DSKBUF_SIZE] __attribute__((aligned(4)));
 
 /* Workaround for bug in GFA Basic 3.51 startup.
  * Theoretically, we are allowed to put the shifty variable anywhere,
@@ -49,5 +51,4 @@ UBYTE dskbuf[DSKBUF_SIZE] __attribute__ ((aligned (2)));
  * TOS puts this variable in a region accessible in user mode, so we
  * do too.
  */
-UBYTE dskbuf_alignment[3]; /* FIXME: Unsafe hack to align dskbuf on 4 bytes */
 UBYTE shifty; /* reflects the status up/down of mode keys */

@@ -567,18 +567,20 @@ void CONOUT_API conout_ascii_out(int ch)
 
 #if CONOUT_ATARI_FASTPATH
 /*
- * gcc m68k -mfastcall passes the 4th int in arg on the stack at 4(sp).
- * Tail-call the fastcall implementation with d0-d3 already set up.
+ * Do not use a naked 4(sp)/jra trampoline here: LTO rewrites across it and
+ * boots into an illegal instruction inside clear_and_home().  Call the
+ * pointer-based impl directly (same workaround as conout_atarifb.c for the
+ * gcc -mfastcall four-int-arg bug).
  */
-__attribute__((naked))
 void CONOUT_API conout_blank_out(int topx, int topy, int botx, int boty)
 {
-    __asm__ volatile(
-        "move.w 4(sp),d3\n\t"
-        "jra _conout_atari_blank_out"
-        :
-        :
-        : "memory");
+    BLANK_RECT rect;
+
+    rect.topx = topx;
+    rect.topy = topy;
+    rect.botx = botx;
+    rect.boty = boty;
+    conout_atari_blank_out_impl(&rect);
 }
 #else
 void CONOUT_API conout_blank_out(int topx, int topy, int botx, int boty)

@@ -435,16 +435,7 @@ static void blank_out16(int topx, int topy, int botx, int boty)
  *   boty - bottom/right cell y position
  */
 
-typedef struct {
-    int topx;
-    int topy;
-    int botx;
-    int boty;
-} BLANK_RECT;
-
-void conout_atari_blank_out_impl(const BLANK_RECT *rect);
-
-void __attribute__((noinline)) conout_atari_blank_out_impl(const BLANK_RECT *rect)
+void FASTCALL_ATTR __attribute__((noinline)) conout_atari_blank_out_impl(const BLANK_RECT *rect)
 {
     int topx = rect->topx;
     int topy = rect->topy;
@@ -516,6 +507,11 @@ void __attribute__((noinline)) conout_atari_blank_out_impl(const BLANK_RECT *rec
 /*
  * gcc 15 m68k -mfastcall mishandles functions with four integer arguments.
  * Pass a BLANK_RECT pointer (a0) to the real implementation instead.
+ *
+ * Keep this TU out of LTO (see Makefile NOLTO): IPA otherwise rewrites the
+ * naked trampoline and scroll_* asm callers that jsr here with d0-d3 set
+ * blow up at boot.  Do not combine other attributes with naked — gcc then
+ * ignores naked on m68k.
  */
 __attribute__((naked))
 void FASTCALL_ATTR conout_atari_blank_out(int topx, int topy, int botx, int boty)

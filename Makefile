@@ -268,6 +268,14 @@ MULTILIBFLAGS = $(CPUFLAGS) -mshort
 INC = -Iinclude -Ibios
 OTHERFLAGS = -fomit-frame-pointer -fno-common
 
+# Optional: -ffunction-sections/-fdata-sections + --gc-sections.
+# With LTO this rarely beats LTO alone on 256K (measure before enabling).
+# Requires emutos.ld to collect .text.*/.bss.*/.data.* (already does).
+ifeq (1,$(GC_SECTIONS))
+OTHERFLAGS += -ffunction-sections -fdata-sections
+LDFLAGS += -Wl,--gc-sections
+endif
+
 # VASM for .asm files
 ASM = vasmm68k_mot
 ASMFLAGS = -quiet -Faout -x $(CPUFLAGS) -spaces -showopt
@@ -618,8 +626,12 @@ NODEP += 192
 192: override DEF += -DTARGET_192
 192: WITH_CLI = 0
 192: ROMSIZE = 192
+# mintelf: default LTO on for small ST ROMs (override with LTO=0).
+ifeq (1,$(MINTELF))
+192: LTO ?= 1
+endif
 192:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' WITH_CLI=$(WITH_CLI) UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS104
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' WITH_CLI=$(WITH_CLI) UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) LTO=$(LTO) MINTELF=$(MINTELF) FASTCALL=$(FASTCALL) $(ROM_PADDED) REF_OS=TOS104
 	@printf "$(LOCALCONFINFO)"
 
 #
@@ -632,8 +644,11 @@ NODEP += 256
 256: OPTFLAGS = $(SMALL_OPTFLAGS)
 256: override DEF += -DTARGET_256
 256: ROMSIZE = 256
+ifeq (1,$(MINTELF))
+256: LTO ?= 1
+endif
 256:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS206
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) LTO=$(LTO) MINTELF=$(MINTELF) FASTCALL=$(FASTCALL) $(ROM_PADDED) REF_OS=TOS206
 	@printf "$(LOCALCONFINFO)"
 	@cp etos256$(UNIQUE).img mpts256$(UNIQUE).img
 
@@ -1452,7 +1467,9 @@ ifeq (1,$(LTO))
 # *first* LTO input, so every LTO'd file ends up grouped there. endrom.c must
 # stay physically last, because ui_mupb has to be located above the AES entry
 # point it points to (see the comment in bios/endrom.c).
-NOLTO = bios/lowstram.c bios/endrom.c
+# conout_atarifb.c: naked FASTCALL blank_out trampoline + inline asm must not
+# be visible to LTO IPA (FASTCALL=1 LTO=1 otherwise illegal-insn at vt52 clear).
+NOLTO = bios/lowstram.c bios/endrom.c bios/conout_atarifb.c
 CFILE_FLAGS = $(if $(filter $(NOLTO),$<),$(filter-out $(LTOFLAGS),$(CFLAGS)),$(CFLAGS))
 # Compiling assembler sources with LTO is useless.
 SFILE_FLAGS = $(filter-out $(LTOFLAGS),$(CFLAGS))

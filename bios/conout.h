@@ -88,6 +88,15 @@ void CONOUT_API conout_paint_cursor(void);
 void CONOUT_API conout_unpaint_cursor(void);
 void CONOUT_API conout_blink_cursor(void);
 
+/* Shared by Atari conout blanking (avoids gcc -mfastcall 4-int-arg bug). */
+typedef struct {
+    int topx;
+    int topy;
+    int botx;
+    int boty;
+} BLANK_RECT;
+void FASTCALL_ATTR conout_atari_blank_out_impl(const BLANK_RECT *rect);
+
 #if defined(FASTCALL_BUILD) \
     && !defined(MACHINE_A2560U) && !defined(MACHINE_A2560K) \
     && !defined(MACHINE_A2560M) && !defined(MACHINE_A2560X) \
