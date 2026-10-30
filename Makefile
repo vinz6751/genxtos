@@ -457,6 +457,12 @@ desk_src = deskstart.S deskmain.c gembind.c deskact.c deskapp.c deskdir.c \
            deskpro.c deskrez.c deskrsrc.c desksupp.c deskwin.c \
            desk_rsc.c icons.c
 
+# UNIQUE (single-country) builds pack desk_rsc into a tree encoding expanded
+# at desk_rs_init(). Multi-language builds keep desk_rsc.c (NLS message ids).
+ifneq (,$(UNIQUE))
+desk_src := $(filter-out desk_rsc.c,$(desk_src)) desk_rsc_pack.c desk_rsc_data.c
+endif
+
 #
 # source code in cli/ for EmuTOS console EmuCON
 #
@@ -1239,6 +1245,20 @@ GEN_SRC += $(ICONRSCGEN_BASE).c $(ICONRSCGEN_BASE).h $(MFORMRSCGEN_BASE).c $(MFO
 $(DESKRSCGEN_BASE)%c $(DESKRSCGEN_BASE)%h: draft erd $(DESKRSC_BASE)%rsc $(DESKRSC_BASE)%def
 	./draft $(DESKRSC_BASE) temp
 	./erd $(NOSHAREARG) -pdesk temp $(DESKRSCGEN_BASE)
+
+# Packed desk resource tables (UNIQUE builds only). Prefer the translated
+# .tr.c when bug translate runs for a non-us country.
+ifneq (,$(UNIQUE))
+DESKPACK_IN = $(DESKRSCGEN_BASE).c
+ifneq (us,$(ETOSLANG))
+DESKPACK_IN = $(DESKRSCGEN_BASE).tr.c
+endif
+GEN_SRC += desk/desk_rsc_data.c desk/desk_rsc_data.h
+desk/desk_rsc_data%c desk/desk_rsc_data%h: tools/deskpack.py $(DESKPACK_IN)
+	python3 tools/deskpack.py $(DESKPACK_IN) desk/desk_rsc_data.c
+# Ensure pack.c sees the generated header on a clean build.
+obj/desk_rsc_pack.o: desk/desk_rsc_data.h
+endif
 $(GEMRSCGEN_BASE)%c $(GEMRSCGEN_BASE)%h: grd $(GEMRSC_BASE)%rsc $(GEMRSC_BASE)%def
 	./grd $(NOSHAREARG) $(GEMRSC_BASE) $(GEMRSCGEN_BASE)
 $(ICONRSCGEN_BASE)%c $(ICONRSCGEN_BASE)%h: ird $(ICONRSC_BASE)%rsc $(ICONRSC_BASE)%def
