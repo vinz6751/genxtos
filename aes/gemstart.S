@@ -31,7 +31,11 @@
         .extern _drwaddr
         .extern _tikcod
         .extern _init_p0_stkptr
+        .extern _gem_main_early
+        .extern _gem_main_late
+#ifndef FASTCALL_BUILD
         .extern _gem_main
+#endif
         .extern _gl_changerez
         .extern _run_accs_and_desktop
         .extern _disable_interrupts
@@ -112,17 +116,21 @@ aes_restart:
         // call C routine to init the SSP in the UDA & return its offset
         jsr     _init_p0_stkptr
 #ifdef FASTCALL_BUILD
-        /* gem_main() on a dedicated stack: p0 u_super lives inside THEGLO
-         * and is too small for FASTCALL early init (pd setup). */
+        // p0 UDA stack is too small for gem_main_early() under FASTCALL;
+        // switch stacks between calls, never inside a C function
         lea     aes_boot_stack_end,sp
+        jsr     _gem_main_early
+        movea.l #_D,a0
+        move.l  UDA_SPSUPER(a0),sp
+        jsr     _gem_main_late
 #else
         movea.l #_D,a6
         adda.l  d0,a6
         movea.l a6,sp
-#endif
 
         // go in C
         jsr     _gem_main
+#endif
 
         // Check for resolution change - if so start over again
         move.w  _gl_changerez,d0

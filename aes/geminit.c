@@ -65,7 +65,11 @@ void accdesk_start(void) NORETURN;  /* called only from gemstart.S */
 LONG size_theglo(void);         /* called only from gemstart.S */
 LONG init_p0_stkptr(void);      /* called only from gemstart.S */
 void run_accs_and_desktop(void);/* called only from gemstart.S */
+void gem_main_early(void);      /* called only from gemstart.S */
+void gem_main_late(void);       /* called only from gemstart.S */
+#if !defined(FASTCALL_BUILD)
 void gem_main(void);            /* called only from gemstart.S */
+#endif
 
 #define ROPEN 0
 
@@ -732,7 +736,11 @@ static BOOL handle_resolution_change(void)
 }
 
 
-void gem_main(void)
+/*
+ * AES init up to process setup.  Under FASTCALL this runs on
+ * aes_boot_stack, because the p0 UDA stack is too small.
+ */
+void gem_main_early(void)
 {
     WORD    i;
 
@@ -801,7 +809,7 @@ void gem_main(void)
     dlr = zlr = NULL;
     fph = fpt = fpcnt = 0;
 
-    /* init initial process (stay on aes_boot_stack under FASTCALL) */
+    /* init initial process */
     for(i=totpds-1; i>=0; i--)
     {
         rlr = pd_index(i);
@@ -835,11 +843,15 @@ void gem_main(void)
     rlr->p_link = NULL;
 
     /* end of process init */
+}
 
-#if defined(FASTCALL_BUILD)
-    /* leave aes_boot_stack before touching p_msg or calling iprocess/psetup */
-    asm volatile("movea.l %0,sp" :: "a"(D.g_int[0].a_uda.u_spsuper) : "memory");
-#endif
+
+/*
+ * Rest of AES init and the desktop loop.  Must run on the p0 UDA stack.
+ */
+void gem_main_late(void)
+{
+    WORD    i;
 
     /* p_msg.action = -1 in each PD */
     for (i = 0; i < totpds; i++)
@@ -878,3 +890,12 @@ void gem_main(void)
     if (D.g_acc)
         dos_free(D.g_acc);
 }
+
+
+#if !defined(FASTCALL_BUILD)
+void gem_main(void)
+{
+    gem_main_early();
+    gem_main_late();
+}
+#endif
