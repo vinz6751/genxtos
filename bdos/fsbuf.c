@@ -59,7 +59,7 @@ void bufl_init(void)
     LONG n;
 
     n = sizeof(BCB) + pun_ptr->max_sect_siz;
-    p = Balloc(FALSE, 2L*NUMBUFS*n);
+    p = balloc_stram(2L*NUMBUFS*n, FALSE);
     if (!p)
         panic("bufl_init(%ld): no memory\n",2L*NUMBUFS*n);
 

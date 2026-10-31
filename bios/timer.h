@@ -40,6 +40,6 @@ BOOL timer_test_with_timeout(BOOL (*predicate)(void), LONG delay);
 void timer_start_20ms_routine(void);
 
 /* XBIOS function */
-void xbtimer(WORD timer, WORD control, WORD data, LONG vector);
+void ARGS_ON_STACK xbtimer(WORD timer, WORD control, WORD data, LONG vector);
 
 #endif

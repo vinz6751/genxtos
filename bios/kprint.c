@@ -68,7 +68,7 @@ static int vcprintf(const char *fmt, va_list ap)
     return doprintf(cprintf_outc, fmt, ap);
 }
 
-int cprintf(const char *RESTRICT fmt, ...)
+int VARARGS cprintf(const char *RESTRICT fmt, ...)
 {
     int n;
     va_list ap;
@@ -284,7 +284,7 @@ static int vkprintf(const char *fmt, va_list ap)
 }
 
 
-int kprintf(const char *RESTRICT fmt, ...)
+int VARARGS kprintf(const char *RESTRICT fmt, ...)
 {
     int n;
     va_list ap;
@@ -302,7 +302,7 @@ int vkcprintf(const char *fmt, va_list ap)
   return vcprintf(fmt, ap);
 }
 
-int kcprintf(const char *RESTRICT fmt, ...)
+int VARARGS kcprintf(const char *RESTRICT fmt, ...)
 {
     int n;
     va_list ap;
@@ -333,7 +333,7 @@ static const char *const exc_messages[] = {
     "Line F Emulator"
 };
 
-void dopanic(const char *fmt, ...)
+void OPTIMIZE_SMALL VARARGS dopanic(const char *fmt, ...)
 {
     UWORD *pc = NULL;
     BOOL wrap;
@@ -606,6 +606,12 @@ void dopanic(const char *fmt, ...)
             kcprintf("Crash at text+%08lx\n", (UBYTE *)pc - run->p_tbase);
     }
 
+#if DETECT_NATIVE_FEATURES
+    if (has_nf_debugger()) {
+        nf_debugger();
+    } else
+#endif
+    {
     /* allow interrupts so we get keypresses */
 #if CONF_WITH_ATARI_VIDEO
     set_sr(0x2300);
@@ -617,6 +623,7 @@ void dopanic(const char *fmt, ...)
     cprintf(_("\n*** Press any key to continue ***"));
     bconin2();
     cprintf("\n");
+    }
 
     savptr = (LONG) trap_save_area; /* in case running program has altered it */
 

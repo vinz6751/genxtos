@@ -391,7 +391,7 @@
 /*
  *  xgetdta - Function 0x2F     f_getdta
  */
-DTAINFO *xgetdta(void)          /* return address of dta */
+DTAINFO *GEMDOS_API xgetdta(void)          /* return address of dta */
 {
     return((DTAINFO *)run->p_xdta);
 }
@@ -400,7 +400,7 @@ DTAINFO *xgetdta(void)          /* return address of dta */
 /*
  *  xsetdta - Function 0x1A     f_setdta
  */
-void xsetdta(DTAINFO *addr)     /* set transfer address to addr */
+void GEMDOS_API xsetdta(DTAINFO *addr)     /* set transfer address to addr */
 {
     run->p_xdta = (DTA *)addr;
 }
@@ -417,7 +417,7 @@ void xsetdta(DTAINFO *addr)     /* set transfer address to addr */
  * problems with BetaDOS, which expects to be able to select drive P:
  * even if it does not exist.
  */
-long xsetdrv(int drv)
+long GEMDOS_API xsetdrv(int drv)
 {
     if ((drv >= 0) && (drv < BLKDEVNUM))
         run->p_curdrv = drv;
@@ -435,7 +435,7 @@ long xsetdrv(int drv)
  *
  *      Last modified   SCC     1 May 85
  */
-long xgetdrv(void)
+long GEMDOS_API xgetdrv(void)
 {
     return run->p_curdrv;
 }

@@ -38,6 +38,17 @@
 
 #define PLANE_OFFSET    2       /* interleaved planes */
 
+/*
+ * conout_atari_* helpers are only part of the public ABI under
+ * FASTCALL_BUILD (see conout.h).  On classic stack builds they stay
+ * file-local so -Werror=missing-prototypes stays happy on GCC 4.x.
+ */
+#if defined(FASTCALL_BUILD)
+# define CONOUT_ATARI_DEF(ret) ret FASTCALL_ATTR
+#else
+# define CONOUT_ATARI_DEF(ret) static ret
+#endif
+
 #define FALCON_BLACK    0x0000
 #define FALCON_WHITE    0xffbf
 
@@ -52,13 +63,25 @@ static const UWORD falcon_default_palette[16] = {
 extern Vwk phys_work;           /* attribute area for physical workstation */
 #endif
 
-static void init(const Fonthead *font)
+static void do_conout_atari_init(const Fonthead *font)
 {
     v_cel_mx = (V_REZ_HZ / font->max_cell_width) - 1;
     v_cel_my = (V_REZ_VT / font->form_height) - 1;
     v_cel_wr = v_lin_wr * v_cel_ht;
     v_cur_ad.pxaddr = v_bas_ad;                /* set cursor to start of screen */
 }
+
+static void FP_CALLBACK init(const Fonthead *font)
+{
+    do_conout_atari_init(font);
+}
+
+#if defined(FASTCALL_BUILD)
+void FASTCALL_ATTR conout_atari_init(const Fonthead *font)
+{
+    do_conout_atari_init(font);
+}
+#endif
 
 
 /*
@@ -74,7 +97,7 @@ static void init(const Fonthead *font)
  * returns pointer to first byte of cell
  */
 
-static CHAR_ADDR cell_addr(UWORD x, UWORD y)
+CONOUT_ATARI_DEF(UBYTE *) conout_atari_cell_addr(UWORD x, UWORD y)
 {
     ULONG disx, disy;
 
@@ -85,33 +108,25 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
     else
 #endif
     {
-        /*
-         * v_planes cannot be more than 8, so as long as there are no more
-         * than 4000 characters per line, the result will fit in a word ...
-         *
-         * X displacement = even(X) * v_planes + Xmod2
-         */
         disx = v_planes * (x & ~1);
-        if (IS_ODD(x)) {        /* Xmod2 = 0 ? */
-            disx++;             /* Xmod2 = 1 */
-        }
+        if (IS_ODD(x))
+            disx++;
     }
 
-    /* Y displacement = Y // cell conversion factor */
     disy = (ULONG)v_cel_wr * y;
+    return v_bas_ad + disy + disx + v_cur_of;
+}
 
-    /*
-     * cell address = screen base address + Y displacement
-     * + X displacement + offset from screen-begin (fix)
-     */
-    return (CHAR_ADDR)(v_bas_ad + disy + disx + v_cur_of);
+static CHAR_ADDR FP_CALLBACK cell_addr(UWORD x, UWORD y)
+{
+    return (CHAR_ADDR)conout_atari_cell_addr(x, y);
 }
 
 
-static int get_char_source(unsigned char c, CHAR_ADDR *src)
+static int FP_CALLBACK get_char_source(unsigned char c, CHAR_ADDR *src)
 {
-    (*src).pxaddr = char_addr(c);   /* a0 -> get character source */
-    return src != NULL;             /* return false if char not in font */
+    (*src).pxaddr = char_addr(c);
+    return (*src).pxaddr != NULL;
 }
 
 
@@ -185,7 +200,7 @@ static void cell_xfer16(UBYTE *src, UBYTE *dst)
  * a4      points to byte below this cell's bottom
  */
 
-static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
+CONOUT_ATARI_DEF(void) conout_atari_blit_char(UBYTE *src, UBYTE *dst)
 {
     UBYTE * src_sav, * dst_sav;
     UWORD fg;
@@ -195,7 +210,7 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
 
 #if CONF_WITH_VIDEL
     if (TRUECOLOR_MODE) {
-        cell_xfer16(src.pxaddr, dst.pxaddr);
+        cell_xfer16(src, dst);
         return;
     }
 #endif
@@ -213,30 +228,29 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
         bg = v_col_bg;
     }
 
-    src_sav = src.pxaddr;
-    dst_sav = dst.pxaddr;
+    src_sav = src;
+    dst_sav = dst;
 
     for (plane = v_planes; plane--; ) {
         int i;
 
-        src.pxaddr = src_sav;                  /* reload src */
-        dst.pxaddr = dst_sav;                  /* reload dst */
+        src = src_sav;
+        dst = dst_sav;
 
         if (bg & 0x0001) {
             if (fg & 0x0001) {
                 /* back:1  fore:1  =>  all ones */
                 for (i = v_cel_ht; i--; ) {
-                    *dst.pxaddr = 0xff;                /* inject a block */
-                    dst.pxaddr += line_wr;
+                    *dst = 0xff;
+                    dst += line_wr;
                 }
             }
             else {
                 /* back:1  fore:0  =>  invert block */
                 for (i = v_cel_ht; i--; ) {
-                    /* inject the inverted source block */
-                    *dst.pxaddr = ~*src.pxaddr;
-                    dst.pxaddr += line_wr;
-                    src.pxaddr += fnt_wr;
+                    *dst = ~*src;
+                    dst += line_wr;
+                    src += fnt_wr;
                 }
             }
         }
@@ -244,24 +258,29 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
             if (fg & 0x0001) {
                 /* back:0  fore:1  =>  direct substitution */
                 for (i = v_cel_ht; i--; ) {
-                    *dst.pxaddr = *src.pxaddr;
-                    dst.pxaddr += line_wr;
-                    src.pxaddr += fnt_wr;
+                    *dst = *src;
+                    dst += line_wr;
+                    src += fnt_wr;
                 }
             }
             else {
                 /* back:0  fore:0  =>  all zeros */
                 for (i = v_cel_ht; i--; ) {
-                    *dst.pxaddr = 0x00;                /* inject a block */
-                    dst.pxaddr += line_wr;
+                    *dst = 0x00;
+                    dst += line_wr;
                 }
             }
         }
 
-        bg >>= 1;                       /* next background color bit */
-        fg >>= 1;                       /* next foreground color bit */
-        dst_sav += PLANE_OFFSET;        /* top of block in next plane */
+        bg >>= 1;
+        fg >>= 1;
+        dst_sav += PLANE_OFFSET;
     }
+}
+
+static void FP_CALLBACK cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
+{
+    conout_atari_blit_char(src.pxaddr, dst.pxaddr);
 }
 
 
@@ -281,12 +300,15 @@ static void cell_xfer(CHAR_ADDR src, CHAR_ADDR dst)
  * out:
  */
 
-static void neg_cell(CHAR_ADDR cell)
+CONOUT_ATARI_DEF(void) conout_atari_neg_cell(UBYTE *px)
 {
+    CHAR_ADDR cell;
     int len;
     int plane;
     int lin_wr = v_lin_wr;
     int cell_len = v_cel_ht;
+
+    cell.pxaddr = px;
 
 #if CONF_WITH_VIDEL
     if (TRUECOLOR_MODE) {               /* chunky pixels */
@@ -302,16 +324,20 @@ static void neg_cell(CHAR_ADDR cell)
 #endif
     {
         for (plane = v_planes; plane--; ) {
-            UBYTE * addr = cell.pxaddr;            /* top of current dest plane */
+            UBYTE * addr = cell.pxaddr;
 
-            /* reset cell length counter */
             for (len = cell_len; len--; ) {
                 *addr = ~*addr;
                 addr += lin_wr;
             }
-            cell.pxaddr += PLANE_OFFSET;           /* a1 -> top of block in next plane */
+            cell.pxaddr += PLANE_OFFSET;
         }
     }
+}
+
+static void FP_CALLBACK neg_cell(CHAR_ADDR cell)
+{
+    conout_atari_neg_cell(cell.pxaddr);
 }
 
 
@@ -325,7 +351,7 @@ static void neg_cell(CHAR_ADDR cell)
  *     true  - CR LF required (position has not been updated)
  */
 
-static void next_cell(void)
+CONOUT_ATARI_DEF(void) conout_atari_next_cell(void)
 {
 #if CONF_WITH_VIDEL
     if (TRUECOLOR_MODE) {               /* chunky pixels */
@@ -334,15 +360,17 @@ static void next_cell(void)
     }
 #endif
 
-    /* if X is even, move to next word in the plane */
     if (IS_ODD(v_cur_cx)) {
-        /* x is odd */
-        v_cur_ad.pxaddr += 1;           /* a1 -> new cell */
+        v_cur_ad.pxaddr += 1;
         return;
     }
 
-    /* new cell (1st plane), added offset to next word in plane */
     v_cur_ad.pxaddr += (v_planes << 1) - 1;
+}
+
+static void FP_CALLBACK next_cell(void)
+{
+    conout_atari_next_cell();
 }
 
 
@@ -407,8 +435,12 @@ static void blank_out16(int topx, int topy, int botx, int boty)
  *   boty - bottom/right cell y position
  */
 
-static void blank_out(int topx, int topy, int botx, int boty)
+void FASTCALL_ATTR __attribute__((noinline)) conout_atari_blank_out_impl(const BLANK_RECT *rect)
 {
+    int topx = rect->topx;
+    int topy = rect->topy;
+    int botx = rect->botx;
+    int boty = rect->boty;
     UWORD color;
     int pair, pairs, row, rows, offs;
     UBYTE *addr;
@@ -420,79 +452,88 @@ static void blank_out(int topx, int topy, int botx, int boty)
     }
 #endif
 
-    color = v_col_bg;                   /* bg color value */
+    color = v_col_bg;
+    addr = conout_atari_cell_addr(topx, topy);
 
-    addr = cell_addr(topx, topy).pxaddr;   /* running pointer to screen */
-
-    /*
-     * # of cell-pairs per row in region - 1
-     *
-     * e.g. topx = 2, botx = 5, so pairs = 2
-     */
-    pairs = (botx - topx + 1) / 2;      /* pairs of characters */
-
-    /* calculate the BYTE offset from the end of one row to next start */
+    pairs = (botx - topx + 1) / 2;
     offs = v_lin_wr - pairs * 2 * v_planes;
-
-    /*
-     * # of lines in region - 1
-     *
-     * see comments re cell-pairs above
-     */
     rows = (boty - topy + 1) * v_cel_ht;
 
     if (v_planes > 1) {
-        /* Color modes are optimized for handling 2 planes at once */
-        ULONG pair_planes[4];        /* bits on screen for 8 planes max */
+        ULONG pair_planes[4];
         UWORD i;
 
-        /* Precalculate the pairs of plane data */
         for (i = 0; i < v_planes / 2; i++) {
-            /* set the high WORD of our LONG for the current plane */
             if (color & 0x0001)
                 pair_planes[i] = 0xffff0000;
             else
                 pair_planes[i] = 0x00000000;
-            color >>= 1;        /* get next bit */
+            color >>= 1;
 
-            /* set the low WORD of our LONG for the current plane */
             if (color & 0x0001)
                 pair_planes[i] |= 0x0000ffff;
-            color >>= 1;        /* get next bit */
+            color >>= 1;
         }
 
-        /* do all rows in region */
         for (row = rows; row--;) {
-            /* loop through all cell pairs */
             for (pair = pairs; pair--;) {
                 for (i = 0; i < v_planes / 2; i++) {
                     *(ULONG*)addr = pair_planes[i];
                     addr += sizeof(ULONG);
                 }
             }
-            addr += offs;       /* skip non-region area with stride advance */
+            addr += offs;
         }
     }
     else {
-        /* Monochrome mode */
-        UWORD pl;               /* bits on screen for current plane */
+        UWORD pl;
 
-        /* set the WORD for plane 0 */
         if (color & 0x0001)
             pl = 0xffff;
         else
             pl = 0x0000;
 
-        /* do all rows in region */
         for (row = rows; row--;) {
-            /* loop through all cell pairs */
             for (pair = pairs; pair--;) {
                 *(UWORD*)addr = pl;
                 addr += sizeof(UWORD);
             }
-            addr += offs;       /* skip non-region area with stride advance */
+            addr += offs;
         }
     }
+}
+
+#if defined(FASTCALL_BUILD)
+/*
+ * gcc 15 m68k -mfastcall mishandles functions with four integer arguments.
+ * Pass a BLANK_RECT pointer (a0) to the real implementation instead.
+ *
+ * Keep this TU out of LTO (see Makefile NOLTO): IPA otherwise rewrites the
+ * naked trampoline and scroll_* asm callers that jsr here with d0-d3 set
+ * blow up at boot.  Do not combine other attributes with naked — gcc then
+ * ignores naked on m68k.
+ */
+__attribute__((naked))
+void FASTCALL_ATTR conout_atari_blank_out(int topx, int topy, int botx, int boty)
+{
+    __asm__ volatile(
+        "move.w d3,-(sp)\n\t"
+        "move.w d2,-(sp)\n\t"
+        "move.w d1,-(sp)\n\t"
+        "move.w d0,-(sp)\n\t"
+        "move.l sp,a0\n\t"
+        "jsr _conout_atari_blank_out_impl\n\t"
+        "lea 8(sp),sp\n\t"
+        "rts"
+    );
+}
+#endif
+
+static void FP_CALLBACK blank_out(int topx, int topy, int botx, int boty)
+{
+    BLANK_RECT rect = { topx, topy, botx, boty };
+
+    conout_atari_blank_out_impl(&rect);
 }
 
 
@@ -515,13 +556,30 @@ static void blank_out(int topx, int topy, int botx, int boty)
  *   top_line - cell y of cell line to be used as top line in scroll
  */
 
-static void scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
+CONOUT_ATARI_DEF(void) conout_atari_scroll_up(UBYTE *src, UBYTE *dst, ULONG count)
 {
-    /* move BYTEs of memory*/
-    memmove(dst.pxaddr, src.pxaddr, count);
+    memmove(dst, src, count);
+#if defined(FASTCALL_BUILD)
+    __asm__ volatile(
+        "move.w %1,d3\n\t"
+        "move.w %0,d2\n\t"
+        "move.w %1,d1\n\t"
+        "moveq #0,d0\n\t"
+        "jsr _conout_atari_blank_out"
+        :
+        : "m"(v_cel_mx), "m"(v_cel_my)
+        : "d0", "d1", "d2", "d3", "memory");
+#else
+    {
+        BLANK_RECT rect = { 0, v_cel_my, v_cel_mx, v_cel_my };
+        conout_atari_blank_out_impl(&rect);
+    }
+#endif
+}
 
-    /* exit thru blank out, bottom line cell address y to top/left cell */
-    blank_out(0, v_cel_my , v_cel_mx, v_cel_my);   
+static void FP_CALLBACK scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
+{
+    conout_atari_scroll_up(src.pxaddr, dst.pxaddr, count);
 }
 
 
@@ -530,19 +588,41 @@ static void scroll_up(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
  * scroll_down - Scroll (partially) downwards
  */
 
-static void scroll_down(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD start_line)
+CONOUT_ATARI_DEF(void) conout_atari_scroll_down(UBYTE *src, UBYTE *dst, LONG count, UWORD start_line)
 {
-    /* move BYTEs of memory*/
-    memmove(dst.pxaddr, src.pxaddr, count);
+    memmove(dst, src, count);
+#if defined(FASTCALL_BUILD)
+    __asm__ volatile(
+        "move.w %1,d3\n\t"
+        "move.w %0,d2\n\t"
+        "move.w %1,d1\n\t"
+        "moveq #0,d0\n\t"
+        "jsr _conout_atari_blank_out"
+        :
+        : "m"(v_cel_mx), "m"(start_line)
+        : "d0", "d1", "d2", "d3", "memory");
+#else
+    {
+        BLANK_RECT rect = { 0, start_line, v_cel_mx, start_line };
+        conout_atari_blank_out_impl(&rect);
+    }
+#endif
+}
 
-    /* exit thru blank out */
-    blank_out(0, start_line , v_cel_mx, start_line);   
+static void FP_CALLBACK scroll_down(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD start_line)
+{
+    conout_atari_scroll_down(src.pxaddr, dst.pxaddr, count, start_line);
 }
 
 
-static void paint_cursor(void)
+CONOUT_ATARI_DEF(void) conout_atari_paint_cursor(void)
 {
-    neg_cell(v_cur_ad);
+    conout_atari_neg_cell(v_cur_ad.pxaddr);
+}
+
+static void FP_CALLBACK paint_cursor(void)
+{
+    conout_atari_paint_cursor();
 }
 
 

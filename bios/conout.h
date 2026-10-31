@@ -68,34 +68,69 @@ extern UBYTE v_stat_0;          /* video cell system status */
 extern WORD sav_cur_x;          /* saved cursor cell x */
 extern WORD sav_cur_y;          /* saved cursor cell y */
 
-/* Prototypes */
-void conout_init(const Fonthead *font);
-void conout_ascii_out(int);
-void conout_enable_cursor(void);
-void conout_disable_cursor(void);
-void conout_move_cursor(int x, int y);
-void conout_blank_out (int, int, int, int);
-void conout_invert_cell(int, int);
-void conout_scroll_up(UWORD top_line);
-void conout_scroll_down(UWORD start_line);
-void conout_paint_cursor(void);
-void conout_unpaint_cursor(void);
-void conout_blink_cursor(void);
+/* OS-internal dispatch wrappers; FP_CALLBACK driver methods stay cdecl. */
+#if defined(FASTCALL_BUILD)
+# define CONOUT_API FASTCALL_ATTR
+#else
+# define CONOUT_API ARGS_ON_STACK
+#endif
+
+void CONOUT_API conout_init(const Fonthead *font);
+void CONOUT_API conout_ascii_out(int);
+void CONOUT_API conout_enable_cursor(void);
+void CONOUT_API conout_disable_cursor(void);
+void CONOUT_API conout_move_cursor(int x, int y);
+void CONOUT_API conout_blank_out (int, int, int, int);
+void CONOUT_API conout_invert_cell(int, int);
+void CONOUT_API conout_scroll_up(UWORD top_line);
+void CONOUT_API conout_scroll_down(UWORD start_line);
+void CONOUT_API conout_paint_cursor(void);
+void CONOUT_API conout_unpaint_cursor(void);
+void CONOUT_API conout_blink_cursor(void);
+
+/* Shared by Atari conout blanking (avoids gcc -mfastcall 4-int-arg bug). */
+typedef struct {
+    int topx;
+    int topy;
+    int botx;
+    int boty;
+} BLANK_RECT;
+void FASTCALL_ATTR conout_atari_blank_out_impl(const BLANK_RECT *rect);
+
+#if defined(FASTCALL_BUILD) \
+    && !defined(MACHINE_A2560U) && !defined(MACHINE_A2560K) \
+    && !defined(MACHINE_A2560M) && !defined(MACHINE_A2560X) \
+    && !defined(MACHINE_GENX) && !defined(MACHINE_AMIGA)
+# define CONOUT_ATARI_FASTPATH 1
+void FASTCALL_ATTR conout_atari_blit_char(UBYTE *src, UBYTE *dst);
+UBYTE * FASTCALL_ATTR conout_atari_cell_addr(UWORD x, UWORD y);
+void FASTCALL_ATTR conout_atari_next_cell(void);
+void FASTCALL_ATTR conout_atari_neg_cell(UBYTE *cell);
+void FASTCALL_ATTR conout_atari_blank_out(int topx, int topy, int botx, int boty);
+void FASTCALL_ATTR conout_atari_scroll_up(UBYTE *src, UBYTE *dst, ULONG count);
+void FASTCALL_ATTR conout_atari_scroll_down(UBYTE *src, UBYTE *dst, LONG count, UWORD start_line);
+#if defined(FASTCALL_BUILD)
+void FASTCALL_ATTR conout_atari_init(const Fonthead *font);
+#endif
+void FASTCALL_ATTR conout_atari_paint_cursor(void);
+#else
+# define CONOUT_ATARI_FASTPATH 0
+#endif
 
 typedef struct {
-    void (*init)(const Fonthead *font);
-    void (*blank_out)(int, int, int, int);
-    void (*neg_cell)(CHAR_ADDR cell);
-    void (*next_cell)(void);
-    void (*cursor_moved)(void);
-    void (*scroll_up)(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count);
-    void (*scroll_down)(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD start_line);
-    int (*get_char_source)(unsigned char c, CHAR_ADDR *src);
-    CHAR_ADDR (*cell_addr)(UWORD x, UWORD y);
-    void (*cell_xfer)(const CHAR_ADDR src, CHAR_ADDR dst);
-    void (*con_paint_cursor)(void);
-    void (*unpaint_cursor)(void);
-    void (*blink_cursor)(void); /* If null, a fallback is used */
+    void (FP_CALLBACK *init)(const Fonthead *font);
+    void (FP_CALLBACK *blank_out)(int, int, int, int);
+    void (FP_CALLBACK *neg_cell)(CHAR_ADDR cell);
+    void (FP_CALLBACK *next_cell)(void);
+    void (FP_CALLBACK *cursor_moved)(void);
+    void (FP_CALLBACK *scroll_up)(const CHAR_ADDR src, CHAR_ADDR dst, ULONG count);
+    void (FP_CALLBACK *scroll_down)(const CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD start_line);
+    int (FP_CALLBACK *get_char_source)(unsigned char c, CHAR_ADDR *src);
+    CHAR_ADDR (FP_CALLBACK *cell_addr)(UWORD x, UWORD y);
+    void (FP_CALLBACK *cell_xfer)(const CHAR_ADDR src, CHAR_ADDR dst);
+    void (FP_CALLBACK *con_paint_cursor)(void);
+    void (FP_CALLBACK *unpaint_cursor)(void);
+    void (FP_CALLBACK *blink_cursor)(void); /* If null, a fallback is used */
 } CONOUT_DRIVER;
 
 #endif

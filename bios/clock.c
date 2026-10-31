@@ -966,7 +966,7 @@ static volatile WORD iclk_ready;
 
 /* called by the ACIA interrupt */
 /* EmuTOS's ikbdsys also puts the buffer (containing ymdhms) on the stack */
-void clockvec(UBYTE *buf)
+void ARGS_ON_STACK clockvec(UBYTE *buf)
 {
     
     UBYTE *b = 1 + ((UBYTE *)&iclkbuf);
@@ -1223,7 +1223,7 @@ void clock_init(void)
 
 /* xbios functions */
 
-void settime(LONG time)
+void ARGS_ON_STACK settime(LONG time)
 {
     /* Update GEMDOS time and date */
     current_time = LOWORD(time);
@@ -1277,7 +1277,7 @@ void settime(LONG time)
     }
 }
 
-LONG gettime(void)
+LONG ARGS_ON_STACK gettime(void)
 {
     if (FALSE)
     {

@@ -1593,9 +1593,9 @@ short old_tree = -1;
 PRIVATE int write_h_extern(FILE *fp)
 {
 #ifdef DESK_RSC
-    fprintf(fp,"extern const BITBLK %srs_bitblk[];\n",prefix);
-    fprintf(fp,"extern const char * const %srs_fstr[];\n",prefix);
-    fprintf(fp,"extern const ICONBLK %srs_iconblk[];\n",prefix);
+    /* bitblk/fstr are filled by desk_rs_init when the resource is packed */
+    fprintf(fp,"extern BITBLK %srs_bitblk[];\n",prefix);
+    fprintf(fp,"extern const char * %srs_fstr[];\n",prefix);
     fprintf(fp,"extern OBJECT * %srs_obj;\n",prefix);
     fprintf(fp,"extern TEDINFO %srs_tedinfo[RS_NTED];\n",prefix);
     fprintf(fp,"extern OBJECT * %srs_trees[];\n\n",prefix);
@@ -1991,7 +1991,11 @@ char *base = (char *)rschdr;
     /*
      * finally we create the array of BITBLKs with pointers to images
      */
+#ifdef DESK_RSC
+    fprintf(fp,"BITBLK %srs_bitblk[] = {\n",prefix);
+#else
     fprintf(fp,"const BITBLK %srs_bitblk[] = {\n",prefix);
+#endif
     bitblk = (BITBLK *)(base + rsh.bitblk);
     for (i = 0; i < nbb; i++, bitblk++) {
         if (i == conditional_bitblk_start)
@@ -2201,7 +2205,11 @@ char *base = (char *)rschdr;
     if (!generate_freestrings)
         return 0;
 
+#ifdef DESK_RSC
+    fprintf(fp,"const char * %srs_fstr[] = {\n",prefix);
+#else
     fprintf(fp,"const char * const %srs_fstr[] = {\n",prefix);
+#endif
 
     nstring = rsh.nstring;
     strptr = (OFFSET *)(base + rsh.frstr);

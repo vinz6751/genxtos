@@ -22,23 +22,23 @@
  * are the implementation of these provided by floppy.c.
  */
 
-void flop_hdv_init(void);
+void ARGS_ON_STACK flop_hdv_init(void);
 WORD flop_boot_read(void);
 LONG flop_mediach(WORD dev);
 
 /* xbios functions */
 
-LONG floprd(UBYTE *buf, LONG filler, WORD dev,
+LONG ARGS_ON_STACK floprd(UBYTE *buf, LONG filler, WORD dev,
                    WORD sect, WORD track, WORD side, WORD count);
-LONG flopwr(const UBYTE *buf, LONG filler, WORD dev,
+LONG ARGS_ON_STACK flopwr(const UBYTE *buf, LONG filler, WORD dev,
                    WORD sect, WORD track, WORD side, WORD count);
-LONG flopfmt(UBYTE *buf, WORD *skew, WORD dev, WORD spt,
+LONG ARGS_ON_STACK flopfmt(UBYTE *buf, WORD *skew, WORD dev, WORD spt,
                     WORD track, WORD side, WORD interleave,
                     ULONG magic, WORD virgin);
-void protobt(UBYTE *buf, LONG serial, WORD type, WORD exec);
-LONG flopver(WORD *buf, LONG filler, WORD dev,
+void ARGS_ON_STACK protobt(UBYTE *buf, LONG serial, WORD type, WORD exec);
+LONG ARGS_ON_STACK flopver(WORD *buf, LONG filler, WORD dev,
                     WORD sect, WORD track, WORD side, WORD count);
-LONG floprate(WORD dev, WORD rate);
+LONG ARGS_ON_STACK floprate(WORD dev, WORD rate);
 
 /* internal functions */
 

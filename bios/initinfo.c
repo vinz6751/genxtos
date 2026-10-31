@@ -39,6 +39,8 @@
 #include "initinfo.h"
 #include "conout.h"
 #include "../bdos/bdosstub.h"
+#include "bdosbind.h"
+#include "bdosdefs.h"
 #include "lineavars.h"
 
 /* Screen width, in characters, as signed value */
@@ -266,7 +268,7 @@ static void cprintf_bytesize(ULONG bytes)
  *
  * returns the selected boot device
  */
-WORD initinfo(ULONG *pshiftbits)
+WORD OPTIMIZE_SMALL initinfo(ULONG *pshiftbits)
 {
     int screen_height = v_cel_my + 1;
     int initinfo_height = 19; /* Define ENABLE_KDEBUG to guess correct value */
@@ -297,6 +299,7 @@ WORD initinfo(ULONG *pshiftbits)
     if (altramsize > 0)
         initinfo_height += 1;
 #endif
+    initinfo_height += 1;     /* Free RAM (Mxalloc) line */
     if (hdd_available)
         initinfo_height += 1;
 
@@ -352,6 +355,13 @@ WORD initinfo(ULONG *pshiftbits)
 #endif
     pair_start("ST-RAM"); cprintf_bytesize(stramsize); pair_end();
 
+    {
+        long free_ram = Mxalloc(-1L, MX_STRAM);
+
+        if (free_ram < 0L)
+            free_ram = 0L;
+        pair_start("Free RAM"); cprintf_bytesize(free_ram); pair_end();
+    }
 
 #if CONF_WITH_ALT_RAM
     if (altramsize > 0) {
@@ -476,7 +486,7 @@ WORD initinfo(ULONG *pshiftbits)
 #else    /* FULL_INITINFO */
 
 
-WORD initinfo(ULONG *pshiftbits)
+WORD OPTIMIZE_SMALL initinfo(ULONG *pshiftbits)
 {
     /* we already displayed a startup message */
 
@@ -488,7 +498,7 @@ WORD initinfo(ULONG *pshiftbits)
 #endif   /* FULL_INITINFO */
 
 
-void display_startup_msg(void)
+void OPTIMIZE_SMALL display_startup_msg(void)
 {
     cprintf("EmuTOS Version %s\r\n", version);
 }

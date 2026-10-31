@@ -21,6 +21,6 @@ void set_nvram_rtc(int index, int data);
 
 /* XBios function */
 
-WORD nvmaccess(WORD type, WORD start, WORD count, UBYTE *buffer);
+WORD ARGS_ON_STACK nvmaccess(WORD type, WORD start, WORD count, UBYTE *buffer);
 
 #endif  /* CONF_WITH_NVRAM */

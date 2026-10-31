@@ -63,7 +63,7 @@ void mfp_init(void)
 
 /*==== xbios functions ===========================================*/
 
-void mfpint(WORD num, LONG vector)
+void ARGS_ON_STACK mfpint(WORD num, LONG vector)
 {
     num &= 0x0F;
     jdisint(num);
@@ -72,13 +72,13 @@ void mfpint(WORD num, LONG vector)
 }
 
 
-void jdisint(WORD num)
+void ARGS_ON_STACK jdisint(WORD num)
 {
     mfp68901_disable_interrupt(MFP_BASE, num);
 }
 
 
-void jenabint(WORD num)
+void ARGS_ON_STACK jenabint(WORD num)
 {
     mfp68901_enable_interrupt(MFP_BASE, num);
 }

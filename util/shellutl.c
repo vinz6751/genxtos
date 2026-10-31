@@ -78,7 +78,7 @@ char *shellutl_find_next_path_component(const char *paths, char *dest)
     if ((last != '\\') && (last != ':'))
         *dest++ = '\\';
 
-	*dest = '\0';
+    *dest = '\0';
 
     /* point past terminating separator or nul */
     return *p ? p + 1 : p;

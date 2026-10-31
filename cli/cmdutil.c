@@ -319,12 +319,16 @@ PRIVATE LONG getjar(void)
 
 /*
  *  getcookie()
+ *
+ * Must use Supexec: EmuCON runs in user mode and cannot read $5a0 directly
+ * (cookie_get/_p_cookies would bus-error).  ROM builds use xbiosbind Supexec
+ * (stack TOS args); standalone still uses jmp_xbios.
  */
 WORD getcookie(LONG cookie,LONG *pvalue)
 {
 COOKIE *jar, *c;
 
-    jar = (COOKIE *)Supexec(getjar);
+    jar = (COOKIE *)Supexec((LONG)getjar);
     if (!jar)
         return 0;
 

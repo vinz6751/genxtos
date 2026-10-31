@@ -26,20 +26,20 @@ void detect_dmasound(void);
 void dmasound_init(void);
 
 /* XBIOS DMA sound functions */
-LONG locksnd(void);
-LONG unlocksnd(void);
-LONG soundcmd(WORD mode, WORD data);
-LONG setbuffer(UWORD mode, ULONG startaddr, ULONG endaddr);
-LONG setsndmode(UWORD mode);
-LONG settracks(UWORD playtracks, UWORD rectracks);
-LONG setmontracks(UWORD montrack);
-LONG setinterrupt(UWORD mode, WORD cause);
-LONG buffoper(WORD mode);
-LONG dsptristate(WORD dspxmit, WORD dsprec);
-LONG gpio(UWORD mode, UWORD data);
-LONG devconnect(WORD source, WORD dest, WORD clk, WORD prescale, WORD protocol);
-LONG sndstatus(WORD reset);
-LONG buffptr(LONG sptr);
+LONG ARGS_ON_STACK locksnd(void);
+LONG ARGS_ON_STACK unlocksnd(void);
+LONG ARGS_ON_STACK soundcmd(WORD mode, WORD data);
+LONG ARGS_ON_STACK setbuffer(UWORD mode, ULONG startaddr, ULONG endaddr);
+LONG ARGS_ON_STACK setsndmode(UWORD mode);
+LONG ARGS_ON_STACK settracks(UWORD playtracks, UWORD rectracks);
+LONG ARGS_ON_STACK setmontracks(UWORD montrack);
+LONG ARGS_ON_STACK setinterrupt(UWORD mode, WORD cause);
+LONG ARGS_ON_STACK buffoper(WORD mode);
+LONG ARGS_ON_STACK dsptristate(WORD dspxmit, WORD dsprec);
+LONG ARGS_ON_STACK gpio(UWORD mode, UWORD data);
+LONG ARGS_ON_STACK devconnect(WORD source, WORD dest, WORD clk, WORD prescale, WORD protocol);
+LONG ARGS_ON_STACK sndstatus(WORD reset);
+LONG ARGS_ON_STACK buffptr(LONG sptr);
 
 #endif /* CONF_WITH_DMASOUND */
 

@@ -20,6 +20,7 @@
 #include "fs.h"
 #include "mem.h"
 #include "proc.h"
+#include "bdosstub.h"
 #include "gemerror.h"
 #include "biosbind.h"
 #include "string.h"
@@ -43,13 +44,7 @@ static void init_pd_fields(PD *p, char *tail, long max, char *envptr);
 static void init_pd_files(PD *p);
 static char *alloc_env(ULONG flags, char *v);
 static UBYTE *alloc_tpa(ULONG flags,LONG needed,LONG *avail);
-static void proc_go(PD *p);
-
-/*
- * global variables
- */
-
-PD      *run;           /* ptr to PD for current process */
+static void __attribute__((noinline, optimize("O0"))) proc_go(PD *p);
 
 /*
  * internal variables
@@ -57,6 +52,7 @@ PD      *run;           /* ptr to PD for current process */
 
 static WORD    supstk[SUPSIZ]; /* common sup stack for all processes */
 static jmp_buf bakbuf;         /* longjmp buffer */
+static char    null_env[2];    /* not in pmd; for PE_BASEPAGE when env is NULL */
 
 
 /*
@@ -176,7 +172,7 @@ static WORD envsize(char *env)
  */
 static PD *cur_p;
 
-long xexec(WORD flag, char *path, char *tail, char *env)
+long GEMDOS_API xexec(WORD flag, char *path, char *tail, char *env)
 {
     PD *p, *owner;
     PGMHDR01 hdr;
@@ -187,6 +183,8 @@ long xexec(WORD flag, char *path, char *tail, char *env)
     FH fh;
 
     KDEBUG(("BDOS xexec: flag or mode = %d\n",flag));
+    NF_TRACE(("xexec flag=%u path=%p tail=%p env=%p\n",
+              (unsigned)flag, path, tail, env));
 
     /* first branch - actions that do not require loading files */
     switch(flag) {
@@ -212,15 +210,17 @@ long xexec(WORD flag, char *path, char *tail, char *env)
         FALLTHROUGH;
     case PE_BASEPAGEFLAGS:      /* create a basepage, respecting the flags */
         hdrflags = (ULONG)path;
-        env_ptr = alloc_env(hdrflags, env);
-        if (env_ptr == NULL) {
+        if (env == NULL)
+            env_ptr = null_env;
+        else if ((env_ptr = alloc_env(hdrflags, env)) == NULL) {
             KDEBUG(("BDOS xexec: no memory for environment\n"));
             return ENSMEM;
         }
         p = (PD *)alloc_tpa((ULONG)path,sizeof(PD),&max);
 
         if (p == NULL) {    /* not even enough memory for basepage */
-            xmfree(env_ptr);
+            if (env_ptr != null_env)
+                xmfree(env_ptr);
             KDEBUG(("BDOS xexec: No memory for basepage\n"));
             return ENSMEM;
         }
@@ -533,7 +533,8 @@ struct gouser_stack {
   PD * basepage;   /* ... upon startup the basepage is in 4(sp) */
 };
 
-static void proc_go(PD *p)
+static void __attribute__((noinline, optimize("O0")))
+proc_go(PD *p)
 {
     struct gouser_stack *sp;
 
@@ -551,8 +552,8 @@ static void proc_go(PD *p)
     sp->sr = get_sr() & 0x0700;  /* the process will start in user mode, same IPL */    
     KDEBUG(("retaddr: %p, sr=%04x\n", (void*)sp->retaddr, sp->sr));
 
-    /* the other stack is the supervisor stack */
-    sp->other_sp = (long) &supstk[SUPSIZ];
+    /* the other stack is the supervisor stack (gouser() reads this in asm) */
+    sp->other_sp = (long)(supstk + SUPSIZ);
     KDEBUG(("other_sp: %p\n", (void*)sp->other_sp));
 
     /* store this new stack in the saved a7 field of the PD */
@@ -589,7 +590,7 @@ static void proc_go(PD *p)
  * terminates the calling process and returns to the parent process
  * with a return code of zero
  */
-void x0term(void)
+void GEMDOS_API x0term(void)
 {
     xterm(0);
 }
@@ -602,7 +603,7 @@ void x0term(void)
  *
  * Function 0x4C        p_term
  */
-void xterm(UWORD rc)
+void GEMDOS_API xterm(UWORD rc)
 {
     PFVOID userterm;
     PD *p = run;
@@ -610,7 +611,8 @@ void xterm(UWORD rc)
     userterm = (PFVOID)Setexc(0x102, (long)-1L);  /* get user term handler address */
     protect_v((PFLONG)userterm);    /* call it, protecting d2/a2 from modification */
 
-    run = run->p_parent;
+    if (run->p_parent)
+        run = run->p_parent;
     ixterm(p);
     /* gouser() will store the current value of D0 in the active PD
      * so it cannot be used here. See proc_go() above.
@@ -625,7 +627,7 @@ void xterm(UWORD rc)
 /*
  * xtermres - Function 0x31 (Ptermres)
  */
-WORD xtermres(long blkln, WORD rc)
+WORD GEMDOS_API xtermres(long blkln, WORD rc)
 {
     xsetblk(0,run,blkln);
 

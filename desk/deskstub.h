@@ -11,5 +11,7 @@
 #define _DESKSTUB_H
 
 void deskstart(void) NORETURN;   /* see deskstart.S */
+void desk_run_inprocess(void);   /* in-process desktop wrapper */
+void desk_boot_enter(void);      /* NATFEAT_DEBUG milestone before deskmain */
 
 #endif /* _DESKSTUB_H */

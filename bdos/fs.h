@@ -373,29 +373,29 @@ WORD log_media(BPB *b, int drv);
  * in fshand.c
  */
 
-long xforce(int std, int h);
+long GEMDOS_API xforce(int std, int h);
 long ixforce(int std, int h, PD *p);
 
 /* duplicate a file handle. */
-long xdup(int h);
+long GEMDOS_API xdup(int h);
 
 /*
  * in fsopnclo.c
  */
 
 /* create file with specified name, attributes */
-long xcreat(char *name, UBYTE attr);
+long GEMDOS_API xcreat(char *name, UBYTE attr);
 long ixcreat(char *name, UBYTE attr);
 
 /* open a file (path name) */
-long xopen(char *name, int mod);
+long GEMDOS_API xopen(char *name, int mod);
 
 /* Close a file */
-long xclose(int h);
+long GEMDOS_API xclose(int h);
 long ixclose(OFD *fd, int part);
 
 /* remove a file */
-long xunlink(char *name);
+long GEMDOS_API xunlink(char *name);
 /* internal delete file. */
 long ixdel(DND *dn, FCB *f, long pos);
 
@@ -422,7 +422,7 @@ void clfix(CLNO cl, CLNO link, DMD *dm);
 CLNO getrealcl(CLNO cl, DMD *dm);
 CLNO getclnum(CLNO cl, OFD *of);
 int nextcl(OFD *p, int wrtflg);
-long xgetfree(long *buf, int drv);
+long GEMDOS_API xgetfree(long *buf, int drv);
 
 /*
  * in fsio.c
@@ -432,32 +432,32 @@ long xgetfree(long *buf, int drv);
 long eof(int h);
 
 /* seek to byte position n on file with handle h */
-long xlseek(long n, int h, int flg);
+long GEMDOS_API xlseek(long n, int h, int flg);
 long ixlseek(OFD *p, long n);
 
 FCB *ixgetfcb(OFD *p);
 
-long xread(int h, long len, void *ubufr);
+long GEMDOS_API xread(int h, long len, void *ubufr);
 long ixread(OFD *p, long len, void *ubufr);
 
-long xwrite(int h, long len, void *ubufr);
+long GEMDOS_API xwrite(int h, long len, void *ubufr);
 long ixwrite(OFD *p, long len, void *ubufr);
 
 /*
  * in fsdir.c
  */
 
-long xmkdir(char *s);
-long xrmdir(char *p);
-long xchmod(char *p, int wrt, UBYTE mod);
-long ixsfirst(char *name, WORD att, DTAINFO *addr);
-long xsfirst(char *name, int att);
-long xsnext(void);
-long xgsdtof(DOSTIME *buf, int h, int wrt);
+long GEMDOS_API xmkdir(char *s);
+long GEMDOS_API xrmdir(char *p);
+long GEMDOS_API xchmod(char *p, int wrt, UBYTE mod);
+long GEMDOS_API ixsfirst(char *name, WORD att, DTAINFO *addr);
+long GEMDOS_API xsfirst(char *name, int att);
+long GEMDOS_API xsnext(void);
+long GEMDOS_API xgsdtof(DOSTIME *buf, int h, int wrt);
 void builds(const char *s1 , char *s2 );
-long xrename(int n, char *p1, char *p2);
-long xchdir(char *p);
-long xgetdir(char *buf, int drv);
+long GEMDOS_API xrename(int n, char *p1, char *p2);
+long GEMDOS_API xchdir(char *p);
+long GEMDOS_API xgetdir(char *buf, int drv);
 FCB *dirinit(DND *dn);
 DND *findit(char *name, const char **sp, int dflag);
 FCB *scan(DND *dnd, const char *n, WORD att, LONG *posp);
@@ -470,10 +470,10 @@ WORD free_available_dnds(void);
 /*
  * in fsmain.c
  */
-DTAINFO *xgetdta(void);
-void xsetdta(DTAINFO *addr);
-long xsetdrv(int drv);
-long xgetdrv(void);
+DTAINFO *GEMDOS_API xgetdta(void);
+void GEMDOS_API xsetdta(DTAINFO *addr);
+long GEMDOS_API xsetdrv(int drv);
+long GEMDOS_API xgetdrv(void);
 OFD  *getofd(int h);
 
 

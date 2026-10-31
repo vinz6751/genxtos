@@ -19,7 +19,7 @@ void osinit_after_xmaddalt(void);
 
 #if CONF_WITH_ALT_RAM
 /* Register an Alt-RAM region to BDOS */
-long xmaddalt(UBYTE *start, long size);
+long GEMDOS_API xmaddalt(UBYTE *start, long size);
 
 /* Get the total size of Alt-RAM regions */
 long total_alt_ram(void);
@@ -34,6 +34,7 @@ extern WORD *root[MAXQUICK];
  * Declared here because referenced by the BIOS OSHEADER,
  * and also by bios/kprint.c */
 extern PD *run;
+extern PD initial_basepage;
 
 /* BDOS current date/time.
  * Declared here because also updated by XBIOS Settime() */

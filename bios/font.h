@@ -22,6 +22,10 @@
 
 void font_init(void);               /* initialize BIOS font ring */
 Fonthead *font_set_default(void);   /* choose the default font */
-UBYTE *char_addr(UWORD ch);         /* get address of a character number in font file */
+#if defined(FASTCALL_BUILD)
+UBYTE * FASTCALL_ATTR char_addr(UWORD ch);
+#else
+UBYTE * ARGS_ON_STACK char_addr(UWORD ch);
+#endif
 
 #endif /* FONT_H */

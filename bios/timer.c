@@ -47,6 +47,20 @@ WORD timer_c_sieve;
 // Called from timer_S.s 200Hz timer irq handler
 void timer_20ms_routine(void);
 
+#if defined(FASTCALL_BUILD)
+static void fpcall_etv_timer(ETV_TIMER_T fn, int ms)
+{
+    __asm__ volatile(
+        "move.l %1,a0\n\t"
+        "move.l %0,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 4(sp),sp"
+        :
+        : "g"(ms), "m"(fn)
+        : "d0", "a0", "memory");
+}
+#endif
+
 // TODO: have a list like the VBL list so users can hook into without having to
 // hook the full timer C vector, so here wouldn't have to depend on the GEM etv_timer as
 // this is a layering breakage.
@@ -61,7 +75,11 @@ void timer_20ms_routine(void)
 #endif
 
     // GEM
-    (*etv_timer)(timer_ms); // We may as well hardcode 20...
+#if defined(FASTCALL_BUILD)
+    fpcall_etv_timer(etv_timer, timer_ms);
+#else
+    (*etv_timer)(timer_ms);
+#endif
 }
 
 
@@ -103,7 +121,7 @@ static const WORD timer_num[] = { MFP_TIMERA, MFP_TIMERB, MFP_200HZ, MFP_TIMERD 
 #endif
 
 // XBIOS function
-void xbtimer(WORD timer, WORD control, WORD data, LONG vector)
+void ARGS_ON_STACK xbtimer(WORD timer, WORD control, WORD data, LONG vector)
 {
     if (timer < 0 || timer > 3)
         return;

@@ -239,9 +239,14 @@ wheel_ikbd_packet:
  * Call the _user_but vector from C.
  */
 _call_user_but:
+#ifdef FASTCALL_BUILD
+        move.l  _user_but,a0
+        jmp     (a0)
+#else
         move.w  4(sp),d0
         move.l  _user_but,a0
         jmp     (a0)
+#endif
 
 
 /*

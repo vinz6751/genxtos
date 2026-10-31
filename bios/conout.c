@@ -32,6 +32,164 @@
 /* Driver in use for outputing text */
 static CONOUT_DRIVER * conout;
 
+#if defined(FASTCALL_BUILD)
+/*
+ * gcc mishandles forwarding of stack arguments to an indirect FP_CALLBACK.
+ * Push explicit operands instead of reading 4(sp) from asm (broken if the
+ * compiler adds a prologue before the asm block).
+ *
+ * Most helpers are only needed when CONOUT_ATARI_FASTPATH is off; the Atari
+ * fastpath calls the concrete conout_atari_* entry points instead.
+ */
+#if !CONOUT_ATARI_FASTPATH
+static long char_addr_arg(CHAR_ADDR a)
+{
+    long v;
+
+    memcpy(&v, &a, sizeof(v));
+    return v;
+}
+
+static CHAR_ADDR char_addr_ret(long v)
+{
+    CHAR_ADDR a;
+
+    memcpy(&a, &v, sizeof(a));
+    return a;
+}
+
+static void fpcall_iiii(void (FP_CALLBACK *fn)(int, int, int, int),
+                        int a, int b, int c, int d)
+{
+    __asm__ volatile(
+        "move.l %4,a0\n\t"
+        "move.l %3,sp@-\n\t"
+        "move.l %2,sp@-\n\t"
+        "move.l %1,sp@-\n\t"
+        "move.l %0,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 16(sp),sp"
+        :
+        : "g"(a), "g"(b), "g"(c), "g"(d), "a"(fn)
+        : "memory");
+}
+
+static CHAR_ADDR fpcall_uu(CHAR_ADDR (FP_CALLBACK *fn)(UWORD, UWORD),
+                           UWORD x, UWORD y)
+{
+    long rc;
+
+    __asm__ volatile(
+        "move.l %3,a0\n\t"
+        "move.l %2,sp@-\n\t"
+        "move.l %1,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 8(sp),sp\n\t"
+        "move.l d0,%0"
+        : "=g"(rc)
+        : "g"((long)x), "g"((long)y), "a"(fn)
+        : "d0", "memory");
+    return char_addr_ret(rc);
+}
+
+static int fpcall_ic(int (FP_CALLBACK *fn)(unsigned char, CHAR_ADDR *),
+                     unsigned char c, CHAR_ADDR *src)
+{
+    int rc;
+
+    __asm__ volatile(
+        "move.l %3,a0\n\t"
+        "move.l %2,sp@-\n\t"
+        "move.l %1,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 8(sp),sp\n\t"
+        "move.l d0,%0"
+        : "=g"(rc)
+        : "g"((long)c), "g"(src), "a"(fn)
+        : "d0", "memory");
+    return rc;
+}
+
+static void fpcall_CC(void (FP_CALLBACK *fn)(CHAR_ADDR, CHAR_ADDR),
+                      CHAR_ADDR src, CHAR_ADDR dst)
+{
+    long s = char_addr_arg(src);
+    long d = char_addr_arg(dst);
+
+    __asm__ volatile(
+        "move.l %2,a0\n\t"
+        "move.l %1,sp@-\n\t"
+        "move.l %0,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 8(sp),sp"
+        :
+        : "g"(s), "g"(d), "a"(fn)
+        : "d0", "memory");
+}
+
+static void fpcall_C(void (FP_CALLBACK *fn)(CHAR_ADDR), CHAR_ADDR cell)
+{
+    long v = char_addr_arg(cell);
+
+    __asm__ volatile(
+        "move.l %1,a0\n\t"
+        "move.l %0,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 4(sp),sp"
+        :
+        : "g"(v), "a"(fn)
+        : "d0", "memory");
+}
+
+static void fpcall_CCC(void (FP_CALLBACK *fn)(const CHAR_ADDR, CHAR_ADDR, ULONG),
+                       CHAR_ADDR src, CHAR_ADDR dst, ULONG count)
+{
+    long s = char_addr_arg(src);
+    long d = char_addr_arg(dst);
+
+    __asm__ volatile(
+        "move.l %3,a0\n\t"
+        "move.l %2,sp@-\n\t"
+        "move.l %1,sp@-\n\t"
+        "move.l %0,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 12(sp),sp"
+        :
+        : "g"(s), "g"(d), "g"(count), "a"(fn)
+        : "d0", "memory");
+}
+
+static void fpcall_CCCi(void (FP_CALLBACK *fn)(const CHAR_ADDR, CHAR_ADDR, LONG, UWORD),
+                        CHAR_ADDR src, CHAR_ADDR dst, LONG count, UWORD start_line)
+{
+    long s = char_addr_arg(src);
+    long d = char_addr_arg(dst);
+
+    __asm__ volatile(
+        "move.l %4,a0\n\t"
+        "move.l %3,sp@-\n\t"
+        "move.l %2,sp@-\n\t"
+        "move.l %1,sp@-\n\t"
+        "move.l %0,sp@-\n\t"
+        "jsr a0@\n\t"
+        "lea 16(sp),sp"
+        :
+        : "g"(s), "g"(d), "g"(count), "g"((long)start_line), "a"(fn)
+        : "d0", "memory");
+}
+#endif /* !CONOUT_ATARI_FASTPATH */
+
+static void fpcall_v(void (FP_CALLBACK *fn)(void))
+{
+    __asm__ volatile(
+        "move.l %0,a0\n\t"
+        "jsr a0@"
+        :
+        : "m"(fn)
+        : "d0", "a0", "memory");
+}
+#endif
+
 #if defined(MACHINE_AMIGA)
 extern const CONOUT_DRIVER conout_amiga;
 #elif !(defined(MACHINE_A2560U) || defined(MACHINE_A2560K) || defined(MACHINE_A2560M) || defined(MACHINE_A2560X) || defined(MACHINE_GENX))
@@ -39,7 +197,7 @@ extern const CONOUT_DRIVER conout_atarifb;
 #endif
 
 
-void conout_init(const Fonthead *font)
+void CONOUT_API conout_init(const Fonthead *font)
 {
     KDEBUG(("conout_init: v_cel_mx: %d v_cel_my:%d\n", v_cel_mx, v_cel_my));
 
@@ -52,7 +210,24 @@ void conout_init(const Fonthead *font)
 #endif
     KDEBUG(("conout_init calling init of driver\n"));
 
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_init(font);
+#elif defined(FASTCALL_BUILD)
+    {
+        void (FP_CALLBACK *initfn)(const Fonthead *) = conout->init;
+
+        __asm__ volatile(
+            "move.l %0,a0\n\t"
+            "move.l %1,sp@-\n\t"
+            "jsr a0@\n\t"
+            "lea 4(sp),sp"
+            :
+            : "a"(initfn), "m"(font)
+            : "a0", "memory");
+    }
+#else
     conout->init(font);
+#endif
 
     KDEBUG(("conout_init exiting\n"));
 }
@@ -74,7 +249,18 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
     if (y > v_cel_my)
         y = v_cel_my;           /* clipped y */
 
+#if CONOUT_ATARI_FASTPATH
+    {
+        CHAR_ADDR a;
+
+        a.pxaddr = conout_atari_cell_addr(x, y);
+        return a;
+    }
+#elif defined(FASTCALL_BUILD)
+    return fpcall_uu(conout->cell_addr, x, y);
+#else
     return conout->cell_addr(x,y);
+#endif
 }
 
 
@@ -90,16 +276,26 @@ static CHAR_ADDR cell_addr(UWORD x, UWORD y)
  *
  * input:
  *  cell    points to destination (1st plane, top of block)
+ *
+ * Currently unused: cursor paint/unpaint replaced the invert-cell path
+ * (#if 1 branches below). Kept for the legacy #else paths.
  */
-
+#if 0
 static void neg_cell(CHAR_ADDR cell)
 {
     v_stat_0 |= M_CRIT;                 /* start of critical section. */
 
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_neg_cell(cell.pxaddr);
+#elif defined(FASTCALL_BUILD)
+    fpcall_C(conout->neg_cell, cell);
+#else
     conout->neg_cell(cell);
+#endif
 
     v_stat_0 &= ~M_CRIT;                /* end of critical section. */
 }
+#endif
 
 
 /*
@@ -129,7 +325,13 @@ static BOOL next_cell(void)
 
     v_cur_cx += 1;                      /* next cell to right */
 
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_next_cell();
+#elif defined(FASTCALL_BUILD)
+    fpcall_v(conout->next_cell);
+#else
     conout->next_cell();
+#endif
 
     return 0;                           /* indicate no wrap needed */
 }
@@ -148,10 +350,16 @@ static BOOL next_cell(void)
  * y - cell Y coordinate
  */
 
-void conout_invert_cell(int x, int y)
+void CONOUT_API conout_invert_cell(int x, int y)
 {
     /* fetch x and y coords and invert cursor. */
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_neg_cell(cell_addr(x, y).pxaddr);
+#elif defined(FASTCALL_BUILD)
+    fpcall_C(conout->neg_cell, cell_addr(x, y));
+#else
     conout->neg_cell(cell_addr(x, y));
+#endif
 }
 
 
@@ -166,7 +374,7 @@ void conout_invert_cell(int x, int y)
  * d1.w    new cell Y coordinate
  */
 
-void conout_move_cursor(int x, int y)
+void CONOUT_API conout_move_cursor(int x, int y)
 {
     /* update cell position */
 
@@ -184,8 +392,13 @@ void conout_move_cursor(int x, int y)
     v_cur_cx = x;
     v_cur_cy = y;
 #if 1
-    if (conout->cursor_moved)
+    if (conout->cursor_moved) {
+#if defined(FASTCALL_BUILD)
+        fpcall_v(conout->cursor_moved);
+#else
         conout->cursor_moved();
+#endif
+    }
 
     if (!CURSOR_IS_ENABLED) {
         /* not visible */
@@ -271,16 +484,31 @@ void conout_move_cursor(int x, int y)
  * ch.w      ascii code for character
  */
 
-void conout_ascii_out(int ch)
+void CONOUT_API conout_ascii_out(int ch)
 {
     CHAR_ADDR src;
     CHAR_ADDR dst;
     BOOL visible;                       /* was the cursor visible? */
 
-    if (!conout->get_char_source(ch, &src)) {
+#if defined(FASTCALL_BUILD)
+#if CONOUT_ATARI_FASTPATH
+    src.pxaddr = char_addr((unsigned char)ch);
+    if (!src.pxaddr) {
         KDEBUG(("conout_ascii_out: no char source"));
         return;
     }
+#else
+    if (!fpcall_ic(conout->get_char_source, (unsigned char)ch, &src)) {
+        KDEBUG(("conout_ascii_out: no char source"));
+        return;
+    }
+#endif
+#else
+    if (!conout->get_char_source((unsigned char)ch, &src)) {
+        KDEBUG(("conout_ascii_out: no char source"));
+        return;
+    }
+#endif
 
     dst = v_cur_ad;                     /* a1 -> get destination */
 
@@ -289,7 +517,15 @@ void conout_ascii_out(int ch)
         CURSOR_DISABLE;            /* start of critical section */
 
     /* put the cell out (this covers the cursor) */
+#if defined(FASTCALL_BUILD)
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_blit_char(src.pxaddr, dst.pxaddr);
+#else
+    fpcall_CC(conout->cell_xfer, src, dst);
+#endif
+#else
     conout->cell_xfer(src, dst);
+#endif
 
     /* advance the cursor and update cursor address and coordinates */
     if (next_cell()) {
@@ -302,18 +538,23 @@ void conout_ascii_out(int ch)
 
         /* perform cell line feed. */
         if (y < v_cel_my) {
-            cell = conout->cell_addr(0, y + 1); /* move down one cell */
-            v_cur_cy = y + 1;           /* update cursor's y coordinate */
+            cell = cell_addr(0, y + 1);
+            v_cur_cy = y + 1;
         }
         else {
-            cell = conout->cell_addr(0, y); /* cursor stays on (current) last line */
-            conout_scroll_up(0);            /* scroll from top of screen */
+            cell = cell_addr(0, y);
+            conout_scroll_up(0);
         }
         v_cur_ad = cell;                /* update cursor address */   
     }
 
-    if (conout->cursor_moved)
+    if (conout->cursor_moved) {
+#if defined(FASTCALL_BUILD)
+        fpcall_v(conout->cursor_moved);
+#else
         conout->cursor_moved();
+#endif
+    }
 
     /* if visible */
     if (visible) {
@@ -333,10 +574,33 @@ void conout_ascii_out(int ch)
 }
 
 
-void conout_blank_out(int topx, int topy, int botx, int boty)
+#if CONOUT_ATARI_FASTPATH
+/*
+ * Do not use a naked 4(sp)/jra trampoline here: LTO rewrites across it and
+ * boots into an illegal instruction inside clear_and_home().  Call the
+ * pointer-based impl directly (same workaround as conout_atarifb.c for the
+ * gcc -mfastcall four-int-arg bug).
+ */
+void CONOUT_API conout_blank_out(int topx, int topy, int botx, int boty)
 {
-    conout->blank_out(topx, topy, botx, boty);
+    BLANK_RECT rect;
+
+    rect.topx = topx;
+    rect.topy = topy;
+    rect.botx = botx;
+    rect.boty = boty;
+    conout_atari_blank_out_impl(&rect);
 }
+#else
+void CONOUT_API conout_blank_out(int topx, int topy, int botx, int boty)
+{
+#if defined(FASTCALL_BUILD)
+    fpcall_iiii(conout->blank_out, topx, topy, botx, boty);
+#else
+    conout->blank_out(topx, topy, botx, boty);
+#endif
+}
+#endif
 
 
 /*
@@ -357,16 +621,22 @@ void conout_blank_out(int topx, int topy, int botx, int boty)
  *   top_line - cell y of cell line to be used as top line in scroll
  */
 
-void conout_scroll_up(UWORD top_line)
+void CONOUT_API conout_scroll_up(UWORD top_line)
 {
     ULONG count;
     CHAR_ADDR src;
     CHAR_ADDR dst;
 
-    dst = conout->cell_addr(0, top_line);
-    src = conout->cell_addr(0, top_line + 1);
+    dst = cell_addr(0, top_line);
+    src = cell_addr(0, top_line + 1);
     count = (ULONG)v_cel_wr * (v_cel_my - top_line);
-    conout->scroll_up(src, dst, count);   
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_scroll_up(src.pxaddr, dst.pxaddr, count);
+#elif defined(FASTCALL_BUILD)
+    fpcall_CCC(conout->scroll_up, src, dst, count);
+#else
+    conout->scroll_up(src, dst, count);
+#endif
 }
 
 
@@ -374,7 +644,7 @@ void conout_scroll_up(UWORD top_line)
  * conout_scroll_down - Scroll (partially) downwards
  */
 
-void conout_scroll_down(UWORD start_line)
+void CONOUT_API conout_scroll_down(UWORD start_line)
 {
     ULONG count;
     CHAR_ADDR src;
@@ -384,26 +654,44 @@ void conout_scroll_down(UWORD start_line)
     dst = cell_addr(0, start_line + 1);
     count = (ULONG)v_cel_wr * (v_cel_my - start_line);
 
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_scroll_down(src.pxaddr, dst.pxaddr, count, start_line);
+#elif defined(FASTCALL_BUILD)
+    fpcall_CCCi(conout->scroll_down, src, dst, count, start_line);
+#else
     conout->scroll_down(src, dst, count, start_line);
+#endif
 }
 
 
-void conout_paint_cursor(void)
+void CONOUT_API conout_paint_cursor(void)
 {
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_paint_cursor();
+#elif defined(FASTCALL_BUILD)
+    fpcall_v(conout->con_paint_cursor);
+#else
     conout->con_paint_cursor();
+#endif
 }
 
 
-void conout_unpaint_cursor(void)
+void CONOUT_API conout_unpaint_cursor(void)
 {
+#if CONOUT_ATARI_FASTPATH
+    conout_atari_paint_cursor();
+#elif defined(FASTCALL_BUILD)
+    fpcall_v(conout->unpaint_cursor);
+#else
     conout->unpaint_cursor();
+#endif
 }
 
 
-void conout_enable_cursor(void)
+void CONOUT_API conout_enable_cursor(void)
 {
-    CURSOR_ENABLE;                           /* set visibility bit */
-    conout->con_paint_cursor();
+    CURSOR_ENABLE;
+    conout_paint_cursor();
 
     /* see if flashing is enabled */
     if (CURSOR_FLASH_ENABLED)
@@ -428,7 +716,7 @@ void conout_enable_cursor(void)
 }
 
 
-void conout_disable_cursor(void)
+void CONOUT_API conout_disable_cursor(void)
 {
     if (!CURSOR_IS_ENABLED)
         return;                         /* if already invisible, just return */
@@ -470,15 +758,34 @@ void conout_disable_cursor(void)
  * This used to be in vt52.c where it arguably belong but since the behaviour depends
  * on the underlying conout driver.
  */
-void conout_blink_cursor(void)
+void CONOUT_API conout_blink_cursor(void)
 {
     if (conout->blink_cursor)
     {
+#if CONOUT_ATARI_FASTPATH
+        /* Atari driver has no custom blink handler */
+#elif defined(FASTCALL_BUILD)
+        fpcall_v(conout->blink_cursor);
+#else
         conout->blink_cursor();
+#endif
     }
-    else if (CURSOR_IS_ENABLED && CURSOR_FLASH_ENABLE && (--v_cur_tim) == 0 )
+    else if (CURSOR_IS_ENABLED && CURSOR_FLASH_ENABLED && (--v_cur_tim) == 0)
     {
         v_cur_tim = v_period; /* reset timer */
-        CURSOR_FLASH_IS_UP ? conout_unpaint_cursor() : conout_paint_cursor(); /* toggle state*/ 
+        /*
+         * Paint and unpaint are symmetric (XOR). M_CSTATE must follow the
+         * pixels: move_cursor erases the old cell only when it thinks the
+         * cursor is painted. If the flag stays up while the cursor is
+         * blinked off, that erase draws a block at the old position.
+         */
+        if (CURSOR_FLASH_IS_UP) {
+            CURSOR_FLASH_DOWN;
+            conout_unpaint_cursor();
+        }
+        else {
+            CURSOR_FLASH_UP;
+            conout_paint_cursor();
+        }
     }
 }

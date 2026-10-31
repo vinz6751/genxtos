@@ -8,12 +8,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "a2560_struct.h"
+#include "../include/portab.h"
 
 #define TRAP_NUMBER 15
 
-/* We use the stack for maximum compatibility, we don't pass data in registers */
-#define ARGS_ON_STACK
-
+/* Trap #15 client API: stack-based calling convention for user programs */
 void ARGS_ON_STACK fnx_system_info(struct foenix_system_info_t *ret);
 
 /* Interrupts */

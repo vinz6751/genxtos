@@ -1893,6 +1893,22 @@ void wm_new(void)
 }
 
 
+#if CONF_AES_INPROCESS
+/*
+ * Clear wind_spb before in-process desk starts.  Do not use this while
+ * anyone may be blocked on sy_wait — that requires unsync()/azombie().
+ * Screen locking from EmuDesk must go through wind_update() so ctlmgr
+ * can take BEG_UPDATE after MU_M1 (menu hover).
+ */
+void wm_inprocess_reset(void)
+{
+    wind_spb.sy_tas = 0;
+    wind_spb.sy_owner = NULL;
+    wind_spb.sy_wait = 0;
+}
+#endif
+
+
 #if CONF_WITH_3D_OBJECTS
 /*
  * redraw selected portion of desktop

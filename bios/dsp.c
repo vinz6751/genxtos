@@ -219,7 +219,7 @@ void dsp_init(void)
  * (optionally) send a block of DSP words with no handshaking, then
  * (optionally) receive a block of DSP words with no handshaking
  */
-void dsp_doblock(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen)
+void ARGS_ON_STACK dsp_doblock(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen)
 {
     if (!has_dsp)
         return;
@@ -256,7 +256,7 @@ void dsp_doblock(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen)
  * (optionally) send a block of DSP words with handshaking, then
  * (optionally) receive a block of DSP words with handshaking
  */
-void dsp_blkhandshake(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen)
+void ARGS_ON_STACK dsp_blkhandshake(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen)
 {
     if (!has_dsp)
         return;
@@ -293,7 +293,7 @@ void dsp_blkhandshake(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen)
  * (optionally) send a block of LONG data with no handshaking, then
  * (optionally) receive a block of LONG data with no handshaking
  */
-void dsp_blkunpacked(LONG *send, LONG sendlen, LONG *rcv, LONG rcvlen)
+void ARGS_ON_STACK dsp_blkunpacked(LONG *send, LONG sendlen, LONG *rcv, LONG rcvlen)
 {
     if (!has_dsp)
         return;
@@ -323,7 +323,7 @@ void dsp_blkunpacked(LONG *send, LONG sendlen, LONG *rcv, LONG rcvlen)
 /*
  * Dsp_InStream(): send DSP words (no handshaking) via an interrupt handler
  */
-void dsp_instream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone)
+void ARGS_ON_STACK dsp_instream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone)
 {
     if (!has_dsp)
         return;
@@ -347,7 +347,7 @@ void dsp_instream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone)
 /*
  * Dsp_OutStream(): receive DSP words (no handshaking) via an interrupt handler
  */
-void dsp_outstream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone)
+void ARGS_ON_STACK dsp_outstream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone)
 {
     if (!has_dsp)
         return;
@@ -422,7 +422,7 @@ void dsp_inout_handler(void)
  * 'output is ready' from the DSP.  on each interrupt, we receive a block
  * and send the next one.
  */
-void dsp_iostream(char *send, char *rcv, LONG sendlen, LONG rcvlen, LONG numblocks, LONG *blocksdone)
+void ARGS_ON_STACK dsp_iostream(char *send, char *rcv, LONG sendlen, LONG rcvlen, LONG numblocks, LONG *blocksdone)
 {
     if (!has_dsp)
         return;
@@ -491,7 +491,7 @@ void dsp_io_handler(void)
 /*
  * Dsp_RemoveInterrupts(): disable send and/or receive interrupts from DSP
  */
-void dsp_removeinterrupts(WORD mask)
+void ARGS_ON_STACK dsp_removeinterrupts(WORD mask)
 {
     if (!has_dsp)
         return;
@@ -505,7 +505,7 @@ void dsp_removeinterrupts(WORD mask)
  *
  * return the size of a DSP word (always 3 for Atari)
  */
-WORD dsp_getwordsize(void)
+WORD ARGS_ON_STACK dsp_getwordsize(void)
 {
     if (!has_dsp)
         return 0x67;    /* unimplemented xbios call: return function # */
@@ -519,7 +519,7 @@ WORD dsp_getwordsize(void)
  * (optionally) send a block of WORD data with no handshaking, then
  * (optionally) receive a block of WORD data with no handshaking
  */
-void dsp_blkwords(WORD *send, LONG sendlen, WORD *rcv, LONG rcvlen)
+void ARGS_ON_STACK dsp_blkwords(WORD *send, LONG sendlen, WORD *rcv, LONG rcvlen)
 {
     if (!has_dsp)
         return;
@@ -555,7 +555,7 @@ void dsp_blkwords(WORD *send, LONG sendlen, WORD *rcv, LONG rcvlen)
  * (optionally) send a block of unsigned chars with no handshaking, then
  * (optionally) receive a block of unsigned chars with no handshaking
  */
-void dsp_blkbytes(UBYTE *send, LONG sendlen, UBYTE *rcv, LONG rcvlen)
+void ARGS_ON_STACK dsp_blkbytes(UBYTE *send, LONG sendlen, UBYTE *rcv, LONG rcvlen)
 {
     if (!has_dsp)
         return;
@@ -596,7 +596,7 @@ void dsp_blkbytes(UBYTE *send, LONG sendlen, UBYTE *rcv, LONG rcvlen)
 /*
  * Dsp_Lock() / Dsp_Unlock(): software lock/unlock for DSP
  */
-WORD dsp_lock(void)
+WORD ARGS_ON_STACK dsp_lock(void)
 {
     if (!has_dsp)
         return 0x68;    /* unimplemented xbios call: return function # */
@@ -608,7 +608,7 @@ WORD dsp_lock(void)
     return 0;
 }
 
-void dsp_unlock(void)
+void ARGS_ON_STACK dsp_unlock(void)
 {
     dsp_is_locked = FALSE;
 }
@@ -616,7 +616,7 @@ void dsp_unlock(void)
 /*
  * Dsp_Available(): return memory availability
  */
-void dsp_available(LONG *xavailable, LONG *yavailable)
+void ARGS_ON_STACK dsp_available(LONG *xavailable, LONG *yavailable)
 {
     *xavailable = subroutine_bottom - YSIZE;
     *yavailable = YSIZE;    /* TOS returns 1 less, probably a bug */
@@ -625,7 +625,7 @@ void dsp_available(LONG *xavailable, LONG *yavailable)
 /*
  * Dsp_Reserve(): reserve program memory
  */
-WORD dsp_reserve(LONG xreserve, LONG yreserve)
+WORD ARGS_ON_STACK dsp_reserve(LONG xreserve, LONG yreserve)
 {
     LONG requested;
 
@@ -647,7 +647,7 @@ WORD dsp_reserve(LONG xreserve, LONG yreserve)
 /*
  * Dsp_LoadProg(): load & run .LOD file from disk
  */
-WORD dsp_loadprog(char *filename, WORD ability, void *buffer)
+WORD ARGS_ON_STACK dsp_loadprog(char *filename, WORD ability, void *buffer)
 {
     LONG size;
 
@@ -667,7 +667,7 @@ WORD dsp_loadprog(char *filename, WORD ability, void *buffer)
 /*
  * Dsp_ExecProg(): load & run binary DSP program
  */
-void dsp_execprog(const UBYTE *codeptr, LONG codesize, WORD ability)
+void ARGS_ON_STACK dsp_execprog(const UBYTE *codeptr, LONG codesize, WORD ability)
 {
     if (!has_dsp)
         return;
@@ -690,7 +690,7 @@ void dsp_execprog(const UBYTE *codeptr, LONG codesize, WORD ability)
  * we reset the DSP via a bit on PSG port A.  this triggers DSP bootstrap
  * firmware to load 512 DSP words and run them.
  */
-void dsp_execboot(const UBYTE *codeptr, LONG codesize, WORD ability)
+void ARGS_ON_STACK dsp_execboot(const UBYTE *codeptr, LONG codesize, WORD ability)
 {
     ULONG end;
     WORD old_sr, n;
@@ -919,7 +919,7 @@ static LONG filesize(char *filename)
 /*
  * Dsp_LodToBinary(): convert .LOD file to binary
  */
-LONG dsp_lodtobinary(char *filename, char *outbuf)
+LONG ARGS_ON_STACK dsp_lodtobinary(char *filename, char *outbuf)
 {
     LONG fsize, numwords = 0L;
     char *inbuf;
@@ -951,7 +951,7 @@ LONG dsp_lodtobinary(char *filename, char *outbuf)
  * users are only supposed to use vectors $13 and $14, but TOS does not
  * enforce this, so (for now at least) we don't either.
  */
-void dsp_triggerhc(WORD vector)
+void ARGS_ON_STACK dsp_triggerhc(WORD vector)
 {
     if (!has_dsp)
         return;
@@ -962,7 +962,7 @@ void dsp_triggerhc(WORD vector)
 /*
  * Dsp_RequestUniqueAbility(): return unique ability identifier
  */
-WORD dsp_requestuniqueability(void)
+WORD ARGS_ON_STACK dsp_requestuniqueability(void)
 {
     if (!has_dsp)
         return 0x71;    /* unimplemented xbios call: return function # */
@@ -973,7 +973,7 @@ WORD dsp_requestuniqueability(void)
 /*
  * Dsp_GetProgAbility(): return ability identifier of current program
  */
-WORD dsp_getprogability(void)
+WORD ARGS_ON_STACK dsp_getprogability(void)
 {
     if (!has_dsp)
         return 0x72;    /* unimplemented xbios call: return function # */
@@ -984,7 +984,7 @@ WORD dsp_getprogability(void)
 /*
  * Dsp_FlushSubroutines(): remove all subroutines from memory
  */
-void dsp_flushsubroutines(void)
+void ARGS_ON_STACK dsp_flushsubroutines(void)
 {
     if (!has_dsp)
         return;
@@ -1080,7 +1080,7 @@ static void send_uservect(void)
 /*
  * Dsp_LoadSubroutine(): install subroutine into DSP memory
  */
-WORD dsp_loadsubroutine(const UBYTE *codeptr, LONG size, WORD ability)
+WORD ARGS_ON_STACK dsp_loadsubroutine(const UBYTE *codeptr, LONG size, WORD ability)
 {
     SUBINFO *p, *oldest;
     WORD i, adjust, handle;
@@ -1143,7 +1143,7 @@ WORD dsp_loadsubroutine(const UBYTE *codeptr, LONG size, WORD ability)
 /*
  * Dsp_InqSubrAbility(): get handle for installed subroutine
  */
-WORD dsp_inqsubrability(WORD ability)
+WORD ARGS_ON_STACK dsp_inqsubrability(WORD ability)
 {
     WORD i;
     SUBINFO *p;
@@ -1163,7 +1163,7 @@ WORD dsp_inqsubrability(WORD ability)
 /*
  * Dsp_RunSubroutine(): execute DSP-resident subroutine
  */
-WORD dsp_runsubroutine(WORD handle)
+WORD ARGS_ON_STACK dsp_runsubroutine(WORD handle)
 {
     WORD n, addr;
 
@@ -1197,7 +1197,7 @@ WORD dsp_runsubroutine(WORD handle)
  * passing an undefined value (in which case nothing is done).
  * we do the same, and also do that when there is no DSP hardware found.
  */
-WORD dsp_hf0(WORD flag)
+WORD ARGS_ON_STACK dsp_hf0(WORD flag)
 {
     WORD ret = 0x77;    /* unimplemented xbios call: return function # */
 
@@ -1219,7 +1219,7 @@ WORD dsp_hf0(WORD flag)
     return ret;
 }
 
-WORD dsp_hf1(WORD flag)
+WORD ARGS_ON_STACK dsp_hf1(WORD flag)
 {
     WORD ret = 0x78;    /* unimplemented xbios call: return function # */
 
@@ -1244,7 +1244,7 @@ WORD dsp_hf1(WORD flag)
 /*
  * Dsp_Hf2() / Dsp_Hf3(): read host flags 2 & 3
  */
-WORD dsp_hf2(void)
+WORD ARGS_ON_STACK dsp_hf2(void)
 {
     WORD ret = 0x79;    /* unimplemented xbios call: return function # */
 
@@ -1254,7 +1254,7 @@ WORD dsp_hf2(void)
     return ret;
 }
 
-WORD dsp_hf3(void)
+WORD ARGS_ON_STACK dsp_hf3(void)
 {
     WORD ret = 0x7a;    /* unimplemented xbios call: return function # */
 
@@ -1270,7 +1270,7 @@ WORD dsp_hf3(void)
  * note: as an undocumented feature, Atari TOS 4.04 returns the contents
  * of the command vector register in d1.  we currently do not emulate this.
  */
-UBYTE dsp_hstat(void)
+UBYTE ARGS_ON_STACK dsp_hstat(void)
 {
     WORD ret = 0x7d;    /* unimplemented xbios call: return function # */
 
@@ -1283,7 +1283,7 @@ UBYTE dsp_hstat(void)
 /*
  * Dsp_SetVectors(): install user interrupt handler
  */
-void dsp_setvectors(void (*receiver)(LONG data), LONG (*transmitter)(void))
+void ARGS_ON_STACK dsp_setvectors(void (*receiver)(LONG data), LONG (*transmitter)(void))
 {
     if (!has_dsp)
         return;
@@ -1335,7 +1335,7 @@ void dsp_sv_handler(void)
  * (optionally) send data blocks with no handshaking, then
  * (optionally) receive data blocks with no handshaking
  */
-void dsp_multblocks(LONG sendnum, LONG rcvnum, DSPBLOCK *sendinfo, DSPBLOCK *rcvinfo)
+void ARGS_ON_STACK dsp_multblocks(LONG sendnum, LONG rcvnum, DSPBLOCK *sendinfo, DSPBLOCK *rcvinfo)
 {
     if (!has_dsp)
         return;

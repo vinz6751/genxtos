@@ -104,7 +104,7 @@ void blkdev_init(void);
 
 /* general block device functions */
 LONG blkdev_boot(void);
-LONG blkdev_getbpb(WORD dev);
+LONG ARGS_ON_STACK blkdev_getbpb(WORD dev);
 LONG blkdev_drvmap(void);
 LONG blkdev_avail(WORD dev);
 UWORD compute_cksum(const UWORD *buf);
@@ -113,7 +113,7 @@ WORD get_shift(ULONG blocksize);
 int add_partition(UWORD unit, LONG *devices_available, char id[], ULONG start, ULONG size);
 
 /* critical error handling */
-LONG call_etv_critic(WORD error,WORD device);   /* in vectors.S */
+LONG ARGS_ON_STACK call_etv_critic(WORD error,WORD device);   /* in vectors.S */
 
 
 /*

@@ -62,6 +62,10 @@ void bmem_init(void)
     KDEBUG(("       stktop = %p\n", stktop));
     KDEBUG(("_end_os_stram = %p\n", _end_os_stram));
 
+#if CONF_WITH_BUS_ERROR && CONF_ATARI_HARDWARE
+    stram_fixup_phystop();
+#endif
+
     /* Start of available ST-RAM */
     end_os = _end_os_stram;
     membot = end_os;
@@ -90,7 +94,7 @@ void bmem_init(void)
  *   size: requested size of buffer, in bytes
  *   top: TRUE to get a block at top of memory, FALSE for bottom.
  */
-UBYTE *balloc_stram(ULONG size, BOOL top)
+UBYTE * ARGS_ON_STACK balloc_stram(ULONG size, BOOL top)
 {
     UBYTE *ret;
 
@@ -111,6 +115,10 @@ UBYTE *balloc_stram(ULONG size, BOOL top)
 
     if (top)
     {
+        /* Guard unsigned underflow when memtop/phystop was never initialized */
+        if (!memtop || (ULONG)memtop < size)
+            panic("balloc_stram(%lu): invalid memtop %p\n", size, memtop);
+
         /* Allocate the new buffer at the top of the ST-RAM */
         memtop -= size;
         ret = memtop;
@@ -131,7 +139,7 @@ UBYTE *balloc_stram(ULONG size, BOOL top)
     return ret;
 }
 
-void getmpb(MEMORY_PARTITION_BLOCK * mpb)
+void ARGS_ON_STACK getmpb(MEMORY_PARTITION_BLOCK * mpb)
 {
 #if DBG_BALLOC
     bmem_allowed = FALSE; /* BIOS memory handling not allowed past this point */
@@ -150,7 +158,7 @@ void getmpb(MEMORY_PARTITION_BLOCK * mpb)
     mpb->mp_mal = NULL;         /* allocated list empty */
 }
 
-TPA_AREA *bmem_gettpa(void)
+TPA_AREA * ARGS_ON_STACK bmem_gettpa(void)
 {
     /* This supposes that memtop follows membot */
     return (TPA_AREA*)&membot;

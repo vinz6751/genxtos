@@ -152,7 +152,7 @@ static void set_sum(UWORD sum)
  *   count  - count of bytes
  *   buffer - buffer for operations
  */
-WORD nvmaccess(WORD type, WORD start, WORD count, UBYTE *buffer)
+WORD ARGS_ON_STACK nvmaccess(WORD type, WORD start, WORD count, UBYTE *buffer)
 {
     volatile UBYTE *addr_reg = (volatile UBYTE *)NVRAM_ADDR_REG;
     volatile UBYTE *data_reg = (volatile UBYTE *)NVRAM_DATA_REG;

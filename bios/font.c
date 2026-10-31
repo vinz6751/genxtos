@@ -103,7 +103,11 @@ Fonthead* font_set_default(void)
  *   pointer to first byte of source cell if code was valid
  */
 
-UBYTE *char_addr(UWORD ch)
+#if defined(FASTCALL_BUILD)
+UBYTE * FASTCALL_ATTR char_addr(UWORD ch)
+#else
+UBYTE * ARGS_ON_STACK char_addr(UWORD ch)
+#endif
 {
     UWORD offs;
 

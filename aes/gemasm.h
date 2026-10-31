@@ -10,11 +10,14 @@
 #ifndef GEMASM_H
 #define GEMASM_H
 
+#include "portab.h"
+
 /* arranges for codevalue to be pushed to the stack for process p,
  * in a standard RTS stack frame, "in preparation for an RTS that
  * will start this process executing".
+ * Stack args: asm reads 4(sp)/8(sp).
  */
-extern void psetup(AESPD *p, PFVOID codevalue);
+extern void FP_CALLBACK psetup(AESPD *p, PFVOID codevalue);
 
 /* launches the top of rlr list, as if called from within function
  * back(AESPD *top_of_rlr)
@@ -27,6 +30,6 @@ extern void gotopgm(void) /*NORETURN*/ ;
 extern void dsptch(void);
 
 /* called by disp() to end a dsptch ... switchto sequence */
-extern void switchto(UDA *puda) NORETURN ;
+extern void FP_CALLBACK switchto(UDA *puda) NORETURN ;
 
 #endif

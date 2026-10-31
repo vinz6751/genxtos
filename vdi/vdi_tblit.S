@@ -240,11 +240,20 @@
 /////////////////////////////////////////////////////////////////////////
 
 //  interface to 'norm_blt'
+//  C prototype: void normal_blit(LOCALVARS *vars, UBYTE *src, UBYTE *dst);
+//  cdecl:       4(sp)=vars, 8(sp)=src, 12(sp)=dst
+//  fastcall:    a0=vars, a1=src, 4(sp)=dst
 _normal_blit:
         movem.l d2-d7/a2-a6,-(sp)       // save registers that GCC expects unchanged
+#ifdef FASTCALL_BUILD
+        move.l  a0,a6                   // vars
+        move.l  a1,a0                   // src
+        move.l  44+4(sp),a1             // dst (only stacked arg)
+#else
         move.l  44+4(sp),a6             // load ptr to end of vars
         move.l  44+8(sp),a0             // a0 & a1 must also be set
         move.l  44+12(sp),a1
+#endif
         jbsr    norm_blt
         movem.l (sp)+,d2-d7/a2-a6       // restore saved registers
         rts

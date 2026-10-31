@@ -129,6 +129,7 @@
         .extern _osif
         .extern _xterm
         .extern _run
+        .extern _initial_basepage
         .extern _longframe              // If not 0, use long stack frames
         .extern _old_trap2
 
@@ -223,7 +224,8 @@ systk:
         move.l  sp,P_A7SAVE(a6) // update saved stack pointer
         lea     50(sp),a0
         move.l  #fstrt,sp
-callos: move.l  a0,-(sp)        // push parm pointer
+callos:
+        move.l  a0,-(sp)        // push parm pointer (osif is ARGS_ON_STACK/cdecl)
         jsr     _osif
         addq.l  #4,sp
 
@@ -233,6 +235,11 @@ callos: move.l  a0,-(sp)        // push parm pointer
 
 _gouser:
         move.l  _run,a5         // a5 -> current basepage
+        cmpa.l  #0,a5
+        jne     gouser_a5_ok
+        lea     _initial_basepage,a5
+        move.l  a5,_run
+gouser_a5_ok:
         move.l  d0,P_D0SAVE(a5)
 ggusr:  move.l  P_A7SAVE(a5),a6 // stack pointer (maybe usp, maybe ssp)
         move.l  (a6)+,a4        // other stack pointer
@@ -264,6 +271,11 @@ retsys: move.l  a6,sp
         // aug 2005, RCL
 _termuser:
         move.l  _run,a5
+        cmpa.l  #0,a5
+        jne     termuser_a5_ok
+        lea     _initial_basepage,a5
+        move.l  a5,_run
+termuser_a5_ok:
         jra     ggusr
 
         .bss

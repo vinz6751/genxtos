@@ -50,7 +50,7 @@ PFVOID old_trap2; /* Old trap #2 handler, also used by rwa.S */
  */
 
 static long ni(void);
-static long xgetver(void);
+static long GEMDOS_API xgetver(void);
 
 
 /*
@@ -75,7 +75,14 @@ static long xgetver(void);
  * this used to be obtained via MGET, but that was a bit pointless,
  * since it was never freed
  */
-static PD initial_basepage;
+PD initial_basepage;
+
+/*
+ * Current process PD.  Lives in bdosmain.o (not proc.o) so the linker
+ * does not place it between supstk[] and rwa.o fstrt[], where deep
+ * GEMDOS supervisor-stack use would overwrite it.
+ */
+PD *run;
 
 /* initial environment string */
 static const char double_nul[2] __attribute__ ((aligned (2))) = { 0, 0 };
@@ -295,7 +302,7 @@ static const FND funcs[] =
  *  xgetver -
  *      return current version number
  */
-static long xgetver(void)
+static long GEMDOS_API xgetver(void)
 {
     return (long)GEMDOS_VERSION;
 }
@@ -337,6 +344,7 @@ void osinit_after_xmaddalt(void)
 {
     /* Set up initial process. Required by Malloc() */
     run = &initial_basepage;
+    initial_basepage.p_parent = &initial_basepage;
     run->p_flags = PF_STANDARD;
     run->p_env = CONST_CAST(char *,double_nul);
 
@@ -427,8 +435,8 @@ static void mark_bcbs_invalid(int drv)
 /*
  *  osif - C implementation of trap #1. Called by _enter.
  */
-long osif(short *pw);   /* called only from rwa.S */
-long osif(short *pw)
+long ARGS_ON_STACK osif(short *pw);   /* called only from rwa.S */
+long ARGS_ON_STACK osif(short *pw)
 {
     char **pb, *pb2, *p, ctmp;
     BPB *b;
@@ -445,6 +453,9 @@ restrt:
         return EINVFN;
 
     KDEBUG(("BDOS (fn=0x%04x)\n",fn));
+    NF_TRACE(("osif fn=0x%04x pw=%p [1]=%u [2]=%u [3]=%u [4]=%u\n",
+              fn, pw, (unsigned)pw[1], (unsigned)pw[2],
+              (unsigned)pw[3], (unsigned)pw[4]));
 
     if (setjmp(errbuf))
     {
@@ -664,39 +675,129 @@ restrt:
 
     if (!rc)
     {
-        switch(f->wparms)
+#if defined(FASTCALL_BUILD)
+#define PW_LONG(i) ((long)(((ULONG)(UWORD)pw[(i)] << 16) | (UWORD)pw[(i)+1]))
+#endif
+        if (fn == 0x4b)
         {
+            rc = xexec((WORD)pw[1],
+                       (char *)(long)(((ULONG)pw[2] << 16) | (UWORD)pw[3]),
+                       (char *)(long)(((ULONG)pw[4] << 16) | (UWORD)pw[5]),
+                       (char *)(long)(((ULONG)pw[6] << 16) | (UWORD)pw[7]));
+        }
+#if defined(FASTCALL_BUILD)
+        else if (fn == 0x1a)          /* Fsetdta */
+        {
+            xsetdta((DTAINFO *)(void *)PW_LONG(1));
+            rc = 0;
+        }
+        else if (fn == 0x4e)          /* Fsfirst */
+        {
+            rc = xsfirst((char *)(void *)PW_LONG(1), pw[3]);
+        }
+        else if (fn == 0x44)          /* Mxalloc(amount, mode) */
+        {
+            rc = (long)xmxalloc(PW_LONG(1), pw[3]);
+        }
+        else if (fn == 0x48)          /* Malloc(amount) */
+        {
+            rc = (long)xmalloc(PW_LONG(1));
+        }
+        else if (fn == 0x49)          /* Mfree(block) */
+        {
+            rc = xmfree((void *)PW_LONG(1));
+        }
+        else if (fn == 0x4a)          /* Mshrink(dummy, block, newsiz) */
+        {
+            rc = xsetblk((int)pw[1], (void *)PW_LONG(2), PW_LONG(4));
+        }
+#if CONF_WITH_ALT_RAM
+        else if (fn == 0x14)          /* Maddalt(start, size) */
+        {
+            rc = xmaddalt((UBYTE *)(void *)PW_LONG(1), PW_LONG(3));
+        }
+#endif
+#endif
+        else switch(f->wparms)
+        {
+#if defined(FASTCALL_BUILD)
+        /*
+         * Trap args arrive as 16-bit words in pw[].  With -mfastcall the
+         * generic ww/www indirect calls no longer match GEMDOS_API callees
+         * that expect a 32-bit pointer built from two words (still the norm
+         * with -mshort).  Reassemble longs here; xexec/Fsetdta/Fsfirst/
+         * Malloc/Mfree/Mshrink/Mxalloc above.
+         *
+         * Indirect calls must use ARGS_ON_STACK function-pointer types so
+         * GCC emits cdecl (stack) calls matching GEMDOS_API callees.  A bare
+         * (long (*)(...)) under -mfastcall passes args in registers.
+         */
+#endif
         case 0:
             rc = (*f->fncall.v)();
             break;
 
         case 1:
+#if defined(FASTCALL_BUILD)
+            rc = ((long ARGS_ON_STACK (*)(short))f->fncall.w)(pw[1]);
+#else
             rc = (*f->fncall.w)(pw[1]);
+#endif
             break;
 
         case 2:
+#if defined(FASTCALL_BUILD)
+            if (fn == 0x46)       /* xforce(std, h): two words, not a pointer */
+                rc = ((long ARGS_ON_STACK (*)(short, short))f->fncall.ww)(pw[1], pw[2]);
+            else
+                rc = ((long ARGS_ON_STACK (*)(void *))f->fncall.w)((void *)PW_LONG(1));
+#else
             rc = (*f->fncall.ww)(pw[1],pw[2]);
+#endif
             break;
 
         case 3:
+#if defined(FASTCALL_BUILD)
+            rc = ((long ARGS_ON_STACK (*)(void *, short))f->fncall.w)((void *)PW_LONG(1), pw[3]);
+#else
             rc = (*f->fncall.www)(pw[1],pw[2],pw[3]);
+#endif
             break;
 
         case 4:
+#if defined(FASTCALL_BUILD)
+            rc = ((long ARGS_ON_STACK (*)(void *, short, short))f->fncall.w)((void *)PW_LONG(1), pw[3], pw[4]);
+#else
             rc = (*f->fncall.wwww)(pw[1],pw[2],pw[3],pw[4]);
+#endif
             break;
 
         case 5:
+#if defined(FASTCALL_BUILD)
+            if (fn == 0x56)       /* xrename(0, old, new) */
+                rc = xrename(pw[1], (char *)(void *)PW_LONG(2), (char *)(void *)PW_LONG(4));
+            else
+                rc = ((long ARGS_ON_STACK (*)(short, void *, long))f->fncall.w)((short)pw[1], (void *)PW_LONG(2), PW_LONG(4));
+#else
             rc = (*f->fncall.wwwww)(pw[1],pw[2],pw[3],pw[4],pw[5]);
+#endif
             break;
 
         case 7:
+#if defined(FASTCALL_BUILD)
+            rc = ((long ARGS_ON_STACK (*)(short, short, short, short, short, short, short))f->fncall.wwwwwww)(
+                pw[1], pw[2], pw[3], pw[4], pw[5], pw[6], pw[7]);
+#else
             rc = (*f->fncall.wwwwwww)(pw[1],pw[2],pw[3],pw[4],pw[5],pw[6],pw[7]);
+#endif
             break;
 
         default:
             rc = EINTRN;    /* Internal error */
         }
+#if defined(FASTCALL_BUILD)
+#undef PW_LONG
+#endif
     }
 
     KDEBUG(("BDOS returns: 0x%08lx\n",rc));

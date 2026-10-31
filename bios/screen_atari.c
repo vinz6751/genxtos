@@ -58,7 +58,7 @@ static WORD shifter_check_moderez(WORD moderez);
  * before memory configuration. This is not used here, and all is
  * done at the same time from C.
  */
-void screen_atari_init(void) {
+void FP_CALLBACK screen_atari_init(void) {
 #if CONF_WITH_VIDEL
     UWORD boot_resolution = FALCON_DEFAULT_BOOT;
 #endif
@@ -196,7 +196,7 @@ void screen_atari_init(void) {
 }
 
 
-void initialise_palette_registers_atari(WORD rez, WORD mode)
+void FP_CALLBACK initialise_palette_registers_atari(WORD rez, WORD mode)
 {
     UWORD mask;
 
@@ -229,7 +229,7 @@ struct video_mode {
     UWORD       vt_rez;         /* screen vertical resolution (v_vt_rez) */
 };
 
-static const struct video_mode const vmode_table[] = {
+static const struct video_mode vmode_table[] = {
     { 4,  320, 200},            /* rez=0: ST low */
     { 2,  640, 200},            /* rez=1: ST medium */
     { 1,  640, 400},            /* rez=2: ST high */
@@ -256,7 +256,7 @@ void initialise_ste_palette(UWORD mask)
 }
 
 
-WORD atari_setcolor(WORD colorNum, WORD color)
+WORD FP_CALLBACK atari_setcolor(WORD colorNum, WORD color)
 {
     WORD oldcolor;
 
@@ -331,7 +331,7 @@ WORD atari_getrez(void)
 }
 
 
-void atari_setphys(const UBYTE *addr)
+void FP_CALLBACK atari_setphys(const UBYTE *addr)
 {
     *(volatile UBYTE *) VIDEOBASE_ADDR_HI = ((ULONG) addr) >> 16;
     *(volatile UBYTE *) VIDEOBASE_ADDR_MID = ((ULONG) addr) >> 8;
@@ -341,7 +341,7 @@ void atari_setphys(const UBYTE *addr)
 }
 
 
-UBYTE *atari_physbase(void)
+UBYTE *FP_CALLBACK atari_physbase(void)
 {
     ULONG addr;
 
@@ -364,7 +364,7 @@ UBYTE *atari_physbase(void)
 }
 
 
-ULONG atari_calc_vram_size(void)
+ULONG FP_CALLBACK atari_calc_vram_size(void)
 {
     ULONG vram_size;
     UWORD planes, w, h;
@@ -416,7 +416,7 @@ static void shifter_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *v
 }
 
 
-void atari_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
+void FP_CALLBACK atari_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
 {
 #if CONF_WITH_VIDEL
     if (has_videl) {
@@ -428,7 +428,7 @@ void atari_get_current_mode_info(UWORD *planes, UWORD *hz_rez, UWORD *vt_rez)
     }
 }
 
-WORD atari_get_palette(void)
+WORD FP_CALLBACK atari_get_palette(void)
 {
     WORD palette;
 
@@ -640,7 +640,7 @@ WORD shifter_screen_can_change_resolution(void)
     return (rez != ST_HIGH);    /* can't change if mono monitor */
 }
 
-static WORD screen_can_change_resolution_atari(void)
+static WORD FP_CALLBACK screen_can_change_resolution_atari(void)
 {
     if (rez_was_hacked)
         return FALSE;
@@ -666,7 +666,7 @@ WORD shifter_get_monitor_type(void)
 }
 
 
-static WORD atari_check_moderez(WORD moderez)
+static WORD FP_CALLBACK atari_check_moderez(WORD moderez)
 {
 #if CONF_WITH_VIDEL
     if (has_videl)
@@ -676,7 +676,7 @@ static WORD atari_check_moderez(WORD moderez)
 }
 
 
-static WORD atari_get_monitor_type(void)
+static WORD FP_CALLBACK atari_get_monitor_type(void)
 {
 #if CONF_WITH_VIDEL
     if (has_videl)
@@ -685,7 +685,7 @@ static WORD atari_get_monitor_type(void)
     return shifter_get_monitor_type();
 }
 
-static void atari_get_pixel_size(WORD *width,WORD *height) {
+static void FP_CALLBACK atari_get_pixel_size(WORD *width,WORD *height) {
     if (HAS_VIDEL || HAS_TT_SHIFTER)
         get_std_pixel_size(width,height);
     else
@@ -700,7 +700,7 @@ static void atari_get_pixel_size(WORD *width,WORD *height) {
     }
 }
 
-static WORD atari_setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode) {
+static WORD FP_CALLBACK atari_setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode) {
     WORD oldmode = 0;
 
     if ((LONG)logLoc > 0) {
@@ -758,7 +758,7 @@ static WORD atari_setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD 
     return oldmode;
 }
 
-static void atari_set_palette(const UWORD *new_palette)
+static void FP_CALLBACK atari_set_palette(const UWORD *new_palette)
 {
     // the contents of colorptr indicate the palette processing required; since
     // the source address must be on a word boundary, we use bit 0 as a flag:

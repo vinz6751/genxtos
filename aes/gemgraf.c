@@ -803,6 +803,7 @@ void gr_gicon(WORD state, ICONBLK *ib, CICON *cicon)
     }
 
     /* draw the label */
+    gsx_attr(TRUE, MD_TRANS, fgcol);
     gr_gtext(TE_CNTR, SMALL, ib->ib_ptext, pt);
 }
 

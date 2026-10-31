@@ -163,6 +163,10 @@ amiga_startup_ret:
         .globl _startup
         jbsr    _startup
 
+        /* RAM detection, sysvar init, BSS clear; jumps to _startup_stage2 */
+        .extern _meminit
+        jmp     _meminit
+
         .globl _startup_stage2
 _startup_stage2:
         lea     _stktop,sp      // Reset the stack to the top

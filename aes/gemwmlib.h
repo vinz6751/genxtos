@@ -45,6 +45,10 @@ void wm_calc(WORD wtype, UWORD kind, WORD x, WORD y, WORD w, WORD h,
              WORD *px, WORD *py, WORD *pw, WORD *ph);
 void wm_new(void);
 
+#if CONF_AES_INPROCESS
+void wm_inprocess_reset(void);
+#endif
+
 #if CONF_WITH_3D_OBJECTS
 void w_redraw_desktop(GRECT *pt);
 #endif

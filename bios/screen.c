@@ -13,7 +13,7 @@
  * option any later version.  See doc/license.txt for details.
  */
 
-#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
 #include "asm.h"
@@ -49,38 +49,34 @@ static void setup_video_ram(void);
 static ULONG calc_vram_size(void);
 static void screen_init_services(UWORD planes, UWORD xrez, UWORD yrez);
 
-// Select the driver
+// Select the driver (pointer avoids gcc -mfastcall sibcall bug on macro-expanded struct)
 #if CONF_WITH_ATARI_VIDEO
- #define screen_driver screen_driver_atari
+ static const SCREEN_DRIVER * const screen_drv = &screen_driver_atari;
 #elif defined(MACHINE_AMIGA)
- #define screen_driver screen_driver_amiga
+ static const SCREEN_DRIVER * const screen_drv = &screen_driver_amiga;
 #elif defined(MACHINE_LISA)
- #define screen_driver screen_driver_lisa
+ static const SCREEN_DRIVER * const screen_drv = &screen_driver_lisa;
 #elif defined(MACHINE_A2560U)
  extern const SCREEN_DRIVER a2560_screen_driver_vicky2;
- #define screen_driver a2560_screen_driver_vicky2
+ static const SCREEN_DRIVER * const screen_drv = &a2560_screen_driver_vicky2;
 #elif defined(MACHINE_A2560K) || defined(MACHINE_A2560X) || defined(MACHINE_GENX)
  extern const SCREEN_DRIVER a2560_screen_driver_1bpp;
- #define screen_driver a2560_screen_driver_1bpp
+ static const SCREEN_DRIVER * const screen_drv = &a2560_screen_driver_1bpp;
 #elif defined(MACHINE_A2560M)
  extern const SCREEN_DRIVER a2560_screen_driver_vicky3;
- #define screen_driver a2560_screen_driver_vicky3
+ static const SCREEN_DRIVER * const screen_drv = &a2560_screen_driver_vicky3;
  #endif
 
 
 void screen_init(void) {
     /* Initialize the video mode and palette. The video memory address will be done later. */
-    screen_driver.init();
+    screen_drv->init();
 
     rez_was_hacked = FALSE; /* initial assumption */
 
     /* Setup the video RAM / allocate it if necessary */
     KDEBUG(("setup_video_ram()\n"));
     setup_video_ram();
-
-    /* Make the video hardware use that video REM */
-    KDEBUG(("screen_setphys(%p)\n",video_ram_addr));
-    screen_setphys(video_ram_addr);
 }
 
 /*
@@ -103,7 +99,7 @@ WORD check_moderez(WORD moderez)
     if (!screen_can_change_resolution())
         return 0;
 
-    return screen_driver.check_moderez(moderez);
+    return screen_drv->check_moderez(moderez);
 }
 
 /*
@@ -112,7 +108,7 @@ WORD check_moderez(WORD moderez)
  */
 void initialise_palette_registers(WORD rez, WORD mode)
 {
-    screen_driver.initialise_palette_registers(rez, mode);
+    screen_drv->initialise_palette_registers(rez, mode);
 }
 
 
@@ -146,6 +142,18 @@ static void setup_video_ram(void)
     /* set the v_bas_ad system variable */
     v_bas_ad = video_ram_addr;
     KDEBUG(("v_bas_ad = %p, vram_size = %ld\n", v_bas_ad, vram_size));
+
+    /* Make the video hardware use that video RAM */
+    KDEBUG(("screen_setphys(%p)\n", video_ram_addr));
+    screen_setphys(video_ram_addr);
+
+#if CONF_WITH_ATARI_VIDEO
+    /*
+     * Keep the allocated base; do not replace v_bas_ad with atari_physbase()
+     * here.  Under FASTCALL_BUILD the direct C call from this file can mis-handle
+     * the cdecl pointer return, and the shifter may not yet reflect the new base.
+     */
+#endif
 }
 
 /*
@@ -171,14 +179,14 @@ WORD screen_can_change_resolution(void)
     if (rez_was_hacked)
         return FALSE;
 
-    return screen_driver.can_change_resolution();
+    return screen_drv->can_change_resolution();
 }
 
 
 /* get monitor type (same encoding as VgetMonitor()) */
 WORD get_monitor_type(void)
 {
-    return screen_driver.get_monitor_type();
+    return screen_drv->get_monitor_type();
 }
 
 
@@ -191,7 +199,7 @@ WORD get_monitor_type(void)
  */
 static ULONG calc_vram_size(void)
 {
-    return screen_driver.calc_vram_size();
+    return screen_drv->calc_vram_size();
 }
 
 
@@ -202,7 +210,7 @@ static ULONG calc_vram_size(void)
  */
 WORD get_palette(void)
 {
-    return screen_driver.get_number_of_colors_nuances();
+    return screen_drv->get_number_of_colors_nuances();
 }
 
 
@@ -232,16 +240,16 @@ void get_std_pixel_size(WORD *width,WORD *height)
  */
 void get_pixel_size(WORD *width,WORD *height)
 {
-    screen_driver.get_pixel_size(width, height);
+    screen_drv->get_pixel_size(width, height);
 }
 
 
 /* hardware independent xbios routines */
 
-const UBYTE *physbase(void)
+const UBYTE * ARGS_ON_STACK physbase(void)
 {
 #if HAS_VIDEO_HARDWARE
-    return screen_driver.physbase();
+    return screen_drv->physbase();
 #else
     /* No real physical screen, fall back to Logbase() */
     return logbase();
@@ -253,17 +261,17 @@ const UBYTE *physbase(void)
 
 void screen_setphys(const UBYTE *addr)
 {
-    screen_driver.setphys(addr);
+    screen_drv->setphys(addr);
 }
 
 
-UBYTE *logbase(void)
+UBYTE * ARGS_ON_STACK logbase(void)
 {
     return v_bas_ad;
 }
 
 
-WORD getrez(void)
+WORD ARGS_ON_STACK getrez(void)
 { /* TODO should that be improved */
 #if CONF_WITH_ATARI_VIDEO
     return atari_getrez();
@@ -289,9 +297,9 @@ WORD getrez(void)
  *        setting the mode specified by 'videlmode' if appropriate)
  *      . reinitialises lineA and the VT52 console
  */
-WORD setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
+WORD ARGS_ON_STACK setscreen(UBYTE *logLoc, const UBYTE *physLoc, WORD rez, WORD videlmode)
 {
-    return screen_driver.setscreen(logLoc, physLoc, rez, videlmode);
+    return screen_drv->setscreen(logLoc, physLoc, rez, videlmode);
 }
 
 
@@ -317,14 +325,14 @@ void screen_init_services_from_mode_info(void)
 
     KDEBUG(("screen_init_services_from_mode_info\n"));
 
-    screen_driver.get_current_mode_info(&planes, &xrez, &yrez);
+    screen_drv->get_current_mode_info(&planes, &xrez, &yrez);
     screen_init_services(planes, xrez, yrez);
 }
 
 /** Schedule the palette change for the next VBL
  * The new palette is stored as colorptr
 */
-void setpalette(const UWORD *palettePtr)
+void ARGS_ON_STACK setpalette(const UWORD *palettePtr)
 {
 #ifdef ENABLE_KDEBUG
     int i, max;
@@ -352,7 +360,7 @@ void setpalette(const UWORD *palettePtr)
  * It is called after the Setpalette xbios call is made.
  */
 void screen_do_set_palette(const UWORD *new_palette) {
-    screen_driver.set_palette(new_palette);
+    screen_drv->set_palette(new_palette);
 }
 
 
@@ -363,10 +371,10 @@ void screen_do_set_palette(const UWORD *new_palette) {
  * on a TT, the h/w updates the corresponding TT palette registers
  * automagically.
  */
-WORD setcolor(WORD colorNum, WORD color)
+WORD ARGS_ON_STACK setcolor(WORD colorNum, WORD color)
 {
 #if HAS_VIDEO_HARDWARE
-    return screen_driver.setcolor(colorNum, color);
+    return screen_drv->setcolor(colorNum, color);
 #else
     /* No hardware, fake return value */
     return 0;
@@ -374,7 +382,7 @@ WORD setcolor(WORD colorNum, WORD color)
 }
 
 
-void vsync(void)
+void ARGS_ON_STACK vsync(void)
 {
     LONG a;
 #if CONF_WITH_ATARI_VIDEO

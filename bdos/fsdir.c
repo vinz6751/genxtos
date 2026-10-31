@@ -198,7 +198,7 @@ static int namlen(char *s11)                            /* M01.01.1107.01 */
  *
  *  Function 0x39   d_create
  */
-long xmkdir(char *s)
+long GEMDOS_API xmkdir(char *s)
 {
     OFD *f;
     OFD *fd,*f0;
@@ -294,7 +294,7 @@ long xmkdir(char *s)
  *                  EACCDN
  *                  EINTRN
  */
-long xrmdir(char *p)
+long GEMDOS_API xrmdir(char *p)
 {
     DND *d;
     DND *d1,**q;
@@ -399,7 +399,7 @@ long xrmdir(char *p)
  *    (2) you may not set the Volume Label bit on a folder.
  *  At this time, EmuTOS behaves like Atari TOS 1-3.
  */
-long xchmod(char *p, int wrt, UBYTE mod)
+long GEMDOS_API xchmod(char *p, int wrt, UBYTE mod)
 {
     OFD *fd;
     DND *dn;                                /*  M01.01.03   */
@@ -449,7 +449,7 @@ long xchmod(char *p, int wrt, UBYTE mod)
  *  returns:
  *      error code.
  */
-long ixsfirst(char *name, WORD att, DTAINFO *addr)
+long GEMDOS_API ixsfirst(char *name, WORD att, DTAINFO *addr)
 {
     const char *s;              /*  M01.01.03                   */
     DND *dn;
@@ -520,7 +520,7 @@ static BOOL contains_wildcard_characters(const char *test)
  *
  *  Error returns:  EFILNF
  */
-long xsfirst(char *name, int att)
+long GEMDOS_API xsfirst(char *name, int att)
 {
     long result;
     DTAINFO *dt;                            /* M01.01.1209.01 */
@@ -651,7 +651,7 @@ static FCB *ixsnext(DTAINFO *dt)
  *
  *  Error returns:  ENMFIL
  */
-long xsnext(void)
+long GEMDOS_API xsnext(void)
 {
     FCB *fcb;
     DTAINFO *dt;
@@ -681,7 +681,7 @@ long xsnext(void)
  *
  *  Function 0x57   f_datime
  */
-long xgsdtof(DOSTIME *buf, int h, int wrt)
+long GEMDOS_API xgsdtof(DOSTIME *buf, int h, int wrt)
 {
     OFD *f = getofd(h);
     DFD *dfd;
@@ -892,7 +892,7 @@ static WORD update_fcb(OFD *fd, LONG posp, LONG len, UBYTE *buf)
  */
 /* rename file, n unused, old path p1, new path p2 */
 /*ARGSUSED*/
-long xrename(int n, char *p1, char *p2)
+long GEMDOS_API xrename(int n, char *p1, char *p2)
 {
     OFD *fd;
     DFD *dfd;
@@ -1110,7 +1110,7 @@ long xrename(int n, char *p1, char *p2)
  *              EPTHNF
  *              ckdrv()
  */
-long xchdir(char *p)
+long GEMDOS_API xchdir(char *p)
 {
     DND *dnd;
     int olddir, newdir, dlog;
@@ -1226,7 +1226,7 @@ void decr_curdir_usage(int n)
  *  Error returns:
  *                  EDRIVE
  */
-long xgetdir(char *buf, int drv)
+long GEMDOS_API xgetdir(char *buf, int drv)
 {
     DND *p;
     int n;

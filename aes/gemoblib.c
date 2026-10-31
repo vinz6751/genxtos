@@ -410,7 +410,7 @@ void ob_format(WORD just, char *raw_str, char *tmpl_str, char *fmt_str)
 
 static __inline__ WORD call_usercode(USERBLK *ub, PARMBLK *pb)
 {
-    register WORD (*ub_code)(PARMBLK *parmblock) __asm__("a0") = ub->ub_code;
+    register WORD (ARGS_ON_STACK *ub_code)(PARMBLK *parmblock) __asm__("a0") = ub->ub_code;
     register WORD retvalue __asm__("d0");
 
     __asm__ volatile
@@ -832,11 +832,21 @@ static void just_draw(OBJECT *tree, WORD obj, WORD sx, WORD sy)
             }
 #if CONF_WITH_NICELINES
             /*
-             * for an apparent menu separator, we replace the traditional
-             * string of dashes with a drawn line for neatness
+             * Menu separators: replace dashes with a drawn line.
+             *
+             * EmuDesk erd truncates separator strings to "-" in the RSC;
+             * adjust_menu() normally expands them.  Also accept a
+             * still-truncated "-" when the object is clearly a wide menu
+             * line (avoids mis-detecting a 1-char dialog dash).
+             *
+             * gsx_attr() above set TEXT attributes; switch to line attrs
+             * like mn_bar() so the separator is actually visible.
              */
-            if ((obtype == G_STRING) && (state & DISABLED) && (len > 3) && is_dashes((char *)spec, len))
+            if ((obtype == G_STRING) && (state & DISABLED)
+                && (((len > 3) && is_dashes((char *)spec, len))
+                    || ((len >= 1) && (*(char *)spec == '-') && (t.g_w > 3 * gl_wchar))))
             {
+                gsx_attr(FALSE, MD_REPLACE, BLACK);
                 gsx_cline(t.g_x, t.g_y+t.g_h/2, t.g_x+t.g_w-1, t.g_y+t.g_h/2);
             }
             else

@@ -253,10 +253,15 @@ trapaes:
         movea.l UDA_SPSUPER(a6),sp
         jbsr    _enable_interrupts      // restore interrupt mask
 
+#ifdef FASTCALL_BUILD
+        move.l  d1,a0                   // AESPB pointer in a0 for fastcall
+        jbsr    _super                  // d0 holds opcode
+#else
         move.l  d1,-(sp)                // addr of parameter
         move.w  d0,-(sp)                // 200 or 201
         jsr     _super                  // jump to supervisor entry point
         addq.l  #6,sp                   // restore stack pointer
+#endif
 
         jbsr    _disable_interrupts     // mask out interrupts
 
@@ -312,9 +317,13 @@ _far_bcha:
 #else
         movem.l d0-d2/a0-a2,-(sp)
 #endif
+#ifdef FASTCALL_BUILD
+        jbsr    _b_click
+#else
         move.w  d0,-(sp)
         jsr     _b_click
         addq.l  #2,sp
+#endif
 #ifdef __mcoldfire__
         movem.l (sp),d0-d2/a0-a2
         lea     24(sp),sp

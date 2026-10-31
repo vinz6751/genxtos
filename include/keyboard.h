@@ -101,14 +101,14 @@ void kbd_int(UBYTE scancode);
 void key_repeat_tick(void);
 
 /* some bios functions */
-LONG bconstat2(void);
-LONG bconin2(void);
-LONG kbshift(WORD flag);
+LONG ARGS_ON_STACK bconstat2(void);
+LONG ARGS_ON_STACK bconin2(void);
+LONG ARGS_ON_STACK kbshift(WORD flag);
 
 /* some xbios functions */
-LONG keytbl(const UBYTE* norm, const UBYTE* shft, const UBYTE* caps);
-WORD kbrate(WORD initial, WORD repeat);
-void bioskeys(void);
+LONG ARGS_ON_STACK keytbl(const UBYTE* norm, const UBYTE* shft, const UBYTE* caps);
+WORD ARGS_ON_STACK kbrate(WORD initial, WORD repeat);
+void ARGS_ON_STACK bioskeys(void);
 
 
 #if CONF_SERIAL_CONSOLE

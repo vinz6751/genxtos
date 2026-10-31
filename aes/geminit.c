@@ -154,7 +154,7 @@ LONG init_p0_stkptr(void)
 {
     UDA *u = &D.g_int[0].a_uda;
 
-    u->u_spsuper = &u->u_supstk + 1;
+    u->u_spsuper = (ULONG *)((char *)&u->u_super[0] + sizeof(u->u_super));
 
     return (char *)u->u_spsuper - (char *)u;
 }
@@ -581,9 +581,19 @@ void run_accs_and_desktop(void)
     OBJECT *tree;
     void *dummy;
 
+    DESK_BOOT_MS(1, "run_accs_and_desktop enter");
+
+    /* Defer these until the accdesk subprocess exists (saves OS MD pool on 512K). */
+    fm_init();
+    mn_init();
+    gl_mowner = ctl_pd = iprocess("SCRENMGR", ctlmgr);
+    /* iprocess/pstart must not leave us "running" as SCRENMGR */
+    rlr = pd_index(0);
+
     /* load gem resource and fix it up before we go */
     gem_rsc_init();
     setup_mouse_cursors();
+    DESK_BOOT_MS(2, "after gem_rsc_init");
 
     /* init button stuff */
     gl_btrue = 0x0;
@@ -595,6 +605,7 @@ void run_accs_and_desktop(void)
     D.g_scrap[0] = dos_gdrv() + 'A';/* set up scrap dir path */
 
     gsx_init();                     /* do gsx open work station */
+    DESK_BOOT_MS(3, "after gsx_init");
 
 #if CONF_WITH_MENU_EXTENSION
     mnext_init();                   /* initialise menu library extension variables */
@@ -620,6 +631,7 @@ void run_accs_and_desktop(void)
     enable_interrupts();
 
     sh_tographic();                 /* go into graphic mode */
+    DESK_BOOT_MS(4, "after sh_tographic");
 
     /* take the tick interrupt */
     disable_interrupts();
@@ -653,11 +665,15 @@ void run_accs_and_desktop(void)
 
     wm_start();                     /* initialise window vars */
     fs_start();                     /* startup gem libs */
+    DESK_BOOT_MS(5, "after wm_start fs_start");
     build_root_path(D.s_cdir, 'A'+dos_gdrv());  /* root of current drive */
     isgem = process_inf2(&isauto);  /* process emudesk.inf part 2 */
 
+    DESK_BOOT_MS(6, "before dsptch (ctlmgr)");
     dsptch();                       /* off we go !!! */
     wait_for_accs(AP_MESAG);        /* wait until DAs have initialised */
+    DESK_BOOT_MS(7, "after wait_for_accs");
+    DESK_BOOT_MS(8, "before sh_main");
     sh_main(isauto, isgem);         /* main shell loop */
 
     free_accs(num_accs);            /* free DA memory */
@@ -745,10 +761,6 @@ void gem_main(void)
         dos_sdrv(bootdev);
     }
 
-    /* initialise AES libraries */
-    fm_init();
-    mn_init();
-
     num_accs = count_accs();        /* puts ACC names in acc[].name */
 
     D.g_acc = NULL;
@@ -789,7 +801,7 @@ void gem_main(void)
     dlr = zlr = NULL;
     fph = fpt = fpcnt = 0;
 
-    /* init initial process */
+    /* init initial process (stay on aes_boot_stack under FASTCALL) */
     for(i=totpds-1; i>=0; i--)
     {
         rlr = pd_index(i);
@@ -805,14 +817,18 @@ void gem_main(void)
         }
         rlr->p_qaddr = rlr->p_queue;
         rlr->p_qindex = 0;
-        memset(rlr->p_name, ' ', AP_NAMELEN);
+        {
+            WORD j;
+            for (j = 0; j < AP_NAMELEN; j++)
+                rlr->p_name[j] = ' ';
+        }
         rlr->p_appdir[0] = '\0'; /* by default, no application directory */
         /* if not rlr then initialize his stack pointer */
         if (i != 0)
-            rlr->p_uda->u_spsuper = &rlr->p_uda->u_supstk;
+            rlr->p_uda->u_spsuper = (ULONG *)((char *)&rlr->p_uda->u_super[0]
+                                              + sizeof(rlr->p_uda->u_super));
         rlr->p_pid = i;
         rlr->p_stat = 0;
-        rlr->p_msg.action = -1;
     }
     curpid = 0;
     rlr->p_pid = curpid++;
@@ -820,20 +836,39 @@ void gem_main(void)
 
     /* end of process init */
 
-    /* restart the tick     */
+#if defined(FASTCALL_BUILD)
+    /* leave aes_boot_stack before touching p_msg or calling iprocess/psetup */
+    asm volatile("movea.l %0,sp" :: "a"(D.g_int[0].a_uda.u_spsuper) : "memory");
+#endif
+
+    /* p_msg.action = -1 in each PD */
+    for (i = 0; i < totpds; i++)
+    {
+        rlr = pd_index(i);
+        rlr->p_msg.action = -1;
+    }
+    /* The loop leaves rlr on the last PD.  With totpds==2 that is the
+     * SCRENMGR slot — iprocess() would then alias rlr and ctl_pd, and
+     * sh_ldapp's rlr=pd0 would orphan the screen manager. */
+    rlr = pd_index(0);
+
+    /* restart the tick (p0 stack and p_msg must be ready first) */
     enable_interrupts();
 
     /*
-     * screen manager process init. this process starts out owning the mouse
-     * and the keyboard. it has a pid == 1
-     */
-    gl_mowner = ctl_pd = iprocess("SCRENMGR", ctlmgr);
-
-    /*
      * run the accessories and the desktop until termination
-     * (for shutdown or resolution change)
+     * (for shutdown or resolution change).  fm_init/mn_init/SCRENMGR
+     * start inside run_accs_and_desktop so this subprocess can be
+     * created while the OS MD pool is still relatively free.
+     *
+     * On 512K ROMs there is not enough OS internal memory to spawn a
+     * second GEMDOS process for accdesk after the AES has started.
      */
+#if CONF_AES_INPROCESS
+    run_accs_and_desktop();
+#else
     aes_run_rom_program(accdesk_start);
+#endif
 
     /* restore previous trap#2 address */
     disable_interrupts();

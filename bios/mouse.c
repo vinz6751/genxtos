@@ -33,7 +33,7 @@
  * new_mousevec is a handler for the IKBD mousevec vectors, it receives the IKBD packet in a0
  */
 
-void Initmous(WORD mouse_mode, struct initmous_parameter_block *p, void(*new_mousevec)(UBYTE*))
+void ARGS_ON_STACK Initmous(WORD mouse_mode, struct initmous_parameter_block *p, KBDVEC_P_fn new_mousevec)
 {
     BOOL error = 0;
 
@@ -98,7 +98,7 @@ void Initmous(WORD mouse_mode, struct initmous_parameter_block *p, void(*new_mou
     }
 
     if (error || mouse_mode == DISABLE_MOUSE) {
-        kbdvecs.mousevec = (void(*)(UBYTE*))just_rts;    /* set dummy vector */
+        kbdvecs.mousevec = kbdvec_nop_p;    /* set dummy vector */
         return;
     }
 

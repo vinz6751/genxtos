@@ -844,7 +844,7 @@ static void ascii_lf(void)
  *   M_CFLASH - cursor flash on
  *   M_CVIS   - cursor visibility on
  */
-WORD cursconf(WORD function, WORD operand)
+WORD ARGS_ON_STACK cursconf(WORD function, WORD operand)
 {
     KDEBUG(("cursconf\n"));
     switch (function) {

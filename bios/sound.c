@@ -91,7 +91,7 @@ void snd_init(void)
     kcl_hook = do_keyclick;
 }
 
-LONG giaccess(WORD data, WORD reg)
+LONG ARGS_ON_STACK giaccess(WORD data, WORD reg)
 {
 #if CONF_WITH_YM2149
     WORD old_sr;
@@ -112,7 +112,7 @@ LONG giaccess(WORD data, WORD reg)
 #endif
 }
 
-void ongibit(WORD data)
+void ARGS_ON_STACK ongibit(WORD data)
 {
 #if CONF_WITH_YM2149
     WORD old_sr;
@@ -127,7 +127,7 @@ void ongibit(WORD data)
 #endif
 }
 
-void offgibit(WORD data)
+void ARGS_ON_STACK offgibit(WORD data)
 {
 #if CONF_WITH_YM2149
     WORD old_sr;
@@ -142,7 +142,7 @@ void offgibit(WORD data)
 #endif
 }
 
-LONG dosound(const UBYTE *table)
+LONG ARGS_ON_STACK dosound(const UBYTE *table)
 {
 #if CONF_WITH_YM2149
     const UBYTE *oldtable = sndtable;

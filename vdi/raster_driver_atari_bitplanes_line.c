@@ -871,11 +871,118 @@ void OPTIMIZE_SMALL swblit_rect_common(const VwkAttrib *attr, const Rect *rect)
 #if CONF_WITH_VDI_VERTLINE
 
 /*
- * vertical_line - draw a vertical line
- *
- * this is a stripped-down version of abline(), for speed
+ * solid LN_MASK: every pixel is drawn, so the rotate-and-test is wasted.
+ * step is the byte delta of one scanline (negative when the line goes up).
  */
-void vertical_line(const Line *line, WORD wrt_mode, UWORD color)
+static void OPTIMIZE_O2 __attribute__((noinline)) vline_or(UWORD *addr, WORD dy, WORD step, UWORD bit)
+{
+#ifdef __mcoldfire__
+    do {
+        *addr |= bit;
+        addr = (UWORD *)((char *)addr + step);
+    } while (dy--);
+#else
+    __asm__ volatile (
+        "1:\n\t"
+        "or.w %2,(%0)\n\t"
+        "adda.w %3,%0\n\t"
+        "dbra %1,1b"
+        : "+a"(addr), "+d"(dy)
+        : "d"(bit), "r"(step)
+        : "memory", "cc");
+#endif
+}
+
+static void OPTIMIZE_O2 __attribute__((noinline)) vline_and(UWORD *addr, WORD dy, WORD step, UWORD bitcomp)
+{
+#ifdef __mcoldfire__
+    do {
+        *addr &= bitcomp;
+        addr = (UWORD *)((char *)addr + step);
+    } while (dy--);
+#else
+    __asm__ volatile (
+        "1:\n\t"
+        "and.w %2,(%0)\n\t"
+        "adda.w %3,%0\n\t"
+        "dbra %1,1b"
+        : "+a"(addr), "+d"(dy)
+        : "d"(bitcomp), "r"(step)
+        : "memory", "cc");
+#endif
+}
+
+static void OPTIMIZE_O2 __attribute__((noinline)) vline_xor(UWORD *addr, WORD dy, WORD step, UWORD bit)
+{
+#ifdef __mcoldfire__
+    do {
+        *addr ^= bit;
+        addr = (UWORD *)((char *)addr + step);
+    } while (dy--);
+#else
+    __asm__ volatile (
+        "1:\n\t"
+        "eor.w %2,(%0)\n\t"
+        "adda.w %3,%0\n\t"
+        "dbra %1,1b"
+        : "+a"(addr), "+d"(dy)
+        : "d"(bit), "r"(step)
+        : "memory", "cc");
+#endif
+}
+
+/*
+ * vertical_line_solid - LN_MASK is 0xFFFF
+ *
+ * ERASE draws only where the mask bit is 0, so a solid mask is a no-op.
+ * REPLACE and TRANS set or clear the pixel on every row.  XOR flips it.
+ * The mask is left unchanged: rotating 0xFFFF stays 0xFFFF.
+ */
+static void OPTIMIZE_O2 vertical_line_solid(const Line *line, WORD wrt_mode, UWORD color)
+{
+    UWORD *start;
+    WORD dy, yinc, step, plane;
+    UWORD bit, bitcomp;
+
+    if (wrt_mode == WM_ERASE)
+        return;
+
+    dy = line->y2 - line->y1;
+    yinc = v_lin_wr / 2;
+    if (dy < 0) {
+        dy = -dy;
+        yinc = -yinc;
+    }
+    step = (WORD)(yinc * 2);
+
+    start = get_start_addr(line->x1, line->y1);
+    bit = 0x8000 >> (line->x1 & 0xf);
+    bitcomp = ~bit;
+
+    for (plane = v_planes - 1; plane >= 0; plane--, start++, color >>= 1) {
+        switch (wrt_mode) {
+        case WM_XOR:
+            vline_xor(start, dy, step, bit);
+            break;
+        case WM_TRANS:
+        case WM_REPLACE:
+            if (color & 1)
+                vline_or(start, dy, step, bit);
+            else
+                vline_and(start, dy, step, bitcomp);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+/*
+ * Dashed (and every other non-solid) vertical line.  Kept separate so
+ * its register save is not paid by the solid path, and the solid path's
+ * save is not paid by dashed lines.
+ */
+static void vertical_line_pattern(const Line *line, WORD wrt_mode, UWORD color)
 {
     UWORD *start, *addr;
     WORD dy;                    /* length of line */
@@ -883,11 +990,7 @@ void vertical_line(const Line *line, WORD wrt_mode, UWORD color)
     UWORD bit, bitcomp;
     WORD plane, loopcnt;
     UWORD linemask;
-    WORD bit_inverted_linemask;
 
-    //bit_inverted_linemask = ((1 << 16) - 1) ^ (WORD)LINEMASK;
-
-    
     /* calculate increase value for y to add to actual address */
     dy = line->y2 - line->y1;
     yinc = v_lin_wr / 2;        /* one line of words */
@@ -968,7 +1071,23 @@ void vertical_line(const Line *line, WORD wrt_mode, UWORD color)
             }
         }
     }
+    /* v_planes is always >= 1 here; GCC 4.6 cannot see that and warns. */
+#if __GNUC_PREREQ(4, 6)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
     LN_MASK = linemask;
+#if __GNUC_PREREQ(4, 6)
+# pragma GCC diagnostic pop
+#endif
+}
+
+void vertical_line(const Line *line, WORD wrt_mode, UWORD color)
+{
+    if ((UWORD)LN_MASK == 0xFFFF)
+        vertical_line_solid(line, wrt_mode, color);
+    else
+        vertical_line_pattern(line, wrt_mode, color);
 }
 #endif
 

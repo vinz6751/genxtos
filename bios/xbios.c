@@ -338,7 +338,7 @@ static void xbios_d(WORD interno, LONG vector)
  * xbios_e - (iorec) Returns pointer to a serial device's input buffer record.
  */
 
-static LONG iorec(WORD devno)
+static LONG ARGS_ON_STACK iorec(WORD devno)
 {
     switch(devno) {
     case 0:
@@ -378,7 +378,7 @@ static LONG xbios_e(WORD devno)
  * tsr    - 68901 register
  * scr    - 68901 register
  */
-static ULONG rsconf(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr)
+static ULONG ARGS_ON_STACK rsconf(WORD baud, WORD ctrl, WORD ucr, WORD rsr, WORD tsr, WORD scr)
 {
     return (*rsconfptr)(baud, ctrl, ucr, rsr, tsr, scr);
 }
@@ -423,7 +423,7 @@ static LONG xbios_10(const UBYTE* unshift, const UBYTE* shift, const UBYTE* caps
 
 static ULONG rseed;
 
-static LONG random(void)
+static LONG ARGS_ON_STACK random(void)
 {
     if(rseed == 0) {
         rseed = hz_200 << 16;
@@ -492,7 +492,7 @@ static LONG xbios_13(WORD *buf, LONG filler, WORD devno, WORD sectno,
  * xbios_14 - (scrdmp) Dump screen to printer.
  */
 
-static void scrdmp(void)
+static void ARGS_ON_STACK scrdmp(void)
 {
     protect_v((PFLONG)dump_vec);
     dumpflg = -1;       /* reset to allow future dumps ... */
@@ -718,7 +718,7 @@ static WORD xbios_21(WORD config)
  *
  */
 
-static LONG kbdvbase(void)
+static LONG ARGS_ON_STACK kbdvbase(void)
 {
     return (LONG) &kbdvecs;
 }
@@ -888,7 +888,7 @@ static WORD xbios_2e(WORD op, WORD start, WORD count, UBYTE *buffer)
 /*
  * xbios_40 - (Blitmode)
  */
-static WORD blitmode(WORD mode)
+static WORD ARGS_ON_STACK blitmode(WORD mode)
 {
 #if CONF_WITH_BLITTER
     WORD status = 0x0000;
@@ -1253,7 +1253,7 @@ static LONG xbios_8d(LONG sptr)
  * with the function number passed as parameter.
  */
 
-LONG xbios_do_unimpl(WORD number)
+LONG ARGS_ON_STACK xbios_do_unimpl(WORD number)
 {
 #if DBG_XBIOS
     kprintf("unimplemented XBIOS function 0x%02x\n", number);

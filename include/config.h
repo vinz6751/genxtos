@@ -418,6 +418,10 @@
 # ifndef CONF_WITH_SCSI
 #  define CONF_WITH_SCSI 0
 # endif
+# ifndef CONF_WITH_SCC
+/* MegaSTE has MFP UART only; SCC is TT/Falcon. */
+#  define CONF_WITH_SCC 0
+# endif
 # ifndef CONF_WITH_TT_MFP
 #  define CONF_WITH_TT_MFP 0
 # endif
@@ -451,7 +455,17 @@
 #endif
 
 /*
- * Defaults for the diagnostic cartridge target (maximum size 128K).
+ * Small ST ROM images (256K/512K padded) lack room for extra GEMDOS
+ * subprocesses after AES init; run accdesk and desktop in-process.
+ */
+#if defined(TARGET_256) || defined(TARGET_512)
+# define CONF_AES_INPROCESS 1
+#endif
+#ifndef CONF_AES_INPROCESS
+# define CONF_AES_INPROCESS 0
+#endif
+
+/*
  * When this is selected, the Makefile excludes AES support in order
  * to reduce ROM size.  However this is still insufficient, so we
  * need to exclude some feature(s).  The cartridge will still run on
@@ -2318,6 +2332,19 @@
 #endif
 #if CONF_DEBUG_DESK_STACK
 # define STACK_MARKER 0xdeadbeef
+#endif
+
+/*
+ * Set CONF_WITH_IKBD_INJECT to 1 to build the IKBD packet inject harness
+ * (bios/ikbd_inject.c) used by desktop self-tests under Hatari. Default
+ * off; NATFEAT_DEBUG builds enable it automatically.
+ */
+#ifndef CONF_WITH_IKBD_INJECT
+# ifdef NATFEAT_DEBUG
+#  define CONF_WITH_IKBD_INJECT 1
+# else
+#  define CONF_WITH_IKBD_INJECT 0
+# endif
 #endif
 
 /*

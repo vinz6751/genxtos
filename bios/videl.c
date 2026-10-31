@@ -648,7 +648,7 @@ WORD current_video_mode;
 /*
  * Set Falcon video mode - also sets 'sshiftmod' appropriately
  */
-WORD vsetmode(WORD mode)
+WORD ARGS_ON_STACK vsetmode(WORD mode)
 {
     WORD ret;
 
@@ -693,7 +693,7 @@ WORD vsetmode(WORD mode)
 /*
  * Get Videl monitor type
  */
-WORD vmontype(void)
+WORD ARGS_ON_STACK vmontype(void)
 {
     if (!has_videl)
         return 0x59;    /* unimplemented xbios call: return function # */
@@ -704,7 +704,7 @@ WORD vmontype(void)
 /*
  * Set external video sync mode
  */
-WORD vsetsync(WORD external)
+WORD ARGS_ON_STACK vsetsync(WORD external)
 {
     UWORD spshift;
 
@@ -753,7 +753,7 @@ WORD vsetsync(WORD external)
  * with the slight drawback that the values returned may differ from those
  * returned by TOS4 in the same circumstances.
  */
-LONG vgetsize(WORD inmode)
+LONG ARGS_ON_STACK vgetsize(WORD inmode)
 {
     const VMODE_ENTRY *p;
     int height;
@@ -835,7 +835,7 @@ static int use_ste_palette(WORD videomode)
  * address | 0x01      load first 16 Falcon palette regs from address
  *       0 | 0x01      load 256 Falcon palette regs from falcon_shadow_palette[]
  */
-WORD vsetrgb(WORD index,WORD count,const ULONG *rgb)
+WORD ARGS_ON_STACK vsetrgb(WORD index,WORD count,const ULONG *rgb)
 {
     ULONG *shadow;
     const ULONG *source;
@@ -891,7 +891,7 @@ WORD vsetrgb(WORD index,WORD count,const ULONG *rgb)
 /*
  * get palette registers
  */
-WORD vgetrgb(WORD index,WORD count,ULONG *rgb)
+WORD ARGS_ON_STACK vgetrgb(WORD index,WORD count,ULONG *rgb)
 {
     ULONG *shadow;
     RGB u;      /* staging area for Falcon shadow palette: RG0B */
@@ -946,7 +946,7 @@ WORD vgetrgb(WORD index,WORD count,ULONG *rgb)
  * This converts an (assumed legal) input mode into the
  * corresponding output mode for the current monitor type
  */
-WORD vfixmode(WORD mode)
+WORD ARGS_ON_STACK vfixmode(WORD mode)
 {
 WORD monitor, currentmode;
 

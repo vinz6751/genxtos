@@ -10,10 +10,11 @@
 #ifndef GEMDOS_H
 #define GEMDOS_H
 
+#include "portab.h"
 #include "bdosbind.h"
 
 WORD pgmld(WORD handle, char *pname, LONG **ldaddr);
-LONG dos_exec(WORD mode, const char *pcspec, const char *pcmdln, const char *segenv); /* see: gemstart.S */
+LONG FP_CALLBACK dos_exec(WORD mode, const char *pcspec, const char *pcmdln, const char *segenv); /* gemstart.S */
 WORD dos_setdt(UWORD h, UWORD time, UWORD date);
 WORD dos_label(char drive, char *plabel);
 void dos_space(WORD drv, LONG *ptotal, LONG *pavail);

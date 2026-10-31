@@ -301,7 +301,7 @@ static void disk_init_one(UWORD unit,LONG *devices_available)
  **     drvrem - mask of drives with removable media
  */
 LONG    drvrem; /* This has a fixed address by the linker script */
-LONG disk_drvrem(void)
+LONG ARGS_ON_STACK disk_drvrem(void)
 {
     return drvrem;
 }
@@ -1255,7 +1255,7 @@ LONG disk_rw(UWORD unit, UWORD rw, ULONG sector, UWORD count, UBYTE *buf)
 
 /*==== XBIOS functions ====================================================*/
 
-LONG DMAread(LONG sector, WORD count, UBYTE *buf, WORD major)
+LONG ARGS_ON_STACK DMAread(LONG sector, WORD count, UBYTE *buf, WORD major)
 {
     UWORD unit = NUMFLOPPIES + major;
     LONG rc;
@@ -1268,7 +1268,7 @@ LONG DMAread(LONG sector, WORD count, UBYTE *buf, WORD major)
     return rc;
 }
 
-LONG DMAwrite(LONG sector, WORD count, const UBYTE *buf, WORD major)
+LONG ARGS_ON_STACK DMAwrite(LONG sector, WORD count, const UBYTE *buf, WORD major)
 {
     UWORD unit = NUMFLOPPIES + major;
 

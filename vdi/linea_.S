@@ -175,36 +175,57 @@ hide_mouse:
         rts
 
 undraw_sprite:
-        move.l  a2,-(sp)        /* save area ptr */
 #if CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#if defined(FASTCALL_BUILD)
+        /* Line-A: a2 = MCS*.  FASTCALL C: a0 = MCS*. */
+        move.l  a2,a0
+#else
+        move.l  a2,-(sp)        /* save area ptr */
+#endif
 #if defined(MACHINE_AMIGA)
         jsr     _linea_sprite_hide_amiga
 #else
         jsr     _linea_sprite_hide_atari
 #endif
-#endif
+#if !defined(FASTCALL_BUILD)
         addq.l  #4,sp
+#endif
+#endif
         rts
 
 draw_sprite:
+#if CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#if defined(FASTCALL_BUILD)
+        /* Line-A: a0=sprite, a2=mcs, d0=x, d1=y.
+         * FASTCALL C: a0=sprite, a1=mcs, d0=x, d1=y. */
+        move.l  a2,a1
+#else
         move.w  d1,-(sp)        /* y coord of hotspot */
         move.w  d0,-(sp)        /* x coord */
         move.l  a2,-(sp)        /* save area ptr */
         move.l  a0,-(sp)        /* new sprite */
-#if CONF_WITH_SOFTWARE_MOUSE_RENDERING
+#endif
 #if defined(MACHINE_AMIGA)
         jsr     _linea_sprite_show_amiga
 #else
         jsr     _linea_sprite_show_atari
 #endif
-#endif
+#if !defined(FASTCALL_BUILD)
         lea     12(sp),sp
+#endif
+#endif
         rts
 
 linea_blit:
+#if defined(FASTCALL_BUILD)
+        /* Line-A: a6 = blit frame.  FASTCALL C: a0 = frame. */
+        move.l  a6,a0
+        jsr     _linea_blit
+#else
         move.l  a6,-(sp)        /* blit frame structure addr */
         jsr     _linea_blit
         addq.l  #4,sp
+#endif
         rts
 
         SECTION_RODATA

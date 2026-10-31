@@ -20,7 +20,6 @@
 /* #define ENABLE_KDEBUG */
 
 #include "emutos.h"
-#include "struct.h"
 #include "aesdefs.h"
 #include "aesext.h"
 #include "aesvars.h"
@@ -705,6 +704,7 @@ void mn_bar(OBJECT *tree, WORD showit)
     AESPD   *p;
     OBJECT  *obj;
 
+    DESK_BOOT_MSF(31, "mn_bar enter tree=%p showit=%d", tree, (int)showit);
     p = fpdnm(NULL, rlr->p_pid);
 
     if (showit)
@@ -717,6 +717,7 @@ void mn_bar(OBJECT *tree, WORD showit)
         ob_actxywh(tree, THEACTIVE, &gl_ctwait.m_gr);
         gsx_sclip(&gl_rzero);
         ob_draw(tree, THEBAR, MAX_DEPTH);
+        DESK_BOOT_MS(32, "mn_bar after ob_draw");
         /* ensure the separator line is drawn in black in replace mode */
         gsx_attr(FALSE, MD_REPLACE, BLACK);
         gsx_cline(0, gl_hbox - 1, gl_width - 1, gl_hbox - 1);

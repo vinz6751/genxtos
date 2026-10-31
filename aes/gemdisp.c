@@ -49,7 +49,7 @@
  *
  * returns -ve value iff it fails (the fork ring is full)
  */
-WORD forkq(FCODE fcode, LONG fdata)
+WORD FP_CALLBACK forkq(FCODE fcode, LONG fdata)
 {
     FPD *f;
 

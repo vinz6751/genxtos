@@ -19,4 +19,16 @@ typedef struct aespb {
     LONG *addrout;
 } AESPB;
 
+#if CONF_AES_INPROCESS
+WORD aes_inprocess_call(AESPB *pb);
+/* Track the in-process desk while it is inside aes_inprocess_call().
+ * unsync() must not dsptch() when *that* PD is the releaser — control
+ * would never return to deskmain.  If another PD (e.g. ctlmgr) releases
+ * while the desk is blocked in mwait inside aes_inprocess_call, dsptch
+ * is still required so the desk can resume. */
+extern WORD aes_inprocess_depth;
+struct aespd;
+extern struct aespd *aes_inprocess_pd;
+#endif
+
 #endif

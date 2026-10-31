@@ -118,17 +118,22 @@ SECTIONS
      * Variables requiring very low addresses, while being accessible
      * from user mode, can be put here.
      */
-    .low_stram : SUBALIGN(2)
+    /*
+     * Do not use SUBALIGN(2) here: it overrides input-section alignment and
+     * would force .bss.dskbuf (aligned(4)) down to 2-byte alignment.  With
+     * -fdata-sections that placed dskbuf at …02 after 1-byte shifty.
+     */
+    .low_stram : ALIGN(4)
     {
         __low_stram_start = .;
-        obj/lowstram.o(.bss COMMON)
-        obj/lineavars.o(.bss COMMON)
+        /* .bss.* : -fdata-sections (optional GC_SECTIONS builds) */
+        obj/lowstram.o(.bss .bss.* COMMON)
+        obj/lineavars.o(.bss .bss.* COMMON)
         __low_stram_end = .;
         ASSERT(ABSOLUTE(_shifty) < 0x8000, "error: bad _shifty address");
         ASSERT((ABSOLUTE(_dskbuf) & 3) == 0, "error: bad _dskbuf alignment");
         ASSERT(ABSOLUTE(__low_stram_end) <= 0x8000, "error: .low_stram section extends beyond 32k");
     } >stram
-
     /* The TEXT segment contains EmuTOS executable code and read-only data.
      * It is always read-only, so it can safely live in ROM.
      */
@@ -136,7 +141,8 @@ SECTIONS
     {
         CREATE_OBJECT_SYMBOLS
         __text = .;
-        *(.text .rodata .rodata.*)
+        /* .text.* : -ffunction-sections (optional GC_SECTIONS builds) */
+        *(.text .text.* .rodata .rodata.*)
         /* Note: .rodata sections are only present in ELF objects.
          * We mix .text and .rodata to keep critical parts (such as BIOS
          * and fonts) at the beginning of the ROM.
@@ -153,7 +159,7 @@ SECTIONS
     .data : SUBALIGN(2)
     {
         __data = .;
-        *(.data)
+        *(.data .data.*)
         __edata = .;
     } >REGION_READ_ONLY
 
@@ -163,10 +169,9 @@ SECTIONS
     .bss : SUBALIGN(2)
     {
         __bss = .;
-        *(.bss COMMON)
+        *(.bss .bss.* COMMON)
         __ebss = .;
     } >REGION_READ_WRITE
-
     /* This section is always the last one stored in ST-RAM.
      * It is usually empty, just used to calculate the last address
      * of ST-RAM statically used by EmuTOS. If needed, the address
@@ -192,6 +197,8 @@ SECTIONS
     {
         *(.comment)
         *(.debug*)
+        *(.note.GNU-stack)
+        *(.gnu.attributes)
     }
 }
 

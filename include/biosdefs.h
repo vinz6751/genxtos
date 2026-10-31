@@ -116,16 +116,20 @@ typedef struct
  */
 typedef struct
 {
-   void (*midivec)(UBYTE data);   /* MIDI Input */
-   void (*vkbderr)(UBYTE data);   /* IKBD Error */
-   void (*vmiderr)(UBYTE data);   /* MIDI Error */
-   void (*statvec)(UBYTE *buf);   /* IKBD Status */
-   void (*mousevec)(UBYTE *buf);  /* IKBD Mouse */
-   void (*clockvec)(UBYTE *buf);  /* IKBD Clock */
-   void (*joyvec)(UBYTE *buf);    /* IKBD Joystick */
-   void (*midisys)(void);         /* Main MIDI Vector */
-   void (*ikbdsys)(void);         /* Main IKBD Vector */
+   void (ARGS_ON_STACK *midivec)(UBYTE data);   /* MIDI Input */
+   void (ARGS_ON_STACK *vkbderr)(UBYTE data);   /* IKBD Error */
+   void (ARGS_ON_STACK *vmiderr)(UBYTE data);   /* MIDI Error */
+   void (ARGS_ON_STACK *statvec)(UBYTE *buf);   /* IKBD Status */
+   void (ARGS_ON_STACK *mousevec)(UBYTE *buf);  /* IKBD Mouse */
+   void (ARGS_ON_STACK *clockvec)(UBYTE *buf);  /* IKBD Clock */
+   void (ARGS_ON_STACK *joyvec)(UBYTE *buf);    /* IKBD Joystick */
+   void (ARGS_ON_STACK *midisys)(void);         /* Main MIDI Vector */
+   void (ARGS_ON_STACK *ikbdsys)(void);         /* Main IKBD Vector */
 } KBDVECS;
+
+typedef void (ARGS_ON_STACK *KBDVEC_B_fn)(UBYTE data);
+typedef void (ARGS_ON_STACK *KBDVEC_P_fn)(UBYTE *buf);
+typedef void (ARGS_ON_STACK *KBDVEC_V_fn)(void);
 
 
 /*

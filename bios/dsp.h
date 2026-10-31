@@ -35,38 +35,38 @@ void dsp_io_handler(void);      /* interrupt handler for Dsp_IOStream() */
 void dsp_sv_handler(void);      /* interrupt handler for Dsp_SetVectors() */
 
 /* XBIOS DSP functions */
-void dsp_doblock(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen);
-void dsp_blkhandshake(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen);
-void dsp_blkunpacked(LONG *send, LONG sendlen, LONG *rcv, LONG rcvlen);
-void dsp_instream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone);
-void dsp_outstream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone);
-void dsp_iostream(char *send, char *rcv, LONG sendlen, LONG rcvlen, LONG numblocks, LONG *blocksdone);
-void dsp_removeinterrupts(WORD mask);
-WORD dsp_getwordsize(void);
-WORD dsp_lock(void);
-void dsp_unlock(void);
-void dsp_available(LONG *xavailable, LONG *yavailable);
-WORD dsp_reserve(LONG xreserve, LONG yreserve);
-WORD dsp_loadprog(char *filename, WORD ability, void *buffer);
-void dsp_execprog(const UBYTE *codeptr, LONG codesize, WORD ability);
-void dsp_execboot(const UBYTE *codeptr, LONG codesize, WORD ability);
-LONG dsp_lodtobinary(char *filename, char *outbuf);
-void dsp_triggerhc(WORD vector);
-WORD dsp_requestuniqueability(void);
-WORD dsp_getprogability(void);
-void dsp_flushsubroutines(void);
-WORD dsp_loadsubroutine(const UBYTE *codeptr, LONG size, WORD ability);
-WORD dsp_inqsubrability(WORD ability);
-WORD dsp_runsubroutine(WORD handle);
-WORD dsp_hf0(WORD flag);
-WORD dsp_hf1(WORD flag);
-WORD dsp_hf2(void);
-WORD dsp_hf3(void);
-void dsp_blkwords(WORD *send, LONG sendlen, WORD *rcv, LONG rcvlen);
-void dsp_blkbytes(UBYTE *send, LONG sendlen, UBYTE *rcv, LONG rcvlen);
-UBYTE dsp_hstat(void);
-void dsp_setvectors(void (*receiver)(LONG data), LONG (*transmitter)(void));
-void dsp_multblocks(LONG sendnum, LONG rcvnum, DSPBLOCK *sendinfo, DSPBLOCK *rcvinfo);
+void ARGS_ON_STACK dsp_doblock(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen);
+void ARGS_ON_STACK dsp_blkhandshake(const UBYTE *send, LONG sendlen, char *rcv, LONG rcvlen);
+void ARGS_ON_STACK dsp_blkunpacked(LONG *send, LONG sendlen, LONG *rcv, LONG rcvlen);
+void ARGS_ON_STACK dsp_instream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone);
+void ARGS_ON_STACK dsp_outstream(char *data, LONG datalen, LONG numblocks, LONG *blocksdone);
+void ARGS_ON_STACK dsp_iostream(char *send, char *rcv, LONG sendlen, LONG rcvlen, LONG numblocks, LONG *blocksdone);
+void ARGS_ON_STACK dsp_removeinterrupts(WORD mask);
+WORD ARGS_ON_STACK dsp_getwordsize(void);
+WORD ARGS_ON_STACK dsp_lock(void);
+void ARGS_ON_STACK dsp_unlock(void);
+void ARGS_ON_STACK dsp_available(LONG *xavailable, LONG *yavailable);
+WORD ARGS_ON_STACK dsp_reserve(LONG xreserve, LONG yreserve);
+WORD ARGS_ON_STACK dsp_loadprog(char *filename, WORD ability, void *buffer);
+void ARGS_ON_STACK dsp_execprog(const UBYTE *codeptr, LONG codesize, WORD ability);
+void ARGS_ON_STACK dsp_execboot(const UBYTE *codeptr, LONG codesize, WORD ability);
+LONG ARGS_ON_STACK dsp_lodtobinary(char *filename, char *outbuf);
+void ARGS_ON_STACK dsp_triggerhc(WORD vector);
+WORD ARGS_ON_STACK dsp_requestuniqueability(void);
+WORD ARGS_ON_STACK dsp_getprogability(void);
+void ARGS_ON_STACK dsp_flushsubroutines(void);
+WORD ARGS_ON_STACK dsp_loadsubroutine(const UBYTE *codeptr, LONG size, WORD ability);
+WORD ARGS_ON_STACK dsp_inqsubrability(WORD ability);
+WORD ARGS_ON_STACK dsp_runsubroutine(WORD handle);
+WORD ARGS_ON_STACK dsp_hf0(WORD flag);
+WORD ARGS_ON_STACK dsp_hf1(WORD flag);
+WORD ARGS_ON_STACK dsp_hf2(void);
+WORD ARGS_ON_STACK dsp_hf3(void);
+void ARGS_ON_STACK dsp_blkwords(WORD *send, LONG sendlen, WORD *rcv, LONG rcvlen);
+void ARGS_ON_STACK dsp_blkbytes(UBYTE *send, LONG sendlen, UBYTE *rcv, LONG rcvlen);
+UBYTE ARGS_ON_STACK dsp_hstat(void);
+void ARGS_ON_STACK dsp_setvectors(void (*receiver)(LONG data), LONG (*transmitter)(void));
+void ARGS_ON_STACK dsp_multblocks(LONG sendnum, LONG rcvnum, DSPBLOCK *sendinfo, DSPBLOCK *rcvinfo);
 
 /* functions in dsp2.S */
 void dsp_inout_asm(void);       /* wrapper for dsp_inout_handler() */

@@ -54,12 +54,28 @@ _trap1_pexec:
 #else
         movem.l d2/a2,-(sp)
 #endif
-        move.l  22(sp),-(sp)    // Push parameter on the stack again for pexec
-        move.l  22(sp),-(sp)
-        move.l  22(sp),-(sp)
-        move.w  24(sp),-(sp)
+#ifdef FASTCALL_BUILD
+        /*
+         * GCC mfastcall: d0=mode, a0=path, a1=tail, env on caller stack at 12(sp)
+         * after the movem prologue (4(sp) above return address).
+         */
+        move.l  12(sp),-(sp)    /* env */
+        move.l  a1,-(sp)        /* tail */
+        move.l  a0,-(sp)        /* path */
+        move.w  d0,-(sp)        /* mode */
+#else
+        /*
+         * Stack ABI: each move.l xx(sp),-(sp) changes SP, so later args must
+         * use the post-push address of the same original slot (22/22/22 then
+         * 24 for the word-sized mode).  Fixed 22/18/14/12 offsets are wrong.
+         */
+        move.l  22(sp),-(sp)    /* env */
+        move.l  22(sp),-(sp)    /* tail (was 18 before previous push) */
+        move.l  22(sp),-(sp)    /* path (was 14 before two pushes) */
+        move.w  24(sp),-(sp)    /* mode (was 12 before three long pushes) */
+#endif
         move.w  #0x4b,-(sp)
-        trap    #1              // Pexec
+        trap    #1              /* Pexec */
         lea     16(sp),sp
 #ifdef __mcoldfire__
         move.l  (sp)+,d2
@@ -164,6 +180,22 @@ _just_rts:
  */
         .globl  _mul_div_round
 _mul_div_round:
+#ifdef FASTCALL_BUILD
+        move.w  d1,-(sp)        // save mult2
+        move.w  d0,d1           // mult1
+        move.w  (sp)+,d0        // mult2
+        add.w   d0,d0
+        muls.w  d1,d0
+        divs.w  d2,d0
+        jmi     mdrminus_fc
+        addq.w  #1,d0
+        asr.w   #1,d0
+        rts
+mdrminus_fc:
+        subq.w  #1,d0
+        asr.w   #1,d0
+        rts
+#else
 #ifdef __mcoldfire__
         moveq.l #0,d0
         move.w  6(sp),d0        // d0 = mult2
@@ -192,6 +224,7 @@ mdrminus:
         subq.w  #1,d0           // d0 = (mult1 * mult2 * 2) / divisor - 1
         asr.w   #1,d0           // d0 = ((mult1 * mult2 * 2) / divisor - 1) / 2
         rts
+#endif
 #endif
 
 /* ==== Glue for external vectors ===========================================

@@ -40,6 +40,28 @@ _bzero_nobuiltin:
 // fills with byte c, returns the given address.
 
 _memset:
+#ifdef FASTCALL_BUILD
+        move.l   a0,a2                 // save dest for return value
+        move.l   d7,-(sp)
+        move.l   d0,d7
+        move.b   d7,d7
+#ifdef __mcoldfire__
+        lsl.l    #8,d7
+#else
+        lsl.w    #8,d7
+#endif
+        move.b   d0,d7
+        move.w   d7,d0
+        swap     d7
+        move.w   d0,d7
+        move.l   d1,d0                 // size
+        jle      end_fc
+        jra      memset
+end_fc:
+        move.l   (sp)+,d7
+        move.l   a2,a0                 // pointer return in a0 (fastcall)
+        rts
+#else
         move.l   4(sp),a0
         move.l   d7,-(sp)
         move.w   12(sp),d0
@@ -55,6 +77,7 @@ _memset:
         move.w   d0,d7
         move.l   14(sp),d0
         jle      end
+#endif
 
 // at this point, a0=block, d7=pattern, d0=size, (sp)=saved d7
 // and we do not read the stack args any more.
@@ -174,5 +197,9 @@ end1:
 #endif
 end:
         move.l   (sp)+,d7
+#ifdef FASTCALL_BUILD
+        move.l   a2,a0                 // pointer return in a0 (fastcall)
+#else
         move.l   4(sp),d0              // return the address.
+#endif
         rts

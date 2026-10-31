@@ -216,19 +216,28 @@ void do_wredraw(WORD w_handle, GRECT *gptr)
         root = pw->w_root;
     }
 
+    DESK_BOOT_MS(254, "do_wredraw: before Supexec idt");
     G.g_idt = Supexec((LONG)get_idt_cookie);    /* current _IDT for format_fnode() */
+    DESK_BOOT_MS(255, "do_wredraw: after Supexec idt");
 
     graf_mouse(M_OFF, NULL);
+    DESK_BOOT_MS(256, "do_wredraw: after graf_mouse OFF");
 
     wind_get_grect(w_handle, WF_FIRSTXYWH, &t);
+    DESK_BOOT_MSF(257, "do_wredraw: first rect %d,%d %d,%d", t.g_x, t.g_y, t.g_w, t.g_h);
     while(t.g_w && t.g_h)
     {
         if (rc_intersect(&clip_r, &t))
+        {
+            DESK_BOOT_MS(258, "do_wredraw: before objc_draw");
             objc_draw(G.g_screen, root, MAX_DEPTH, t.g_x, t.g_y, t.g_w, t.g_h);
+            DESK_BOOT_MS(259, "do_wredraw: after objc_draw");
+        }
         wind_get_grect(w_handle, WF_NEXTXYWH, &t);
     }
 
     graf_mouse(M_ON, NULL);
+    DESK_BOOT_MS(260, "do_wredraw: after graf_mouse ON");
 }
 
 
@@ -461,9 +470,19 @@ WORD do_diropen(WNODE *pw, WORD new_win, WORD curr_icon,
      */
     desk_verify(pw->w_id, TRUE);
 
-    /* make it redraw */
-    if (redraw && !new_win)
-        fun_msg(WM_REDRAW, pw->w_id, pt->g_x, pt->g_y, pt->g_w, pt->g_h);
+    /*
+     * Always queue a redraw after the view exists.  For new windows AES
+     * already sent WM_REDRAW from wind_open — but that was *before*
+     * desk_verify built the icon tree; if that message was dropped
+     * (e.g. open faulted in user-mode wm_update), the work area stayed blank.
+     */
+    if (redraw)
+    {
+        GRECT work;
+
+        wind_get_grect(pw->w_id, WF_WXYWH, &work);
+        fun_msg(WM_REDRAW, pw->w_id, work.g_x, work.g_y, work.g_w, work.g_h);
+    }
 
     desk_busy_off();
 

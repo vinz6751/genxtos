@@ -95,22 +95,22 @@ extern void (*dump_vec)(void);
 
 /* indirect BIOS vectors */
 
-extern LONG (*bconstat_vec[])(void);
-extern LONG (*bconin_vec[])(void);
-extern LONG (*bconout_vec[])(WORD, WORD);
-extern LONG (*bcostat_vec[])(void);
+extern LONG (ARGS_ON_STACK *bconstat_vec[])(void);
+extern LONG (ARGS_ON_STACK *bconin_vec[])(void);
+extern LONG (ARGS_ON_STACK *bconout_vec[])(WORD, WORD);
+extern LONG (ARGS_ON_STACK *bcostat_vec[])(void);
 
-extern LONG (*hdv_rw)(WORD rw, UBYTE *buf, WORD cnt, WORD recnr, WORD dev, LONG lrecnr);
-extern LONG (*hdv_bpb)(WORD dev);
-extern LONG (*hdv_mediach)(WORD dev);
-extern LONG (*hdv_boot)(void);
-extern void (*hdv_init)(void);
+extern LONG (ARGS_ON_STACK *hdv_rw)(WORD rw, UBYTE *buf, WORD cnt, WORD recnr, WORD dev, LONG lrecnr);
+extern LONG (ARGS_ON_STACK *hdv_bpb)(WORD dev);
+extern LONG (ARGS_ON_STACK *hdv_mediach)(WORD dev);
+extern LONG (ARGS_ON_STACK *hdv_boot)(void);
+extern void (ARGS_ON_STACK *hdv_init)(void);
 
 extern void (*bell_hook)(void);
 extern void (*kcl_hook)(void);
 
 extern ETV_TIMER_T etv_timer;
-extern LONG (*etv_critic)(WORD err,WORD dev);
+extern LONG (ARGS_ON_STACK *etv_critic)(WORD err,WORD dev);
 extern void (*etv_term)(void);
 
 extern void (*swv_vec)(void);

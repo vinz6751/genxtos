@@ -302,7 +302,7 @@ static void flop_init(WORD dev)
 #endif
 }
 
-void flop_hdv_init(void)
+void ARGS_ON_STACK flop_hdv_init(void)
 {
     /* set floppy specific stuff */
     fverify = 0xff;
@@ -687,7 +687,7 @@ static const struct _protobt protobt_data[] = {
 };
 #define NUM_PROTOBT_ENTRIES ARRAY_SIZE(protobt_data)
 
-void protobt(UBYTE *buf, LONG serial, WORD type, WORD exec)
+void ARGS_ON_STACK protobt(UBYTE *buf, LONG serial, WORD type, WORD exec)
 {
     WORD is_exec;
     struct bs *b = (struct bs *)buf;
@@ -739,14 +739,14 @@ void protobt(UBYTE *buf, LONG serial, WORD type, WORD exec)
 /*==== xbios floprd, flopwr ===============================================*/
 
 
-LONG floprd(UBYTE *buf, LONG filler, WORD dev,
+LONG ARGS_ON_STACK floprd(UBYTE *buf, LONG filler, WORD dev,
             WORD sect, WORD track, WORD side, WORD count)
 {
     return flopio(buf, RW_READ, dev, sect, track, side, count);
 }
 
 
-LONG flopwr(const UBYTE *buf, LONG filler, WORD dev,
+LONG ARGS_ON_STACK flopwr(const UBYTE *buf, LONG filler, WORD dev,
             WORD sect, WORD track, WORD side, WORD count)
 {
     return flopio(CONST_CAST(UBYTE *, buf), RW_WRITE, dev, sect, track, side, count);
@@ -794,7 +794,7 @@ LONG flopwr(const UBYTE *buf, LONG filler, WORD dev,
  * at least 1KB in length (actually 2*SECTOR_SIZE in this implementation).
  */
 
-LONG flopver(WORD *buf, LONG filler, WORD dev,
+LONG ARGS_ON_STACK flopver(WORD *buf, LONG filler, WORD dev,
              WORD sect, WORD track, WORD side, WORD count)
 {
     LONG rc = 0L;
@@ -895,7 +895,7 @@ LONG flopver(WORD *buf, LONG filler, WORD dev,
 
 /*==== xbios flopfmt ======================================================*/
 
-LONG flopfmt(UBYTE *buf, WORD *skew, WORD dev, WORD spt,
+LONG ARGS_ON_STACK flopfmt(UBYTE *buf, WORD *skew, WORD dev, WORD spt,
              WORD track, WORD side, WORD interleave,
              ULONG magic, WORD virgin)
 {
@@ -1036,7 +1036,7 @@ LONG flopfmt(UBYTE *buf, WORD *skew, WORD dev, WORD spt,
  * the main purpose of this would seem to be to allow a mix of drive
  * types on e.g. a TT, via a small user program.
  */
-LONG floprate(WORD dev, WORD rate)
+LONG ARGS_ON_STACK floprate(WORD dev, WORD rate)
 {
     WORD old = 0;
     struct flop_info *f;

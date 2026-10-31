@@ -25,8 +25,12 @@
  */
 
 _scasb:
+#ifdef FASTCALL_BUILD
+        move.w  d0,d1
+#else
         move.l  4(sp),a0
         move.w  8(sp),d1
+#endif
 scasb_loop:
         move.b  (a0)+,d0
         jeq     scasb_end
@@ -47,8 +51,12 @@ scasb_end:
  */
 
 _expand_string:
+#ifdef FASTCALL_BUILD
+        exg     a0,a1
+#else
         movea.l 8(sp),a0        // a0 -> source
         movea.l 4(sp),a1        // a1 -> dest
+#endif
         move.l  a0,d0           // remember source start
         clr.w   d1              // work reg
 copy_loop:

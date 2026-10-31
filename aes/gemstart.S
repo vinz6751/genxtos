@@ -111,9 +111,15 @@ aes_restart:
 
         // call C routine to init the SSP in the UDA & return its offset
         jsr     _init_p0_stkptr
+#ifdef FASTCALL_BUILD
+        /* gem_main() on a dedicated stack: p0 u_super lives inside THEGLO
+         * and is too small for FASTCALL early init (pd setup). */
+        lea     aes_boot_stack_end,sp
+#else
         movea.l #_D,a6
         adda.l  d0,a6
         movea.l a6,sp
+#endif
 
         // go in C
         jsr     _gem_main
@@ -210,6 +216,9 @@ _dos_exec:
         // to a multiple of 4 bytes; so, for safety, you should increase
         // the minimum adjustment by two bytes on ColdFire systems.
 
+        // FP_CALLBACK / ARGS_ON_STACK: C always passes args on the stack
+        // (see gemdos.h), even in a FASTCALL_BUILD.
+
         jsr     _disable_interrupts
         movea.l _rlr,a0
         movea.l PD_UDA(a0),a0
@@ -242,6 +251,7 @@ _dos_exec:
 #endif
         rts
 
+
 .bss
 
 old_gem_ssp:
@@ -254,3 +264,10 @@ gemusp:
 // pointer to original environment, restored on AES restart
 save_ad_envrn:
         .ds.l   1
+
+#ifdef FASTCALL_BUILD
+        .align  4
+aes_boot_stack:
+        .ds.b   8192
+aes_boot_stack_end:
+#endif

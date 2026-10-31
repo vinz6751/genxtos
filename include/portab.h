@@ -259,4 +259,32 @@ typedef LONG LONG_ALIAS MAY_ALIAS;
 # define OPTIMIZE_O3
 #endif
 
+/*
+ * Calling convention markers for mixed fastcall/cdecl builds.
+ * When the OS is compiled with -mfastcall, user-visible trap handlers
+ * and stack-based callbacks must opt out via ARGS_ON_STACK (cdecl).
+ *
+ * Only emit the attributes under FASTCALL_BUILD: classic m68k-atari-mint
+ * GCC 4.6.4 ignores cdecl/fastcall and warns (-Wattributes). Without
+ * -mfastcall the default ABI is already stack-based, so the markers are
+ * no-ops.
+ */
+#if defined(FASTCALL_BUILD)
+# define ARGS_ON_STACK  __attribute__((cdecl))
+# define FASTCALL_ATTR  __attribute__((fastcall))
+#else
+# define ARGS_ON_STACK
+# define FASTCALL_ATTR
+#endif
+
+#if defined(FASTCALL_BUILD)
+# define FP_CALLBACK ARGS_ON_STACK
+# define GEMDOS_API    ARGS_ON_STACK
+# define VARARGS       ARGS_ON_STACK  /* kprintf, panic, sprintf, … */
+#else
+# define FP_CALLBACK
+# define GEMDOS_API
+# define VARARGS
+#endif
+
 #endif /* PORTAB_H */

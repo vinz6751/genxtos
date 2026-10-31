@@ -13,9 +13,11 @@
 #ifndef SETJMP_H
 #define SETJMP_H
 
+#include "portab.h"
+
 typedef long jmp_buf[13];
 
-int setjmp(jmp_buf state);
-void longjmp(jmp_buf state, WORD value) NORETURN;
+int ARGS_ON_STACK setjmp(jmp_buf state);
+void ARGS_ON_STACK longjmp(jmp_buf state, WORD value) NORETURN;
 
 #endif /* SETJMP_H */

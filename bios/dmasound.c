@@ -219,7 +219,7 @@ void dmasound_init(void)
 /**
  * Lock the XBIOS DMA sound subsystem
  */
-LONG locksnd(void)
+LONG ARGS_ON_STACK locksnd(void)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x80;    /* unimplemented xbios call: return function # */
@@ -234,7 +234,7 @@ LONG locksnd(void)
 /**
  * Free the XBIOS DMA sound subsystem
  */
-LONG unlocksnd(void)
+LONG ARGS_ON_STACK unlocksnd(void)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x81;    /* unimplemented xbios call: return function # */
@@ -346,7 +346,7 @@ static LONG sndcmd_ste(WORD mode, WORD data)
 /**
  * Configure various sound settings
  */
-LONG soundcmd(WORD mode, WORD data)
+LONG ARGS_ON_STACK soundcmd(WORD mode, WORD data)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x82;    /* unimplemented xbios call: return function # */
@@ -373,7 +373,7 @@ LONG soundcmd(WORD mode, WORD data)
 /**
  * Set DMA sound frame buffer pointers
  */
-LONG setbuffer(UWORD mode, ULONG startaddr, ULONG endaddr)
+LONG ARGS_ON_STACK setbuffer(UWORD mode, ULONG startaddr, ULONG endaddr)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x83;    /* unimplemented xbios call: return function # */
@@ -405,7 +405,7 @@ LONG setbuffer(UWORD mode, ULONG startaddr, ULONG endaddr)
 /**
  * Set sound mode (stereo/mono, 8-bit/16-bit)
  */
-LONG setsndmode(UWORD mode)
+LONG ARGS_ON_STACK setsndmode(UWORD mode)
 {
     UBYTE modectrl;
 
@@ -428,7 +428,7 @@ LONG setsndmode(UWORD mode)
 /**
  * Set amount of tracks
  */
-LONG settracks(UWORD playtracks, UWORD rectracks)
+LONG ARGS_ON_STACK settracks(UWORD playtracks, UWORD rectracks)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x85;    /* unimplemented xbios call: return function # */
@@ -445,7 +445,7 @@ LONG settracks(UWORD playtracks, UWORD rectracks)
 /**
  * Set DAC track
  */
-LONG setmontracks(UWORD montrack)
+LONG ARGS_ON_STACK setmontracks(UWORD montrack)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x86;    /* unimplemented xbios call: return function # */
@@ -461,7 +461,7 @@ LONG setmontracks(UWORD montrack)
 /**
  * Set interrupt mode (Timer-A or MFP-i7)
  */
-LONG setinterrupt(UWORD mode, WORD cause)
+LONG ARGS_ON_STACK setinterrupt(UWORD mode, WORD cause)
 {
     UBYTE irqreg;
 
@@ -503,7 +503,7 @@ LONG setinterrupt(UWORD mode, WORD cause)
 /**
  * Enable/disable frame replay/recording and set looping mode
  */
-LONG buffoper(WORD mode)
+LONG ARGS_ON_STACK buffoper(WORD mode)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x88;    /* unimplemented xbios call: return function # */
@@ -525,7 +525,7 @@ LONG buffoper(WORD mode)
 /**
  * Connect/disconnect the DSP from the sound matrix
  */
-LONG dsptristate(WORD dspxmit, WORD dsprec)
+LONG ARGS_ON_STACK dsptristate(WORD dspxmit, WORD dsprec)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x89;    /* unimplemented xbios call: return function # */
@@ -549,7 +549,7 @@ LONG dsptristate(WORD dspxmit, WORD dsprec)
 /**
  * Set/get the GPIO pins of the DSP connector
  */
-LONG gpio(UWORD mode, UWORD data)
+LONG ARGS_ON_STACK gpio(UWORD mode, UWORD data)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x8a;    /* unimplemented xbios call: return function # */
@@ -725,7 +725,7 @@ static LONG devconnect_ste(WORD source, WORD dest, WORD clk,
     return 0;
 }
 
-LONG devconnect(WORD source, WORD dest, WORD clk, WORD prescale, WORD protocol)
+LONG ARGS_ON_STACK devconnect(WORD source, WORD dest, WORD clk, WORD prescale, WORD protocol)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x8b;    /* unimplemented xbios call: return function # */
@@ -755,7 +755,7 @@ LONG devconnect(WORD source, WORD dest, WORD clk, WORD prescale, WORD protocol)
  * in addition:
  *      $ff893c-3d  codec_status is set to $003f
  */
-LONG sndstatus(WORD reset)
+LONG ARGS_ON_STACK sndstatus(WORD reset)
 {
     if (!SOUND_IS_AVAILABLE)
         return 0x8c;    /* unimplemented xbios call: return function # */
@@ -776,7 +776,7 @@ LONG sndstatus(WORD reset)
 /**
  * Get current frame replay/recording positions
  */
-LONG buffptr(LONG ptr)
+LONG ARGS_ON_STACK buffptr(LONG ptr)
 {
     struct SndBufPtr {
         LONG play;

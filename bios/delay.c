@@ -42,7 +42,7 @@ ULONG loopcount_1_msec;
 /*
  * function prototypes (functions in delayasm.S)
  */
-ULONG run_calibration(ULONG loopcount);
+ULONG ARGS_ON_STACK run_calibration(ULONG loopcount);
 void calibration_timer(void);
 
 /*

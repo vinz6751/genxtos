@@ -213,6 +213,12 @@ ELF = 0
 # Unlike the default m68k-atari-mint one, it is recent enough to support LTO.
 MINTELF = 0
 
+# Override with 1 to compile internal OS code with -mfastcall (requires MINTELF=1 or ELF=1).
+FASTCALL = 0
+
+# Override with 1 to enable NFDBG() trace macros (NF_STDERR via kprintf under Hatari).
+NATFEAT_DEBUG = 0
+
 ifeq (1,$(MINTELF))
 ELF_TOOLCHAIN_PREFIX = m68k-atari-mintelf-
 else
@@ -229,6 +235,18 @@ TOOLCHAIN_PREFIX = m68k-atari-mint-
 TOOLCHAIN_CFLAGS =
 endif
 
+ifeq (1,$(FASTCALL))
+ifneq (,$(filter 1,$(ELF) $(MINTELF)))
+FASTCALLFLAGS = -mfastcall -fno-builtin-memset -fno-builtin-memcpy -fno-builtin-memmove -fno-builtin-sprintf -fno-optimize-sibling-calls
+else
+$(warning FASTCALL=1 requires ELF=1 or MINTELF=1)
+FASTCALLFLAGS =
+endif
+else
+FASTCALLFLAGS =
+endif
+TOOLCHAIN_CFLAGS += $(FASTCALLFLAGS)
+
 # indent flags
 INDENT = indent -kr
 
@@ -239,7 +257,7 @@ ARFLAGS = rc
 # Linker with relocation information and binary output (image)
 LD = $(CC) $(MULTILIBFLAGS) -nostartfiles -nostdlib
 LIBS = -lgcc
-LDFLAGS = -Wl,-T,obj/emutospp.ld
+LDFLAGS = -Wl,-T,obj/emutospp.ld $(FASTCALLFLAGS)
 PCREL_LDFLAGS = -Wl,--oformat=binary,-Ttext=0,--entry=0
 
 # C compiler
@@ -247,8 +265,16 @@ CC = $(TOOLCHAIN_PREFIX)gcc
 CPP = $(CC) -E
 CPUFLAGS = -m68000
 MULTILIBFLAGS = $(CPUFLAGS) -mshort
-INC = -Iinclude
+INC = -Iinclude -Ibios
 OTHERFLAGS = -fomit-frame-pointer -fno-common
+
+# Optional: -ffunction-sections/-fdata-sections + --gc-sections.
+# With LTO this rarely beats LTO alone on 256K (measure before enabling).
+# Requires emutos.ld to collect .text.*/.bss.*/.data.* (already does).
+ifeq (1,$(GC_SECTIONS))
+OTHERFLAGS += -ffunction-sections -fdata-sections
+LDFLAGS += -Wl,--gc-sections
+endif
 
 # VASM for .asm files
 ASM = vasmm68k_mot
@@ -283,6 +309,14 @@ endif
 endif
 
 DEFINES = $(LOCALCONF) -DWITH_AES=$(WITH_AES) -DWITH_CLI=$(WITH_CLI) $(DEF)
+ifeq (1,$(FASTCALL))
+ifneq (,$(filter 1,$(ELF) $(MINTELF)))
+DEFINES += -DFASTCALL_BUILD
+endif
+endif
+ifeq (1,$(NATFEAT_DEBUG))
+DEFINES += -DNATFEAT_DEBUG
+endif
 CFLAGS_COMPILE = $(TOOLCHAIN_CFLAGS) $(OPTFLAGS) $(OTHERFLAGS) $(WARNFLAGS)
 CFLAGS = $(MULTILIBFLAGS) $(CFLAGS_COMPILE) $(INC) $(DEFINES)
 
@@ -333,11 +367,11 @@ bios_src = startup.S
 bios_src += lowstram.c
 
 # Other BIOS sources can be put in any order
-bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c bios.c xbios.c xbios_tt.c acsi.c \
+bios_src +=  memory.S processor.S vectors.S aciavecs.S aciavecs_c.c kbdvec_stubs.c bios.c xbios.c xbios_tt.c acsi.c \
              biosmem.c blkdev.c chardev.c clock.c \
              conout.c conout_atarifb.c conout_amiga.c \
              cartridge_atari.S country.c \
-             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c initinfo.c iorec.c \
+             disk.c dma.c dmasound.c floppy.c font.c ide.c ikbd.c ikbd_inject.c initinfo.c iorec.c \
              keyboard.c keyboard_mouse_emulation.c kprint.c kprintasm.S machine.c \
              mfp.c mfp68901.c midi.c mouse.c natfeat.S natfeats.c nvram.c panicasm.S \
              parport.c screen.c screen_atari.c screen_tt.c  screen_vicky2.c screen_vicky3.c screen_1bpp.c \
@@ -422,6 +456,12 @@ desk_src = deskstart.S deskmain.c gembind.c deskact.c deskapp.c deskdir.c \
            deskfpd.c deskfun.c deskglob.c deskinf.c deskins.c deskobj.c \
            deskpro.c deskrez.c deskrsrc.c desksupp.c deskwin.c \
            desk_rsc.c icons.c
+
+# UNIQUE (single-country) builds pack desk_rsc into a tree encoding expanded
+# at desk_rs_init(). Multi-language builds keep desk_rsc.c (NLS message ids).
+ifneq (,$(UNIQUE))
+desk_src := $(filter-out desk_rsc.c,$(desk_src)) desk_rsc_pack.c desk_rsc_data.c
+endif
 
 #
 # source code in cli/ for EmuTOS console EmuCON
@@ -570,7 +610,7 @@ endif
 FOENIX_SRC = $(wildcard foenix/*.c foenix/*.h foenix/*.S)
 
 foenix/libfoenix-%.a: $(FOENIX_SRC) foenix/Makefile
-	$(MAKE) -C foenix libfoenix-$*.a CPUFLAGS='$(CPUFLAGS)'
+	$(MAKE) -C foenix libfoenix-$*.a CPUFLAGS='$(CPUFLAGS)' MINTELF='$(MINTELF)' FASTCALL='$(FASTCALL)' TOOLCHAIN_PREFIX='$(TOOLCHAIN_PREFIX)'
 
 #
 # Padded Image
@@ -592,8 +632,12 @@ NODEP += 192
 192: override DEF += -DTARGET_192
 192: WITH_CLI = 0
 192: ROMSIZE = 192
+# mintelf: default LTO on for small ST ROMs (override with LTO=0).
+ifeq (1,$(MINTELF))
+192: LTO ?= 1
+endif
 192:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' WITH_CLI=$(WITH_CLI) UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS104
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' WITH_CLI=$(WITH_CLI) UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) LTO=$(LTO) MINTELF=$(MINTELF) FASTCALL=$(FASTCALL) $(ROM_PADDED) REF_OS=TOS104
 	@printf "$(LOCALCONFINFO)"
 
 #
@@ -606,8 +650,11 @@ NODEP += 256
 256: OPTFLAGS = $(SMALL_OPTFLAGS)
 256: override DEF += -DTARGET_256
 256: ROMSIZE = 256
+ifeq (1,$(MINTELF))
+256: LTO ?= 1
+endif
 256:
-	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) $(ROM_PADDED) REF_OS=TOS206
+	$(MAKE) DEF='$(DEF)' OPTFLAGS='$(OPTFLAGS)' UNIQUE=$(UNIQUE) ROMSIZE=$(ROMSIZE) ROM_PADDED=$(ROM_PADDED) LTO=$(LTO) MINTELF=$(MINTELF) FASTCALL=$(FASTCALL) $(ROM_PADDED) REF_OS=TOS206
 	@printf "$(LOCALCONFINFO)"
 	@cp etos256$(UNIQUE).img mpts256$(UNIQUE).img
 
@@ -1198,6 +1245,20 @@ GEN_SRC += $(ICONRSCGEN_BASE).c $(ICONRSCGEN_BASE).h $(MFORMRSCGEN_BASE).c $(MFO
 $(DESKRSCGEN_BASE)%c $(DESKRSCGEN_BASE)%h: draft erd $(DESKRSC_BASE)%rsc $(DESKRSC_BASE)%def
 	./draft $(DESKRSC_BASE) temp
 	./erd $(NOSHAREARG) -pdesk temp $(DESKRSCGEN_BASE)
+
+# Packed desk resource tables (UNIQUE builds only). Prefer the translated
+# .tr.c when bug translate runs for a non-us country.
+ifneq (,$(UNIQUE))
+DESKPACK_IN = $(DESKRSCGEN_BASE).c
+ifneq (us,$(ETOSLANG))
+DESKPACK_IN = $(DESKRSCGEN_BASE).tr.c
+endif
+GEN_SRC += desk/desk_rsc_data.c desk/desk_rsc_data.h
+desk/desk_rsc_data%c desk/desk_rsc_data%h: tools/deskpack.py $(DESKPACK_IN)
+	python3 tools/deskpack.py $(DESKPACK_IN) desk/desk_rsc_data.c
+# Ensure pack.c sees the generated header on a clean build.
+obj/desk_rsc_pack.o: desk/desk_rsc_data.h
+endif
 $(GEMRSCGEN_BASE)%c $(GEMRSCGEN_BASE)%h: grd $(GEMRSC_BASE)%rsc $(GEMRSC_BASE)%def
 	./grd $(NOSHAREARG) $(GEMRSC_BASE) $(GEMRSCGEN_BASE)
 $(ICONRSCGEN_BASE)%c $(ICONRSCGEN_BASE)%h: ird $(ICONRSC_BASE)%rsc $(ICONRSC_BASE)%def
@@ -1426,7 +1487,9 @@ ifeq (1,$(LTO))
 # *first* LTO input, so every LTO'd file ends up grouped there. endrom.c must
 # stay physically last, because ui_mupb has to be located above the AES entry
 # point it points to (see the comment in bios/endrom.c).
-NOLTO = bios/lowstram.c bios/endrom.c
+# conout_atarifb.c: naked FASTCALL blank_out trampoline + inline asm must not
+# be visible to LTO IPA (FASTCALL=1 LTO=1 otherwise illegal-insn at vt52 clear).
+NOLTO = bios/lowstram.c bios/endrom.c bios/conout_atarifb.c
 CFILE_FLAGS = $(if $(filter $(NOLTO),$<),$(filter-out $(LTOFLAGS),$(CFLAGS)),$(CFLAGS))
 # Compiling assembler sources with LTO is useless.
 SFILE_FLAGS = $(filter-out $(LTOFLAGS),$(CFLAGS))
@@ -1440,6 +1503,9 @@ obj/%.o : %.c
 
 obj/%.o : %.S
 	$(CC) $(SFILE_FLAGS) -c $< -o $@
+
+# conout_atarifb.c: FP_CALLBACK driver methods use ARGS_ON_STACK; exported
+# conout_atari_* entry points use -mfastcall like the rest of the FASTCALL build.
 
 #
 # version string

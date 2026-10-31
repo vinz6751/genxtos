@@ -15,6 +15,8 @@
 #ifndef MOUSE_H
 #define MOUSE_H
 
+#include "biosdefs.h"
+
 /* Defines for mouse configuration in IKBD */
                     /* the following values apply to 'topmode' in 'struct initmous_parameter_block' */
 #define IN_YTOP 0   /* Y=0 means top of screen */
@@ -70,6 +72,6 @@ struct mouse_data {
 #define ABSOLUTE_MOUSE 2
 #define KEYCODE_MOUSE 4
 
-void Initmous(WORD , struct initmous_parameter_block *, void (*)(UBYTE*));
+void ARGS_ON_STACK Initmous(WORD , struct initmous_parameter_block *, KBDVEC_P_fn);
 
 #endif /* MOUSE_H */

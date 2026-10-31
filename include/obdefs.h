@@ -228,9 +228,11 @@ typedef struct
 
 struct _PARMBLK;
 
+#include "portab.h"
+
 typedef struct
 {
-        WORD    (*ub_code)(struct _PARMBLK *parmblock);
+        WORD    (ARGS_ON_STACK *ub_code)(struct _PARMBLK *parmblock);
         LONG    ub_parm;
 } USERBLK;
 

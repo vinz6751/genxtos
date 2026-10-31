@@ -80,7 +80,7 @@ WORD argc, rc;
     current_res = original_res;
     original_color3 = Setcolor(3,-1);
 
-    nflops_copy = Supexec(get_nflops);      /* number of floppy drives */
+    nflops_copy = Supexec((LONG)get_nflops);      /* number of floppy drives */
 
     /*
      * start up in ST medium if we are currently in ST low

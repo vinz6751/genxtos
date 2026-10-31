@@ -25,7 +25,7 @@
 /*
  * Set TT shifter mode
  */
-WORD esetshift(WORD mode)
+WORD ARGS_ON_STACK esetshift(WORD mode)
 {
     volatile WORD *resreg = (WORD *)TT_SHIFTER;
     WORD oldmode;
@@ -55,7 +55,7 @@ WORD esetshift(WORD mode)
 /*
  * Get TT shifter mode
  */
-WORD egetshift(void)
+WORD ARGS_ON_STACK egetshift(void)
 {
     if (!has_tt_shifter)
         return 0x51;    /* unimplemented xbios call: return function # */
@@ -67,7 +67,7 @@ WORD egetshift(void)
 /*
  * Read/modify TT shifter colour bank number
  */
-WORD esetbank(WORD bank)
+WORD ARGS_ON_STACK esetbank(WORD bank)
 {
     volatile UBYTE *shiftreg = (UBYTE *)(TT_SHIFTER+1);
     UBYTE old;
@@ -86,7 +86,7 @@ WORD esetbank(WORD bank)
 /*
  * Read/modify TT palette colour entry
  */
-WORD esetcolor(WORD index,UWORD color)
+WORD ARGS_ON_STACK esetcolor(WORD index,UWORD color)
 {
     UWORD oldcolor;
 
@@ -110,7 +110,7 @@ WORD esetcolor(WORD index,UWORD color)
  * which is the de facto TOS standard for unimplemented xbios functions.
  * Therefore internally we make it return a WORD.
  */
-WORD esetpalette(WORD index,WORD count,UWORD *rgb)
+WORD ARGS_ON_STACK esetpalette(WORD index,WORD count,UWORD *rgb)
 {
     volatile UWORD *ttcolour;
 
@@ -135,7 +135,7 @@ WORD esetpalette(WORD index,WORD count,UWORD *rgb)
  *
  * See the comments for esetpalette() above
  */
-WORD egetpalette(WORD index,WORD count,UWORD *rgb)
+WORD ARGS_ON_STACK egetpalette(WORD index,WORD count,UWORD *rgb)
 {
     volatile UWORD *ttcolour;
 
@@ -158,7 +158,7 @@ WORD egetpalette(WORD index,WORD count,UWORD *rgb)
 /*
  * Read/modify TT shifter grey mode bit
  */
-WORD esetgray(WORD mode)
+WORD ARGS_ON_STACK esetgray(WORD mode)
 {
     volatile UBYTE *shiftreg = (UBYTE *)TT_SHIFTER;
     UBYTE old;
@@ -179,7 +179,7 @@ WORD esetgray(WORD mode)
 /*
  * Read/modify TT shifter smear mode bit
  */
-WORD esetsmear(WORD mode)
+WORD ARGS_ON_STACK esetsmear(WORD mode)
 {
     volatile UBYTE *shiftreg = (UBYTE *)TT_SHIFTER;
     UBYTE old;

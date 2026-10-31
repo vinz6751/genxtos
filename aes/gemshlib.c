@@ -46,6 +46,8 @@
 #include "geminit.h"
 #include "gemaplib.h"
 #include "gemmnlib.h"
+#include "geminput.h"
+#include "gemasm.h"
 
 #include "string.h"
 #include "miscutil.h"
@@ -533,9 +535,12 @@ static void sh_chdef(SHELL *psh)
 LONG aes_run_rom_program(PRG_ENTRY *entry)
 {
     PD *pd;     /* this is the BDOS PD structure, not the AESPD */
-
-    /* Create a basepage with the standard Pexec() */
-    pd = (PD *) Pexec(PE_BASEPAGEFLAGS, (char*)PF_STANDARD, "", NULL);
+    LONG rc;
+    rc = Pexec(PE_BASEPAGEFLAGS, (char*)(ULONG)PF_STANDARD, "", NULL);
+    NFDBG(("aes_run_rom_program: PE_BASEPAGEFLAGS rc=%ld entry=%p\n", rc, entry));
+    if (rc < 0)
+        return rc;
+    pd = (PD *)rc;
     pd->p_tbase = (UBYTE *) entry;
 
     /* Run the program with dos_exec() for AES reentrancy issues */
@@ -562,14 +567,33 @@ static WORD sh_ldapp(SHELL *psh)
     if (psh->sh_nextapp == DESKTOP_APP)
     {
         /* Start the ROM desktop: */
+#if !CONF_AES_INPROCESS
         sh_show("");        /* like TOS, we don't display a name */
+#endif
+        DESK_BOOT_MS(9, "sh_ldapp DESKTOP_APP");
         p_nameit(rlr, fname);
         p_setappdir(rlr, D.s_cmd);
+#if CONF_AES_INPROCESS
+        /*
+         * EmuDesk shares the AES shell PD (pid 0).  After startup dsptch(),
+         * ctlmgr may still be on the ready list.  One dsptch() lets it
+         * reach mwait (nrl); then set rlr to the shell for desk_run_inprocess().
+         * (Do not assign rlr=pd0 while ctlmgr is still linked on rlr — that
+         * orphans SCRENMGR and kills menu-bar MU_M1 hover.)
+         */
+        dsptch();
+        rlr = pd_index(0);
+        wm_inprocess_reset();
+        DESK_BOOT_MS(10, "before desk_run_inprocess");
+        desk_run_inprocess();
+        DESK_BOOT_MS(14, "after desk_run_inprocess");
+#else
         if (aes_run_rom_program(deskstart))
         {
             KDEBUG(("sh_ldapp(): ROM desktop terminated abnormally\n"));
             wm_new();           /* run wind_new() to clean up */
         }
+#endif
         return 0;
     }
 
@@ -655,6 +679,8 @@ void sh_main(BOOL isauto, BOOL isgem)
 {
     WORD rc = 0;
     SHELL *psh = &sh;
+
+    DESK_BOOT_MS(8, "sh_main enter");
 
     psh->sh_doexec = SHW_EXEC;
     psh->sh_nextapp = isauto ? AUTORUN_APP : DESKTOP_APP;

@@ -14,6 +14,7 @@
 #define STRING_H
 
 #include <stddef.h>
+#include "portab.h"
 
 /* string routines */
 
@@ -30,7 +31,7 @@ int strncmp(const char *a, const char *b, size_t n);
 int strncasecmp(const char *a, const char *b, size_t n);
 char *strchr(const char *s, int c);
 int toupper(int c);
-int sprintf(char *RESTRICT str, const char *RESTRICT fmt, ...) SPRINTF_STYLE;
+int VARARGS sprintf(char *RESTRICT str, const char *RESTRICT fmt, ...) SPRINTF_STYLE;
 
 
 /* Inline string routines: */
@@ -81,23 +82,26 @@ int memcmp(const void * s1, const void * s2, size_t n);
 
 /* moves length bytes from src to dst. returns dst as passed.
  * the behaviour is undefined if the two regions overlap.
+ *
+ * With FASTCALL_BUILD, util/memmove.S uses the register ABI (a0=dst,
+ * a1=src, d0=len) and returns the destination pointer in a0.  Without
+ * it, assembly uses the stack ABI (cdecl) and returns in d0.
  */
-void * memcpy(void * RESTRICT dst, const void * RESTRICT src,
-              size_t length);
-
-/* moves length bytes from src to dst, performing correctly
- * if the two regions overlap. returns dst as passed.
- */
-void * memmove(void * dst, const void * src,
-               size_t length);
-
-/* fills with byte c, returns the given address. */
+#if defined(FASTCALL_BUILD)
+void * memcpy(void * RESTRICT dst, const void * RESTRICT src, size_t length);
+void * memmove(void * dst, const void * src, size_t length);
 void * memset(void *address, int c, size_t size);
+#else
+void * ARGS_ON_STACK memcpy(void * RESTRICT dst, const void * RESTRICT src,
+              size_t length);
+void * ARGS_ON_STACK memmove(void * dst, const void * src, size_t length);
+void * ARGS_ON_STACK memset(void *address, int c, size_t size);
+#endif
 
 /* clear memory
  * we use our own name to circumvent GCC converting bzero to memset
  */
 #define bzero bzero_nobuiltin
-void bzero(void *address, size_t size);
+void ARGS_ON_STACK bzero_nobuiltin(void *address, size_t size);
 
 #endif /* STRING_H */

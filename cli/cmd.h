@@ -33,10 +33,31 @@
 
 /*
  * system calls
+ *
+ * Embedded (ROM) CLI: use the FASTCALL-safe inline trap bindings.  The old
+ * jmp_* variadic trampolines put the XBIOS/GEMDOS opcode in d0 under
+ * -mfastcall, which broke Supexec/getcookie (bus error at jar=0xe2).
+ *
+ * Standalone EmuCON keeps the trampolines (built without -mfastcall).
  */
-extern LONG jmp_gemdos(WORD, ...);
-extern LONG jmp_bios(WORD, ...);
-extern LONG jmp_xbios(WORD, ...);
+#ifndef STANDALONE_CONSOLE
+
+#include "bdosbind.h"
+#include "biosbind.h"
+#include "xbiosbind.h"
+
+/* Not covered by bdosbind.h / CLI-compatible arities */
+#define Sversion()          trap1(0x30)
+#define Fdup(a)             trap1(0x45, a)
+#define Fforce(a,b)         trap1(0x46, a, b)
+#undef Frename
+#define Frename(reserved,oldname,newname) trap1(0x56, reserved, oldname, newname)
+
+#else /* STANDALONE_CONSOLE */
+
+extern LONG VARARGS jmp_gemdos(WORD, ...);
+extern LONG VARARGS jmp_bios(WORD, ...);
+extern LONG VARARGS jmp_xbios(WORD, ...);
 
 #define jmp_gemdos_v(a)         jmp_gemdos((WORD)(a))
 #define jmp_gemdos_w(a,b)       jmp_gemdos((WORD)(a),(WORD)(b))
@@ -91,6 +112,8 @@ extern LONG jmp_xbios(WORD, ...);
 #define Kbrate(a,b)         jmp_xbios_ww(0x23,a,b)
 #define Supexec(a)          jmp_xbios_l(0x26,a)
 
+#endif /* STANDALONE_CONSOLE */
+
 
 /*
  * program parameters
@@ -139,6 +162,7 @@ extern LONG jmp_xbios(WORD, ...);
 /*
  *  typedefs
  */
+#ifdef STANDALONE_CONSOLE
 typedef struct {
     char    d_reserved[21];
     char    d_attrib;
@@ -147,6 +171,7 @@ typedef struct {
     LONG    d_length;
     char    d_fname[14];
 } DTA;
+#endif /* STANDALONE_CONSOLE: ROM build uses DTA from bdosdefs.h */
 
 /* Type of function run by execute() */
 typedef LONG FUNC(WORD argc,char **argv);

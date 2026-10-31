@@ -33,7 +33,11 @@
 /*
  *  local constants
  */
+#if defined(TARGET_256) || defined(TARGET_512)
+#define NUM_OSM_BLOCKS  200         /* small-ROM AES needs more MDs than stock TOS */
+#else
 #define NUM_OSM_BLOCKS  118         /* more than TOS, probably larger than necessary */
+#endif
 #define LEN_OSM_BLOCK   (2+64)      /* in bytes */
 /* size of os memory pool, in words: */
 #define LENOSM          (LEN_OSM_BLOCK*NUM_OSM_BLOCKS/sizeof(WORD))
