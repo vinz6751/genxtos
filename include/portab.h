@@ -263,8 +263,13 @@ typedef LONG LONG_ALIAS MAY_ALIAS;
  * Calling convention markers for mixed fastcall/cdecl builds.
  * When the OS is compiled with -mfastcall, user-visible trap handlers
  * and stack-based callbacks must opt out via ARGS_ON_STACK (cdecl).
+ *
+ * Only emit the attributes under FASTCALL_BUILD: classic m68k-atari-mint
+ * GCC 4.6.4 ignores cdecl/fastcall and warns (-Wattributes). Without
+ * -mfastcall the default ABI is already stack-based, so the markers are
+ * no-ops.
  */
-#if defined(__GNUC__) && defined(__MINT__)
+#if defined(FASTCALL_BUILD)
 # define ARGS_ON_STACK  __attribute__((cdecl))
 # define FASTCALL_ATTR  __attribute__((fastcall))
 #else

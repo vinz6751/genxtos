@@ -1071,7 +1071,15 @@ static void vertical_line_pattern(const Line *line, WORD wrt_mode, UWORD color)
             }
         }
     }
+    /* v_planes is always >= 1 here; GCC 4.6 cannot see that and warns. */
+#if __GNUC_PREREQ(4, 6)
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
     LN_MASK = linemask;
+#if __GNUC_PREREQ(4, 6)
+# pragma GCC diagnostic pop
+#endif
 }
 
 void vertical_line(const Line *line, WORD wrt_mode, UWORD color)
