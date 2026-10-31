@@ -1,5 +1,5 @@
 
-#define ENABLE_KDEBUG 1
+/* #define ENABLE_KDEBUG 1 */
 
 #include "emutos.h"
 

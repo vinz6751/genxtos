@@ -3,7 +3,7 @@
  * Licence: MIT
  */
 
-#define ENABLE_KDEBUG
+/* #define ENABLE_KDEBUG */
 
 #include <stdint.h>
 #include "emutos.h"
